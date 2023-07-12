@@ -1,0 +1,1058 @@
+2023-07-12 09:36:00,976 INFO org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext [Thread-205] Closing org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@4ed48df4: startup date [Tue Jul 11 17:55:10 IST 2023]; root of context hierarchy
+2023-07-12 09:36:01,059 INFO org.springframework.context.support.DefaultLifecycleProcessor [Thread-205] Stopping beans in phase 2147483647
+2023-07-12 09:36:01,070 INFO org.springframework.jmx.export.annotation.AnnotationMBeanExporter [Thread-205] Unregistering JMX-exposed beans on shutdown
+2023-07-12 09:36:01,087 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [Thread-205] Closing JPA EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 09:36:28,030 INFO com.iemr.flw.FlwApplication [restartedMain] Starting FlwApplication on DESKTOP-T44T19P with PID 14472 (C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes started by Beehyv in C:\Users\Beehyv\Desktop\PSMRI\FLW-API)
+2023-07-12 09:36:28,034 DEBUG com.iemr.flw.FlwApplication [restartedMain] Running with Spring Boot v1.5.8.RELEASE, Spring v4.3.12.RELEASE
+2023-07-12 09:36:28,034 INFO com.iemr.flw.FlwApplication [restartedMain] No active profile set, falling back to default profiles: default
+2023-07-12 09:36:28,195 INFO org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext [restartedMain] Refreshing org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@58f00739: startup date [Wed Jul 12 09:36:28 IST 2023]; root of context hierarchy
+2023-07-12 09:36:28,890 INFO org.hibernate.validator.internal.util.Version [background-preinit] HV000001: Hibernate Validator 5.3.5.Final
+2023-07-12 09:36:30,368 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 09:36:30,509 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'configProperties' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.config.ConfigProperties]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\config\ConfigProperties.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=configProperties; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 09:36:30,511 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'sessionObject' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.sessionobject.SessionObject]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\sessionobject\SessionObject.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=sessionObject; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 09:36:30,511 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'redisStorage' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.redis.RedisStorage]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\redis\RedisStorage.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=redisStorage; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 09:36:30,517 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 09:36:30,862 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 09:36:30,957 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.EligibleCoupleRegisterRepo.
+2023-07-12 09:36:30,958 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.EligibleCoupleTrackingRepo.
+2023-07-12 09:36:30,959 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.PregnantWomanRegisterRepo.
+2023-07-12 09:36:30,960 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.UserServiceRoleRepo.
+2023-07-12 09:36:30,960 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.ANCVisitRepo.
+2023-07-12 09:36:31,007 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'propertySourcesPlaceholderConfigurer' with a different definition: replacing [Root bean: class [org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=propertySourcesPlaceholderConfigurer; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/boot/autoconfigure/context/PropertyPlaceholderAutoConfiguration.class]] with [Root bean: class [org.springframework.boot.autoconfigure.session.RedisSessionConfiguration$SpringBootRedisHttpSessionConfiguration]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=propertySourcesPlaceholderConfigurer; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/boot/autoconfigure/session/RedisSessionConfiguration$SpringBootRedisHttpSessionConfiguration.class]]
+2023-07-12 09:36:31,424 INFO org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] JSR-330 'javax.inject.Inject' annotation found and supported for autowiring
+2023-07-12 09:36:31,656 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [restartedMain] Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration$$EnhancerBySpringCGLIB$$138f1532] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2023-07-12 09:36:32,358 INFO org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainer [restartedMain] Tomcat initialized with port(s): 8081 (http)
+2023-07-12 09:36:32,375 INFO org.apache.catalina.core.StandardService [restartedMain] Starting service [Tomcat]
+2023-07-12 09:36:32,377 INFO org.apache.catalina.core.StandardEngine [restartedMain] Starting Servlet Engine: Apache Tomcat/8.5.23
+2023-07-12 09:36:32,578 INFO org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/] [localhost-startStop-1] Initializing Spring embedded WebApplicationContext
+2023-07-12 09:36:32,578 INFO org.springframework.web.context.ContextLoader [localhost-startStop-1] Root WebApplicationContext: initialization completed in 4383 ms
+2023-07-12 09:36:33,096 INFO org.springframework.boot.web.servlet.ServletRegistrationBean [localhost-startStop-1] Mapping servlet: 'dispatcherServlet' to [/]
+2023-07-12 09:36:33,100 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'characterEncodingFilter' to: [/*]
+2023-07-12 09:36:33,100 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'springSessionRepositoryFilter' to: [/*]
+2023-07-12 09:36:33,100 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'hiddenHttpMethodFilter' to: [/*]
+2023-07-12 09:36:33,100 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'httpPutFormContentFilter' to: [/*]
+2023-07-12 09:36:33,100 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'requestContextFilter' to: [/*]
+2023-07-12 09:36:34,648 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [restartedMain] Building JPA container EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 09:36:34,665 INFO org.hibernate.jpa.internal.util.LogHelper [restartedMain] HHH000204: Processing PersistenceUnitInfo [
+	name: db_identity
+	...]
+2023-07-12 09:36:34,770 INFO org.hibernate.Version [restartedMain] HHH000412: Hibernate Core {5.0.12.Final}
+2023-07-12 09:36:34,772 INFO org.hibernate.cfg.Environment [restartedMain] HHH000206: hibernate.properties not found
+2023-07-12 09:36:34,773 INFO org.hibernate.cfg.Environment [restartedMain] HHH000021: Bytecode provider name : javassist
+2023-07-12 09:36:34,827 INFO org.hibernate.annotations.common.Version [restartedMain] HCANN000001: Hibernate Commons Annotations {5.0.1.Final}
+2023-07-12 09:36:34,959 INFO org.hibernate.dialect.Dialect [restartedMain] HHH000400: Using dialect: org.hibernate.dialect.MySQL5Dialect
+2023-07-12 09:36:35,595 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [restartedMain] Initialized JPA EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 09:36:36,202 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [restartedMain] HHH000397: Using ASTQueryTranslatorFactory
+2023-07-12 09:36:36,462 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Boolean com.iemr.flw.utils.config.ConfigProperties.extendExpiryTime
+2023-07-12 09:36:36,462 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Integer com.iemr.flw.utils.config.ConfigProperties.sessionExpiryTime
+2023-07-12 09:36:36,463 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.String com.iemr.flw.utils.config.ConfigProperties.redisurl
+2023-07-12 09:36:36,463 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Integer com.iemr.flw.utils.config.ConfigProperties.redisport
+2023-07-12 09:36:37,064 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.saveEligibleCouple(java.util.List<com.iemr.flw.dto.EligibleCoupleDTO>,java.lang.String)
+2023-07-12 09:36:37,067 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleTrackingRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.saveEligibleCoupleTracking(java.util.List<com.iemr.flw.dto.EligibleCoupleTrackingDTO>,java.lang.String)
+2023-07-12 09:36:37,068 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleRegister],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.getEligibleCouple(java.lang.Long,java.lang.String)
+2023-07-12 09:36:37,068 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleTrackingRegister],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.getEligibleCoupleTracking(java.lang.Long,java.lang.String)
+2023-07-12 09:36:37,069 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/user/getUserRoles],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.UserController.getEligibleCouple(java.lang.Integer,java.lang.String)
+2023-07-12 09:36:37,074 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources]}" onto public org.springframework.http.ResponseEntity<java.util.List<springfox.documentation.swagger.web.SwaggerResource>> springfox.documentation.swagger.web.ApiResourceController.swaggerResources()
+2023-07-12 09:36:37,075 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources/configuration/ui]}" onto public org.springframework.http.ResponseEntity<springfox.documentation.swagger.web.UiConfiguration> springfox.documentation.swagger.web.ApiResourceController.uiConfiguration()
+2023-07-12 09:36:37,076 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources/configuration/security]}" onto public org.springframework.http.ResponseEntity<springfox.documentation.swagger.web.SecurityConfiguration> springfox.documentation.swagger.web.ApiResourceController.securityConfiguration()
+2023-07-12 09:36:37,078 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/error]}" onto public org.springframework.http.ResponseEntity<java.util.Map<java.lang.String, java.lang.Object>> org.springframework.boot.autoconfigure.web.BasicErrorController.error(javax.servlet.http.HttpServletRequest)
+2023-07-12 09:36:37,079 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/error],produces=[text/html]}" onto public org.springframework.web.servlet.ModelAndView org.springframework.boot.autoconfigure.web.BasicErrorController.errorHtml(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)
+2023-07-12 09:36:37,355 INFO springfox.documentation.spring.web.PropertySourcedRequestMappingHandlerMapping [restartedMain] Mapped URL path [/v2/api-docs] onto method [public org.springframework.http.ResponseEntity<springfox.documentation.spring.web.json.Json> springfox.documentation.swagger2.web.Swagger2Controller.getDocumentation(java.lang.String,javax.servlet.http.HttpServletRequest)]
+2023-07-12 09:36:37,825 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter [restartedMain] Looking for @ControllerAdvice: org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@58f00739: startup date [Wed Jul 12 09:36:28 IST 2023]; root of context hierarchy
+2023-07-12 09:36:37,893 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/webjars/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 09:36:37,893 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 09:36:37,942 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/**/favicon.ico] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 09:36:38,609 INFO org.springframework.boot.devtools.autoconfigure.OptionalLiveReloadServer [restartedMain] LiveReload server is running on port 35729
+2023-07-12 09:36:38,839 INFO org.springframework.jmx.export.annotation.AnnotationMBeanExporter [restartedMain] Registering beans for JMX exposure on startup
+2023-07-12 09:36:38,851 INFO org.springframework.context.support.DefaultLifecycleProcessor [restartedMain] Starting beans in phase 2147483647
+2023-07-12 09:36:38,851 INFO springfox.documentation.spring.web.plugins.DocumentationPluginsBootstrapper [restartedMain] Context refreshed
+2023-07-12 09:36:38,878 INFO springfox.documentation.spring.web.plugins.DocumentationPluginsBootstrapper [restartedMain] Found 1 custom documentation plugin(s)
+2023-07-12 09:36:38,920 INFO springfox.documentation.spring.web.scanners.ApiListingReferenceScanner [restartedMain] Scanning for api listing references
+2023-07-12 09:36:39,191 INFO springfox.documentation.spring.web.readers.operation.CachingOperationNameGenerator [restartedMain] Generating unique operation named: getEligibleCoupleUsingGET_1
+2023-07-12 09:36:39,233 INFO org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor [restartedMain] No TaskScheduler/ScheduledExecutorService bean found for scheduled processing
+2023-07-12 09:36:39,248 INFO org.apache.coyote.http11.Http11NioProtocol [restartedMain] Initializing ProtocolHandler ["http-nio-8081"]
+2023-07-12 09:36:39,262 INFO org.apache.coyote.http11.Http11NioProtocol [restartedMain] Starting ProtocolHandler ["http-nio-8081"]
+2023-07-12 09:36:39,263 INFO org.apache.tomcat.util.net.NioSelectorPool [restartedMain] Using a shared selector for servlet write/read
+2023-07-12 09:36:39,287 INFO org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainer [restartedMain] Tomcat started on port(s): 8081 (http)
+2023-07-12 09:36:39,297 INFO com.iemr.flw.FlwApplication [restartedMain] Started FlwApplication in 12.003 seconds (JVM running for 19.115)
+2023-07-12 10:00:13,937 INFO org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext [Thread-33] Closing org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@58f00739: startup date [Wed Jul 12 09:36:28 IST 2023]; root of context hierarchy
+2023-07-12 10:00:13,941 INFO org.springframework.context.support.DefaultLifecycleProcessor [Thread-33] Stopping beans in phase 2147483647
+2023-07-12 10:00:13,948 INFO org.springframework.jmx.export.annotation.AnnotationMBeanExporter [Thread-33] Unregistering JMX-exposed beans on shutdown
+2023-07-12 10:00:13,962 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [Thread-33] Closing JPA EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 10:00:30,836 INFO com.iemr.flw.FlwApplication [restartedMain] Starting FlwApplication on DESKTOP-T44T19P with PID 17728 (C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes started by Beehyv in C:\Users\Beehyv\Desktop\PSMRI\FLW-API)
+2023-07-12 10:00:30,840 DEBUG com.iemr.flw.FlwApplication [restartedMain] Running with Spring Boot v1.5.8.RELEASE, Spring v4.3.12.RELEASE
+2023-07-12 10:00:30,841 INFO com.iemr.flw.FlwApplication [restartedMain] No active profile set, falling back to default profiles: default
+2023-07-12 10:00:31,040 INFO org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext [restartedMain] Refreshing org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@33b81c67: startup date [Wed Jul 12 10:00:31 IST 2023]; root of context hierarchy
+2023-07-12 10:00:31,396 INFO org.hibernate.validator.internal.util.Version [background-preinit] HV000001: Hibernate Validator 5.3.5.Final
+2023-07-12 10:00:33,107 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 10:00:33,214 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'configProperties' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.config.ConfigProperties]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\config\ConfigProperties.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=configProperties; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 10:00:33,216 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'sessionObject' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.sessionobject.SessionObject]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\sessionobject\SessionObject.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=sessionObject; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 10:00:33,216 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'redisStorage' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.redis.RedisStorage]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\redis\RedisStorage.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=redisStorage; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 10:00:33,221 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 10:00:33,504 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 10:00:33,570 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.EligibleCoupleRegisterRepo.
+2023-07-12 10:00:33,570 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.EligibleCoupleTrackingRepo.
+2023-07-12 10:00:33,571 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.PregnantWomanRegisterRepo.
+2023-07-12 10:00:33,571 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.UserServiceRoleRepo.
+2023-07-12 10:00:33,572 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.ANCVisitRepo.
+2023-07-12 10:00:33,604 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'propertySourcesPlaceholderConfigurer' with a different definition: replacing [Root bean: class [org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=propertySourcesPlaceholderConfigurer; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/boot/autoconfigure/context/PropertyPlaceholderAutoConfiguration.class]] with [Root bean: class [org.springframework.boot.autoconfigure.session.RedisSessionConfiguration$SpringBootRedisHttpSessionConfiguration]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=propertySourcesPlaceholderConfigurer; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/boot/autoconfigure/session/RedisSessionConfiguration$SpringBootRedisHttpSessionConfiguration.class]]
+2023-07-12 10:00:33,926 INFO org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] JSR-330 'javax.inject.Inject' annotation found and supported for autowiring
+2023-07-12 10:00:34,161 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [restartedMain] Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration$$EnhancerBySpringCGLIB$$dc281eb] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2023-07-12 10:00:34,742 INFO org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainer [restartedMain] Tomcat initialized with port(s): 8081 (http)
+2023-07-12 10:00:34,753 INFO org.apache.catalina.core.StandardService [restartedMain] Starting service [Tomcat]
+2023-07-12 10:00:34,754 INFO org.apache.catalina.core.StandardEngine [restartedMain] Starting Servlet Engine: Apache Tomcat/8.5.23
+2023-07-12 10:00:34,914 INFO org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/] [localhost-startStop-1] Initializing Spring embedded WebApplicationContext
+2023-07-12 10:00:34,914 INFO org.springframework.web.context.ContextLoader [localhost-startStop-1] Root WebApplicationContext: initialization completed in 3874 ms
+2023-07-12 10:00:35,455 INFO org.springframework.boot.web.servlet.ServletRegistrationBean [localhost-startStop-1] Mapping servlet: 'dispatcherServlet' to [/]
+2023-07-12 10:00:35,459 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'characterEncodingFilter' to: [/*]
+2023-07-12 10:00:35,459 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'springSessionRepositoryFilter' to: [/*]
+2023-07-12 10:00:35,459 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'hiddenHttpMethodFilter' to: [/*]
+2023-07-12 10:00:35,460 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'httpPutFormContentFilter' to: [/*]
+2023-07-12 10:00:35,460 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'requestContextFilter' to: [/*]
+2023-07-12 10:01:43,059 ERROR org.apache.tomcat.jdbc.pool.ConnectionPool [restartedMain] Unable to create initial connections of pool.
+com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException: Could not create connection to database server. Attempted reconnect 3 times. Giving up.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.Util.getInstance(Util.java:408)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:918)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:897)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:886)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:860)
+	at com.mysql.jdbc.ConnectionImpl.connectWithRetries(ConnectionImpl.java:2097)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2022)
+	at com.mysql.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:779)
+	at com.mysql.jdbc.JDBC4Connection.<init>(JDBC4Connection.java:47)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:389)
+	at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:330)
+	at org.apache.tomcat.jdbc.pool.PooledConnection.connectUsingDriver(PooledConnection.java:310)
+	at org.apache.tomcat.jdbc.pool.PooledConnection.connect(PooledConnection.java:203)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.createConnection(ConnectionPool.java:735)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.borrowConnection(ConnectionPool.java:667)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.init(ConnectionPool.java:482)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.<init>(ConnectionPool.java:154)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.pCreatePool(DataSourceProxy.java:118)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.createPool(DataSourceProxy.java:107)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.getConnection(DataSourceProxy.java:131)
+	at org.springframework.jdbc.datasource.DataSourceUtils.doGetConnection(DataSourceUtils.java:111)
+	at org.springframework.jdbc.datasource.DataSourceUtils.getConnection(DataSourceUtils.java:77)
+	at org.springframework.jdbc.support.JdbcUtils.extractDatabaseMetaData(JdbcUtils.java:326)
+	at org.springframework.jdbc.support.JdbcUtils.extractDatabaseMetaData(JdbcUtils.java:366)
+	at org.springframework.boot.autoconfigure.orm.jpa.DatabaseLookup.getDatabase(DatabaseLookup.java:72)
+	at org.springframework.boot.autoconfigure.orm.jpa.JpaProperties.determineDatabase(JpaProperties.java:139)
+	at org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration.jpaVendorAdapter(JpaBaseConfiguration.java:105)
+	at org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration$$EnhancerBySpringCGLIB$$7748e60b.CGLIB$jpaVendorAdapter$6(<generated>)
+	at org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration$$EnhancerBySpringCGLIB$$7748e60b$$FastClassBySpringCGLIB$$d762d05.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:228)
+	at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:358)
+	at org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration$$EnhancerBySpringCGLIB$$7748e60b.jpaVendorAdapter(<generated>)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:162)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:588)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1173)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1067)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:513)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483)
+	at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:208)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1138)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1066)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:835)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:741)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:467)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1173)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1067)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:513)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483)
+	at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:208)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1138)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1066)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:835)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:741)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:467)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1173)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1067)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:513)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483)
+	at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:197)
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1078)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:857)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:543)
+	at org.springframework.boot.context.embedded.EmbeddedWebApplicationContext.refresh(EmbeddedWebApplicationContext.java:122)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:693)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:360)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:303)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1118)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1107)
+	at com.iemr.flw.FlwApplication.main(FlwApplication.java:20)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:49)
+Caused by: com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.SQLError.createCommunicationsException(SQLError.java:989)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:341)
+	at com.mysql.jdbc.ConnectionImpl.coreConnect(ConnectionImpl.java:2189)
+	at com.mysql.jdbc.ConnectionImpl.connectWithRetries(ConnectionImpl.java:2038)
+	... 88 common frames omitted
+Caused by: java.net.ConnectException: Connection timed out: connect
+	at java.net.DualStackPlainSocketImpl.connect0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketConnect(DualStackPlainSocketImpl.java:79)
+	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+	at java.net.PlainSocketImpl.connect(PlainSocketImpl.java:172)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+	at java.net.Socket.connect(Socket.java:589)
+	at com.mysql.jdbc.StandardSocketFactory.connect(StandardSocketFactory.java:211)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:300)
+	... 90 common frames omitted
+2023-07-12 10:01:43,067 WARN org.springframework.boot.autoconfigure.orm.jpa.DatabaseLookup [restartedMain] Unable to determine jdbc url from datasource
+org.springframework.jdbc.support.MetaDataAccessException: Could not get Connection for extracting meta data; nested exception is org.springframework.jdbc.CannotGetJdbcConnectionException: Could not get JDBC Connection; nested exception is com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException: Could not create connection to database server. Attempted reconnect 3 times. Giving up.
+	at org.springframework.jdbc.support.JdbcUtils.extractDatabaseMetaData(JdbcUtils.java:339)
+	at org.springframework.jdbc.support.JdbcUtils.extractDatabaseMetaData(JdbcUtils.java:366)
+	at org.springframework.boot.autoconfigure.orm.jpa.DatabaseLookup.getDatabase(DatabaseLookup.java:72)
+	at org.springframework.boot.autoconfigure.orm.jpa.JpaProperties.determineDatabase(JpaProperties.java:139)
+	at org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration.jpaVendorAdapter(JpaBaseConfiguration.java:105)
+	at org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration$$EnhancerBySpringCGLIB$$7748e60b.CGLIB$jpaVendorAdapter$6(<generated>)
+	at org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration$$EnhancerBySpringCGLIB$$7748e60b$$FastClassBySpringCGLIB$$d762d05.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:228)
+	at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:358)
+	at org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration$$EnhancerBySpringCGLIB$$7748e60b.jpaVendorAdapter(<generated>)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:162)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:588)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1173)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1067)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:513)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483)
+	at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:208)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1138)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1066)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:835)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:741)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:467)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1173)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1067)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:513)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483)
+	at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:208)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1138)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1066)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:835)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:741)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:467)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1173)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1067)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:513)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483)
+	at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:197)
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1078)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:857)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:543)
+	at org.springframework.boot.context.embedded.EmbeddedWebApplicationContext.refresh(EmbeddedWebApplicationContext.java:122)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:693)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:360)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:303)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1118)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1107)
+	at com.iemr.flw.FlwApplication.main(FlwApplication.java:20)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:49)
+Caused by: org.springframework.jdbc.CannotGetJdbcConnectionException: Could not get JDBC Connection; nested exception is com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException: Could not create connection to database server. Attempted reconnect 3 times. Giving up.
+	at org.springframework.jdbc.datasource.DataSourceUtils.getConnection(DataSourceUtils.java:80)
+	at org.springframework.jdbc.support.JdbcUtils.extractDatabaseMetaData(JdbcUtils.java:326)
+	... 66 common frames omitted
+Caused by: com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException: Could not create connection to database server. Attempted reconnect 3 times. Giving up.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.Util.getInstance(Util.java:408)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:918)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:897)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:886)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:860)
+	at com.mysql.jdbc.ConnectionImpl.connectWithRetries(ConnectionImpl.java:2097)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2022)
+	at com.mysql.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:779)
+	at com.mysql.jdbc.JDBC4Connection.<init>(JDBC4Connection.java:47)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:389)
+	at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:330)
+	at org.apache.tomcat.jdbc.pool.PooledConnection.connectUsingDriver(PooledConnection.java:310)
+	at org.apache.tomcat.jdbc.pool.PooledConnection.connect(PooledConnection.java:203)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.createConnection(ConnectionPool.java:735)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.borrowConnection(ConnectionPool.java:667)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.init(ConnectionPool.java:482)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.<init>(ConnectionPool.java:154)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.pCreatePool(DataSourceProxy.java:118)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.createPool(DataSourceProxy.java:107)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.getConnection(DataSourceProxy.java:131)
+	at org.springframework.jdbc.datasource.DataSourceUtils.doGetConnection(DataSourceUtils.java:111)
+	at org.springframework.jdbc.datasource.DataSourceUtils.getConnection(DataSourceUtils.java:77)
+	... 67 common frames omitted
+Caused by: com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.SQLError.createCommunicationsException(SQLError.java:989)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:341)
+	at com.mysql.jdbc.ConnectionImpl.coreConnect(ConnectionImpl.java:2189)
+	at com.mysql.jdbc.ConnectionImpl.connectWithRetries(ConnectionImpl.java:2038)
+	... 88 common frames omitted
+Caused by: java.net.ConnectException: Connection timed out: connect
+	at java.net.DualStackPlainSocketImpl.connect0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketConnect(DualStackPlainSocketImpl.java:79)
+	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+	at java.net.PlainSocketImpl.connect(PlainSocketImpl.java:172)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+	at java.net.Socket.connect(Socket.java:589)
+	at com.mysql.jdbc.StandardSocketFactory.connect(StandardSocketFactory.java:211)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:300)
+	... 90 common frames omitted
+2023-07-12 10:01:43,140 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [restartedMain] Building JPA container EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 10:01:43,153 INFO org.hibernate.jpa.internal.util.LogHelper [restartedMain] HHH000204: Processing PersistenceUnitInfo [
+	name: db_identity
+	...]
+2023-07-12 10:01:43,239 INFO org.hibernate.Version [restartedMain] HHH000412: Hibernate Core {5.0.12.Final}
+2023-07-12 10:01:43,240 INFO org.hibernate.cfg.Environment [restartedMain] HHH000206: hibernate.properties not found
+2023-07-12 10:01:43,241 INFO org.hibernate.cfg.Environment [restartedMain] HHH000021: Bytecode provider name : javassist
+2023-07-12 10:01:43,294 INFO org.hibernate.annotations.common.Version [restartedMain] HCANN000001: Hibernate Commons Annotations {5.0.1.Final}
+2023-07-12 10:01:45,705 INFO org.hibernate.dialect.Dialect [restartedMain] HHH000400: Using dialect: org.hibernate.dialect.MySQL5Dialect
+2023-07-12 10:01:46,358 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [restartedMain] Initialized JPA EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 10:01:46,828 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [restartedMain] HHH000397: Using ASTQueryTranslatorFactory
+2023-07-12 10:01:47,160 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Boolean com.iemr.flw.utils.config.ConfigProperties.extendExpiryTime
+2023-07-12 10:01:47,160 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Integer com.iemr.flw.utils.config.ConfigProperties.sessionExpiryTime
+2023-07-12 10:01:47,160 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.String com.iemr.flw.utils.config.ConfigProperties.redisurl
+2023-07-12 10:01:47,161 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Integer com.iemr.flw.utils.config.ConfigProperties.redisport
+2023-07-12 10:01:47,859 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleTrackingRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.saveEligibleCoupleTracking(java.util.List<com.iemr.flw.dto.EligibleCoupleTrackingDTO>,java.lang.String)
+2023-07-12 10:01:47,861 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleRegister],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.getEligibleCouple(java.lang.Long,java.lang.String)
+2023-07-12 10:01:47,862 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleTrackingRegister],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.getEligibleCoupleTracking(java.lang.Long,java.lang.String)
+2023-07-12 10:01:47,862 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.saveEligibleCouple(java.util.List<com.iemr.flw.dto.EligibleCoupleDTO>,java.lang.String)
+2023-07-12 10:01:47,864 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/saveANCVisit],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.saveANCVisit(java.util.List<com.iemr.flw.dto.ANCVisitDTO>,java.lang.String)
+2023-07-12 10:01:47,865 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/pregnantWoman],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.getPregnantWoman(java.lang.Long,java.lang.String)
+2023-07-12 10:01:47,866 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/getANCVisitsForPW],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.getANCVisitDetails(java.lang.Long,java.lang.String)
+2023-07-12 10:01:47,867 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/pregnantWomanRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.savePregnantWomanRegistrations(java.util.List<com.iemr.flw.dto.PregnantWomanDTO>,java.lang.String)
+2023-07-12 10:01:47,868 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/user/getUserRoles],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.UserController.getEligibleCouple(java.lang.Integer,java.lang.String)
+2023-07-12 10:01:47,873 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources/configuration/ui]}" onto public org.springframework.http.ResponseEntity<springfox.documentation.swagger.web.UiConfiguration> springfox.documentation.swagger.web.ApiResourceController.uiConfiguration()
+2023-07-12 10:01:47,874 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources]}" onto public org.springframework.http.ResponseEntity<java.util.List<springfox.documentation.swagger.web.SwaggerResource>> springfox.documentation.swagger.web.ApiResourceController.swaggerResources()
+2023-07-12 10:01:47,875 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources/configuration/security]}" onto public org.springframework.http.ResponseEntity<springfox.documentation.swagger.web.SecurityConfiguration> springfox.documentation.swagger.web.ApiResourceController.securityConfiguration()
+2023-07-12 10:01:47,878 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/error]}" onto public org.springframework.http.ResponseEntity<java.util.Map<java.lang.String, java.lang.Object>> org.springframework.boot.autoconfigure.web.BasicErrorController.error(javax.servlet.http.HttpServletRequest)
+2023-07-12 10:01:47,878 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/error],produces=[text/html]}" onto public org.springframework.web.servlet.ModelAndView org.springframework.boot.autoconfigure.web.BasicErrorController.errorHtml(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)
+2023-07-12 10:01:48,109 INFO springfox.documentation.spring.web.PropertySourcedRequestMappingHandlerMapping [restartedMain] Mapped URL path [/v2/api-docs] onto method [public org.springframework.http.ResponseEntity<springfox.documentation.spring.web.json.Json> springfox.documentation.swagger2.web.Swagger2Controller.getDocumentation(java.lang.String,javax.servlet.http.HttpServletRequest)]
+2023-07-12 10:01:48,372 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter [restartedMain] Looking for @ControllerAdvice: org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@33b81c67: startup date [Wed Jul 12 10:00:31 IST 2023]; root of context hierarchy
+2023-07-12 10:01:48,455 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/webjars/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 10:01:48,455 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 10:01:48,506 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/**/favicon.ico] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 10:01:49,196 INFO org.springframework.boot.devtools.autoconfigure.OptionalLiveReloadServer [restartedMain] LiveReload server is running on port 35729
+2023-07-12 10:01:49,351 INFO org.springframework.jmx.export.annotation.AnnotationMBeanExporter [restartedMain] Registering beans for JMX exposure on startup
+2023-07-12 10:01:49,360 INFO org.springframework.context.support.DefaultLifecycleProcessor [restartedMain] Starting beans in phase 2147483647
+2023-07-12 10:01:49,360 INFO springfox.documentation.spring.web.plugins.DocumentationPluginsBootstrapper [restartedMain] Context refreshed
+2023-07-12 10:01:49,385 INFO springfox.documentation.spring.web.plugins.DocumentationPluginsBootstrapper [restartedMain] Found 1 custom documentation plugin(s)
+2023-07-12 10:01:49,422 INFO springfox.documentation.spring.web.scanners.ApiListingReferenceScanner [restartedMain] Scanning for api listing references
+2023-07-12 10:01:49,689 INFO springfox.documentation.spring.web.readers.operation.CachingOperationNameGenerator [restartedMain] Generating unique operation named: getEligibleCoupleUsingGET_1
+2023-07-12 10:01:49,728 INFO org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor [restartedMain] No TaskScheduler/ScheduledExecutorService bean found for scheduled processing
+2023-07-12 10:01:49,745 INFO org.apache.coyote.http11.Http11NioProtocol [restartedMain] Initializing ProtocolHandler ["http-nio-8081"]
+2023-07-12 10:01:49,760 INFO org.apache.coyote.http11.Http11NioProtocol [restartedMain] Starting ProtocolHandler ["http-nio-8081"]
+2023-07-12 10:01:49,761 INFO org.apache.tomcat.util.net.NioSelectorPool [restartedMain] Using a shared selector for servlet write/read
+2023-07-12 10:01:49,786 INFO org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainer [restartedMain] Tomcat started on port(s): 8081 (http)
+2023-07-12 10:01:49,795 INFO com.iemr.flw.FlwApplication [restartedMain] Started FlwApplication in 79.453 seconds (JVM running for 86.517)
+2023-07-12 12:24:36,418 INFO org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext [Thread-161] Closing org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@33b81c67: startup date [Wed Jul 12 10:00:31 IST 2023]; root of context hierarchy
+2023-07-12 12:24:36,427 INFO org.springframework.context.support.DefaultLifecycleProcessor [Thread-161] Stopping beans in phase 2147483647
+2023-07-12 12:24:36,436 INFO org.springframework.jmx.export.annotation.AnnotationMBeanExporter [Thread-161] Unregistering JMX-exposed beans on shutdown
+2023-07-12 12:24:36,453 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [Thread-161] Closing JPA EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 12:25:01,669 INFO com.iemr.flw.FlwApplication [restartedMain] Starting FlwApplication on DESKTOP-T44T19P with PID 2232 (C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes started by Beehyv in C:\Users\Beehyv\Desktop\PSMRI\FLW-API)
+2023-07-12 12:25:01,672 DEBUG com.iemr.flw.FlwApplication [restartedMain] Running with Spring Boot v1.5.8.RELEASE, Spring v4.3.12.RELEASE
+2023-07-12 12:25:01,672 INFO com.iemr.flw.FlwApplication [restartedMain] No active profile set, falling back to default profiles: default
+2023-07-12 12:25:01,830 INFO org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext [restartedMain] Refreshing org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@bb6cce7: startup date [Wed Jul 12 12:25:01 IST 2023]; root of context hierarchy
+2023-07-12 12:25:02,128 INFO org.hibernate.validator.internal.util.Version [background-preinit] HV000001: Hibernate Validator 5.3.5.Final
+2023-07-12 12:25:03,588 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 12:25:03,815 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'configProperties' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.config.ConfigProperties]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\config\ConfigProperties.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=configProperties; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 12:25:03,817 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'sessionObject' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.sessionobject.SessionObject]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\sessionobject\SessionObject.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=sessionObject; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 12:25:03,817 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'redisStorage' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.redis.RedisStorage]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\redis\RedisStorage.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=redisStorage; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 12:25:03,823 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 12:25:04,481 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 12:25:04,572 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.EligibleCoupleRegisterRepo.
+2023-07-12 12:25:04,573 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.EligibleCoupleTrackingRepo.
+2023-07-12 12:25:04,573 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.DeliveryOutcomeRepo.
+2023-07-12 12:25:04,574 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.PregnantWomanRegisterRepo.
+2023-07-12 12:25:04,574 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.UserServiceRoleRepo.
+2023-07-12 12:25:04,575 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.ANCVisitRepo.
+2023-07-12 12:25:04,613 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'propertySourcesPlaceholderConfigurer' with a different definition: replacing [Root bean: class [org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=propertySourcesPlaceholderConfigurer; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/boot/autoconfigure/context/PropertyPlaceholderAutoConfiguration.class]] with [Root bean: class [org.springframework.boot.autoconfigure.session.RedisSessionConfiguration$SpringBootRedisHttpSessionConfiguration]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=propertySourcesPlaceholderConfigurer; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/boot/autoconfigure/session/RedisSessionConfiguration$SpringBootRedisHttpSessionConfiguration.class]]
+2023-07-12 12:25:05,259 INFO org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] JSR-330 'javax.inject.Inject' annotation found and supported for autowiring
+2023-07-12 12:25:05,504 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [restartedMain] Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration$$EnhancerBySpringCGLIB$$722027f5] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2023-07-12 12:25:06,112 INFO org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainer [restartedMain] Tomcat initialized with port(s): 8081 (http)
+2023-07-12 12:25:06,123 INFO org.apache.catalina.core.StandardService [restartedMain] Starting service [Tomcat]
+2023-07-12 12:25:06,124 INFO org.apache.catalina.core.StandardEngine [restartedMain] Starting Servlet Engine: Apache Tomcat/8.5.23
+2023-07-12 12:25:06,283 INFO org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/] [localhost-startStop-1] Initializing Spring embedded WebApplicationContext
+2023-07-12 12:25:06,283 INFO org.springframework.web.context.ContextLoader [localhost-startStop-1] Root WebApplicationContext: initialization completed in 4453 ms
+2023-07-12 12:25:07,011 INFO org.springframework.boot.web.servlet.ServletRegistrationBean [localhost-startStop-1] Mapping servlet: 'dispatcherServlet' to [/]
+2023-07-12 12:25:07,025 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'characterEncodingFilter' to: [/*]
+2023-07-12 12:25:07,026 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'springSessionRepositoryFilter' to: [/*]
+2023-07-12 12:25:07,026 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'hiddenHttpMethodFilter' to: [/*]
+2023-07-12 12:25:07,026 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'httpPutFormContentFilter' to: [/*]
+2023-07-12 12:25:07,026 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'requestContextFilter' to: [/*]
+2023-07-12 12:26:14,949 ERROR org.apache.tomcat.jdbc.pool.ConnectionPool [restartedMain] Unable to create initial connections of pool.
+com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException: Could not create connection to database server. Attempted reconnect 3 times. Giving up.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.Util.getInstance(Util.java:408)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:918)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:897)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:886)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:860)
+	at com.mysql.jdbc.ConnectionImpl.connectWithRetries(ConnectionImpl.java:2097)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2022)
+	at com.mysql.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:779)
+	at com.mysql.jdbc.JDBC4Connection.<init>(JDBC4Connection.java:47)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:389)
+	at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:330)
+	at org.apache.tomcat.jdbc.pool.PooledConnection.connectUsingDriver(PooledConnection.java:310)
+	at org.apache.tomcat.jdbc.pool.PooledConnection.connect(PooledConnection.java:203)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.createConnection(ConnectionPool.java:735)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.borrowConnection(ConnectionPool.java:667)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.init(ConnectionPool.java:482)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.<init>(ConnectionPool.java:154)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.pCreatePool(DataSourceProxy.java:118)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.createPool(DataSourceProxy.java:107)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.getConnection(DataSourceProxy.java:131)
+	at org.springframework.jdbc.datasource.DataSourceUtils.doGetConnection(DataSourceUtils.java:111)
+	at org.springframework.jdbc.datasource.DataSourceUtils.getConnection(DataSourceUtils.java:77)
+	at org.springframework.jdbc.support.JdbcUtils.extractDatabaseMetaData(JdbcUtils.java:326)
+	at org.springframework.jdbc.support.JdbcUtils.extractDatabaseMetaData(JdbcUtils.java:366)
+	at org.springframework.boot.autoconfigure.orm.jpa.DatabaseLookup.getDatabase(DatabaseLookup.java:72)
+	at org.springframework.boot.autoconfigure.orm.jpa.JpaProperties.determineDatabase(JpaProperties.java:139)
+	at org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration.jpaVendorAdapter(JpaBaseConfiguration.java:105)
+	at org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration$$EnhancerBySpringCGLIB$$dba68c15.CGLIB$jpaVendorAdapter$3(<generated>)
+	at org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration$$EnhancerBySpringCGLIB$$dba68c15$$FastClassBySpringCGLIB$$7f511d40.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:228)
+	at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:358)
+	at org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration$$EnhancerBySpringCGLIB$$dba68c15.jpaVendorAdapter(<generated>)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:162)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:588)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1173)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1067)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:513)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483)
+	at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:208)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1138)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1066)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:835)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:741)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:467)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1173)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1067)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:513)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483)
+	at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:208)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1138)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1066)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:835)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:741)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:467)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1173)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1067)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:513)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483)
+	at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:197)
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1078)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:857)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:543)
+	at org.springframework.boot.context.embedded.EmbeddedWebApplicationContext.refresh(EmbeddedWebApplicationContext.java:122)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:693)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:360)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:303)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1118)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1107)
+	at com.iemr.flw.FlwApplication.main(FlwApplication.java:20)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:49)
+Caused by: com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.SQLError.createCommunicationsException(SQLError.java:989)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:341)
+	at com.mysql.jdbc.ConnectionImpl.coreConnect(ConnectionImpl.java:2189)
+	at com.mysql.jdbc.ConnectionImpl.connectWithRetries(ConnectionImpl.java:2038)
+	... 88 common frames omitted
+Caused by: java.net.ConnectException: Connection timed out: connect
+	at java.net.DualStackPlainSocketImpl.connect0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketConnect(DualStackPlainSocketImpl.java:79)
+	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+	at java.net.PlainSocketImpl.connect(PlainSocketImpl.java:172)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+	at java.net.Socket.connect(Socket.java:589)
+	at com.mysql.jdbc.StandardSocketFactory.connect(StandardSocketFactory.java:211)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:300)
+	... 90 common frames omitted
+2023-07-12 12:26:14,955 WARN org.springframework.boot.autoconfigure.orm.jpa.DatabaseLookup [restartedMain] Unable to determine jdbc url from datasource
+org.springframework.jdbc.support.MetaDataAccessException: Could not get Connection for extracting meta data; nested exception is org.springframework.jdbc.CannotGetJdbcConnectionException: Could not get JDBC Connection; nested exception is com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException: Could not create connection to database server. Attempted reconnect 3 times. Giving up.
+	at org.springframework.jdbc.support.JdbcUtils.extractDatabaseMetaData(JdbcUtils.java:339)
+	at org.springframework.jdbc.support.JdbcUtils.extractDatabaseMetaData(JdbcUtils.java:366)
+	at org.springframework.boot.autoconfigure.orm.jpa.DatabaseLookup.getDatabase(DatabaseLookup.java:72)
+	at org.springframework.boot.autoconfigure.orm.jpa.JpaProperties.determineDatabase(JpaProperties.java:139)
+	at org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration.jpaVendorAdapter(JpaBaseConfiguration.java:105)
+	at org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration$$EnhancerBySpringCGLIB$$dba68c15.CGLIB$jpaVendorAdapter$3(<generated>)
+	at org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration$$EnhancerBySpringCGLIB$$dba68c15$$FastClassBySpringCGLIB$$7f511d40.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:228)
+	at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:358)
+	at org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration$$EnhancerBySpringCGLIB$$dba68c15.jpaVendorAdapter(<generated>)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:162)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:588)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1173)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1067)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:513)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483)
+	at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:208)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1138)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1066)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:835)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:741)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:467)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1173)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1067)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:513)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483)
+	at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:208)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1138)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1066)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:835)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:741)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:467)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1173)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1067)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:513)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483)
+	at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:197)
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1078)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:857)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:543)
+	at org.springframework.boot.context.embedded.EmbeddedWebApplicationContext.refresh(EmbeddedWebApplicationContext.java:122)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:693)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:360)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:303)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1118)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1107)
+	at com.iemr.flw.FlwApplication.main(FlwApplication.java:20)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:49)
+Caused by: org.springframework.jdbc.CannotGetJdbcConnectionException: Could not get JDBC Connection; nested exception is com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException: Could not create connection to database server. Attempted reconnect 3 times. Giving up.
+	at org.springframework.jdbc.datasource.DataSourceUtils.getConnection(DataSourceUtils.java:80)
+	at org.springframework.jdbc.support.JdbcUtils.extractDatabaseMetaData(JdbcUtils.java:326)
+	... 66 common frames omitted
+Caused by: com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException: Could not create connection to database server. Attempted reconnect 3 times. Giving up.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.Util.getInstance(Util.java:408)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:918)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:897)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:886)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:860)
+	at com.mysql.jdbc.ConnectionImpl.connectWithRetries(ConnectionImpl.java:2097)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2022)
+	at com.mysql.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:779)
+	at com.mysql.jdbc.JDBC4Connection.<init>(JDBC4Connection.java:47)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:389)
+	at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:330)
+	at org.apache.tomcat.jdbc.pool.PooledConnection.connectUsingDriver(PooledConnection.java:310)
+	at org.apache.tomcat.jdbc.pool.PooledConnection.connect(PooledConnection.java:203)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.createConnection(ConnectionPool.java:735)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.borrowConnection(ConnectionPool.java:667)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.init(ConnectionPool.java:482)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.<init>(ConnectionPool.java:154)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.pCreatePool(DataSourceProxy.java:118)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.createPool(DataSourceProxy.java:107)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.getConnection(DataSourceProxy.java:131)
+	at org.springframework.jdbc.datasource.DataSourceUtils.doGetConnection(DataSourceUtils.java:111)
+	at org.springframework.jdbc.datasource.DataSourceUtils.getConnection(DataSourceUtils.java:77)
+	... 67 common frames omitted
+Caused by: com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.SQLError.createCommunicationsException(SQLError.java:989)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:341)
+	at com.mysql.jdbc.ConnectionImpl.coreConnect(ConnectionImpl.java:2189)
+	at com.mysql.jdbc.ConnectionImpl.connectWithRetries(ConnectionImpl.java:2038)
+	... 88 common frames omitted
+Caused by: java.net.ConnectException: Connection timed out: connect
+	at java.net.DualStackPlainSocketImpl.connect0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketConnect(DualStackPlainSocketImpl.java:79)
+	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+	at java.net.PlainSocketImpl.connect(PlainSocketImpl.java:172)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+	at java.net.Socket.connect(Socket.java:589)
+	at com.mysql.jdbc.StandardSocketFactory.connect(StandardSocketFactory.java:211)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:300)
+	... 90 common frames omitted
+2023-07-12 12:26:15,051 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [restartedMain] Building JPA container EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 12:26:15,068 INFO org.hibernate.jpa.internal.util.LogHelper [restartedMain] HHH000204: Processing PersistenceUnitInfo [
+	name: db_identity
+	...]
+2023-07-12 12:26:15,402 INFO org.hibernate.Version [restartedMain] HHH000412: Hibernate Core {5.0.12.Final}
+2023-07-12 12:26:15,406 INFO org.hibernate.cfg.Environment [restartedMain] HHH000206: hibernate.properties not found
+2023-07-12 12:26:15,412 INFO org.hibernate.cfg.Environment [restartedMain] HHH000021: Bytecode provider name : javassist
+2023-07-12 12:26:15,607 INFO org.hibernate.annotations.common.Version [restartedMain] HCANN000001: Hibernate Commons Annotations {5.0.1.Final}
+2023-07-12 12:27:23,119 ERROR org.apache.tomcat.jdbc.pool.ConnectionPool [restartedMain] Unable to create initial connections of pool.
+com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException: Could not create connection to database server. Attempted reconnect 3 times. Giving up.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.Util.getInstance(Util.java:408)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:918)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:897)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:886)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:860)
+	at com.mysql.jdbc.ConnectionImpl.connectWithRetries(ConnectionImpl.java:2097)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2022)
+	at com.mysql.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:779)
+	at com.mysql.jdbc.JDBC4Connection.<init>(JDBC4Connection.java:47)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:389)
+	at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:330)
+	at org.apache.tomcat.jdbc.pool.PooledConnection.connectUsingDriver(PooledConnection.java:310)
+	at org.apache.tomcat.jdbc.pool.PooledConnection.connect(PooledConnection.java:203)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.createConnection(ConnectionPool.java:735)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.borrowConnection(ConnectionPool.java:667)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.init(ConnectionPool.java:482)
+	at org.apache.tomcat.jdbc.pool.ConnectionPool.<init>(ConnectionPool.java:154)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.pCreatePool(DataSourceProxy.java:118)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.createPool(DataSourceProxy.java:107)
+	at org.apache.tomcat.jdbc.pool.DataSourceProxy.getConnection(DataSourceProxy.java:131)
+	at org.hibernate.engine.jdbc.connections.internal.DatasourceConnectionProviderImpl.getConnection(DatasourceConnectionProviderImpl.java:122)
+	at org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess.obtainConnection(JdbcEnvironmentInitiator.java:180)
+	at org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator.initiateService(JdbcEnvironmentInitiator.java:68)
+	at org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator.initiateService(JdbcEnvironmentInitiator.java:35)
+	at org.hibernate.boot.registry.internal.StandardServiceRegistryImpl.initiateService(StandardServiceRegistryImpl.java:88)
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.createService(AbstractServiceRegistryImpl.java:254)
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.initializeService(AbstractServiceRegistryImpl.java:228)
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.getService(AbstractServiceRegistryImpl.java:207)
+	at org.hibernate.engine.jdbc.internal.JdbcServicesImpl.configure(JdbcServicesImpl.java:51)
+	at org.hibernate.boot.registry.internal.StandardServiceRegistryImpl.configureService(StandardServiceRegistryImpl.java:94)
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.initializeService(AbstractServiceRegistryImpl.java:237)
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.getService(AbstractServiceRegistryImpl.java:207)
+	at org.hibernate.boot.model.process.spi.MetadataBuildingProcess.handleTypes(MetadataBuildingProcess.java:352)
+	at org.hibernate.boot.model.process.spi.MetadataBuildingProcess.complete(MetadataBuildingProcess.java:111)
+	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.metadata(EntityManagerFactoryBuilderImpl.java:847)
+	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.build(EntityManagerFactoryBuilderImpl.java:874)
+	at org.springframework.orm.jpa.vendor.SpringHibernateJpaPersistenceProvider.createContainerEntityManagerFactory(SpringHibernateJpaPersistenceProvider.java:60)
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.createNativeEntityManagerFactory(LocalContainerEntityManagerFactoryBean.java:353)
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.buildNativeEntityManagerFactory(AbstractEntityManagerFactoryBean.java:370)
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.afterPropertiesSet(AbstractEntityManagerFactoryBean.java:359)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1687)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1624)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:555)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483)
+	at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:197)
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1078)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:857)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:543)
+	at org.springframework.boot.context.embedded.EmbeddedWebApplicationContext.refresh(EmbeddedWebApplicationContext.java:122)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:693)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:360)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:303)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1118)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1107)
+	at com.iemr.flw.FlwApplication.main(FlwApplication.java:20)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:49)
+Caused by: com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:425)
+	at com.mysql.jdbc.SQLError.createCommunicationsException(SQLError.java:989)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:341)
+	at com.mysql.jdbc.ConnectionImpl.coreConnect(ConnectionImpl.java:2189)
+	at com.mysql.jdbc.ConnectionImpl.connectWithRetries(ConnectionImpl.java:2038)
+	... 62 common frames omitted
+Caused by: java.net.ConnectException: Connection timed out: connect
+	at java.net.DualStackPlainSocketImpl.connect0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketConnect(DualStackPlainSocketImpl.java:79)
+	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+	at java.net.PlainSocketImpl.connect(PlainSocketImpl.java:172)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+	at java.net.Socket.connect(Socket.java:589)
+	at com.mysql.jdbc.StandardSocketFactory.connect(StandardSocketFactory.java:211)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:300)
+	... 64 common frames omitted
+2023-07-12 12:27:23,120 WARN org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator [restartedMain] HHH000342: Could not obtain connection to query metadata : Could not create connection to database server. Attempted reconnect 3 times. Giving up.
+2023-07-12 12:27:23,130 INFO org.hibernate.dialect.Dialect [restartedMain] HHH000400: Using dialect: org.hibernate.dialect.MySQL5Dialect
+2023-07-12 12:27:23,147 INFO org.hibernate.engine.jdbc.env.internal.LobCreatorBuilderImpl [restartedMain] HHH000422: Disabling contextual LOB creation as connection was null
+2023-07-12 12:27:23,626 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [restartedMain] Initialized JPA EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 12:27:24,042 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [restartedMain] HHH000397: Using ASTQueryTranslatorFactory
+2023-07-12 12:27:24,342 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Boolean com.iemr.flw.utils.config.ConfigProperties.extendExpiryTime
+2023-07-12 12:27:24,342 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Integer com.iemr.flw.utils.config.ConfigProperties.sessionExpiryTime
+2023-07-12 12:27:24,342 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.String com.iemr.flw.utils.config.ConfigProperties.redisurl
+2023-07-12 12:27:24,342 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Integer com.iemr.flw.utils.config.ConfigProperties.redisport
+2023-07-12 12:27:24,988 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleRegister],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.getEligibleCouple(java.lang.Long,java.lang.String)
+2023-07-12 12:27:24,990 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleTrackingRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.saveEligibleCoupleTracking(java.util.List<com.iemr.flw.dto.EligibleCoupleTrackingDTO>,java.lang.String)
+2023-07-12 12:27:24,990 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleTrackingRegister],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.getEligibleCoupleTracking(java.lang.Long,java.lang.String)
+2023-07-12 12:27:24,991 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.saveEligibleCouple(java.util.List<com.iemr.flw.dto.EligibleCoupleDTO>,java.lang.String)
+2023-07-12 12:27:24,992 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/saveANCVisit],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.saveANCVisit(java.util.List<com.iemr.flw.dto.ANCVisitDTO>,java.lang.String)
+2023-07-12 12:27:24,993 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/pregnantWoman],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.getPregnantWoman(java.lang.Long,java.lang.String)
+2023-07-12 12:27:24,993 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/pregnantWomanRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.savePregnantWomanRegistrations(java.util.List<com.iemr.flw.dto.PregnantWomanDTO>,java.lang.String)
+2023-07-12 12:27:24,994 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/getANCVisitsForPW],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.getANCVisitDetails(java.lang.Long,java.lang.String)
+2023-07-12 12:27:24,994 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/user/getUserRoles],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.UserController.getEligibleCouple(java.lang.Integer,java.lang.String)
+2023-07-12 12:27:24,998 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources/configuration/ui]}" onto public org.springframework.http.ResponseEntity<springfox.documentation.swagger.web.UiConfiguration> springfox.documentation.swagger.web.ApiResourceController.uiConfiguration()
+2023-07-12 12:27:24,999 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources]}" onto public org.springframework.http.ResponseEntity<java.util.List<springfox.documentation.swagger.web.SwaggerResource>> springfox.documentation.swagger.web.ApiResourceController.swaggerResources()
+2023-07-12 12:27:25,000 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources/configuration/security]}" onto public org.springframework.http.ResponseEntity<springfox.documentation.swagger.web.SecurityConfiguration> springfox.documentation.swagger.web.ApiResourceController.securityConfiguration()
+2023-07-12 12:27:25,002 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/error]}" onto public org.springframework.http.ResponseEntity<java.util.Map<java.lang.String, java.lang.Object>> org.springframework.boot.autoconfigure.web.BasicErrorController.error(javax.servlet.http.HttpServletRequest)
+2023-07-12 12:27:25,002 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/error],produces=[text/html]}" onto public org.springframework.web.servlet.ModelAndView org.springframework.boot.autoconfigure.web.BasicErrorController.errorHtml(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)
+2023-07-12 12:27:25,207 INFO springfox.documentation.spring.web.PropertySourcedRequestMappingHandlerMapping [restartedMain] Mapped URL path [/v2/api-docs] onto method [public org.springframework.http.ResponseEntity<springfox.documentation.spring.web.json.Json> springfox.documentation.swagger2.web.Swagger2Controller.getDocumentation(java.lang.String,javax.servlet.http.HttpServletRequest)]
+2023-07-12 12:27:25,497 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter [restartedMain] Looking for @ControllerAdvice: org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@bb6cce7: startup date [Wed Jul 12 12:25:01 IST 2023]; root of context hierarchy
+2023-07-12 12:27:25,567 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/webjars/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 12:27:25,567 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 12:27:25,619 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/**/favicon.ico] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 12:27:26,288 INFO org.springframework.boot.devtools.autoconfigure.OptionalLiveReloadServer [restartedMain] LiveReload server is running on port 35729
+2023-07-12 12:27:26,445 INFO org.springframework.jmx.export.annotation.AnnotationMBeanExporter [restartedMain] Registering beans for JMX exposure on startup
+2023-07-12 12:27:26,456 INFO org.springframework.context.support.DefaultLifecycleProcessor [restartedMain] Starting beans in phase 2147483647
+2023-07-12 12:27:26,456 INFO springfox.documentation.spring.web.plugins.DocumentationPluginsBootstrapper [restartedMain] Context refreshed
+2023-07-12 12:27:26,476 INFO springfox.documentation.spring.web.plugins.DocumentationPluginsBootstrapper [restartedMain] Found 1 custom documentation plugin(s)
+2023-07-12 12:27:26,517 INFO springfox.documentation.spring.web.scanners.ApiListingReferenceScanner [restartedMain] Scanning for api listing references
+2023-07-12 12:27:26,741 INFO springfox.documentation.spring.web.readers.operation.CachingOperationNameGenerator [restartedMain] Generating unique operation named: getEligibleCoupleUsingGET_1
+2023-07-12 12:27:26,770 INFO org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor [restartedMain] No TaskScheduler/ScheduledExecutorService bean found for scheduled processing
+2023-07-12 12:27:26,781 INFO org.apache.coyote.http11.Http11NioProtocol [restartedMain] Initializing ProtocolHandler ["http-nio-8081"]
+2023-07-12 12:27:26,791 INFO org.apache.coyote.http11.Http11NioProtocol [restartedMain] Starting ProtocolHandler ["http-nio-8081"]
+2023-07-12 12:27:26,792 INFO org.apache.tomcat.util.net.NioSelectorPool [restartedMain] Using a shared selector for servlet write/read
+2023-07-12 12:27:26,809 INFO org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainer [restartedMain] Tomcat started on port(s): 8081 (http)
+2023-07-12 12:27:26,816 INFO com.iemr.flw.FlwApplication [restartedMain] Started FlwApplication in 145.92 seconds (JVM running for 154.935)
+2023-07-12 13:28:26,750 INFO org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/] [http-nio-8081-exec-1] Initializing Spring FrameworkServlet 'dispatcherServlet'
+2023-07-12 13:28:26,751 INFO org.springframework.web.servlet.DispatcherServlet [http-nio-8081-exec-1] FrameworkServlet 'dispatcherServlet': initialization started
+2023-07-12 13:28:26,785 INFO org.springframework.web.servlet.DispatcherServlet [http-nio-8081-exec-1] FrameworkServlet 'dispatcherServlet': initialization completed in 34 ms
+2023-07-12 13:28:26,834 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-1] calling getAllUserRoles for userId: 1019
+2023-07-12 13:29:40,063 WARN org.springframework.web.servlet.PageNotFound [http-nio-8081-exec-4] Request method 'POST' not supported
+2023-07-12 13:29:40,064 WARN org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver [http-nio-8081-exec-4] Resolved exception caused by Handler execution: org.springframework.web.HttpRequestMethodNotSupportedException: Request method 'POST' not supported
+2023-07-12 13:30:52,588 WARN org.springframework.web.servlet.PageNotFound [http-nio-8081-exec-6] Request method 'POST' not supported
+2023-07-12 13:30:52,588 WARN org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver [http-nio-8081-exec-6] Resolved exception caused by Handler execution: org.springframework.web.HttpRequestMethodNotSupportedException: Request method 'POST' not supported
+2023-07-12 13:30:59,442 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-7] calling getAllUserRoles for userId: 1019
+2023-07-12 13:31:38,532 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-8] calling getAllUserRoles for userId: 1260
+2023-07-12 13:31:49,722 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-10] calling getAllUserRoles for userId: 1260
+2023-07-12 13:32:04,237 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-1] calling getAllUserRoles for userId: 1260
+2023-07-12 13:37:46,109 INFO org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext [Thread-297] Closing org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@bb6cce7: startup date [Wed Jul 12 12:25:01 IST 2023]; root of context hierarchy
+2023-07-12 13:37:46,112 INFO org.springframework.context.support.DefaultLifecycleProcessor [Thread-297] Stopping beans in phase 2147483647
+2023-07-12 13:37:46,119 INFO org.springframework.jmx.export.annotation.AnnotationMBeanExporter [Thread-297] Unregistering JMX-exposed beans on shutdown
+2023-07-12 13:37:46,123 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [Thread-297] Closing JPA EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 13:38:02,390 INFO com.iemr.flw.FlwApplication [restartedMain] Starting FlwApplication on DESKTOP-T44T19P with PID 8988 (C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes started by Beehyv in C:\Users\Beehyv\Desktop\PSMRI\FLW-API)
+2023-07-12 13:38:02,394 DEBUG com.iemr.flw.FlwApplication [restartedMain] Running with Spring Boot v1.5.8.RELEASE, Spring v4.3.12.RELEASE
+2023-07-12 13:38:02,395 INFO com.iemr.flw.FlwApplication [restartedMain] No active profile set, falling back to default profiles: default
+2023-07-12 13:38:02,594 INFO org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext [restartedMain] Refreshing org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@d8ba2c8: startup date [Wed Jul 12 13:38:02 IST 2023]; root of context hierarchy
+2023-07-12 13:38:03,131 INFO org.hibernate.validator.internal.util.Version [background-preinit] HV000001: Hibernate Validator 5.3.5.Final
+2023-07-12 13:38:04,744 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 13:38:04,884 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'configProperties' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.config.ConfigProperties]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\config\ConfigProperties.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=configProperties; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 13:38:04,885 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'sessionObject' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.sessionobject.SessionObject]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\sessionobject\SessionObject.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=sessionObject; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 13:38:04,885 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'redisStorage' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.redis.RedisStorage]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\redis\RedisStorage.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=redisStorage; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 13:38:04,889 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 13:38:05,178 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 13:38:05,255 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.EligibleCoupleRegisterRepo.
+2023-07-12 13:38:05,255 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.EligibleCoupleTrackingRepo.
+2023-07-12 13:38:05,256 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.DeliveryOutcomeRepo.
+2023-07-12 13:38:05,256 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.PregnantWomanRegisterRepo.
+2023-07-12 13:38:05,257 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.UserServiceRoleRepo.
+2023-07-12 13:38:05,257 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.ANCVisitRepo.
+2023-07-12 13:38:05,296 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'propertySourcesPlaceholderConfigurer' with a different definition: replacing [Root bean: class [org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=propertySourcesPlaceholderConfigurer; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/boot/autoconfigure/context/PropertyPlaceholderAutoConfiguration.class]] with [Root bean: class [org.springframework.boot.autoconfigure.session.RedisSessionConfiguration$SpringBootRedisHttpSessionConfiguration]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=propertySourcesPlaceholderConfigurer; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/boot/autoconfigure/session/RedisSessionConfiguration$SpringBootRedisHttpSessionConfiguration.class]]
+2023-07-12 13:38:05,676 INFO org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] JSR-330 'javax.inject.Inject' annotation found and supported for autowiring
+2023-07-12 13:38:05,923 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [restartedMain] Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration$$EnhancerBySpringCGLIB$$2ee9c67f] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2023-07-12 13:38:06,533 INFO org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainer [restartedMain] Tomcat initialized with port(s): 8081 (http)
+2023-07-12 13:38:06,544 INFO org.apache.catalina.core.StandardService [restartedMain] Starting service [Tomcat]
+2023-07-12 13:38:06,546 INFO org.apache.catalina.core.StandardEngine [restartedMain] Starting Servlet Engine: Apache Tomcat/8.5.23
+2023-07-12 13:38:06,719 INFO org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/] [localhost-startStop-1] Initializing Spring embedded WebApplicationContext
+2023-07-12 13:38:06,720 INFO org.springframework.web.context.ContextLoader [localhost-startStop-1] Root WebApplicationContext: initialization completed in 4127 ms
+2023-07-12 13:38:07,259 INFO org.springframework.boot.web.servlet.ServletRegistrationBean [localhost-startStop-1] Mapping servlet: 'dispatcherServlet' to [/]
+2023-07-12 13:38:07,264 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'characterEncodingFilter' to: [/*]
+2023-07-12 13:38:07,264 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'springSessionRepositoryFilter' to: [/*]
+2023-07-12 13:38:07,265 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'hiddenHttpMethodFilter' to: [/*]
+2023-07-12 13:38:07,265 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'httpPutFormContentFilter' to: [/*]
+2023-07-12 13:38:07,265 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'requestContextFilter' to: [/*]
+2023-07-12 13:38:10,634 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [restartedMain] Building JPA container EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 13:38:10,668 INFO org.hibernate.jpa.internal.util.LogHelper [restartedMain] HHH000204: Processing PersistenceUnitInfo [
+	name: db_identity
+	...]
+2023-07-12 13:38:10,839 INFO org.hibernate.Version [restartedMain] HHH000412: Hibernate Core {5.0.12.Final}
+2023-07-12 13:38:10,842 INFO org.hibernate.cfg.Environment [restartedMain] HHH000206: hibernate.properties not found
+2023-07-12 13:38:10,843 INFO org.hibernate.cfg.Environment [restartedMain] HHH000021: Bytecode provider name : javassist
+2023-07-12 13:38:10,925 INFO org.hibernate.annotations.common.Version [restartedMain] HCANN000001: Hibernate Commons Annotations {5.0.1.Final}
+2023-07-12 13:38:11,147 INFO org.hibernate.dialect.Dialect [restartedMain] HHH000400: Using dialect: org.hibernate.dialect.MySQL5Dialect
+2023-07-12 13:38:11,736 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [restartedMain] Initialized JPA EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 13:38:12,144 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [restartedMain] HHH000397: Using ASTQueryTranslatorFactory
+2023-07-12 13:38:12,520 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Boolean com.iemr.flw.utils.config.ConfigProperties.extendExpiryTime
+2023-07-12 13:38:12,520 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Integer com.iemr.flw.utils.config.ConfigProperties.sessionExpiryTime
+2023-07-12 13:38:12,521 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.String com.iemr.flw.utils.config.ConfigProperties.redisurl
+2023-07-12 13:38:12,521 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Integer com.iemr.flw.utils.config.ConfigProperties.redisport
+2023-07-12 13:38:13,208 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleRegister],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.getEligibleCouple(java.lang.Long,java.lang.String)
+2023-07-12 13:38:13,209 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleTrackingRegister],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.getEligibleCoupleTracking(java.lang.Long,java.lang.String)
+2023-07-12 13:38:13,210 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.saveEligibleCouple(java.util.List<com.iemr.flw.dto.EligibleCoupleDTO>,java.lang.String)
+2023-07-12 13:38:13,210 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleTrackingRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.saveEligibleCoupleTracking(java.util.List<com.iemr.flw.dto.EligibleCoupleTrackingDTO>,java.lang.String)
+2023-07-12 13:38:13,212 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/pregnantWomanRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.savePregnantWomanRegistrations(java.util.List<com.iemr.flw.dto.PregnantWomanDTO>,java.lang.String)
+2023-07-12 13:38:13,213 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/getANCVisitsForPW],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.getANCVisitDetails(java.lang.Long,java.lang.String)
+2023-07-12 13:38:13,213 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/pregnantWoman],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.getPregnantWoman(java.lang.Long,java.lang.String)
+2023-07-12 13:38:13,214 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/saveANCVisit],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.saveANCVisit(java.util.List<com.iemr.flw.dto.ANCVisitDTO>,java.lang.String)
+2023-07-12 13:38:13,214 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/user/getUserRole],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.UserController.getEligibleCouple(java.lang.Integer,java.lang.Integer,java.lang.String)
+2023-07-12 13:38:13,218 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources/configuration/security]}" onto public org.springframework.http.ResponseEntity<springfox.documentation.swagger.web.SecurityConfiguration> springfox.documentation.swagger.web.ApiResourceController.securityConfiguration()
+2023-07-12 13:38:13,219 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources/configuration/ui]}" onto public org.springframework.http.ResponseEntity<springfox.documentation.swagger.web.UiConfiguration> springfox.documentation.swagger.web.ApiResourceController.uiConfiguration()
+2023-07-12 13:38:13,219 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources]}" onto public org.springframework.http.ResponseEntity<java.util.List<springfox.documentation.swagger.web.SwaggerResource>> springfox.documentation.swagger.web.ApiResourceController.swaggerResources()
+2023-07-12 13:38:13,222 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/error]}" onto public org.springframework.http.ResponseEntity<java.util.Map<java.lang.String, java.lang.Object>> org.springframework.boot.autoconfigure.web.BasicErrorController.error(javax.servlet.http.HttpServletRequest)
+2023-07-12 13:38:13,223 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/error],produces=[text/html]}" onto public org.springframework.web.servlet.ModelAndView org.springframework.boot.autoconfigure.web.BasicErrorController.errorHtml(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)
+2023-07-12 13:38:13,421 INFO springfox.documentation.spring.web.PropertySourcedRequestMappingHandlerMapping [restartedMain] Mapped URL path [/v2/api-docs] onto method [public org.springframework.http.ResponseEntity<springfox.documentation.spring.web.json.Json> springfox.documentation.swagger2.web.Swagger2Controller.getDocumentation(java.lang.String,javax.servlet.http.HttpServletRequest)]
+2023-07-12 13:38:13,775 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter [restartedMain] Looking for @ControllerAdvice: org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@d8ba2c8: startup date [Wed Jul 12 13:38:02 IST 2023]; root of context hierarchy
+2023-07-12 13:38:13,856 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/webjars/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 13:38:13,856 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 13:38:13,900 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/**/favicon.ico] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 13:38:14,528 INFO org.springframework.boot.devtools.autoconfigure.OptionalLiveReloadServer [restartedMain] LiveReload server is running on port 35729
+2023-07-12 13:38:14,678 INFO org.springframework.jmx.export.annotation.AnnotationMBeanExporter [restartedMain] Registering beans for JMX exposure on startup
+2023-07-12 13:38:14,688 INFO org.springframework.context.support.DefaultLifecycleProcessor [restartedMain] Starting beans in phase 2147483647
+2023-07-12 13:38:14,688 INFO springfox.documentation.spring.web.plugins.DocumentationPluginsBootstrapper [restartedMain] Context refreshed
+2023-07-12 13:38:14,707 INFO springfox.documentation.spring.web.plugins.DocumentationPluginsBootstrapper [restartedMain] Found 1 custom documentation plugin(s)
+2023-07-12 13:38:14,741 INFO springfox.documentation.spring.web.scanners.ApiListingReferenceScanner [restartedMain] Scanning for api listing references
+2023-07-12 13:38:14,956 INFO springfox.documentation.spring.web.readers.operation.CachingOperationNameGenerator [restartedMain] Generating unique operation named: getEligibleCoupleUsingGET_1
+2023-07-12 13:38:14,984 INFO org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor [restartedMain] No TaskScheduler/ScheduledExecutorService bean found for scheduled processing
+2023-07-12 13:38:14,996 INFO org.apache.coyote.http11.Http11NioProtocol [restartedMain] Initializing ProtocolHandler ["http-nio-8081"]
+2023-07-12 13:38:15,005 INFO org.apache.coyote.http11.Http11NioProtocol [restartedMain] Starting ProtocolHandler ["http-nio-8081"]
+2023-07-12 13:38:15,006 INFO org.apache.tomcat.util.net.NioSelectorPool [restartedMain] Using a shared selector for servlet write/read
+2023-07-12 13:38:15,023 INFO org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainer [restartedMain] Tomcat started on port(s): 8081 (http)
+2023-07-12 13:38:15,029 INFO com.iemr.flw.FlwApplication [restartedMain] Started FlwApplication in 13.335 seconds (JVM running for 20.024)
+2023-07-12 13:38:33,022 INFO org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/] [http-nio-8081-exec-1] Initializing Spring FrameworkServlet 'dispatcherServlet'
+2023-07-12 13:38:33,023 INFO org.springframework.web.servlet.DispatcherServlet [http-nio-8081-exec-1] FrameworkServlet 'dispatcherServlet': initialization started
+2023-07-12 13:38:33,053 INFO org.springframework.web.servlet.DispatcherServlet [http-nio-8081-exec-1] FrameworkServlet 'dispatcherServlet': initialization completed in 30 ms
+2023-07-12 13:38:54,100 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-3] calling getAllUserRoles for userId: 1260
+2023-07-12 13:38:54,312 ERROR com.iemr.flw.controller.CoupleController [http-nio-8081-exec-3] Error in saving eligible couple registration details, java.lang.ClassCastException: com.iemr.flw.dto.UserServiceRoleDTO cannot be cast to com.iemr.flw.domain.UserServiceRole
+2023-07-12 13:38:55,713 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-4] calling getAllUserRoles for userId: 1260
+2023-07-12 13:38:55,808 ERROR com.iemr.flw.controller.CoupleController [http-nio-8081-exec-4] Error in saving eligible couple registration details, java.lang.ClassCastException: com.iemr.flw.dto.UserServiceRoleDTO cannot be cast to com.iemr.flw.domain.UserServiceRole
+2023-07-12 13:42:43,526 INFO org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext [Thread-35] Closing org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@d8ba2c8: startup date [Wed Jul 12 13:38:02 IST 2023]; root of context hierarchy
+2023-07-12 13:42:43,529 INFO org.springframework.context.support.DefaultLifecycleProcessor [Thread-35] Stopping beans in phase 2147483647
+2023-07-12 13:42:43,546 INFO org.springframework.jmx.export.annotation.AnnotationMBeanExporter [Thread-35] Unregistering JMX-exposed beans on shutdown
+2023-07-12 13:42:43,552 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [Thread-35] Closing JPA EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 13:43:13,266 INFO com.iemr.flw.FlwApplication [restartedMain] Starting FlwApplication on DESKTOP-T44T19P with PID 13900 (C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes started by Beehyv in C:\Users\Beehyv\Desktop\PSMRI\FLW-API)
+2023-07-12 13:43:13,269 DEBUG com.iemr.flw.FlwApplication [restartedMain] Running with Spring Boot v1.5.8.RELEASE, Spring v4.3.12.RELEASE
+2023-07-12 13:43:13,269 INFO com.iemr.flw.FlwApplication [restartedMain] No active profile set, falling back to default profiles: default
+2023-07-12 13:43:13,356 INFO org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext [restartedMain] Refreshing org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@48a1b6de: startup date [Wed Jul 12 13:43:13 IST 2023]; root of context hierarchy
+2023-07-12 13:43:13,557 INFO org.hibernate.validator.internal.util.Version [background-preinit] HV000001: Hibernate Validator 5.3.5.Final
+2023-07-12 13:43:15,048 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 13:43:15,191 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'configProperties' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.config.ConfigProperties]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\config\ConfigProperties.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=configProperties; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 13:43:15,193 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'sessionObject' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.sessionobject.SessionObject]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\sessionobject\SessionObject.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=sessionObject; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 13:43:15,193 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'redisStorage' with a different definition: replacing [Generic bean: class [com.iemr.flw.utils.redis.RedisStorage]; scope=singleton; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in file [C:\Users\Beehyv\Desktop\PSMRI\FLW-API\target\classes\com\iemr\flw\utils\redis\RedisStorage.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=FLWApplBeans; factoryMethodName=redisStorage; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [com/iemr/flw/utils/FLWApplBeans.class]]
+2023-07-12 13:43:15,199 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 13:43:15,495 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-07-12 13:43:15,568 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.EligibleCoupleRegisterRepo.
+2023-07-12 13:43:15,569 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.EligibleCoupleTrackingRepo.
+2023-07-12 13:43:15,569 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.DeliveryOutcomeRepo.
+2023-07-12 13:43:15,570 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.PregnantWomanRegisterRepo.
+2023-07-12 13:43:15,570 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.UserServiceRoleRepo.
+2023-07-12 13:43:15,571 INFO org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport [restartedMain] Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.iemr.flw.repo.ANCVisitRepo.
+2023-07-12 13:43:15,607 INFO org.springframework.beans.factory.support.DefaultListableBeanFactory [restartedMain] Overriding bean definition for bean 'propertySourcesPlaceholderConfigurer' with a different definition: replacing [Root bean: class [org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=propertySourcesPlaceholderConfigurer; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/boot/autoconfigure/context/PropertyPlaceholderAutoConfiguration.class]] with [Root bean: class [org.springframework.boot.autoconfigure.session.RedisSessionConfiguration$SpringBootRedisHttpSessionConfiguration]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=propertySourcesPlaceholderConfigurer; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/boot/autoconfigure/session/RedisSessionConfiguration$SpringBootRedisHttpSessionConfiguration.class]]
+2023-07-12 13:43:15,927 INFO org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] JSR-330 'javax.inject.Inject' annotation found and supported for autowiring
+2023-07-12 13:43:16,121 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [restartedMain] Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration$$EnhancerBySpringCGLIB$$b9c68c71] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2023-07-12 13:43:16,778 INFO org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainer [restartedMain] Tomcat initialized with port(s): 8081 (http)
+2023-07-12 13:43:16,795 INFO org.apache.catalina.core.StandardService [restartedMain] Starting service [Tomcat]
+2023-07-12 13:43:16,796 INFO org.apache.catalina.core.StandardEngine [restartedMain] Starting Servlet Engine: Apache Tomcat/8.5.23
+2023-07-12 13:43:16,993 INFO org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/] [localhost-startStop-1] Initializing Spring embedded WebApplicationContext
+2023-07-12 13:43:16,993 INFO org.springframework.web.context.ContextLoader [localhost-startStop-1] Root WebApplicationContext: initialization completed in 3637 ms
+2023-07-12 13:43:17,592 INFO org.springframework.boot.web.servlet.ServletRegistrationBean [localhost-startStop-1] Mapping servlet: 'dispatcherServlet' to [/]
+2023-07-12 13:43:17,597 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'characterEncodingFilter' to: [/*]
+2023-07-12 13:43:17,598 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'springSessionRepositoryFilter' to: [/*]
+2023-07-12 13:43:17,598 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'hiddenHttpMethodFilter' to: [/*]
+2023-07-12 13:43:17,598 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'httpPutFormContentFilter' to: [/*]
+2023-07-12 13:43:17,598 INFO org.springframework.boot.web.servlet.FilterRegistrationBean [localhost-startStop-1] Mapping filter: 'requestContextFilter' to: [/*]
+2023-07-12 13:43:18,956 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [restartedMain] Building JPA container EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 13:43:18,967 INFO org.hibernate.jpa.internal.util.LogHelper [restartedMain] HHH000204: Processing PersistenceUnitInfo [
+	name: db_identity
+	...]
+2023-07-12 13:43:19,028 INFO org.hibernate.Version [restartedMain] HHH000412: Hibernate Core {5.0.12.Final}
+2023-07-12 13:43:19,029 INFO org.hibernate.cfg.Environment [restartedMain] HHH000206: hibernate.properties not found
+2023-07-12 13:43:19,030 INFO org.hibernate.cfg.Environment [restartedMain] HHH000021: Bytecode provider name : javassist
+2023-07-12 13:43:19,072 INFO org.hibernate.annotations.common.Version [restartedMain] HCANN000001: Hibernate Commons Annotations {5.0.1.Final}
+2023-07-12 13:43:19,199 INFO org.hibernate.dialect.Dialect [restartedMain] HHH000400: Using dialect: org.hibernate.dialect.MySQL5Dialect
+2023-07-12 13:43:19,677 INFO org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean [restartedMain] Initialized JPA EntityManagerFactory for persistence unit 'db_identity'
+2023-07-12 13:43:20,090 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [restartedMain] HHH000397: Using ASTQueryTranslatorFactory
+2023-07-12 13:43:20,438 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Boolean com.iemr.flw.utils.config.ConfigProperties.extendExpiryTime
+2023-07-12 13:43:20,438 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Integer com.iemr.flw.utils.config.ConfigProperties.sessionExpiryTime
+2023-07-12 13:43:20,438 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.String com.iemr.flw.utils.config.ConfigProperties.redisurl
+2023-07-12 13:43:20,438 WARN org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor [restartedMain] Autowired annotation is not supported on static fields: private static java.lang.Integer com.iemr.flw.utils.config.ConfigProperties.redisport
+2023-07-12 13:43:21,038 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleRegister],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.getEligibleCouple(java.lang.Long,java.lang.String)
+2023-07-12 13:43:21,040 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.saveEligibleCouple(java.util.List<com.iemr.flw.dto.EligibleCoupleDTO>,java.lang.String)
+2023-07-12 13:43:21,041 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleTrackingRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.saveEligibleCoupleTracking(java.util.List<com.iemr.flw.dto.EligibleCoupleTrackingDTO>,java.lang.String)
+2023-07-12 13:43:21,041 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/couple/eligibleCoupleTrackingRegister],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.CoupleController.getEligibleCoupleTracking(java.lang.Long,java.lang.String)
+2023-07-12 13:43:21,042 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/pregnantWoman],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.getPregnantWoman(java.lang.Long,java.lang.String)
+2023-07-12 13:43:21,043 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/pregnantWomanRegister],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.savePregnantWomanRegistrations(java.util.List<com.iemr.flw.dto.PregnantWomanDTO>,java.lang.String)
+2023-07-12 13:43:21,043 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/getANCVisitsForPW],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.getANCVisitDetails(java.lang.Long,java.lang.String)
+2023-07-12 13:43:21,044 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/maternalCare/saveANCVisit],methods=[POST],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.PregnantWomanController.saveANCVisit(java.util.List<com.iemr.flw.dto.ANCVisitDTO>,java.lang.String)
+2023-07-12 13:43:21,044 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/user/getUserRole],methods=[GET],headers=[Authorization]}" onto public org.springframework.http.ResponseEntity<?> com.iemr.flw.controller.UserController.getEligibleCouple(java.lang.Integer,java.lang.Integer,java.lang.String)
+2023-07-12 13:43:21,047 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources/configuration/security]}" onto public org.springframework.http.ResponseEntity<springfox.documentation.swagger.web.SecurityConfiguration> springfox.documentation.swagger.web.ApiResourceController.securityConfiguration()
+2023-07-12 13:43:21,048 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources/configuration/ui]}" onto public org.springframework.http.ResponseEntity<springfox.documentation.swagger.web.UiConfiguration> springfox.documentation.swagger.web.ApiResourceController.uiConfiguration()
+2023-07-12 13:43:21,049 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/swagger-resources]}" onto public org.springframework.http.ResponseEntity<java.util.List<springfox.documentation.swagger.web.SwaggerResource>> springfox.documentation.swagger.web.ApiResourceController.swaggerResources()
+2023-07-12 13:43:21,051 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/error]}" onto public org.springframework.http.ResponseEntity<java.util.Map<java.lang.String, java.lang.Object>> org.springframework.boot.autoconfigure.web.BasicErrorController.error(javax.servlet.http.HttpServletRequest)
+2023-07-12 13:43:21,052 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping [restartedMain] Mapped "{[/error],produces=[text/html]}" onto public org.springframework.web.servlet.ModelAndView org.springframework.boot.autoconfigure.web.BasicErrorController.errorHtml(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)
+2023-07-12 13:43:21,299 INFO springfox.documentation.spring.web.PropertySourcedRequestMappingHandlerMapping [restartedMain] Mapped URL path [/v2/api-docs] onto method [public org.springframework.http.ResponseEntity<springfox.documentation.spring.web.json.Json> springfox.documentation.swagger2.web.Swagger2Controller.getDocumentation(java.lang.String,javax.servlet.http.HttpServletRequest)]
+2023-07-12 13:43:21,599 INFO org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter [restartedMain] Looking for @ControllerAdvice: org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext@48a1b6de: startup date [Wed Jul 12 13:43:13 IST 2023]; root of context hierarchy
+2023-07-12 13:43:21,674 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/webjars/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 13:43:21,674 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 13:43:21,731 INFO org.springframework.web.servlet.handler.SimpleUrlHandlerMapping [restartedMain] Mapped URL path [/**/favicon.ico] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2023-07-12 13:43:22,402 INFO org.springframework.boot.devtools.autoconfigure.OptionalLiveReloadServer [restartedMain] LiveReload server is running on port 35729
+2023-07-12 13:43:22,593 INFO org.springframework.jmx.export.annotation.AnnotationMBeanExporter [restartedMain] Registering beans for JMX exposure on startup
+2023-07-12 13:43:22,602 INFO org.springframework.context.support.DefaultLifecycleProcessor [restartedMain] Starting beans in phase 2147483647
+2023-07-12 13:43:22,602 INFO springfox.documentation.spring.web.plugins.DocumentationPluginsBootstrapper [restartedMain] Context refreshed
+2023-07-12 13:43:22,621 INFO springfox.documentation.spring.web.plugins.DocumentationPluginsBootstrapper [restartedMain] Found 1 custom documentation plugin(s)
+2023-07-12 13:43:22,655 INFO springfox.documentation.spring.web.scanners.ApiListingReferenceScanner [restartedMain] Scanning for api listing references
+2023-07-12 13:43:22,881 INFO springfox.documentation.spring.web.readers.operation.CachingOperationNameGenerator [restartedMain] Generating unique operation named: getEligibleCoupleUsingGET_1
+2023-07-12 13:43:22,925 INFO org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor [restartedMain] No TaskScheduler/ScheduledExecutorService bean found for scheduled processing
+2023-07-12 13:43:22,941 INFO org.apache.coyote.http11.Http11NioProtocol [restartedMain] Initializing ProtocolHandler ["http-nio-8081"]
+2023-07-12 13:43:22,956 INFO org.apache.coyote.http11.Http11NioProtocol [restartedMain] Starting ProtocolHandler ["http-nio-8081"]
+2023-07-12 13:43:22,957 INFO org.apache.tomcat.util.net.NioSelectorPool [restartedMain] Using a shared selector for servlet write/read
+2023-07-12 13:43:22,975 INFO org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainer [restartedMain] Tomcat started on port(s): 8081 (http)
+2023-07-12 13:43:22,982 INFO com.iemr.flw.FlwApplication [restartedMain] Started FlwApplication in 10.101 seconds (JVM running for 22.667)
+2023-07-12 13:43:38,626 INFO org.apache.catalina.core.ContainerBase.[Tomcat].[localhost].[/] [http-nio-8081-exec-1] Initializing Spring FrameworkServlet 'dispatcherServlet'
+2023-07-12 13:43:38,626 INFO org.springframework.web.servlet.DispatcherServlet [http-nio-8081-exec-1] FrameworkServlet 'dispatcherServlet': initialization started
+2023-07-12 13:43:38,652 INFO org.springframework.web.servlet.DispatcherServlet [http-nio-8081-exec-1] FrameworkServlet 'dispatcherServlet': initialization completed in 26 ms
+2023-07-12 13:43:38,690 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-1] calling getUserRole for userId: 1260
+2023-07-12 13:43:56,269 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-4] calling getUserRole for userId: 1260
+2023-07-12 13:45:38,159 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-6] calling getUserRole for userId: 1260
+2023-07-12 13:46:21,967 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-8] calling getUserRole for userId: 1260
+2023-07-12 13:48:18,007 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-10] calling getUserRole for userId: 1260
+2023-07-12 13:48:50,878 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-1] calling getUserRole for userId: 1019
+2023-07-12 13:50:36,858 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-3] calling getUserRole for userId: 1260
+2023-07-12 14:58:04,534 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-6] calling getUserRole for userId: 1260
+2023-07-12 14:59:39,630 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-8] calling getUserRole for userId: 1260
+2023-07-12 15:00:21,787 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-10] calling getUserRole for userId: 1260
+2023-07-12 15:02:49,734 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-1] calling getUserRole for userId: 1260
+2023-07-12 15:05:40,239 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-3] calling getUserRole for userId: 1260
+2023-07-12 15:18:22,146 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-6] calling getUserRole for userId: 1260
+2023-07-12 15:18:47,506 INFO com.iemr.flw.service.impl.UserServiceImpl [http-nio-8081-exec-7] calling getUserRole for userId: 1262
