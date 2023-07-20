@@ -1,6 +1,7 @@
 package com.iemr.flw.dto;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 public class UserServiceRoleDTO {
@@ -36,5 +37,9 @@ public class UserServiceRoleDTO {
         this.blockName = blockName;
         this.villageId = villageId;
         this.villageName = villageName;
+    }
+
+    public UserServiceRoleDTO() {
+
     }
 }

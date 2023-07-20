@@ -1,6 +1,5 @@
 package com.iemr.flw.controller;
 
-import com.iemr.flw.domain.UserServiceRole;
 import com.iemr.flw.dto.UserServiceRoleDTO;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.ApiResponse;
