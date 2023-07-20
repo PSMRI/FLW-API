@@ -10,14 +10,14 @@ public class GetBenRequestHandler {
 	private Integer userId;
 	private String userName;
 
-	private Integer AshaId;
+	private Integer ashaId;
 
 	public Integer getAshaId() {
-		return AshaId;
+		return ashaId;
 	}
 
 	public void setAshaId(Integer ashaId) {
-		AshaId = ashaId;
+		this.ashaId = ashaId;
 	}
 
 	public String getUserName() {

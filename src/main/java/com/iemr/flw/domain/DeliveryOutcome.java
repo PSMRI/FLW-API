@@ -8,7 +8,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Data
-@Table(name = "t_delivery_outcome")
+@Table(name = "t_delivery_outcome", schema = "db_iemr")
 public class DeliveryOutcome {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

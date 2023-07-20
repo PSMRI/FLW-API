@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "t_eligible_couple_register")
+@Table(name = "t_eligible_couple_register", schema = "db_iemr")
 @Data
 public class EligibleCoupleRegister {
 
