@@ -1,7 +1,8 @@
 package com.iemr.flw.controller;
 
-import com.iemr.flw.dto.ANCVisitDTO;
-import com.iemr.flw.dto.PregnantWomanDTO;
+import com.iemr.flw.dto.*;
+import com.iemr.flw.service.DeliveryOutcomeService;
+import com.iemr.flw.service.InfantService;
 import com.iemr.flw.service.PregnantWomanService;
 import com.iemr.flw.utils.ApiResponse;
 import io.swagger.annotations.ApiOperation;
@@ -16,12 +17,18 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/maternalCare", headers = "Authorization")
-public class PregnantWomanController {
+public class MaternalHealthController {
 
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
 
     @Autowired
     private PregnantWomanService pregnantWomanService;
+
+    @Autowired
+    private DeliveryOutcomeService deliveryOutcomeService;
+
+    @Autowired
+    private InfantService infantService;
 
     @CrossOrigin()
     @ApiOperation(value = "save pregnant woman registration details", consumes = "application/json", produces = "application/json")
@@ -84,6 +91,70 @@ public class PregnantWomanController {
             logger.error("Error in fetching anc visit details, " + e);
             return new ResponseEntity<>(
                     new ApiResponse(false, "Error in fetching anc visit details, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @CrossOrigin()
+    @ApiOperation(value = "save Delivery Outcome details", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = { "/saveDeliveryOutcome" }, method = { RequestMethod.POST })
+    public ResponseEntity<?> saveDeliveryOutcome(@RequestBody List<DeliveryOutcomeDTO> deliveryOutcomeDTOS,
+                                          @RequestHeader(value = "Authorization") String Authorization) {
+        try {
+            String result = deliveryOutcomeService.registerDeliveryOutcome(deliveryOutcomeDTOS);
+            return new ResponseEntity<>(
+                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+        } catch (Exception e) {
+            logger.error("Error in saving Delivery Outcome details, " + e);
+            return new ResponseEntity<>(
+                    new ApiResponse(false, e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @CrossOrigin()
+    @ApiOperation(value = "get Delivery Outcome details", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = { "/getDeliveryOutcome" }, method = { RequestMethod.GET })
+    public ResponseEntity<?> getDeliveryOutcome(@RequestParam("benId") Long benId,
+                                                @RequestHeader(value = "Authorization") String Authorization) {
+        try {
+            DeliveryOutcomeDTO serviceResponse = deliveryOutcomeService.getDeliveryOutcome(benId);
+            return new ResponseEntity<>(
+                    new ApiResponse(true, null, serviceResponse), HttpStatus.ACCEPTED);
+        } catch (Exception e) {
+            logger.error("Error in fetching Delivery Outcome details, " + e);
+            return new ResponseEntity<>(
+                    new ApiResponse(false, "Error in fetching Delivery Outcome details, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @CrossOrigin()
+    @ApiOperation(value = "save Infant registration details", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = { "/registerInfant" }, method = { RequestMethod.POST })
+    public ResponseEntity<?> saveEligibleCouple(@RequestBody List<InfantRegisterDTO> infantRegisterDTOs,
+                                                @RequestHeader(value = "Authorization") String Authorization) {
+        try {
+            String result = infantService.registerInfant(infantRegisterDTOs);
+            return new ResponseEntity<>(
+                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+        } catch (Exception e) {
+            logger.error("Error in saving infant registration details, " + e);
+            return new ResponseEntity<>(
+                    new ApiResponse(false, e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @CrossOrigin()
+    @ApiOperation(value = "get infant registration details", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = { "/infantDetails" }, method = { RequestMethod.GET })
+    public ResponseEntity<?> getEligibleCouple(@RequestParam(value = "benId") Long benId,
+                                               @RequestHeader(value = "Authorization") String Authorization) {
+        try {
+            InfantRegisterDTO result = infantService.getInfantDetails(benId);
+            return new ResponseEntity<>(
+                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+        } catch (Exception e) {
+            logger.error("Error in fetching infant registration details, " + e);
+            return new ResponseEntity<>(
+                    new ApiResponse(false, "Error in fetching infant registration details, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

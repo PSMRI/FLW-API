@@ -27,12 +27,14 @@ import com.google.gson.JsonParser;
 import com.iemr.flw.utils.config.ConfigProperties;
 import com.iemr.flw.utils.redis.RedisSessionException;
 import com.iemr.flw.utils.redis.RedisStorage;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class SessionObject {
 	private RedisStorage objectStore;
 
+	@Autowired
 	public void setObjectStore(RedisStorage objectStore) {
 		this.objectStore = objectStore;
 	}

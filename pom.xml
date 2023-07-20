@@ -207,18 +207,24 @@
             <artifactId>jersey-media-multipart</artifactId>
             <version>2.0-m11</version>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>RELEASE</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <profiles>
         <profile>
-            <id>1097_identity</id>
+            <id>1097_flw</id>
             <properties>
-                <final-name>1097identityapi-v1.0</final-name>
+                <final-name>1097flwapi-v1.0</final-name>
                 <target-properties>target/classes/application.properties</target-properties>
                 <source-properties>src/main/environment/1097_${environment}.properties</source-properties>
             </properties>
             <build>
-                <finalName>1097identityapi-v1.0</finalName>
+                <finalName>1097flwapi-v1.0</finalName>
             </build>
         </profile>
     </profiles>
@@ -226,7 +232,7 @@
 
 
     <build>
-        <finalName>identity-0.0.1</finalName>
+        <finalName>flw-0.0.1</finalName>
         <plugins>
 
             <plugin>

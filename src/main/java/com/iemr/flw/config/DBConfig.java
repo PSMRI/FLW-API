@@ -22,6 +22,7 @@
 package com.iemr.flw.config;
 
 import com.iemr.flw.utils.CryptoUtil;
+import com.iemr.flw.utils.config.ConfigProperties;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.slf4j.Logger;
@@ -72,9 +73,6 @@ public class DBConfig {
 
 //		datasource.setUsername(cryptoUtil.decrypt(ConfigProperties.getPropertyByName("encDbUserName")));
 //		datasource.setPassword(cryptoUtil.decrypt(ConfigProperties.getPropertyByName("encDbPass")));
-
-//		datasource.setUsername("beehyv");
-//		datasource.setPassword("beehyv@2022$");
 
 		return datasource;
 	}
