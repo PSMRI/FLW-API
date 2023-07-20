@@ -348,11 +348,11 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             resultMap.put("ashaId", userID);
                     }
                     // get HealthID of ben
-                    if (m.getBenRegId() != null) {
-                        List<String> healthID = fetchHealthIdByBenRegID(m.getBenRegId().longValue(), authorisation);
-                        if (healthID != null)
-                            resultMap.put("HealthID", healthID);
-                    }
+//                    if (m.getBenRegId() != null) {
+//                        List<String> healthID = fetchHealthIdByBenRegID(m.getBenRegId().longValue(), authorisation);
+//                        if (healthID != null)
+//                            resultMap.put("HealthID", healthID);
+//                    }
 
                     resultList.add(resultMap);
 

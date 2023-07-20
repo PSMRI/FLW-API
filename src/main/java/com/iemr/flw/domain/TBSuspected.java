@@ -14,6 +14,8 @@ public class TBSuspected {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    private Long userId;
+
     private Long benId;
 
     private Timestamp visitDate;

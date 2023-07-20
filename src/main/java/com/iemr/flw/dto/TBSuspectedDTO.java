@@ -9,6 +9,8 @@ public class TBSuspectedDTO {
 
     private Long id;
 
+    private Long userId;
+
     private Long benId;
 
     private Timestamp visitDate;

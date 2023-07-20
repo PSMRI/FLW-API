@@ -14,6 +14,8 @@ public class TBScreening {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    private Long userId;
+
     private Long benId;
 
     private Timestamp visitDate;
