@@ -21,12 +21,13 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     @Query(nativeQuery = true, value = " SELECT userid FROM db_iemr.m_user WHERE UserName = :userName ")
     Integer getUserIDByUserName(@Param("userName") String userName);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE DATE(t.createdDate) BETWEEN DATE(:fromDate) "
-            + " AND DATE(:toDate) AND t.createdBy = :userName")
+    @Query(value = " SELECT * FROM db_identity.i_beneficiaryaddress WHERE createdDate BETWEEN :fromDate "
+            + " AND :toDate AND createdBy = :userName AND VanID NOT IN (1,2,3,4,5,6,7,8,9) \n#pageable\n", nativeQuery = true)
     Page<RMNCHMBeneficiaryaddress> getBenDataWithinDates(@Param("userName") String userName,
                                                          @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate, Pageable pageable);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE t.createdBy = :userName")
+    @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE t.createdBy = :userName "
+            + " AND t.VanID NOT IN (1,2,3,4,5,6,7,8,9) ")
     Page<RMNCHMBeneficiaryaddress> getBenDataByUser(@Param("userName") String userName, Pageable pageable);
 
     @Query(value = " SELECT t FROM RMNCHMBeneficiarymapping t WHERE t.benAddressId = :addressID")
