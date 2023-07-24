@@ -1,9 +1,9 @@
 package com.iemr.flw.service.impl;
 
-import com.iemr.flw.domain.TBScreening;
-import com.iemr.flw.dto.TBScreeningDTO;
-import com.iemr.flw.dto.TBScreeningRequestDTO;
-import com.iemr.flw.repo.TBScreeningRepo;
+import com.iemr.flw.domain.iemr.TBScreening;
+import com.iemr.flw.dto.iemr.TBScreeningDTO;
+import com.iemr.flw.dto.iemr.TBScreeningRequestDTO;
+import com.iemr.flw.repo.iemr.TBScreeningRepo;
 import com.iemr.flw.service.TBScreeningService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;

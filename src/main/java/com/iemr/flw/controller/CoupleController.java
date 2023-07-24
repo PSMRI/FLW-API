@@ -1,7 +1,7 @@
 package com.iemr.flw.controller;
 
-import com.iemr.flw.dto.EligibleCoupleDTO;
-import com.iemr.flw.dto.EligibleCoupleTrackingDTO;
+import com.iemr.flw.dto.iemr.EligibleCoupleDTO;
+import com.iemr.flw.dto.iemr.EligibleCoupleTrackingDTO;
 import com.iemr.flw.service.CoupleService;
 import com.iemr.flw.utils.ApiResponse;
 import io.swagger.annotations.ApiOperation;

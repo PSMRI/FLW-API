@@ -1,12 +1,8 @@
 package com.iemr.flw.controller;
 
-import com.iemr.flw.domain.TBScreening;
-import com.iemr.flw.dto.TBScreeningDTO;
-import com.iemr.flw.dto.TBScreeningRequestDTO;
-import com.iemr.flw.dto.UserServiceRoleDTO;
+import com.iemr.flw.dto.iemr.TBScreeningDTO;
+import com.iemr.flw.dto.iemr.TBScreeningRequestDTO;
 import com.iemr.flw.service.TBScreeningService;
-import com.iemr.flw.service.TBSuspectedService;
-import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.ApiResponse;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;

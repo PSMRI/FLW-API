@@ -1,6 +1,6 @@
 package com.iemr.flw.service;
 
-import com.iemr.flw.dto.InfantRegisterDTO;
+import com.iemr.flw.dto.iemr.InfantRegisterDTO;
 
 import java.util.List;
 

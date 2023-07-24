@@ -1,9 +1,9 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.flw.domain.DeliveryOutcome;
-import com.iemr.flw.dto.DeliveryOutcomeDTO;
-import com.iemr.flw.repo.DeliveryOutcomeRepo;
+import com.iemr.flw.domain.iemr.DeliveryOutcome;
+import com.iemr.flw.dto.iemr.DeliveryOutcomeDTO;
+import com.iemr.flw.repo.iemr.DeliveryOutcomeRepo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

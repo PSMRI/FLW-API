@@ -1,7 +1,7 @@
 package com.iemr.flw.controller;
 
-import com.iemr.flw.dto.EligibleCoupleDTO;
-import com.iemr.flw.dto.EligibleCoupleTrackingDTO;
+import com.iemr.flw.dto.iemr.EligibleCoupleDTO;
+import com.iemr.flw.dto.iemr.EligibleCoupleTrackingDTO;
 import com.iemr.flw.service.CoupleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

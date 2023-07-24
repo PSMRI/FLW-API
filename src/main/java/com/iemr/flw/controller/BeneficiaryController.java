@@ -1,6 +1,6 @@
 package com.iemr.flw.controller;
 
-import com.iemr.flw.dto.GetBenRequestHandler;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.service.BeneficiaryService;
 import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.annotations.ApiOperation;

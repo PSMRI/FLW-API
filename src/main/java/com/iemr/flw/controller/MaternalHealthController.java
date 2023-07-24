@@ -1,6 +1,9 @@
 package com.iemr.flw.controller;
 
-import com.iemr.flw.dto.*;
+import com.iemr.flw.dto.iemr.ANCVisitDTO;
+import com.iemr.flw.dto.iemr.DeliveryOutcomeDTO;
+import com.iemr.flw.dto.iemr.InfantRegisterDTO;
+import com.iemr.flw.dto.iemr.PregnantWomanDTO;
 import com.iemr.flw.service.DeliveryOutcomeService;
 import com.iemr.flw.service.InfantService;
 import com.iemr.flw.service.PregnantWomanService;
@@ -56,9 +59,9 @@ public class MaternalHealthController {
             return new ResponseEntity<>(
                     new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
         } catch (Exception e) {
-            logger.error("Error in saving pregnant woman registration details, " + e);
+            logger.error("Error in fetching pregnant woman registration details, " + e);
             return new ResponseEntity<>(
-                    new ApiResponse(false, "Error in saving pregnant woman registration details, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+                    new ApiResponse(false, "Error in fetching pregnant woman registration details, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

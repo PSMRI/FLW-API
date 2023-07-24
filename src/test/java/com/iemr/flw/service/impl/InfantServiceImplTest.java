@@ -1,9 +1,9 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.flw.domain.InfantRegister;
-import com.iemr.flw.dto.InfantRegisterDTO;
-import com.iemr.flw.repo.InfantRegisterRepo;
+import com.iemr.flw.domain.iemr.InfantRegister;
+import com.iemr.flw.dto.iemr.InfantRegisterDTO;
+import com.iemr.flw.repo.iemr.InfantRegisterRepo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

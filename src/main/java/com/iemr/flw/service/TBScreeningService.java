@@ -1,7 +1,7 @@
 package com.iemr.flw.service;
 
-import com.iemr.flw.dto.TBScreeningDTO;
-import com.iemr.flw.dto.TBScreeningRequestDTO;
+import com.iemr.flw.dto.iemr.TBScreeningDTO;
+import com.iemr.flw.dto.iemr.TBScreeningRequestDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

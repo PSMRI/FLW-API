@@ -1,6 +1,6 @@
 package com.iemr.flw.controller;
 
-import com.iemr.flw.dto.UserServiceRoleDTO;
+import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.ApiResponse;
 import io.swagger.annotations.ApiOperation;

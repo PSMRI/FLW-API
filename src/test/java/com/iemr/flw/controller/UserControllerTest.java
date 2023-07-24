@@ -1,6 +1,6 @@
 package com.iemr.flw.controller;
 
-import com.iemr.flw.dto.UserServiceRoleDTO;
+import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
 import com.iemr.flw.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

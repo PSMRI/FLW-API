@@ -1,6 +1,6 @@
 package com.iemr.flw.service;
 
-import com.iemr.flw.dto.GetBenRequestHandler;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 
 public interface BeneficiaryService {
 

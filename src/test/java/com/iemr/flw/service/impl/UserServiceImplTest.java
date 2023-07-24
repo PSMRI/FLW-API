@@ -1,7 +1,7 @@
 package com.iemr.flw.service.impl;
 
-import com.iemr.flw.dto.UserServiceRoleDTO;
-import com.iemr.flw.repo.UserServiceRoleRepo;
+import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
+import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

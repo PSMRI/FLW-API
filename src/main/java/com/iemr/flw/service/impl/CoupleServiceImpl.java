@@ -1,12 +1,12 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.flw.domain.EligibleCoupleRegister;
-import com.iemr.flw.domain.EligibleCoupleTracking;
-import com.iemr.flw.dto.EligibleCoupleDTO;
-import com.iemr.flw.dto.EligibleCoupleTrackingDTO;
-import com.iemr.flw.repo.EligibleCoupleRegisterRepo;
-import com.iemr.flw.repo.EligibleCoupleTrackingRepo;
+import com.iemr.flw.domain.iemr.EligibleCoupleRegister;
+import com.iemr.flw.domain.iemr.EligibleCoupleTracking;
+import com.iemr.flw.dto.iemr.EligibleCoupleDTO;
+import com.iemr.flw.dto.iemr.EligibleCoupleTrackingDTO;
+import com.iemr.flw.repo.iemr.EligibleCoupleRegisterRepo;
+import com.iemr.flw.repo.iemr.EligibleCoupleTrackingRepo;
 import com.iemr.flw.service.CoupleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
