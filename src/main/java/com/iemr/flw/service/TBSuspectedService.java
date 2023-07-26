@@ -12,5 +12,5 @@ public interface TBSuspectedService {
 
     String save(TBSuspectedRequestDTO tbScreeningList) throws Exception;
 
-    TBSuspectedRequestDTO getByUserId(GetBenRequestHandler userId);
+    String getByUserId(GetBenRequestHandler userId);
 }

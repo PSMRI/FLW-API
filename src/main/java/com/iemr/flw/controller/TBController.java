@@ -5,14 +5,14 @@ import com.iemr.flw.dto.iemr.TBScreeningRequestDTO;
 import com.iemr.flw.dto.iemr.TBSuspectedRequestDTO;
 import com.iemr.flw.service.TBScreeningService;
 import com.iemr.flw.service.TBSuspectedService;
-import com.iemr.flw.utils.ApiResponse;
+import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.sql.Timestamp;
 
 @RestController
 @RequestMapping(value = "/tb", headers = "Authorization")
@@ -29,64 +29,101 @@ public class TBController {
     @CrossOrigin()
     @ApiOperation(value = "get tb screening data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
     @RequestMapping(value = { "/screening/getAll" }, method = { RequestMethod.POST })
-    public ResponseEntity<?> getAllScreeningByUserId(@RequestBody GetBenRequestHandler request,
+    public String getAllScreeningByUserId(@RequestBody GetBenRequestHandler requestDTO,
                                                @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
         try {
-            TBScreeningRequestDTO result = tbScreeningService.getByUserId(request);
-            return new ResponseEntity<>(
-                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                String s = tbScreeningService.getByUserId(requestDTO);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in fetching tb screening details by user, " + e);
-            return new ResponseEntity<>(
-                    new ApiResponse(false, "Error in fetching tb screening details by user, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Error in tb screening get data : " + e);
+            response.setError(5000, "Error in tb screening get data : " + e);
         }
+        return response.toString();
     }
 
 
     @CrossOrigin()
     @ApiOperation(value = "save tb screening data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
     @RequestMapping(value = { "/screening/saveAll" }, method = { RequestMethod.POST })
-    public ResponseEntity<?> saveAllScreeningByUserId(@RequestBody TBScreeningRequestDTO requestDTO,
+    public String saveAllScreeningByUserId(@RequestBody TBScreeningRequestDTO requestDTO,
                                                       @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
         try {
-            String result = tbScreeningService.save(requestDTO);
-            return new ResponseEntity<>(
-                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                String s = tbScreeningService.save(requestDTO);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in saving tb screening details by user, " + e);
-            return new ResponseEntity<>(
-                    new ApiResponse(false, "Error in saving tb screening details by user, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Error in save tb screening details : " + e);
+            response.setError(5000, "Error in save tb suspected details : " + e);
         }
+        return response.toString();
     }
     @CrossOrigin()
     @ApiOperation(value = "get tb suspected data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
     @RequestMapping(value = { "/suspected/getAll" }, method = { RequestMethod.POST })
-    public ResponseEntity<?> getAllSuspectedByUserId(@RequestBody GetBenRequestHandler request,
+    public String getAllSuspectedByUserId(@RequestBody GetBenRequestHandler requestDTO,
                                             @RequestHeader(value = "Authorization") String Authorization) {
+
+        OutputResponse response = new OutputResponse();
         try {
-            TBSuspectedRequestDTO result = tbSuspectedService.getByUserId(request);
-            return new ResponseEntity<>(
-                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                String s = tbSuspectedService.getByUserId(requestDTO);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in fetching tb suspected details by user, " + e);
-            return new ResponseEntity<>(
-                    new ApiResponse(false, "Error in fetching tb suspected details by user, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Error in get data : " + e);
+            response.setError(5000, "Error in get data : " + e);
         }
+        return response.toString();
     }
 
     @CrossOrigin()
     @ApiOperation(value = "save tb suspected data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
     @RequestMapping(value = { "/suspected/saveAll" }, method = { RequestMethod.POST })
-    public ResponseEntity<?> saveAllSuspectedByUserId(@RequestBody TBSuspectedRequestDTO requestDTO,
+    public String saveAllSuspectedByUserId(@RequestBody TBSuspectedRequestDTO requestDTO,
                                                       @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
         try {
-            String result = tbSuspectedService.save(requestDTO);
-            return new ResponseEntity<>(
-                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                String s = tbSuspectedService.save(requestDTO);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in saving tb suspected details by user, " + e);
-            return new ResponseEntity<>(
-                    new ApiResponse(false, "Error in saving tb suspected details by user, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Error in save tb suspected details : " + e);
+            response.setError(5000, "Error in save tb suspected details : " + e);
         }
+        return response.toString();
     }
 }

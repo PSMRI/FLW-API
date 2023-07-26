@@ -1,5 +1,6 @@
 package com.iemr.flw.service.impl;
 
+import com.google.gson.Gson;
 import com.iemr.flw.domain.iemr.TBScreening;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.TBScreeningDTO;
@@ -50,18 +51,18 @@ public class TBScreeningServiceImpl implements TBScreeningService {
             tbScreening.setUserId(requestDTO.getUserId());
             tbScreeningRepo.save(tbScreening);
         });
-        return null;
+        return "no of tb screening items saved: " + requestDTO.getTbScreeningList().size();
     }
 
     @Override
-    public TBScreeningRequestDTO getByUserId(GetBenRequestHandler request) {
+    public String getByUserId(GetBenRequestHandler request) {
         List<TBScreeningDTO> dtos = new ArrayList<>();
         List<TBScreening> tbScreeningList = tbScreeningRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
         tbScreeningList.forEach(tbScreening -> dtos.add(modelMapper.map(tbScreening, TBScreeningDTO.class)));
         TBScreeningRequestDTO tbScreeningRequestDTO = new TBScreeningRequestDTO();
         tbScreeningRequestDTO.setTbScreeningList(dtos);
         tbScreeningRequestDTO.setUserId(request.getAshaId());
-        return tbScreeningRequestDTO;
+        return (new Gson()).toJson(tbScreeningRequestDTO);
     }
 
 }

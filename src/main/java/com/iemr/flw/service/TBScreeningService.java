@@ -11,5 +11,5 @@ public interface TBScreeningService {
 
     String save(TBScreeningRequestDTO tbScreeningList) throws Exception;
 
-    TBScreeningRequestDTO getByUserId(GetBenRequestHandler userId);
+    String getByUserId(GetBenRequestHandler userId);
 }

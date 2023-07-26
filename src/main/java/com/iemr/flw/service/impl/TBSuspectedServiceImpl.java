@@ -1,5 +1,6 @@
 package com.iemr.flw.service.impl;
 
+import com.google.gson.Gson;
 import com.iemr.flw.domain.iemr.TBSuspected;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.TBSuspectedDTO;
@@ -50,18 +51,18 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
             tbSuspected.setUserId(requestDTO.getUserId());
             tbSuspectedRepo.save(tbSuspected);
         });
-        return null;
+        return "no of tb suspected items saved:" + requestDTO.getTbSuspectedList().size();
     }
 
     @Override
-    public TBSuspectedRequestDTO getByUserId(GetBenRequestHandler request) {
+    public String getByUserId(GetBenRequestHandler request) {
         List<TBSuspectedDTO> dtos = new ArrayList<>();
         List<TBSuspected> tbSuspectedList = tbSuspectedRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
         tbSuspectedList.forEach(tbSuspected -> dtos.add(modelMapper.map(tbSuspected, TBSuspectedDTO.class)));
         TBSuspectedRequestDTO tbSuspectedRequestDTO = new TBSuspectedRequestDTO();
         tbSuspectedRequestDTO.setTbSuspectedList(dtos);
         tbSuspectedRequestDTO.setUserId(request.getAshaId());
-        return tbSuspectedRequestDTO;
+        return (new Gson()).toJson(tbSuspectedRequestDTO);
     }
 
 }
