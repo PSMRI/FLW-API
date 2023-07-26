@@ -1,6 +1,7 @@
 package com.iemr.flw.service.impl;
 
 import com.iemr.flw.domain.iemr.TBScreening;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.TBScreeningDTO;
 import com.iemr.flw.dto.iemr.TBScreeningRequestDTO;
 import com.iemr.flw.repo.iemr.TBScreeningRepo;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -30,18 +32,36 @@ public class TBScreeningServiceImpl implements TBScreeningService {
 
     @Override
     public String save(TBScreeningRequestDTO requestDTO) throws Exception {
-        requestDTO.getTbScreeningList().forEach(tbScreeningDTO -> {
-            tbScreeningRepo.getByBenId(tbScreeningDTO.getBenId());
+        requestDTO.getTbScreeningList().forEach(tbScreeningDTO ->
+        {
+            TBScreening tbScreening =
+                    tbScreeningRepo.getByUserIdAndBenId(tbScreeningDTO.getBenId(), requestDTO.getUserId());
+
+            if (tbScreening == null) {
+                tbScreening = new TBScreening();
+                modelMapper.map(tbScreeningDTO, tbScreening);
+                tbScreening.setId(null);
+            } else {
+                Long id = tbScreening.getId();
+                modelMapper.map(tbScreeningDTO, tbScreening);
+                tbScreening.setId(id);
+            }
+
+            tbScreening.setUserId(requestDTO.getUserId());
+            tbScreeningRepo.save(tbScreening);
         });
-//        tbScreeningRepo.save(tbScreeningList);
         return null;
     }
 
     @Override
-    public List<TBScreeningDTO> getByUserId(Integer userId) {
-        List<TBScreening> tbScreeningList =  tbScreeningRepo.getByUserId(userId);
-//        tbScreeningList.ma
-        return null;
+    public TBScreeningRequestDTO getByUserId(GetBenRequestHandler request) {
+        List<TBScreeningDTO> dtos = new ArrayList<>();
+        List<TBScreening> tbScreeningList = tbScreeningRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
+        tbScreeningList.forEach(tbScreening -> dtos.add(modelMapper.map(tbScreening, TBScreeningDTO.class)));
+        TBScreeningRequestDTO tbScreeningRequestDTO = new TBScreeningRequestDTO();
+        tbScreeningRequestDTO.setTbScreeningList(dtos);
+        tbScreeningRequestDTO.setUserId(request.getAshaId());
+        return tbScreeningRequestDTO;
     }
 
 }

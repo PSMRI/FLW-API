@@ -348,11 +348,9 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             resultMap.put("ashaId", userID);
                     }
                     // get HealthID of ben
-//                    if (m.getBenRegId() != null) {
-//                        List<String> healthID = fetchHealthIdByBenRegID(m.getBenRegId().longValue(), authorisation);
-//                        if (healthID != null)
-//                            resultMap.put("HealthID", healthID);
-//                    }
+                    if (m.getBenRegId() != null) {
+                        fetchHealthIdByBenRegID(m.getBenRegId().longValue(), authorisation, resultMap);
+                    }
 
                     resultList.add(resultMap);
 
@@ -371,7 +369,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         return new Gson().toJson(response);
     }
 
-    public List<String> fetchHealthIdByBenRegID(Long benRegID, String authorization) {
+    public void fetchHealthIdByBenRegID(Long benRegID, String authorization, Map<String, Object> resultMap) {
         Map<String, Long> requestMap = new HashMap<String, Long>();
         requestMap.put("beneficiaryRegID", benRegID);
         requestMap.put("beneficiaryID", null);
@@ -393,17 +391,19 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         BenHealthIDDetails[].class);
                 for (BenHealthIDDetails value : ben) {
                     if (value.getHealthId() != null)
-                        result.add(value.getHealthId());
+                        resultMap.put("healthId",value.getHealthId());
+                    if (value.getHealthIdNumber() != null)
+                        resultMap.put("healthIdNumber",value.getHealthIdNumber());
                 }
 
             }
 
         } catch (Exception e) {
             logger.info("Error while fetching ABHA" + e.getMessage());
-            return null;
+//			return null;
         }
 
-        return result;
+//		return result;
 
     }
 }
