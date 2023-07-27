@@ -44,4 +44,8 @@ public class PregnantWomanDTO {
     private String hadPregCompilation;
 
     private String pregCompilation;
+
+    private Timestamp createdDate;
+
+    private String createdBy;
 }

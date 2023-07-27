@@ -3,6 +3,7 @@ package com.iemr.flw.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.ANCVisit;
 import com.iemr.flw.domain.iemr.PregnantWomanRegister;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.ANCVisitDTO;
 import com.iemr.flw.dto.iemr.PregnantWomanDTO;
 import com.iemr.flw.repo.iemr.ANCVisitRepo;
@@ -13,11 +14,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class PregnantWomanServiceImplTest {
@@ -31,72 +33,88 @@ class PregnantWomanServiceImplTest {
     @InjectMocks
     private PregnantWomanServiceImpl pregnantWomanService;
 
-    private ObjectMapper objectMapper;
+    private ObjectMapper mapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
-        objectMapper = new ObjectMapper();
     }
 
     @Test
-    void registerPregnantWoman_ValidInput_ReturnsSuccessMessage() {
+    void testRegisterPregnantWoman_Success() {
+        // Arrange
         List<PregnantWomanDTO> pregnantWomanDTOs = new ArrayList<>();
-        // Add test data to pregnantWomanDTOs
-
-        // Mock the repository save method
-        when(pregnantWomanRegisterRepo.save(anyListOf(PregnantWomanRegister.class))).thenReturn(new ArrayList<>());
+        pregnantWomanDTOs.add(new PregnantWomanDTO());
 
         // Act
         String result = pregnantWomanService.registerPregnantWoman(pregnantWomanDTOs);
 
         // Assert
+        assertNotNull(result);
         assertEquals("saved successfully", result);
+
+        verify(pregnantWomanRegisterRepo, times(1)).save(anyList());
     }
 
     @Test
-    void getPregnantWoman_ValidBenId_ReturnsPregnantWomanDTO() {
-        Long benId = 1L;
-        PregnantWomanRegister pregnantWomanRegister = new PregnantWomanRegister();
-        // Set up the repository getPWRWithBen method to return pregnantWomanRegister
-        when(pregnantWomanRegisterRepo.getPWRWithBen(benId)).thenReturn(pregnantWomanRegister);
+    void testGetPregnantWoman_Success() {
+        // Arrange
+        GetBenRequestHandler dto = new GetBenRequestHandler();
+        dto.setAshaId(123);
+        dto.setFromDate(new Timestamp((new Date()).getTime()));
+        dto.setToDate(new Timestamp((new Date()).getTime()));
+
+        List<PregnantWomanRegister> pregnantWomanRegisterList = new ArrayList<>();
+        pregnantWomanRegisterList.add(new PregnantWomanRegister());
+
+        when(pregnantWomanRegisterRepo.getPWRWithBen(dto.getAshaId(), dto.getFromDate(), dto.getToDate())).thenReturn(pregnantWomanRegisterList);
 
         // Act
-        PregnantWomanDTO result = pregnantWomanService.getPregnantWoman(benId);
+        List<PregnantWomanDTO> result = pregnantWomanService.getPregnantWoman(dto);
 
         // Assert
-        assertEquals(pregnantWomanRegister, objectMapper.convertValue(result, PregnantWomanRegister.class));
+        assertNotNull(result);
+        assertEquals(pregnantWomanRegisterList.size(), result.size());
+
+        verify(pregnantWomanRegisterRepo, times(1)).getPWRWithBen(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
     }
 
     @Test
-    void getANCVisits_ValidPwrId_ReturnsANCVisitDTOList() {
-        Long pwrId = 1L;
+    void testGetANCVisits_Success() {
+        // Arrange
+        GetBenRequestHandler dto = new GetBenRequestHandler();
+        dto.setAshaId(123);
+        dto.setFromDate(new Timestamp((new Date()).getTime()));
+        dto.setToDate(new Timestamp((new Date()).getTime()));
+
         List<ANCVisit> ancVisits = new ArrayList<>();
-        // Set up the repository getANCForPW method to return ancVisits
-        when(ancVisitRepo.getANCForPW(pwrId)).thenReturn(ancVisits);
+        ancVisits.add(new ANCVisit());
+
+        when(ancVisitRepo.getANCForPW(dto.getAshaId(), dto.getFromDate(), dto.getToDate())).thenReturn(ancVisits);
 
         // Act
-        List<ANCVisitDTO> result = pregnantWomanService.getANCVisits(pwrId);
+        List<ANCVisitDTO> result = pregnantWomanService.getANCVisits(dto);
 
         // Assert
-        assertEquals(ancVisits.stream()
-                .map(anc -> objectMapper.convertValue(anc, ANCVisitDTO.class))
-                .collect(Collectors.toList()), result);
+        assertNotNull(result);
+        assertEquals(ancVisits.size(), result.size());
+
+        verify(ancVisitRepo, times(1)).getANCForPW(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
     }
 
     @Test
-    void saveANCVisit_ValidInput_ReturnsSuccessMessage() {
+    void testSaveANCVisit_Success() {
+        // Arrange
         List<ANCVisitDTO> ancVisitDTOs = new ArrayList<>();
-        // Add test data to ancVisitDTOs
-
-        // Mock the repository save method
-        when(ancVisitRepo.save(anyListOf(ANCVisit.class))).thenReturn(new ArrayList<>());
+        ancVisitDTOs.add(new ANCVisitDTO());
 
         // Act
         String result = pregnantWomanService.saveANCVisit(ancVisitDTOs);
 
         // Assert
+        assertNotNull(result);
         assertEquals("saved successfully", result);
+
+        verify(ancVisitRepo, times(1)).save(anyList());
     }
 }
-

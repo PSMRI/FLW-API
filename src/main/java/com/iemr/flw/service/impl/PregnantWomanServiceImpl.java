@@ -3,6 +3,7 @@ package com.iemr.flw.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.ANCVisit;
 import com.iemr.flw.domain.iemr.PregnantWomanRegister;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.ANCVisitDTO;
 import com.iemr.flw.dto.iemr.PregnantWomanDTO;
 import com.iemr.flw.repo.iemr.ANCVisitRepo;
@@ -51,10 +52,14 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
     }
 
     @Override
-    public PregnantWomanDTO getPregnantWoman(Long benId) {
+    public List<PregnantWomanDTO> getPregnantWoman(GetBenRequestHandler dto) {
         try{
-            PregnantWomanRegister pregnantWomanRegister = pregnantWomanRegisterRepo.getPWRWithBen(benId);
-            return mapper.convertValue(pregnantWomanRegister, PregnantWomanDTO.class);
+            List<PregnantWomanRegister> pregnantWomanRegisterList =
+                    pregnantWomanRegisterRepo.getPWRWithBen(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
+
+            return pregnantWomanRegisterList.stream()
+                    .map(pregnantWomanRegister -> mapper.convertValue(pregnantWomanRegister, PregnantWomanDTO.class))
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -62,9 +67,9 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
     }
 
     @Override
-    public List<ANCVisitDTO> getANCVisits(Long pwrId) {
+    public List<ANCVisitDTO> getANCVisits(GetBenRequestHandler dto) {
         try {
-            List<ANCVisit> ancVisits = ancVisitRepo.getANCForPW(pwrId);
+            List<ANCVisit> ancVisits = ancVisitRepo.getANCForPW(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
             return ancVisits.stream()
                     .map(anc -> mapper.convertValue(anc, ANCVisitDTO.class))
                     .collect(Collectors.toList());

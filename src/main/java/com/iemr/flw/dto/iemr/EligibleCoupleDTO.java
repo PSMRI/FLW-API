@@ -86,4 +86,8 @@ public class EligibleCoupleDTO implements Serializable {
     private String gender9;
 
 //    private Integer eighthAndNinthChildGap;
+
+    private Timestamp createdDate;
+
+    private String createdBy;
 }

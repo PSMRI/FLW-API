@@ -2,6 +2,7 @@ package com.iemr.flw.controller;
 
 import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
 import com.iemr.flw.service.UserService;
+import com.iemr.flw.utils.ApiResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -10,7 +11,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class UserControllerTest {
@@ -27,31 +28,52 @@ class UserControllerTest {
     }
 
     @Test
-    void getUserRole_ValidUserIdAndRoleId_ReturnsAcceptedResponse() {
-        Integer userId = 1;
-        Integer roleId = 1;
-        UserServiceRoleDTO expectedResponse = new UserServiceRoleDTO();
-        // Set up userService.getUserRole to return expectedResponse
-        when(userService.getUserRole(userId, roleId)).thenReturn(expectedResponse);
+    void testGetUserDetail_Success() {
+        // Arrange
+        Integer userId = 123;
+        UserServiceRoleDTO userServiceRoleDTO = new UserServiceRoleDTO();
+        userServiceRoleDTO.setUserId(userId);
+
+        when(userService.getUserDetail(anyInt())).thenReturn(userServiceRoleDTO);
 
         // Act
-        ResponseEntity<?> response = userController.getEligibleCouple(userId, roleId, "Authorization");
+        ResponseEntity<?> responseEntity = userController.getUserDetail(userId, "AuthorizationToken");
 
         // Assert
-        assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
+        assertNotNull(responseEntity);
+        assertEquals(HttpStatus.ACCEPTED, responseEntity.getStatusCode());
+
+        ApiResponse apiResponse = (ApiResponse) responseEntity.getBody();
+        assertNotNull(apiResponse);
+        assertTrue(apiResponse.getSuccess());
+        assertNull(apiResponse.getMessage());
+
+        assertEquals(userServiceRoleDTO, apiResponse.getData());
+
+        verify(userService, times(1)).getUserDetail(userId);
     }
 
     @Test
-    void getUserRole_InvalidUserIdAndRoleId_ReturnsInternalServerErrorResponse() {
-        Integer userId = 999;
-        Integer roleId = 999;
+    void testGetUserDetail_Exception() {
+        // Arrange
+        Integer userId = 123;
 
-        when(userService.getUserRole(userId, roleId)).thenThrow(new RuntimeException("Invalid user or role ID"));
+        when(userService.getUserDetail(anyInt())).thenThrow(new RuntimeException("Test exception"));
 
         // Act
-        ResponseEntity<?> response = userController.getEligibleCouple(userId, roleId, "Authorization");
+        ResponseEntity<?> responseEntity = userController.getUserDetail(userId, "AuthorizationToken");
 
         // Assert
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertNotNull(responseEntity);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
+
+        ApiResponse apiResponse = (ApiResponse) responseEntity.getBody();
+        assertNotNull(apiResponse);
+        assertFalse(apiResponse.getSuccess());
+        assertNotNull(apiResponse.getMessage());
+
+        assertNull(apiResponse.getData());
+
+        verify(userService, times(1)).getUserDetail(userId);
     }
 }

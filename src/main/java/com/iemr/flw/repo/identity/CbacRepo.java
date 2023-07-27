@@ -12,7 +12,8 @@ import java.util.List;
 @Repository
 public interface CbacRepo extends JpaRepository<CbacDetails, Long> {
 
-    List<CbacDetails> getAllByCreatedBy(String userId);
+    @Query(value = "SELECT cbac FROM CbacDetails cbac WHERE cbac.createdBy = :user and cbac.createdDate >= :fromDate and cbac.createdDate <= :toDate")
+    List<CbacDetails> getAllByCreatedBy(@Param("user") String user, @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
     @Query(value = "Select * from db_identity.i_cbacdetails where beneficiaryRegId = :benRegId and DATE(createdDate) = DATE(:createdDate) limit 1", nativeQuery = true)
     CbacDetails findCbacDetailsByBeneficiaryRegIdAndCreatedDate(@Param("benRegId") Long benRegId, @Param("createdDate") Timestamp createdDate);

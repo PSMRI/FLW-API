@@ -67,5 +67,8 @@ public class ANCVisitDTO {
 
     private Boolean isBabyDelivered;
 
+    private Timestamp createdDate;
+
+    private String createdBy;
 }
 

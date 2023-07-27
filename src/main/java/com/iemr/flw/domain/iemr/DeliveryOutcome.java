@@ -65,6 +65,6 @@ public class DeliveryOutcome {
     @Column(name = "created_by")
     private String createdBy;
 
-    @Column(name = "create_date")
-    private Timestamp createDate;
+    @Column(name = "created_date")
+    private Timestamp createdDate;
 }

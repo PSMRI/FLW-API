@@ -1,5 +1,6 @@
 package com.iemr.flw.service;
 
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.EligibleCoupleDTO;
 import com.iemr.flw.dto.iemr.EligibleCoupleTrackingDTO;
 
@@ -11,8 +12,8 @@ public interface CoupleService {
 
     String registerEligibleCoupleTracking(List<EligibleCoupleTrackingDTO> eligibleCoupleTrackingDTOs);
 
-    EligibleCoupleDTO getEligibleCouple(Long benId);
+    List<EligibleCoupleDTO> getEligibleCoupleRegRecords(GetBenRequestHandler dto);
 
-    List<EligibleCoupleTrackingDTO> getEligibleCoupleTracking(Long ecrId);
+    List<EligibleCoupleTrackingDTO> getEligibleCoupleTracking(GetBenRequestHandler requestDto);
 
 }

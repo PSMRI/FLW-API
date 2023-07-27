@@ -11,7 +11,7 @@ import java.sql.Timestamp;
 public class InfantRegister {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "ben_id")
@@ -64,4 +64,10 @@ public class InfantRegister {
 
     @Column(name = "vitk_dose")
     private Timestamp vitkDose;
+
+    @Column(name = "created_date")
+    private Timestamp createdDate;
+
+    @Column(name = "created_by")
+    private String createdBy;
 }

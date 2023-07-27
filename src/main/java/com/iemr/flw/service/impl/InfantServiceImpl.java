@@ -2,6 +2,7 @@ package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.InfantRegister;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.InfantRegisterDTO;
 import com.iemr.flw.repo.iemr.InfantRegisterRepo;
 import com.iemr.flw.service.InfantService;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class InfantServiceImpl implements InfantService {
@@ -38,10 +40,14 @@ public class InfantServiceImpl implements InfantService {
     }
 
     @Override
-    public InfantRegisterDTO getInfantDetails(Long benId) {
+    public List<InfantRegisterDTO> getInfantDetails(GetBenRequestHandler dto) {
         try{
-            InfantRegister infantRegister = infantRegisterRepo.getInfantDetailsWithBen(benId);
-            return mapper.convertValue(infantRegister, InfantRegisterDTO.class);
+            List<InfantRegister> infantRegisterList =
+                    infantRegisterRepo.getInfantDetailsForUser(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
+
+            return infantRegisterList.stream()
+                    .map(infantRegister -> mapper.convertValue(infantRegister, InfantRegisterDTO.class))
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             // log
         }

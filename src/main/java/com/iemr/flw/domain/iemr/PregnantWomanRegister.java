@@ -12,7 +12,7 @@ import java.sql.Timestamp;
 public class PregnantWomanRegister {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "ben_id")
@@ -68,5 +68,11 @@ public class PregnantWomanRegister {
 
     @Column(name = "preg_compilation")
     private String pregCompilation;
+
+    @Column(name = "created_date")
+    private Timestamp createdDate;
+
+    @Column(name = "created_by")
+    private String createdBy;
 }
 

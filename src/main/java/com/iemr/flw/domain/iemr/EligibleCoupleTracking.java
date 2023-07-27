@@ -11,7 +11,7 @@ import java.sql.Timestamp;
 public class EligibleCoupleTracking {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "ecr_id")
@@ -35,4 +35,9 @@ public class EligibleCoupleTracking {
     @Column(name = "method_of_contraception")
     private String methodOfContraception;
 
+    @Column(name = "created_date")
+    private Timestamp createdDate;
+
+    @Column(name = "created_by")
+    private String createdBy;
 }

@@ -1,5 +1,6 @@
 package com.iemr.flw.controller;
 
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.ANCVisitDTO;
 import com.iemr.flw.dto.iemr.DeliveryOutcomeDTO;
 import com.iemr.flw.dto.iemr.InfantRegisterDTO;
@@ -35,7 +36,7 @@ public class MaternalHealthController {
 
     @CrossOrigin()
     @ApiOperation(value = "save pregnant woman registration details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/pregnantWomanRegister" }, method = { RequestMethod.POST })
+    @RequestMapping(value = { "/pregnantWoman/saveAll" }, method = { RequestMethod.POST })
     public ResponseEntity<?> savePregnantWomanRegistrations(@RequestBody List<PregnantWomanDTO> pregnantWomanDTOs,
                                                 @RequestHeader(value = "Authorization") String Authorization) {
         try {
@@ -51,11 +52,11 @@ public class MaternalHealthController {
 
     @CrossOrigin()
     @ApiOperation(value = "get List of pregnant woman registration details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/pregnantWoman" }, method = { RequestMethod.GET })
-    public ResponseEntity<?> getPregnantWoman(@RequestParam(value = "benId") Long benId,
+    @RequestMapping(value = { "/pregnantWoman/getAll" }, method = { RequestMethod.POST })
+    public ResponseEntity<?> getPregnantWomanList(@RequestBody GetBenRequestHandler requestDTO,
                                                @RequestHeader(value = "Authorization") String Authorization) {
         try {
-            PregnantWomanDTO result = pregnantWomanService.getPregnantWoman(benId);
+            List<PregnantWomanDTO> result = pregnantWomanService.getPregnantWoman(requestDTO);
             return new ResponseEntity<>(
                     new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
         } catch (Exception e) {
@@ -67,7 +68,7 @@ public class MaternalHealthController {
 
     @CrossOrigin()
     @ApiOperation(value = "save anc visit details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/saveANCVisit" }, method = { RequestMethod.POST })
+    @RequestMapping(value = { "/ancVisit/saveAll" }, method = { RequestMethod.POST })
     public ResponseEntity<?> saveANCVisit(@RequestBody List<ANCVisitDTO> ancVisitDTOs,
                                           @RequestHeader(value = "Authorization") String Authorization) {
         try {
@@ -83,11 +84,11 @@ public class MaternalHealthController {
 
     @CrossOrigin()
     @ApiOperation(value = "get anc visit details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/getANCVisitsForPW" }, method = { RequestMethod.GET })
-    public ResponseEntity<?> getANCVisitDetails(@RequestParam("pwrId") Long pwrId,
+    @RequestMapping(value = { "/ancVisit/getAll" }, method = { RequestMethod.POST })
+    public ResponseEntity<?> getANCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,
                                                 @RequestHeader(value = "Authorization") String Authorization) {
         try {
-            List<ANCVisitDTO> serviceResponse = pregnantWomanService.getANCVisits(pwrId);
+            List<ANCVisitDTO> serviceResponse = pregnantWomanService.getANCVisits(requestDTO);
             return new ResponseEntity<>(
                     new ApiResponse(true, null, serviceResponse), HttpStatus.ACCEPTED);
         } catch (Exception e) {
@@ -99,7 +100,7 @@ public class MaternalHealthController {
 
     @CrossOrigin()
     @ApiOperation(value = "save Delivery Outcome details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/saveDeliveryOutcome" }, method = { RequestMethod.POST })
+    @RequestMapping(value = { "/deliveryOutcome/saveAll" }, method = { RequestMethod.POST })
     public ResponseEntity<?> saveDeliveryOutcome(@RequestBody List<DeliveryOutcomeDTO> deliveryOutcomeDTOS,
                                           @RequestHeader(value = "Authorization") String Authorization) {
         try {
@@ -115,11 +116,11 @@ public class MaternalHealthController {
 
     @CrossOrigin()
     @ApiOperation(value = "get Delivery Outcome details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/getDeliveryOutcome" }, method = { RequestMethod.GET })
-    public ResponseEntity<?> getDeliveryOutcome(@RequestParam("benId") Long benId,
+    @RequestMapping(value = { "/deliveryOutcome/getAll" }, method = { RequestMethod.POST })
+    public ResponseEntity<?> getDeliveryOutcome(@RequestBody GetBenRequestHandler requestDTO,
                                                 @RequestHeader(value = "Authorization") String Authorization) {
         try {
-            DeliveryOutcomeDTO serviceResponse = deliveryOutcomeService.getDeliveryOutcome(benId);
+            List<DeliveryOutcomeDTO> serviceResponse = deliveryOutcomeService.getDeliveryOutcome(requestDTO);
             return new ResponseEntity<>(
                     new ApiResponse(true, null, serviceResponse), HttpStatus.ACCEPTED);
         } catch (Exception e) {
@@ -131,8 +132,8 @@ public class MaternalHealthController {
 
     @CrossOrigin()
     @ApiOperation(value = "save Infant registration details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/registerInfant" }, method = { RequestMethod.POST })
-    public ResponseEntity<?> saveEligibleCouple(@RequestBody List<InfantRegisterDTO> infantRegisterDTOs,
+    @RequestMapping(value = { "/infant/saveAll" }, method = { RequestMethod.POST })
+    public ResponseEntity<?> saveInfantList(@RequestBody List<InfantRegisterDTO> infantRegisterDTOs,
                                                 @RequestHeader(value = "Authorization") String Authorization) {
         try {
             String result = infantService.registerInfant(infantRegisterDTOs);
@@ -147,11 +148,11 @@ public class MaternalHealthController {
 
     @CrossOrigin()
     @ApiOperation(value = "get infant registration details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/infantDetails" }, method = { RequestMethod.GET })
-    public ResponseEntity<?> getEligibleCouple(@RequestParam(value = "benId") Long benId,
+    @RequestMapping(value = { "/infant/getAll" }, method = { RequestMethod.POST })
+    public ResponseEntity<?> getInfantList(@RequestBody GetBenRequestHandler requestDTO,
                                                @RequestHeader(value = "Authorization") String Authorization) {
         try {
-            InfantRegisterDTO result = infantService.getInfantDetails(benId);
+            List<InfantRegisterDTO> result = infantService.getInfantDetails(requestDTO);
             return new ResponseEntity<>(
                     new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
         } catch (Exception e) {

@@ -3,14 +3,19 @@ package com.iemr.flw.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.identity.CbacDetails;
 import com.iemr.flw.dto.identity.CbacDTO;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.identity.CbacRepo;
 import com.iemr.flw.service.CbacService;
+import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CbacServiceImpl implements CbacService {
@@ -21,18 +26,22 @@ public class CbacServiceImpl implements CbacService {
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
 
+    private final Logger logger = LoggerFactory.getLogger(CbacServiceImpl.class);
+
     ObjectMapper mapper = new ObjectMapper();
 
-    public List<CbacDTO> getByUserId(Integer userId) {
-        String user = beneficiaryRepo.getUserName(userId);
-        List<CbacDetails> cbacList = cbacRepo.getAllByCreatedBy(user);
+    public List<CbacDTO> getByUserId(GetBenRequestHandler dto) {
+        try {
+            String user = beneficiaryRepo.getUserName(dto.getAshaId());
+            List<CbacDetails> cbacList = cbacRepo.getAllByCreatedBy(user, dto.getFromDate(), dto.getToDate());
 
-        List<CbacDTO> result = new ArrayList<>();
-        cbacList.forEach(cbacDetails -> {
-            CbacDTO cbacDTO = mapper.convertValue(cbacDetails, CbacDTO.class);
-            result.add(cbacDTO);
-        });
-        return result;
+            return cbacList.stream()
+                    .map(cbacDetails -> mapper.convertValue(cbacDetails, CbacDTO.class))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+        return null;
     }
 
     public String save(List<CbacDTO> cbacList, String user) {

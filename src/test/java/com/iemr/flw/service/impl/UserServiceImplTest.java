@@ -8,8 +8,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.when;
 
 class UserServiceImplTest {
 
@@ -25,32 +29,23 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getUserRole_ValidUserIdAndRoleId_ReturnsUserRoleDTO() {
-        Integer userId = 1;
-        Integer roleId = 1;
-        UserServiceRoleDTO expectedUserRole = new UserServiceRoleDTO();
-        // Set up the repository getUserRole method to return expectedUserRole
-        when(userServiceRoleRepo.getUserRole(userId, roleId)).thenReturn(expectedUserRole);
+    void testGetUserDetail_Success() {
+        // Arrange
+        int userId = 123;
+        UserServiceRoleDTO expectedUserRoleDTO = new UserServiceRoleDTO();
+        expectedUserRoleDTO.setUserId(userId);
+        expectedUserRoleDTO.setRoleName("ROLE_USER");
+
+        List<UserServiceRoleDTO> userRoleList = new ArrayList<>();
+        userRoleList.add(expectedUserRoleDTO);
+
+        when(userServiceRoleRepo.getUserRole(anyInt())).thenReturn(userRoleList);
 
         // Act
-        UserServiceRoleDTO result = userService.getUserRole(userId, roleId);
+        UserServiceRoleDTO result = userService.getUserDetail(userId);
 
         // Assert
-        assertEquals(expectedUserRole, result);
-    }
-
-    @Test
-    void getUserRole_UserRoleNotFound_ReturnsNull() {
-        Integer userId = 1;
-        Integer roleId = 1;
-        // Set up the repository getUserRole method to return null
-        when(userServiceRoleRepo.getUserRole(userId, roleId)).thenReturn(null);
-
-        // Act
-        UserServiceRoleDTO result = userService.getUserRole(userId, roleId);
-
-        // Assert
-        assertEquals(null, result);
+        assertEquals(expectedUserRoleDTO.getUserId(), result.getUserId());
+        assertEquals(expectedUserRoleDTO.getRoleName(), result.getRoleName());
     }
 }
-

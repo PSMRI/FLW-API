@@ -24,4 +24,7 @@ public class EligibleCoupleTrackingDTO implements Serializable {
 
     private String methodOfContraception;
 
+    private Timestamp createdDate;
+
+    private String createdBy;
 }

@@ -127,4 +127,18 @@ public class EligibleCoupleRegister {
 
 //    @Column(name = "eighth_and_ninth_child_gap")
 //    private Integer eighthAndNinthChildGap;
+
+    @Column(name = "created_date")
+    private Timestamp createdDate;
+
+    @Column(name = "created_by")
+    private String createdBy;
+
+    public Long getBenId() {
+        return benId;
+    }
+
+    public void setBenId(Long benId) {
+        this.benId = benId;
+    }
 }

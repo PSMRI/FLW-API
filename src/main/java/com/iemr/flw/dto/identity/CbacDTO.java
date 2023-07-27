@@ -2,11 +2,13 @@ package com.iemr.flw.dto.identity;
 
 import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.sql.Timestamp;
 
 @Data
 @Getter
+@Setter
 public class CbacDTO {
     private Long cbacDetailsId;
     private Long beneficiaryRegId;
@@ -132,5 +134,4 @@ public class CbacDTO {
     private Timestamp syncedDate;
     private Integer providerServiceMapId;
     private Integer deviceId;
-//    private Integer beneficiaryId;
 }

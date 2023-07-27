@@ -11,7 +11,7 @@ import java.sql.Timestamp;
 public class ANCVisit {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "pwr_id")
@@ -101,4 +101,9 @@ public class ANCVisit {
     @Column(name = "is_baby_delivered")
     private Boolean isBabyDelivered;
 
+    @Column(name = "created_date")
+    private Timestamp createdDate;
+
+    @Column(name = "created_by")
+    private String createdBy;
 }

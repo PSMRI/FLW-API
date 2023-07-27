@@ -2,6 +2,7 @@ package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.DeliveryOutcome;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.DeliveryOutcomeDTO;
 import com.iemr.flw.repo.iemr.DeliveryOutcomeRepo;
 import com.iemr.flw.service.DeliveryOutcomeService;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -45,10 +47,12 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
     }
 
     @Override
-    public DeliveryOutcomeDTO getDeliveryOutcome(Long benId) {
+    public List<DeliveryOutcomeDTO> getDeliveryOutcome(GetBenRequestHandler dto) {
         try{
-            DeliveryOutcome deliveryOutcome = deliveryOutcomeRepo.getDeliveryOutcomeByBenId(benId);
-            return mapper.convertValue(deliveryOutcome, DeliveryOutcomeDTO.class);
+            List<DeliveryOutcome> deliveryOutcomeList = deliveryOutcomeRepo.getDeliveryOutcomeByBenId(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
+            return deliveryOutcomeList.stream()
+                    .map(deliveryOutcome -> mapper.convertValue(deliveryOutcome, DeliveryOutcomeDTO.class))
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             logger.error(e.getMessage());
         }

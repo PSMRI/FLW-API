@@ -4,5 +4,5 @@ import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
 
 public interface UserService {
 
-    UserServiceRoleDTO getUserRole(Integer userId, Integer roleId);
+    UserServiceRoleDTO getUserDetail(Integer userId);
 }

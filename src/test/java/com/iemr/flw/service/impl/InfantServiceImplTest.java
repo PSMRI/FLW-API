@@ -2,6 +2,7 @@ package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.InfantRegister;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.InfantRegisterDTO;
 import com.iemr.flw.repo.iemr.InfantRegisterRepo;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,10 +11,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class InfantServiceImplTest {
@@ -24,55 +27,49 @@ class InfantServiceImplTest {
     @InjectMocks
     private InfantServiceImpl infantService;
 
-    private ObjectMapper objectMapper;
+    private ObjectMapper mapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
-        objectMapper = new ObjectMapper();
     }
 
     @Test
-    void registerInfant_ValidInput_ReturnsSuccessMessage() {
+    void testRegisterInfant_Success() {
+        // Arrange
         List<InfantRegisterDTO> infantRegisterDTOs = new ArrayList<>();
-        // Add test data to infantRegisterDTOs
-
-        // Mock the repository save method
-        when(infantRegisterRepo.save(anyListOf(InfantRegister.class))).thenReturn(new ArrayList<>());
+        infantRegisterDTOs.add(new InfantRegisterDTO());
 
         // Act
         String result = infantService.registerInfant(infantRegisterDTOs);
 
         // Assert
+        assertNotNull(result);
         assertEquals("saved successfully", result);
+
+        verify(infantRegisterRepo, times(1)).save(anyList());
     }
 
     @Test
-    void getInfantDetails_ValidBenId_ReturnsInfantRegisterDTO() {
-        Long benId = 1L;
-        InfantRegister infantRegister = new InfantRegister();
-        // Set up the repository getInfantDetailsWithBen method to return infantRegister
-        when(infantRegisterRepo.getInfantDetailsWithBen(benId)).thenReturn(infantRegister);
+    void testGetInfantDetails_Success() {
+        // Arrange
+        GetBenRequestHandler dto = new GetBenRequestHandler();
+        dto.setAshaId(123);
+        dto.setFromDate(new Timestamp((new Date()).getTime()));
+        dto.setToDate(new Timestamp((new Date()).getTime()));
+
+        List<InfantRegister> infantRegisterList = new ArrayList<>();
+        infantRegisterList.add(new InfantRegister());
+
+        when(infantRegisterRepo.getInfantDetailsForUser(dto.getAshaId(), dto.getFromDate(), dto.getToDate())).thenReturn(infantRegisterList);
 
         // Act
-        InfantRegisterDTO result = infantService.getInfantDetails(benId);
+        List<InfantRegisterDTO> result = infantService.getInfantDetails(dto);
 
         // Assert
-        assertEquals(infantRegister, objectMapper.convertValue(result, InfantRegister.class));
-    }
+        assertNotNull(result);
+        assertEquals(infantRegisterList.size(), result.size());
 
-    @Test
-    void getInfantDetails_InvalidBenId_ReturnsNull() {
-        Long benId = 999L;
-
-        // Set up the repository getInfantDetailsWithBen method to return null
-        when(infantRegisterRepo.getInfantDetailsWithBen(benId)).thenReturn(null);
-
-        // Act
-        InfantRegisterDTO result = infantService.getInfantDetails(benId);
-
-        // Assert
-        assertEquals(null, result);
+        verify(infantRegisterRepo, times(1)).getInfantDetailsForUser(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
     }
 }
-

@@ -42,4 +42,8 @@ public class InfantRegisterDTO {
     private Timestamp hepBDose;
 
     private Timestamp vitkDose;
+
+    private Timestamp createdDate;
+
+    private String createdBy;
 }
