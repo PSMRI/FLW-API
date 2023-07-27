@@ -65,6 +65,7 @@ public class HTTPRequestInterceptor extends HandlerInterceptorAdapter {
 				String[] requestURIParts = request.getRequestURI().split("/");
 				String requestAPI = requestURIParts[requestURIParts.length - 1];
 				switch (requestAPI) {
+//				case "getUserRole":
 				case "swagger-ui.html":
 				case "ui":
 				case "swagger-resources":

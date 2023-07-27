@@ -39,17 +39,21 @@ public class SwaggerConfig
 	@Bean
 	public Docket productApi()
 	{
-		return new Docket(DocumentationType.SWAGGER_2).select().apis(RequestHandlerSelectors.any())
-				.paths(PathSelectors.any()).build().apiInfo(metaData());
+		return new Docket(DocumentationType.SWAGGER_2)
+				.select()
+				.apis(RequestHandlerSelectors.any())
+				.paths(PathSelectors.any())
+				.build()
+				.apiInfo(metaData());
 	}
 
 	private ApiInfo metaData()
 	{
 		ApiInfoBuilder builder = new ApiInfoBuilder();
-		builder.contact(new Contact("AMRIT", "https://psmri.github.io/PSMRI/", "amrit@piramalswasthya.org"));
-		builder.description("A microservice for the creation and management of beneficaries.");
+//		builder.contact(new Contact("AMRIT", "https://psmri.github.io/PSMRI/", "amrit@piramalswasthya.org"));
+		builder.description("A microservice for the creation and management of beneficiaries related data");
 		builder.version("1.0");
-		builder.title("Identity API");
+		builder.title("Flw API");
 		return builder.build();
 	}
 }

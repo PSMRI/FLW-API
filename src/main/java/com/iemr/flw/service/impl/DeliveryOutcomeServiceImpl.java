@@ -1,11 +1,9 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.flw.domain.DeliveryOutcome;
-import com.iemr.flw.domain.PregnantWomanRegister;
-import com.iemr.flw.dto.DeliveryOutcomeDTO;
-import com.iemr.flw.dto.PregnantWomanDTO;
-import com.iemr.flw.repo.DeliveryOutcomeRepo;
+import com.iemr.flw.domain.iemr.DeliveryOutcome;
+import com.iemr.flw.dto.iemr.DeliveryOutcomeDTO;
+import com.iemr.flw.repo.iemr.DeliveryOutcomeRepo;
 import com.iemr.flw.service.DeliveryOutcomeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

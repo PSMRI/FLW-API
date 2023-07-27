@@ -1,7 +1,7 @@
 package com.iemr.flw.service.impl;
 
-import com.iemr.flw.dto.UserServiceRoleDTO;
-import com.iemr.flw.repo.UserServiceRoleRepo;
+import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
+import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

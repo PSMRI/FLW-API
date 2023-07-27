@@ -1,7 +1,7 @@
 package com.iemr.flw.service;
 
-import com.iemr.flw.dto.ANCVisitDTO;
-import com.iemr.flw.dto.PregnantWomanDTO;
+import com.iemr.flw.dto.iemr.ANCVisitDTO;
+import com.iemr.flw.dto.iemr.PregnantWomanDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
