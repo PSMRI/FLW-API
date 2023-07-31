@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 public class CbacDTO {
     private Long cbacDetailsId;
     private Long beneficiaryRegId;
+    private Long beneficiaryId;
     private String cbacAge;
     private Integer cbacAgePosi;
     private String cbacAlcohol;

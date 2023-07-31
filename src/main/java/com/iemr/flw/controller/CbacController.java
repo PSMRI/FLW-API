@@ -2,20 +2,15 @@ package com.iemr.flw.controller;
 
 import com.google.gson.Gson;
 import com.iemr.flw.dto.identity.CbacDTO;
-import com.iemr.flw.dto.identity.CbacRequestDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.service.CbacService;
-import com.iemr.flw.utils.ApiResponse;
 import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
@@ -30,7 +25,7 @@ public class CbacController {
     @CrossOrigin()
     @ApiOperation(value = "get cbac details of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
     @RequestMapping(value = { "/getAll" }, method = { RequestMethod.POST })
-    public String getAllScreeningByUserId(@RequestBody GetBenRequestHandler requestDTO,
+    public String getAllCbacDetailsByUserId(@RequestBody GetBenRequestHandler requestDTO,
                                                      @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
@@ -55,13 +50,13 @@ public class CbacController {
     @CrossOrigin()
     @ApiOperation(value = "save cbac details of all beneficiaries registered with given user name", consumes = "application/json", produces = "application/json")
     @RequestMapping(value = { "/saveAll" }, method = { RequestMethod.POST })
-    public String saveAllCbacDetailsByUserId(@RequestBody CbacRequestDTO requestDTO,
+    public String saveAllCbacDetailsByUserId(@RequestBody List<CbacDTO> cbacDTOS,
                                              @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
-            logger.info("Saving All Cbac Details for user: " + requestDTO.getUserName());
-            if (requestDTO != null) {
-                String s = cbacService.save(requestDTO.getCbacDTOList(), requestDTO.getUserName());
+            logger.info("Saving Cbac Details for");
+            if (cbacDTOS.size() != 0) {
+                String s = cbacService.save(cbacDTOS);
                 if (s != null)
                     response.setResponse(s);
                 else

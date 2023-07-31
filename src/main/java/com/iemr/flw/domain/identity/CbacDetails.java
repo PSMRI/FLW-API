@@ -8,8 +8,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "i_cbacdetails", schema = "db_identity")
-//@Data
-//@IdClass(CbacId.class)
+@Data
 public class CbacDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -137,10 +136,15 @@ public class CbacDetails {
     private Timestamp syncedDate;
     private Integer providerServiceMapId;
     private Integer deviceId;
+    @Transient
+    private Long beneficiaryId;
 
     @Id
-    @Column(name = "CBACDetailsId")
+    @Column(name = "CBACDetailsid")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public long getCbacDetailsId() {
+        if(cbacDetailsId == null)
+            return 0L;
         return cbacDetailsId;
     }
 
@@ -151,6 +155,8 @@ public class CbacDetails {
     @Basic
     @Column(name = "BeneficiaryRegID")
     public Long getBeneficiaryRegId() {
+        if(beneficiaryRegId == null)
+            return 0L;
         return beneficiaryRegId;
     }
 
