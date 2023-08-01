@@ -5,7 +5,6 @@ import com.iemr.flw.dto.iemr.TBSuspectedRequestDTO;
 
 public interface HighRiskNonPregnantService {
 
-
     String getAllAssessment(GetBenRequestHandler requestDTO);
 
     String saveAllAssessment(TBSuspectedRequestDTO requestDTO);

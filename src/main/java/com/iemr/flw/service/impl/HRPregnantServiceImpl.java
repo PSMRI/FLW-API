@@ -28,8 +28,7 @@ public class HRPregnantServiceImpl implements HighRiskPregnantService {
 
     private final Logger logger = LoggerFactory.getLogger(HRPregnantServiceImpl.class);
 
-    @Autowired
-    private ModelMapper modelMapper;
+    private ModelMapper modelMapper = new ModelMapper();
 
 
     @Override
