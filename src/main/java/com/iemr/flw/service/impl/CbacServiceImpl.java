@@ -37,15 +37,15 @@ public class CbacServiceImpl implements CbacService {
 
             List<CbacDTO> result = new ArrayList<>();
             cbacList.forEach(cbacDetails -> {
-                          BigInteger benId = beneficiaryRepo.getBenIdFromRegID(cbacDetails.getBeneficiaryRegId());
-                        CbacDTO cbacDTO = mapper.convertValue(cbacDetails, CbacDTO.class);
-                        if(benId != null) {
-                            cbacDTO.setBeneficiaryId(benId.longValue());
-                        } else {
-                            cbacDTO.setBeneficiaryId(0L);
-                        }
-                        result.add(cbacDTO);
-                    });
+                BigInteger benId = beneficiaryRepo.getBenIdFromRegID(cbacDetails.getBeneficiaryRegId());
+                CbacDTO cbacDTO = mapper.convertValue(cbacDetails, CbacDTO.class);
+                if (benId != null) {
+                    cbacDTO.setBeneficiaryId(benId.longValue());
+                } else {
+                    cbacDTO.setBeneficiaryId(0L);
+                }
+                result.add(cbacDTO);
+            });
             return result;
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -56,14 +56,16 @@ public class CbacServiceImpl implements CbacService {
     public String save(List<CbacDTO> cbacList) {
         List<CbacDetails> cbacDetailsToBeSaved = new ArrayList<>();
         StringBuilder responseMessage = new StringBuilder();
-                cbacList.forEach(cbacDTO -> {
-                    Long benRegId = beneficiaryRepo.getRegIDFromBenId(cbacDTO.getBeneficiaryId());
-                    CbacDetails cbacDetails= mapper.convertValue(cbacDTO, CbacDetails.class);
-                    cbacDetails.setBeneficiaryRegId(benRegId);
-                    CbacDetails existingCbac = cbacRepo.findCbacDetailsByBeneficiaryRegIdAndCreatedDate(
-                            cbacDetails.getBeneficiaryRegId(), cbacDetails.getCreatedDate());
-                    if(existingCbac == null) {
-                        cbacDetailsToBeSaved.add(cbacDetails);
+        cbacList.forEach(cbacDTO -> {
+            Long benRegId = beneficiaryRepo.getRegIDFromBenId(cbacDTO.getBeneficiaryId());
+            CbacDetails cbacDetails = mapper.convertValue(cbacDTO, CbacDetails.class);
+            cbacDetails.setBeneficiaryRegId(benRegId);
+            CbacDetails existingCbac = cbacRepo.findCbacDetailsByBeneficiaryRegIdAndCreatedDate(
+                    benRegId, cbacDetails.getCreatedDate());
+            if (existingCbac == null) {
+                cbacDetails.setCbacDetailsId(null);
+                cbacDetails.setBeneficiaryId(null);
+                cbacDetailsToBeSaved.add(cbacDetails);
             } else {
                 responseMessage.append("cbac with benRegId: " + cbacDetails.getBeneficiaryRegId() +
                         " and createdDate " + cbacDetails.getCreatedDate() + " already exists.");

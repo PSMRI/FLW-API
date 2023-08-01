@@ -148,7 +148,7 @@ public class CbacDetails {
         return cbacDetailsId;
     }
 
-    public void setCbacDetailsId(long cbacDetailsId) {
+    public void setCbacDetailsId(Long cbacDetailsId) {
         this.cbacDetailsId = cbacDetailsId;
     }
 
