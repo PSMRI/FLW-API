@@ -1,21 +1,26 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iemr.flw.domain.identity.CbacAdditionalDetails;
 import com.iemr.flw.domain.identity.CbacDetails;
 import com.iemr.flw.dto.identity.CbacDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
+import com.iemr.flw.repo.identity.CbacAdditionalDetailRepo;
 import com.iemr.flw.repo.identity.CbacRepo;
 import com.iemr.flw.service.CbacService;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class CbacServiceImpl implements CbacService {
@@ -24,25 +29,56 @@ public class CbacServiceImpl implements CbacService {
     private CbacRepo cbacRepo;
 
     @Autowired
+    private CbacAdditionalDetailRepo cbacAddRepo;
+
+    @Autowired
     private BeneficiaryRepo beneficiaryRepo;
+
+    @Value("2")
+    private String cbac_page_size;
 
     private final Logger logger = LoggerFactory.getLogger(CbacServiceImpl.class);
 
     ObjectMapper mapper = new ObjectMapper();
 
+    ModelMapper modelMapper = new ModelMapper();
+
     public List<CbacDTO> getByUserId(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
-            List<CbacDetails> cbacList = cbacRepo.getAllByCreatedBy(user, dto.getFromDate(), dto.getToDate());
+            Integer pageSize = Integer.valueOf(cbac_page_size);
+            PageRequest pageRequest = new PageRequest(dto.getPageNo(),pageSize );
+            Page<CbacDetails> cbacList = cbacRepo.getAllByCreatedBy(user, dto.getFromDate(), dto.getToDate(), pageRequest);
 
             List<CbacDTO> result = new ArrayList<>();
             cbacList.forEach(cbacDetails -> {
                 BigInteger benId = beneficiaryRepo.getBenIdFromRegID(cbacDetails.getBeneficiaryRegId());
+                CbacAdditionalDetails cbacAdditionalDetails = cbacAddRepo.findCbacAdditionalDetail(cbacDetails.getCbacDetailsId());
                 CbacDTO cbacDTO = mapper.convertValue(cbacDetails, CbacDTO.class);
                 if (benId != null) {
                     cbacDTO.setBeneficiaryId(benId.longValue());
                 } else {
                     cbacDTO.setBeneficiaryId(0L);
+                }
+                if(cbacAdditionalDetails != null) {
+                    cbacDTO.setCbacCloudy(cbacAdditionalDetails.getCbacCloudy());
+                    cbacDTO.setCbacCloudyPosi(cbacAdditionalDetails.getCbacCloudyPosi());
+                    cbacDTO.setCbacDiffreading(cbacAdditionalDetails.getCbacDiffreading());
+                    cbacDTO.setCbacDiffreadingPosi(cbacAdditionalDetails.getCbacDiffreadingPosi());
+                    cbacDTO.setCbacPainIneyes(cbacAdditionalDetails.getCbacPainIneyes());
+                    cbacDTO.setCbacPainIneyesPosi(cbacAdditionalDetails.getCbacPainIneyesPosi());
+                    cbacDTO.setCbacRednessIneyes(cbacAdditionalDetails.getCbacRednessIneyes());
+                    cbacDTO.setCbacRednessIneyesPosi(cbacAdditionalDetails.getCbacRednessIneyesPosi());
+                    cbacDTO.setCbacDiffInhearing(cbacAdditionalDetails.getCbacDiffInhearing());
+                    cbacDTO.setCbacDiffInhearingPosi(cbacAdditionalDetails.getCbacDiffInhearingPosi());
+                    cbacDTO.setCbacFeelingUnsteady(cbacAdditionalDetails.getCbacFeelingUnsteady());
+                    cbacDTO.setCbacFeelingUnsteadyPosi(cbacAdditionalDetails.getCbacFeelingUnsteadyPosi());
+                    cbacDTO.setCbacSufferPhysicalDisability(cbacAdditionalDetails.getCbacSufferPhysicalDisability());
+                    cbacDTO.setCbacSufferPhysicalDisabilityPosi(cbacAdditionalDetails.getCbacSufferPhysicalDisabilityPosi());
+                    cbacDTO.setCbacNeedingHelp(cbacAdditionalDetails.getCbacNeedingHelp());
+                    cbacDTO.setCbacNeedingHelpPosi(cbacAdditionalDetails.getCbacNeedingHelpPosi());
+                    cbacDTO.setCbacForgettingNames(cbacAdditionalDetails.getCbacForgettingNames());
+                    cbacDTO.setCbacForgettingNamesPosi(cbacAdditionalDetails.getCbacForgettingNamesPosi());
                 }
                 result.add(cbacDTO);
             });
@@ -54,27 +90,32 @@ public class CbacServiceImpl implements CbacService {
     }
 
     public String save(List<CbacDTO> cbacList) {
-        List<CbacDetails> cbacDetailsToBeSaved = new ArrayList<>();
+        List<CbacAdditionalDetails> cbacAdditionalDetailsList = new ArrayList<>();
         StringBuilder responseMessage = new StringBuilder();
         cbacList.forEach(cbacDTO -> {
             Long benRegId = beneficiaryRepo.getRegIDFromBenId(cbacDTO.getBeneficiaryId());
-            CbacDetails cbacDetails = mapper.convertValue(cbacDTO, CbacDetails.class);
+            CbacDetails cbacDetails = modelMapper.map(cbacDTO, CbacDetails.class);
             cbacDetails.setBeneficiaryRegId(benRegId);
+
             CbacDetails existingCbac = cbacRepo.findCbacDetailsByBeneficiaryRegIdAndCreatedDate(
                     benRegId, cbacDetails.getCreatedDate());
             if (existingCbac == null) {
                 cbacDetails.setCbacDetailsId(null);
                 cbacDetails.setBeneficiaryId(null);
-                cbacDetailsToBeSaved.add(cbacDetails);
+                CbacDetails savedCbac = cbacRepo.save(cbacDetails);
+                CbacAdditionalDetails cbacAdditionalDetails = modelMapper.map(cbacDTO, CbacAdditionalDetails.class);
+                cbacAdditionalDetails.setCbacDetailsId(savedCbac.getCbacDetailsId());
+                cbacAdditionalDetailsList.add(cbacAdditionalDetails);
+
             } else {
                 responseMessage.append("cbac with benRegId: " + cbacDetails.getBeneficiaryRegId() +
                         " and createdDate " + cbacDetails.getCreatedDate() + " already exists.");
                 responseMessage.append(System.getProperty("line.separator"));
             }
         });
-        if (cbacDetailsToBeSaved.size() > 0) {
-            cbacRepo.save(cbacDetailsToBeSaved);
-            responseMessage.append(cbacDetailsToBeSaved.size() + " CBAC Details Saved!");
+        if (cbacAdditionalDetailsList.size() > 0) {
+            cbacAddRepo.save(cbacAdditionalDetailsList);
+            responseMessage.append(cbacAdditionalDetailsList.size() + " CBAC Details Saved!");
         }
         return responseMessage.toString();
     }
