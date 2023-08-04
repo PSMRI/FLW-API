@@ -151,6 +151,10 @@ public class CbacDTO {
     private Integer cbacNeedingHelpPosi;
     private String cbacForgettingNames;
     private Integer cbacForgettingNamesPosi;
+    private String cbacTinglingPalm;
+    private Integer cbacTinglingPalmPosi;
+    private String cbacWhiteOrRedPatch;
+    private Integer cbacWhiteOrRedPatchPosi;
 
     public Long getCbacDetailsId() {
         return cbacDetailsId;

@@ -1,8 +1,10 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.iemr.flw.domain.identity.CbacAdditionalDetails;
 import com.iemr.flw.domain.identity.CbacDetails;
+import com.iemr.flw.dto.identity.CbacStatus;
 import com.iemr.flw.dto.identity.CbacDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
@@ -20,7 +22,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class CbacServiceImpl implements CbacService {
@@ -34,7 +38,7 @@ public class CbacServiceImpl implements CbacService {
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
 
-    @Value("2")
+    @Value("10")
     private String cbac_page_size;
 
     private final Logger logger = LoggerFactory.getLogger(CbacServiceImpl.class);
@@ -43,12 +47,14 @@ public class CbacServiceImpl implements CbacService {
 
     ModelMapper modelMapper = new ModelMapper();
 
-    public List<CbacDTO> getByUserId(GetBenRequestHandler dto) {
+    public String getByUserId(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
-            Integer pageSize = Integer.valueOf(cbac_page_size);
+            int pageSize = Integer.parseInt(cbac_page_size);
+            int totalPage;
             PageRequest pageRequest = new PageRequest(dto.getPageNo(),pageSize );
             Page<CbacDetails> cbacList = cbacRepo.getAllByCreatedBy(user, dto.getFromDate(), dto.getToDate(), pageRequest);
+            totalPage = cbacList.getTotalPages();
 
             List<CbacDTO> result = new ArrayList<>();
             cbacList.forEach(cbacDetails -> {
@@ -82,7 +88,11 @@ public class CbacServiceImpl implements CbacService {
                 }
                 result.add(cbacDTO);
             });
-            return result;
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", result);
+            response.put("pageSize", Integer.parseInt(cbac_page_size));
+            response.put("totalPage", totalPage);
+            return new Gson().toJson(response);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -91,7 +101,7 @@ public class CbacServiceImpl implements CbacService {
 
     public String save(List<CbacDTO> cbacList) {
         List<CbacAdditionalDetails> cbacAdditionalDetailsList = new ArrayList<>();
-        StringBuilder responseMessage = new StringBuilder();
+        List<CbacStatus> result = new ArrayList<>();
         cbacList.forEach(cbacDTO -> {
             Long benRegId = beneficiaryRepo.getRegIDFromBenId(cbacDTO.getBeneficiaryId());
             CbacDetails cbacDetails = modelMapper.map(cbacDTO, CbacDetails.class);
@@ -103,20 +113,23 @@ public class CbacServiceImpl implements CbacService {
                 cbacDetails.setCbacDetailsId(null);
                 cbacDetails.setBeneficiaryId(null);
                 CbacDetails savedCbac = cbacRepo.save(cbacDetails);
+                result.add(new CbacStatus(cbacDTO.getBeneficiaryId(), cbacDTO.getCreatedDate(), "Success"));
                 CbacAdditionalDetails cbacAdditionalDetails = modelMapper.map(cbacDTO, CbacAdditionalDetails.class);
                 cbacAdditionalDetails.setCbacDetailsId(savedCbac.getCbacDetailsId());
                 cbacAdditionalDetailsList.add(cbacAdditionalDetails);
 
             } else {
-                responseMessage.append("cbac with benRegId: " + cbacDetails.getBeneficiaryRegId() +
-                        " and createdDate " + cbacDetails.getCreatedDate() + " already exists.");
-                responseMessage.append(System.getProperty("line.separator"));
+//                responseMessage.append("cbac with benRegId: " + cbacDTO.getBeneficiaryId() +
+//                        " and createdDate " + cbacDetails.getCreatedDate() + " already exists.");
+//                responseMessage.append(System.getProperty("line.separator"));
+                result.add(new CbacStatus(cbacDTO.getBeneficiaryId(), cbacDTO.getCreatedDate(), "Fail"));
             }
         });
         if (cbacAdditionalDetailsList.size() > 0) {
             cbacAddRepo.save(cbacAdditionalDetailsList);
-            responseMessage.append(cbacAdditionalDetailsList.size() + " CBAC Details Saved!");
+//            responseMessage.append(cbacAdditionalDetailsList.size() + " CBAC Details Saved!");
         }
-        return responseMessage.toString();
+//        return responseMessage.toString();
+        return new Gson().toJson(result);
     }
 }

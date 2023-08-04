@@ -30,4 +30,8 @@ public class CbacAdditionalDetails {
     private Integer cbacNeedingHelpPosi;
     private String cbacForgettingNames;
     private Integer cbacForgettingNamesPosi;
+    private String cbacTinglingPalm;
+    private Integer cbacTinglingPalmPosi;
+    private String cbacWhiteOrRedPatch;
+    private Integer cbacWhiteOrRedPatchPosi;
 }
