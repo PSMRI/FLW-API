@@ -85,6 +85,10 @@ public class CbacServiceImpl implements CbacService {
                     cbacDTO.setCbacNeedingHelpPosi(cbacAdditionalDetails.getCbacNeedingHelpPosi());
                     cbacDTO.setCbacForgettingNames(cbacAdditionalDetails.getCbacForgettingNames());
                     cbacDTO.setCbacForgettingNamesPosi(cbacAdditionalDetails.getCbacForgettingNamesPosi());
+                    cbacDTO.setCbacTinglingPalm(cbacAdditionalDetails.getCbacTinglingPalm());
+                    cbacDTO.setCbacTinglingPalmPosi(cbacAdditionalDetails.getCbacTinglingPalmPosi());
+                    cbacDTO.setCbacWhiteOrRedPatch(cbacAdditionalDetails.getCbacWhiteOrRedPatch());
+                    cbacDTO.setCbacWhiteOrRedPatchPosi(cbacAdditionalDetails.getCbacWhiteOrRedPatchPosi());
                 }
                 result.add(cbacDTO);
             });
