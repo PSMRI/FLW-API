@@ -9,5 +9,5 @@ public interface CbacService {
 
     String save(List<CbacDTO> cbacList) throws Exception;
 
-    List<CbacDTO> getByUserId(GetBenRequestHandler requestDTO);
+    String getByUserId(GetBenRequestHandler requestDTO);
 }

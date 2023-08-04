@@ -31,10 +31,10 @@ public class CbacController {
         try {
             logger.info("fetching All Cbac Details for user: " + requestDTO.getAshaId());
             if (requestDTO != null) {
-                List<CbacDTO> result = cbacService.getByUserId(requestDTO);
-                String s = (new Gson()).toJson(result);
-                if (s != null)
-                    response.setResponse(s);
+                String result = cbacService.getByUserId(requestDTO);
+
+                if (result != null)
+                    response.setResponse(result);
                 else
                     response.setError(5000, "No record found");
             } else
