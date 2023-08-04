@@ -1,8 +1,6 @@
 package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.NonPregnantWomanHighRiskTrack;
-import com.iemr.flw.domain.iemr.PregnantWomanHighRiskTrack;
-import com.iemr.flw.domain.iemr.TBScreening;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,9 +12,9 @@ import java.util.List;
 @Repository
 public interface HRNonPregnantTrackRepo extends JpaRepository<NonPregnantWomanHighRiskTrack, Long> {
 
-    @Query(value = "SELECT nhrpt FROM NonPregnantWomanHighRiskTrack nhrpt WHERE nhrpt.benId = :benId and nhrpt.userId = :userId")
-    TBScreening getByUserIdAndBenId(@Param("benId") Long benId, @Param("userId") Integer userId);
+    @Query(value = "SELECT npt FROM NonPregnantWomanHighRiskTrack npt WHERE npt.benId = :benId and npt.userId = :userId and npt.visitDate = :visitDate")
+    NonPregnantWomanHighRiskTrack getByUserIdAndBenId(@Param("benId") Long benId, @Param("userId") Integer userId, Timestamp visitDate);
 
-    @Query(value = "SELECT nhrpt FROM NonPregnantWomanHighRiskTrack nhrpt WHERE nhrpt.userId = :userId and nhrpt.visitDate >= :fromDate and nhrpt.visitDate <= :toDate")
-    List<TBScreening> getByUserId(@Param("userId") Integer userId, @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
+    @Query(value = "SELECT npt FROM NonPregnantWomanHighRiskTrack npt WHERE npt.userId = :userId and npt.visitDate >= :fromDate and npt.visitDate <= :toDate")
+    List<NonPregnantWomanHighRiskTrack> getByUserId(@Param("userId") Integer userId, @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 }
