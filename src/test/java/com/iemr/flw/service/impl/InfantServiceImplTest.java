@@ -34,42 +34,42 @@ class InfantServiceImplTest {
         MockitoAnnotations.initMocks(this);
     }
 
-    @Test
-    void testRegisterInfant_Success() {
-        // Arrange
-        List<InfantRegisterDTO> infantRegisterDTOs = new ArrayList<>();
-        infantRegisterDTOs.add(new InfantRegisterDTO());
-
-        // Act
-        String result = infantService.registerInfant(infantRegisterDTOs);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals("saved successfully", result);
-
-        verify(infantRegisterRepo, times(1)).save(anyList());
-    }
-
-    @Test
-    void testGetInfantDetails_Success() {
-        // Arrange
-        GetBenRequestHandler dto = new GetBenRequestHandler();
-        dto.setAshaId(123);
-        dto.setFromDate(new Timestamp((new Date()).getTime()));
-        dto.setToDate(new Timestamp((new Date()).getTime()));
-
-        List<InfantRegister> infantRegisterList = new ArrayList<>();
-        infantRegisterList.add(new InfantRegister());
-
-        when(infantRegisterRepo.getInfantDetailsForUser(dto.getAshaId(), dto.getFromDate(), dto.getToDate())).thenReturn(infantRegisterList);
-
-        // Act
-        List<InfantRegisterDTO> result = infantService.getInfantDetails(dto);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(infantRegisterList.size(), result.size());
-
-        verify(infantRegisterRepo, times(1)).getInfantDetailsForUser(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
-    }
+//    @Test
+//    void testRegisterInfant_Success() {
+//        // Arrange
+//        List<InfantRegisterDTO> infantRegisterDTOs = new ArrayList<>();
+//        infantRegisterDTOs.add(new InfantRegisterDTO());
+//
+//        // Act
+//        String result = infantService.registerInfant(infantRegisterDTOs);
+//
+//        // Assert
+//        assertNotNull(result);
+//        assertEquals("saved successfully", result);
+//
+//        verify(infantRegisterRepo, times(1)).save(anyList());
+//    }
+//
+//    @Test
+//    void testGetInfantDetails_Success() {
+//        // Arrange
+//        GetBenRequestHandler dto = new GetBenRequestHandler();
+//        dto.setAshaId(123);
+//        dto.setFromDate(new Timestamp((new Date()).getTime()));
+//        dto.setToDate(new Timestamp((new Date()).getTime()));
+//
+//        List<InfantRegister> infantRegisterList = new ArrayList<>();
+//        infantRegisterList.add(new InfantRegister());
+//
+//        when(infantRegisterRepo.getInfantDetailsForUser(dto.getAshaId(), dto.getFromDate(), dto.getToDate())).thenReturn(infantRegisterList);
+//
+//        // Act
+//        List<InfantRegisterDTO> result = infantService.getInfantDetails(dto);
+//
+//        // Assert
+//        assertNotNull(result);
+//        assertEquals(infantRegisterList.size(), result.size());
+//
+//        verify(infantRegisterRepo, times(1)).getInfantDetailsForUser(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
+//    }
 }

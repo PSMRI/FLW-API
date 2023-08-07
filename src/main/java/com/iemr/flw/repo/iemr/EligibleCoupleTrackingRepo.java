@@ -13,6 +13,8 @@ import java.util.List;
 public interface EligibleCoupleTrackingRepo extends JpaRepository<EligibleCoupleTracking, Long> {
 
     @Query(" SELECT ect FROM EligibleCoupleTracking ect WHERE ect.createdBy = :userId and ect.createdDate >= :fromDate and ect.createdDate <= :toDate")
-    List<EligibleCoupleTracking> getECTrackRecords(@Param("userId") Integer userId,
+    List<EligibleCoupleTracking> getECTrackRecords(@Param("userId") String userId,
                                                    @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
+
+    EligibleCoupleTracking findEligibleCoupleTrackingByEcrIdAndCreatedDate(Long ecrId, Timestamp createdDate);
 }

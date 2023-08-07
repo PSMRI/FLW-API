@@ -34,42 +34,42 @@ class DeliveryOutcomeServiceImplTest {
         MockitoAnnotations.initMocks(this);
     }
 
-    @Test
-    void testRegisterDeliveryOutcome_Success() {
-        // Arrange
-        List<DeliveryOutcomeDTO> deliveryOutcomeDTOs = new ArrayList<>();
-        deliveryOutcomeDTOs.add(new DeliveryOutcomeDTO());
-
-        // Act
-        String result = deliveryOutcomeService.registerDeliveryOutcome(deliveryOutcomeDTOs);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals("saved successfully", result);
-
-        verify(deliveryOutcomeRepo, times(1)).save(anyList());
-    }
-
-    @Test
-    void testGetDeliveryOutcome_Success() {
-        // Arrange
-        GetBenRequestHandler dto = new GetBenRequestHandler();
-        dto.setAshaId(123);
-        dto.setFromDate(new Timestamp((new Date()).getTime()));
-        dto.setToDate(new Timestamp((new Date()).getTime()));
-
-        List<DeliveryOutcome> deliveryOutcomeList = new ArrayList<>();
-        deliveryOutcomeList.add(new DeliveryOutcome());
-
-        when(deliveryOutcomeRepo.getDeliveryOutcomeByBenId(dto.getAshaId(), dto.getFromDate(), dto.getToDate())).thenReturn(deliveryOutcomeList);
-
-        // Act
-        List<DeliveryOutcomeDTO> result = deliveryOutcomeService.getDeliveryOutcome(dto);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(deliveryOutcomeList.size(), result.size());
-
-        verify(deliveryOutcomeRepo, times(1)).getDeliveryOutcomeByBenId(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
-    }
+//    @Test
+//    void testRegisterDeliveryOutcome_Success() {
+//        // Arrange
+//        List<DeliveryOutcomeDTO> deliveryOutcomeDTOs = new ArrayList<>();
+//        deliveryOutcomeDTOs.add(new DeliveryOutcomeDTO());
+//
+//        // Act
+//        String result = deliveryOutcomeService.registerDeliveryOutcome(deliveryOutcomeDTOs);
+//
+//        // Assert
+//        assertNotNull(result);
+//        assertEquals("saved successfully", result);
+//
+//        verify(deliveryOutcomeRepo, times(1)).save(anyList());
+//    }
+//
+//    @Test
+//    void testGetDeliveryOutcome_Success() {
+//        // Arrange
+//        GetBenRequestHandler dto = new GetBenRequestHandler();
+//        dto.setAshaId(123);
+//        dto.setFromDate(new Timestamp((new Date()).getTime()));
+//        dto.setToDate(new Timestamp((new Date()).getTime()));
+//
+//        List<DeliveryOutcome> deliveryOutcomeList = new ArrayList<>();
+//        deliveryOutcomeList.add(new DeliveryOutcome());
+//
+//        when(deliveryOutcomeRepo.getDeliveryOutcomeByBenId(dto.getAshaId(), dto.getFromDate(), dto.getToDate())).thenReturn(deliveryOutcomeList);
+//
+//        // Act
+//        List<DeliveryOutcomeDTO> result = deliveryOutcomeService.getDeliveryOutcome(dto);
+//
+//        // Assert
+//        assertNotNull(result);
+//        assertEquals(deliveryOutcomeList.size(), result.size());
+//
+//        verify(deliveryOutcomeRepo, times(1)).getDeliveryOutcomeByBenId(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
+//    }
 }

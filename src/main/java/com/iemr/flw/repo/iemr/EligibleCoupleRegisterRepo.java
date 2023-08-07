@@ -12,10 +12,10 @@ import java.util.List;
 @Repository
 public interface EligibleCoupleRegisterRepo extends JpaRepository<EligibleCoupleRegister, Long> {
 
-    @Query(" SELECT ecr FROM EligibleCoupleRegister ecr WHERE ecr.benId = :benId")
-    EligibleCoupleRegister getECRWithBen(@Param("benId") Long benId);
+//    @Query(" SELECT ecr FROM EligibleCoupleRegister ecr WHERE ecr.benId = :benId")
+    EligibleCoupleRegister findEligibleCoupleRegisterByBenIdAndCreatedDate(Long benId, Timestamp createdDate);
 
     @Query(" SELECT ecr FROM EligibleCoupleRegister ecr WHERE ecr.createdBy = :userId and ecr.createdDate >= :fromDate and ecr.createdDate <= :toDate")
-    List<EligibleCoupleRegister> getECRegRecords(@Param("userId") Integer userId,
+    List<EligibleCoupleRegister> getECRegRecords(@Param("userId") String userId,
                                                  @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 }

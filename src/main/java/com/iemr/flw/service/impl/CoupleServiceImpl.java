@@ -6,9 +6,11 @@ import com.iemr.flw.domain.iemr.EligibleCoupleTracking;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.EligibleCoupleDTO;
 import com.iemr.flw.dto.iemr.EligibleCoupleTrackingDTO;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.EligibleCoupleRegisterRepo;
 import com.iemr.flw.repo.iemr.EligibleCoupleTrackingRepo;
 import com.iemr.flw.service.CoupleService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,57 +27,71 @@ public class CoupleServiceImpl implements CoupleService {
     @Autowired
     private EligibleCoupleTrackingRepo eligibleCoupleTrackingRepo;
 
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
+
     ObjectMapper mapper = new ObjectMapper();
+
+    ModelMapper modelMapper = new ModelMapper();
 
     @Override
     public String registerEligibleCouple(List<EligibleCoupleDTO> eligibleCoupleDTOs) {
         try {
-            StringBuilder responseMessage = new StringBuilder();
             List<EligibleCoupleRegister> ecrList = new ArrayList<>();
             eligibleCoupleDTOs.forEach(it ->{
-                EligibleCoupleRegister eligibleCoupleRegister =
-                        mapper.convertValue(it, EligibleCoupleRegister.class);
-                EligibleCoupleRegister existingECR = eligibleCoupleRegisterRepo.getECRWithBen(eligibleCoupleRegister.getBenId());
+                EligibleCoupleRegister existingECR =
+                        eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+
                 if(existingECR != null) {
-                    responseMessage.append("Eligible couple with benId: " + eligibleCoupleRegister.getBenId() + " already exists \n");
+                    Long id = existingECR.getId();
+                    modelMapper.map(it, existingECR);
+                    existingECR.setId(id);
                 } else {
-                    ecrList.add(eligibleCoupleRegister);
+                    existingECR = new EligibleCoupleRegister();
+                    modelMapper.map(it, existingECR);
+                    existingECR.setId(null);
                 }
+                ecrList.add(existingECR);
             });
-            if (ecrList.size() > 0) {
-                eligibleCoupleRegisterRepo.save(ecrList);
-                responseMessage.append(ecrList.size() + " Eligible Couple Register Details Saved!");
-            }
-            return responseMessage.toString();
+            eligibleCoupleRegisterRepo.save(ecrList);
+            return "no of ecr details saved: " + eligibleCoupleDTOs.size();
         } catch (Exception e) {
-            // log
+            return "error while saving ecr details: " + e.getMessage();
         }
-        return null;
     }
 
     @Override
     public String registerEligibleCoupleTracking(List<EligibleCoupleTrackingDTO> eligibleCoupleTrackingDTOs) {
-
         try {
             List<EligibleCoupleTracking> ectList = new ArrayList<>();
             eligibleCoupleTrackingDTOs.forEach(it ->{
-                EligibleCoupleTracking eligibleCoupleTracking =
-                        mapper.convertValue(it, EligibleCoupleTracking.class);
-                ectList.add(eligibleCoupleTracking);
+                EligibleCoupleTracking ect =
+                        eligibleCoupleTrackingRepo.findEligibleCoupleTrackingByEcrIdAndCreatedDate(it.getEcrId(), it.getCreatedDate());
+
+                if(ect != null) {
+                    Long id = ect.getId();
+                    modelMapper.map(it, ect);
+                    ect.setId(id);
+                } else {
+                    ect = new EligibleCoupleTracking();
+                    modelMapper.map(it, ect);
+                    ect.setId(null);
+                }
+                ectList.add(ect);
             });
             eligibleCoupleTrackingRepo.save(ectList);
-            return "saved successfully";
+            return "no of ect details saved: " + eligibleCoupleTrackingDTOs.size();
         } catch (Exception e) {
-            // log
+            return "error while saving ect details: " + e.getMessage();
         }
-        return null;
     }
 
     @Override
     public List<EligibleCoupleDTO> getEligibleCoupleRegRecords(GetBenRequestHandler dto) {
         try{
+            String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<EligibleCoupleRegister> eligibleCoupleRegisterList =
-                    eligibleCoupleRegisterRepo.getECRegRecords(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
+                    eligibleCoupleRegisterRepo.getECRegRecords(user, dto.getFromDate(), dto.getToDate());
             return eligibleCoupleRegisterList.stream()
                     .map(eligibleCoupleRegister -> mapper.convertValue(eligibleCoupleRegister, EligibleCoupleDTO.class))
                     .collect(Collectors.toList());
@@ -89,8 +105,10 @@ public class CoupleServiceImpl implements CoupleService {
     public List<EligibleCoupleTrackingDTO> getEligibleCoupleTracking(GetBenRequestHandler dto) {
 
         try {
+            String user = beneficiaryRepo.getUserName(dto.getAshaId());
+
             List<EligibleCoupleTracking> eligibleCoupleTrackingList =
-                    eligibleCoupleTrackingRepo.getECTrackRecords(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
+                    eligibleCoupleTrackingRepo.getECTrackRecords(user, dto.getFromDate(), dto.getToDate());
             return eligibleCoupleTrackingList.stream()
                     .map(ect -> mapper.convertValue(ect, EligibleCoupleTrackingDTO.class))
                     .collect(Collectors.toList());
