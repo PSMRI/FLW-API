@@ -27,11 +27,33 @@ public class HRPregnantAssessDTO {
 
     private String medicalIssues;
 
+    private String badObstetric;
+
     private String pastCSection;
 
     private Boolean isHighRisk;
 
     private Timestamp visitDate;
+
+    private Timestamp lmpDate;
+
+    public Timestamp getLmpDate() {
+        return lmpDate;
+    }
+
+    public void setLmpDate(Timestamp lmpDate) {
+        this.lmpDate = lmpDate;
+    }
+
+    public Timestamp getEdd() {
+        return edd;
+    }
+
+    public void setEdd(Timestamp edd) {
+        this.edd = edd;
+    }
+
+    private Timestamp edd;
 
     public Long getId() {
         return id;
