@@ -1,6 +1,5 @@
 package com.iemr.flw.controller;
 
-import com.google.gson.Gson;
 import com.iemr.flw.dto.identity.CbacDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.service.CbacService;
@@ -25,9 +24,9 @@ public class CbacController {
 
     @CrossOrigin()
     @ApiOperation(value = "get cbac details of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/getAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/getAll"}, method = {RequestMethod.POST})
     public String getAllCbacDetailsByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                                     @RequestHeader(value = "Authorization") String Authorization) {
+                                            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("fetching All Cbac Details for user: " + requestDTO.getAshaId());
@@ -50,7 +49,7 @@ public class CbacController {
 
     @CrossOrigin()
     @ApiOperation(value = "save cbac details of all beneficiaries registered with given user name", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/saveAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/saveAll"}, method = {RequestMethod.POST})
     public String saveAllCbacDetailsByUserId(@RequestBody List<CbacDTO> cbacDTOS,
                                              @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();

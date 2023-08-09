@@ -20,15 +20,12 @@ import java.util.stream.Collectors;
 @Service
 public class ChildServiceImpl implements ChildService {
 
+    private final Logger logger = LoggerFactory.getLogger(CbacServiceImpl.class);
+    ModelMapper modelMapper = new ModelMapper();
     @Autowired
     private ChildRegisterRepo childRepo;
-
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
-
-    private final Logger logger = LoggerFactory.getLogger(CbacServiceImpl.class);
-
-    ModelMapper modelMapper = new ModelMapper();
 
     public String getByUserId(GetBenRequestHandler dto) {
         try {
@@ -40,7 +37,7 @@ public class ChildServiceImpl implements ChildService {
 //                ChildRegisterDTO childDTO = modelMapper.map(childRegister, ChildRegisterDTO.class);
 //                result.add(childDTO);
 //            });
-            List<ChildRegisterDTO> result =  childRegisterList.stream()
+            List<ChildRegisterDTO> result = childRegisterList.stream()
                     .map(childRegister -> modelMapper.map(childRegister, ChildRegisterDTO.class))
                     .collect(Collectors.toList());
             return new Gson().toJson(result);

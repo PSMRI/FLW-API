@@ -28,9 +28,9 @@ public class TBController {
 
     @CrossOrigin()
     @ApiOperation(value = "get tb screening data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/screening/getAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/screening/getAll"}, method = {RequestMethod.POST})
     public String getAllScreeningByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                               @RequestHeader(value = "Authorization") String Authorization) {
+                                          @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -54,9 +54,9 @@ public class TBController {
 
     @CrossOrigin()
     @ApiOperation(value = "save tb screening data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/screening/saveAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/screening/saveAll"}, method = {RequestMethod.POST})
     public String saveAllScreeningByUserId(@RequestBody TBScreeningRequestDTO requestDTO,
-                                                      @RequestHeader(value = "Authorization") String Authorization) {
+                                           @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -76,11 +76,12 @@ public class TBController {
         }
         return response.toString();
     }
+
     @CrossOrigin()
     @ApiOperation(value = "get tb suspected data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/suspected/getAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/suspected/getAll"}, method = {RequestMethod.POST})
     public String getAllSuspectedByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                            @RequestHeader(value = "Authorization") String Authorization) {
+                                          @RequestHeader(value = "Authorization") String Authorization) {
 
         OutputResponse response = new OutputResponse();
         try {
@@ -104,9 +105,9 @@ public class TBController {
 
     @CrossOrigin()
     @ApiOperation(value = "save tb suspected data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/suspected/saveAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/suspected/saveAll"}, method = {RequestMethod.POST})
     public String saveAllSuspectedByUserId(@RequestBody TBSuspectedRequestDTO requestDTO,
-                                                      @RequestHeader(value = "Authorization") String Authorization) {
+                                           @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 

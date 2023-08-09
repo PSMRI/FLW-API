@@ -23,7 +23,7 @@ public class HRPregnantTrackDTO {
 
     private String gestDiabetesMellitus;
 
-    private String  hypothyrodism;
+    private String hypothyrodism;
 
     private String polyhydromnios;
 

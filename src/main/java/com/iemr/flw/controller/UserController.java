@@ -22,9 +22,9 @@ public class UserController {
 
     @CrossOrigin()
     @ApiOperation(value = "get user Detail of userId and roleId", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/getUserDetail" }, method = { RequestMethod.GET })
+    @RequestMapping(value = {"/getUserDetail"}, method = {RequestMethod.GET})
     public ResponseEntity<?> getUserDetail(@RequestParam(value = "userId") Integer userId,
-                                               @RequestHeader(value = "Authorization") String Authorization) {
+                                           @RequestHeader(value = "Authorization") String Authorization) {
         try {
             UserServiceRoleDTO result = userService.getUserDetail(userId);
             return new ResponseEntity<>(

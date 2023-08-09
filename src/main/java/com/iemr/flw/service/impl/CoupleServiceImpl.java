@@ -21,28 +21,24 @@ import java.util.stream.Collectors;
 @Service
 public class CoupleServiceImpl implements CoupleService {
 
+    ObjectMapper mapper = new ObjectMapper();
+    ModelMapper modelMapper = new ModelMapper();
     @Autowired
     private EligibleCoupleRegisterRepo eligibleCoupleRegisterRepo;
-
     @Autowired
     private EligibleCoupleTrackingRepo eligibleCoupleTrackingRepo;
-
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
-
-    ObjectMapper mapper = new ObjectMapper();
-
-    ModelMapper modelMapper = new ModelMapper();
 
     @Override
     public String registerEligibleCouple(List<EligibleCoupleDTO> eligibleCoupleDTOs) {
         try {
             List<EligibleCoupleRegister> ecrList = new ArrayList<>();
-            eligibleCoupleDTOs.forEach(it ->{
+            eligibleCoupleDTOs.forEach(it -> {
                 EligibleCoupleRegister existingECR =
                         eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
 
-                if(existingECR != null) {
+                if (existingECR != null) {
                     Long id = existingECR.getId();
                     modelMapper.map(it, existingECR);
                     existingECR.setId(id);
@@ -64,11 +60,11 @@ public class CoupleServiceImpl implements CoupleService {
     public String registerEligibleCoupleTracking(List<EligibleCoupleTrackingDTO> eligibleCoupleTrackingDTOs) {
         try {
             List<EligibleCoupleTracking> ectList = new ArrayList<>();
-            eligibleCoupleTrackingDTOs.forEach(it ->{
+            eligibleCoupleTrackingDTOs.forEach(it -> {
                 EligibleCoupleTracking ect =
                         eligibleCoupleTrackingRepo.findEligibleCoupleTrackingByEcrIdAndCreatedDate(it.getEcrId(), it.getCreatedDate());
 
-                if(ect != null) {
+                if (ect != null) {
                     Long id = ect.getId();
                     modelMapper.map(it, ect);
                     ect.setId(id);
@@ -88,7 +84,7 @@ public class CoupleServiceImpl implements CoupleService {
 
     @Override
     public List<EligibleCoupleDTO> getEligibleCoupleRegRecords(GetBenRequestHandler dto) {
-        try{
+        try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<EligibleCoupleRegister> eligibleCoupleRegisterList =
                     eligibleCoupleRegisterRepo.getECRegRecords(user, dto.getFromDate(), dto.getToDate());

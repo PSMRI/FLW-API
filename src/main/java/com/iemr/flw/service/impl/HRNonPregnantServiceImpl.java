@@ -23,15 +23,12 @@ import java.util.List;
 @Service
 public class HRNonPregnantServiceImpl implements HighRiskNonPregnantService {
 
+    private final Logger logger = LoggerFactory.getLogger(HRNonPregnantServiceImpl.class);
+    private final ModelMapper modelMapper = new ModelMapper();
     @Autowired
     private HRNonPregnantAssessRepo assessRepo;
-
     @Autowired
     private HRNonPregnantTrackRepo trackRepo;
-
-    private final Logger logger = LoggerFactory.getLogger(HRNonPregnantServiceImpl.class);
-
-    private final ModelMapper modelMapper = new ModelMapper();
 
     @Override
     public String getAllAssessment(GetBenRequestHandler request) {

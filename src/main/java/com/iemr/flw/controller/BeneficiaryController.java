@@ -22,7 +22,7 @@ public class BeneficiaryController {
     @RequestMapping(value = "/getBeneficiaryData", method = RequestMethod.POST)
     @ApiOperation(value = "get beneficiary data for given user ", consumes = "application/json", produces = "application/json")
     public String getBeneficiaryDataByAsha(@RequestBody GetBenRequestHandler requestDTO,
-            @RequestHeader(value = "Authorization") String authorization) {
+                                           @RequestHeader(value = "Authorization") String authorization) {
         OutputResponse response = new OutputResponse();
         try {
             if (requestDTO != null) {

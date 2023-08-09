@@ -25,11 +25,9 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
 
     @Autowired
     PregnantWomanRegisterRepo pregnantWomanRegisterRepo;
-
+    ObjectMapper mapper = new ObjectMapper();
     @Autowired
     private ANCVisitRepo ancVisitRepo;
-
-    ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public String registerPregnantWoman(List<PregnantWomanDTO> pregnantWomanDTOs) {
@@ -37,10 +35,10 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
         try {
             List<PregnantWomanRegister> pwrList = new ArrayList<>();
             pregnantWomanDTOs.forEach(it -> {
-                        PregnantWomanRegister pregnantWomanRegister =
-                                mapper.convertValue(it, PregnantWomanRegister.class);
-                        pwrList.add(pregnantWomanRegister);
-                    });
+                PregnantWomanRegister pregnantWomanRegister =
+                        mapper.convertValue(it, PregnantWomanRegister.class);
+                pwrList.add(pregnantWomanRegister);
+            });
             pregnantWomanRegisterRepo.save(pwrList);
 
             logger.info("Pregnant Woman details saved");
@@ -53,7 +51,7 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
 
     @Override
     public List<PregnantWomanDTO> getPregnantWoman(GetBenRequestHandler dto) {
-        try{
+        try {
             List<PregnantWomanRegister> pregnantWomanRegisterList =
                     pregnantWomanRegisterRepo.getPWRWithBen(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
 

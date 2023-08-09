@@ -13,6 +13,8 @@ public class HRPregnantAssessDTO {
 
     private Long benId;
 
+    private Timestamp visitDate;
+
     private String noOfDeliveries;
 
     private String timeLessThan18m;
@@ -21,21 +23,19 @@ public class HRPregnantAssessDTO {
 
     private String age;
 
-    private String misCarriage;
+    private String rhNegative;
 
     private String homeDelivery;
 
-    private String medicalIssues;
-
     private String badObstetric;
 
-    private String pastCSection;
+    private String multiplePregnancy;
 
     private Boolean isHighRisk;
 
-    private Timestamp visitDate;
-
     private Timestamp lmpDate;
+
+    private Timestamp edd;
 
     public Timestamp getLmpDate() {
         return lmpDate;
@@ -53,7 +53,6 @@ public class HRPregnantAssessDTO {
         this.edd = edd;
     }
 
-    private Timestamp edd;
 
     public Long getId() {
         return id;
@@ -111,12 +110,28 @@ public class HRPregnantAssessDTO {
         this.age = age;
     }
 
-    public String getMisCarriage() {
-        return misCarriage;
+    public String getRhNegative() {
+        return rhNegative;
     }
 
-    public void setMisCarriage(String misCarriage) {
-        this.misCarriage = misCarriage;
+    public void setRhNegative(String rhNegative) {
+        this.rhNegative = rhNegative;
+    }
+
+    public String getBadObstetric() {
+        return badObstetric;
+    }
+
+    public void setBadObstetric(String badObstetric) {
+        this.badObstetric = badObstetric;
+    }
+
+    public String getMultiplePregnancy() {
+        return multiplePregnancy;
+    }
+
+    public void setMultiplePregnancy(String multiplePregnancy) {
+        this.multiplePregnancy = multiplePregnancy;
     }
 
     public String getHomeDelivery() {
@@ -125,22 +140,6 @@ public class HRPregnantAssessDTO {
 
     public void setHomeDelivery(String homeDelivery) {
         this.homeDelivery = homeDelivery;
-    }
-
-    public String getMedicalIssues() {
-        return medicalIssues;
-    }
-
-    public void setMedicalIssues(String medicalIssues) {
-        this.medicalIssues = medicalIssues;
-    }
-
-    public String getPastCSection() {
-        return pastCSection;
-    }
-
-    public void setPastCSection(String pastCSection) {
-        this.pastCSection = pastCSection;
     }
 
     public Boolean getHighRisk() {

@@ -16,17 +16,16 @@ import java.util.stream.Collectors;
 @Service
 public class InfantServiceImpl implements InfantService {
 
+    ObjectMapper mapper = new ObjectMapper();
     @Autowired
     private InfantRegisterRepo infantRegisterRepo;
-
-    ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public String registerInfant(List<InfantRegisterDTO> infantRegisterDTOs) {
 
         try {
             List<InfantRegister> infantList = new ArrayList<>();
-            infantRegisterDTOs.forEach(it ->{
+            infantRegisterDTOs.forEach(it -> {
                 InfantRegister infantRegister =
                         mapper.convertValue(it, InfantRegister.class);
                 infantList.add(infantRegister);
@@ -41,7 +40,7 @@ public class InfantServiceImpl implements InfantService {
 
     @Override
     public List<InfantRegisterDTO> getInfantDetails(GetBenRequestHandler dto) {
-        try{
+        try {
             List<InfantRegister> infantRegisterList =
                     infantRegisterRepo.getInfantDetailsForUser(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
 

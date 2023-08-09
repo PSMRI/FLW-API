@@ -19,12 +19,10 @@ import java.util.stream.Collectors;
 @Service
 public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
 
+    private final Logger logger = LoggerFactory.getLogger(DeliveryOutcomeServiceImpl.class);
+    ObjectMapper mapper = new ObjectMapper();
     @Autowired
     private DeliveryOutcomeRepo deliveryOutcomeRepo;
-
-    private final Logger logger = LoggerFactory.getLogger(DeliveryOutcomeServiceImpl.class);
-
-    ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public String registerDeliveryOutcome(List<DeliveryOutcomeDTO> deliveryOutcomeDTOS) {
@@ -48,7 +46,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
 
     @Override
     public List<DeliveryOutcomeDTO> getDeliveryOutcome(GetBenRequestHandler dto) {
-        try{
+        try {
             List<DeliveryOutcome> deliveryOutcomeList = deliveryOutcomeRepo.getDeliveryOutcomeByBenId(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
             return deliveryOutcomeList.stream()
                     .map(deliveryOutcome -> mapper.convertValue(deliveryOutcome, DeliveryOutcomeDTO.class))

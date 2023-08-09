@@ -32,11 +32,9 @@ import java.util.*;
 @PropertySource("classpath:application.properties")
 public class BeneficiaryServiceImpl implements BeneficiaryService {
 
+    private final Logger logger = LoggerFactory.getLogger(BeneficiaryServiceImpl.class);
     @Value("${door-to-door-page-size}")
     private String door_to_door_page_size;
-
-    private final Logger logger = LoggerFactory.getLogger(BeneficiaryServiceImpl.class);
-
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
 
@@ -391,9 +389,9 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         BenHealthIDDetails[].class);
                 for (BenHealthIDDetails value : ben) {
                     if (value.getHealthId() != null)
-                        resultMap.put("healthId",value.getHealthId());
+                        resultMap.put("healthId", value.getHealthId());
                     if (value.getHealthIdNumber() != null)
-                        resultMap.put("healthIdNumber",value.getHealthIdNumber());
+                        resultMap.put("healthIdNumber", value.getHealthIdNumber());
                 }
 
             }

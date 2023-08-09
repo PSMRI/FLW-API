@@ -19,12 +19,10 @@ import java.util.List;
 @Service
 public class TBScreeningServiceImpl implements TBScreeningService {
 
+    private final Logger logger = LoggerFactory.getLogger(TBScreeningServiceImpl.class);
     @Autowired
     private TBScreeningRepo tbScreeningRepo;
-
-    private final Logger logger = LoggerFactory.getLogger(TBScreeningServiceImpl.class);
-
-    private ModelMapper modelMapper = new ModelMapper();
+    private final ModelMapper modelMapper = new ModelMapper();
 
     @Override
     public String getByBenId(Long benId, String authorisation) throws Exception {

@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.iemr.flw.domain.identity.CbacAdditionalDetails;
 import com.iemr.flw.domain.identity.CbacDetails;
-import com.iemr.flw.dto.identity.CbacStatus;
 import com.iemr.flw.dto.identity.CbacDTO;
+import com.iemr.flw.dto.identity.CbacStatus;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.identity.CbacAdditionalDetailRepo;
@@ -29,30 +29,24 @@ import java.util.Map;
 @Service
 public class CbacServiceImpl implements CbacService {
 
+    private final Logger logger = LoggerFactory.getLogger(CbacServiceImpl.class);
+    ObjectMapper mapper = new ObjectMapper();
+    ModelMapper modelMapper = new ModelMapper();
     @Autowired
     private CbacRepo cbacRepo;
-
     @Autowired
     private CbacAdditionalDetailRepo cbacAddRepo;
-
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
-
     @Value("10")
     private String cbac_page_size;
-
-    private final Logger logger = LoggerFactory.getLogger(CbacServiceImpl.class);
-
-    ObjectMapper mapper = new ObjectMapper();
-
-    ModelMapper modelMapper = new ModelMapper();
 
     public String getByUserId(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             int pageSize = Integer.parseInt(cbac_page_size);
             int totalPage;
-            PageRequest pageRequest = new PageRequest(dto.getPageNo(),pageSize );
+            PageRequest pageRequest = new PageRequest(dto.getPageNo(), pageSize);
             Page<CbacDetails> cbacList = cbacRepo.getAllByCreatedBy(user, dto.getFromDate(), dto.getToDate(), pageRequest);
             totalPage = cbacList.getTotalPages();
 
@@ -66,7 +60,7 @@ public class CbacServiceImpl implements CbacService {
                 } else {
                     cbacDTO.setBeneficiaryId(0L);
                 }
-                if(cbacAdditionalDetails != null) {
+                if (cbacAdditionalDetails != null) {
                     cbacDTO.setCbacCloudy(cbacAdditionalDetails.getCbacCloudy());
                     cbacDTO.setCbacCloudyPosi(cbacAdditionalDetails.getCbacCloudyPosi());
                     cbacDTO.setCbacDiffreading(cbacAdditionalDetails.getCbacDiffreading());

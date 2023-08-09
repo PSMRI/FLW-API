@@ -1,7 +1,6 @@
 package com.iemr.flw.controller;
 
 import com.google.gson.Gson;
-import com.iemr.flw.dto.identity.CbacDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.EligibleCoupleDTO;
 import com.iemr.flw.dto.iemr.EligibleCoupleTrackingDTO;
@@ -30,9 +29,9 @@ public class CoupleController {
 
     @CrossOrigin()
     @ApiOperation(value = "save eligible couple registration details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/register/saveAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/register/saveAll"}, method = {RequestMethod.POST})
     public String saveEligibleCouple(@RequestBody List<EligibleCoupleDTO> eligibleCoupleDTOs,
-                                  @RequestHeader(value = "Authorization") String Authorization) {
+                                     @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("Saving All Eligible Couple Details");
@@ -53,9 +52,9 @@ public class CoupleController {
 
     @CrossOrigin()
     @ApiOperation(value = "save eligible couple tracking details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/tracking/saveAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/tracking/saveAll"}, method = {RequestMethod.POST})
     public String saveEligibleCoupleTracking(@RequestBody List<EligibleCoupleTrackingDTO> eligibleCoupleTrackingDTOs,
-                                     @RequestHeader(value = "Authorization") String Authorization) {
+                                             @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("Saving All Eligible Couple Tracking Details");
@@ -76,7 +75,7 @@ public class CoupleController {
 
     @CrossOrigin()
     @ApiOperation(value = "get List of eligible couple registration details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/register/getAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/register/getAll"}, method = {RequestMethod.POST})
     public String getEligibleCouple(@RequestBody GetBenRequestHandler requestDTO,
                                     @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
@@ -101,9 +100,9 @@ public class CoupleController {
 
     @CrossOrigin()
     @ApiOperation(value = "get List of eligible couple tracking details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/tracking/getAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/tracking/getAll"}, method = {RequestMethod.POST})
     public ResponseEntity<?> getEligibleCoupleTracking(@RequestBody GetBenRequestHandler requestDTO,
-                                               @RequestHeader(value = "Authorization") String Authorization) {
+                                                       @RequestHeader(value = "Authorization") String Authorization) {
         try {
             List<EligibleCoupleTrackingDTO> result = coupleService.getEligibleCoupleTracking(requestDTO);
             return new ResponseEntity<>(

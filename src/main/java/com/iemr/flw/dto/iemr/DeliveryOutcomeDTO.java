@@ -2,7 +2,6 @@ package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
 
-import javax.persistence.Column;
 import java.sql.Time;
 import java.sql.Timestamp;
 

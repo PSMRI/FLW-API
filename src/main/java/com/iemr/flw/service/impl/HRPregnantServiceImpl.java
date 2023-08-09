@@ -22,15 +22,12 @@ import java.util.List;
 @Service
 public class HRPregnantServiceImpl implements HighRiskPregnantService {
 
+    private final Logger logger = LoggerFactory.getLogger(HRPregnantServiceImpl.class);
     @Autowired
     private HRPregnantAssessRepo assessRepo;
-
     @Autowired
     private HRPregnantTrackRepo trackRepo;
-
-    private final Logger logger = LoggerFactory.getLogger(HRPregnantServiceImpl.class);
-
-    private ModelMapper modelMapper = new ModelMapper();
+    private final ModelMapper modelMapper = new ModelMapper();
 
 
     @Override

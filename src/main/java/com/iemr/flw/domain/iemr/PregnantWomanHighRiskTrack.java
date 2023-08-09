@@ -36,7 +36,7 @@ public class PregnantWomanHighRiskTrack {
     private String gestDiabetesMellitus;
 
     @Column(name = "hypothyrodism")
-    private String  hypothyrodism;
+    private String hypothyrodism;
 
     @Column(name = "polyhydromnios")
     private String polyhydromnios;

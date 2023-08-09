@@ -1,7 +1,6 @@
 package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
-import lombok.ToString;
 
 import java.io.Serializable;
 import java.sql.Timestamp;

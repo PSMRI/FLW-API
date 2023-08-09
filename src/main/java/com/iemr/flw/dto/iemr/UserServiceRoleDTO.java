@@ -2,7 +2,6 @@ package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Data
