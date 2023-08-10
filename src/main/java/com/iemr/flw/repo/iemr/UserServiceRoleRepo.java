@@ -13,7 +13,7 @@ import java.util.List;
 public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Integer> {
 
     @Query("SELECT new com.iemr.flw.dto.iemr.UserServiceRoleDTO(u.userId, u.name, u.userName, u.stateId, u.stateName, u.workingDistrictId," +
-            "u.workingDistrictName, u.serviceProviderId, u.roleId, u.roleName, u.providerServiceMapId, u.blockid," +
-            "u.blockname, u.villageid, u.villagename) FROM UserServiceRole u where u.userId = :userId")
+            "u.workingDistrictName, u.serviceProviderId, u.roleId, u.roleName, u.providerServiceMapId, u.blockid, u.blockname, u.villageid, " +
+            "u.villagename) FROM UserServiceRole u where u.userId = :userId and u.userServciceRoleDeleted = false and u.userDeleted = false")
     List<UserServiceRoleDTO> getUserRole(@Param("userId") Integer userId);
 }
