@@ -46,4 +46,8 @@ public class InfantRegisterDTO {
     private Timestamp createdDate;
 
     private String createdBy;
+
+    private Timestamp updatedDate;
+
+    private String updatedBy;
 }

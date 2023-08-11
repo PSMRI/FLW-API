@@ -70,4 +70,10 @@ public class InfantRegister {
 
     @Column(name = "created_by")
     private String createdBy;
+
+    @Column(name = "updated_date")
+    private Timestamp updatedDate;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
 }

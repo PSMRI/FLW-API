@@ -1,6 +1,7 @@
 package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.ANCVisit;
+import com.iemr.flw.domain.iemr.EligibleCoupleTracking;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +14,8 @@ import java.util.List;
 public interface ANCVisitRepo extends JpaRepository<ANCVisit, Long> {
 
     @Query(value = "SELECT anc FROM  ANCVisit anc WHERE anc.createdBy = :userId and anc.createdDate >= :fromDate and anc.createdDate <= :toDate")
-    List<ANCVisit> getANCForPW(@Param("userId") Integer userId,
+    List<ANCVisit> getANCForPW(@Param("userId") String userId,
                                @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
+
+    ANCVisit findANCVisitByBenIdAndCreatedDate(Long benId, Timestamp createdDate);
 }

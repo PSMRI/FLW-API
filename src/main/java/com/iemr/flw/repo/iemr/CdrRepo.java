@@ -1,6 +1,6 @@
 package com.iemr.flw.repo.iemr;
 
-import com.iemr.flw.domain.iemr.DeliveryOutcome;
+import com.iemr.flw.domain.iemr.CDR;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,9 +10,11 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @Repository
-public interface DeliveryOutcomeRepo extends JpaRepository<DeliveryOutcome, Long> {
+public interface CdrRepo extends JpaRepository<CDR, Long> {
 
-    @Query(" SELECT do FROM DeliveryOutcome do WHERE do.createdBy = :userId and do.createdDate >= :fromDate and do.createdDate <= :toDate")
-    List<DeliveryOutcome> getDeliveryOutcomeByBenId(@Param("userId") String userId,
+    CDR findCDRByBenIdAndCreatedDate(Long benId, Timestamp createdDate);
+
+    @Query(" SELECT c FROM CDR c WHERE c.createdBy = :userId and c.createdDate >= :fromDate and c.createdDate <= :toDate")
+    List<CDR> getAllCdrByBenId(@Param("userId") String userId,
                                                     @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 }

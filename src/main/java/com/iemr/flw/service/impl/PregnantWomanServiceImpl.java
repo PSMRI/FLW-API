@@ -2,13 +2,16 @@ package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.ANCVisit;
+import com.iemr.flw.domain.iemr.EligibleCoupleTracking;
 import com.iemr.flw.domain.iemr.PregnantWomanRegister;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.ANCVisitDTO;
 import com.iemr.flw.dto.iemr.PregnantWomanDTO;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.ANCVisitRepo;
 import com.iemr.flw.repo.iemr.PregnantWomanRegisterRepo;
 import com.iemr.flw.service.PregnantWomanService;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +28,16 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
 
     @Autowired
     PregnantWomanRegisterRepo pregnantWomanRegisterRepo;
-    ObjectMapper mapper = new ObjectMapper();
+
     @Autowired
     private ANCVisitRepo ancVisitRepo;
+
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
+
+    ObjectMapper mapper = new ObjectMapper();
+
+    ModelMapper modelMapper = new ModelMapper();
 
     @Override
     public String registerPregnantWoman(List<PregnantWomanDTO> pregnantWomanDTOs) {
@@ -35,14 +45,24 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
         try {
             List<PregnantWomanRegister> pwrList = new ArrayList<>();
             pregnantWomanDTOs.forEach(it -> {
-                PregnantWomanRegister pregnantWomanRegister =
-                        mapper.convertValue(it, PregnantWomanRegister.class);
-                pwrList.add(pregnantWomanRegister);
+                PregnantWomanRegister pwr =
+                        pregnantWomanRegisterRepo.findPregnantWomanRegisterByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+
+                if (pwr != null) {
+                    Long id = pwr.getId();
+                    modelMapper.map(it, pwr);
+                    pwr.setId(id);
+                } else {
+                    pwr = new PregnantWomanRegister();
+                    modelMapper.map(it, pwr);
+                    pwr.setId(null);
+                }
+                pwrList.add(pwr);
             });
             pregnantWomanRegisterRepo.save(pwrList);
 
-            logger.info("Pregnant Woman details saved");
-            return "saved successfully";
+            logger.info(pregnantWomanDTOs.size() + " Pregnant Woman details saved");
+            return "no of pwr details saved: " + pregnantWomanDTOs.size();
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -51,9 +71,10 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
 
     @Override
     public List<PregnantWomanDTO> getPregnantWoman(GetBenRequestHandler dto) {
-        try {
+        try{
+            String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<PregnantWomanRegister> pregnantWomanRegisterList =
-                    pregnantWomanRegisterRepo.getPWRWithBen(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
+                    pregnantWomanRegisterRepo.getPWRWithBen(user, dto.getFromDate(), dto.getToDate());
 
             return pregnantWomanRegisterList.stream()
                     .map(pregnantWomanRegister -> mapper.convertValue(pregnantWomanRegister, PregnantWomanDTO.class))
@@ -67,12 +88,13 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
     @Override
     public List<ANCVisitDTO> getANCVisits(GetBenRequestHandler dto) {
         try {
-            List<ANCVisit> ancVisits = ancVisitRepo.getANCForPW(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
+            String user = beneficiaryRepo.getUserName(dto.getAshaId());
+            List<ANCVisit> ancVisits = ancVisitRepo.getANCForPW(user, dto.getFromDate(), dto.getToDate());
             return ancVisits.stream()
                     .map(anc -> mapper.convertValue(anc, ANCVisitDTO.class))
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            // log
+            logger.error(e.getMessage());
         }
         return null;
     }
@@ -82,14 +104,25 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
         try {
             List<ANCVisit> ancList = new ArrayList<>();
             ancVisitDTOs.forEach(it -> {
-                ANCVisit ancVisit = mapper.convertValue(it, ANCVisit.class);
+                ANCVisit ancVisit =
+                        ancVisitRepo.findANCVisitByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+
+                if (ancVisit != null) {
+                    Long id = ancVisit.getId();
+                    modelMapper.map(it, ancVisit);
+                    ancVisit.setId(id);
+                } else {
+                    ancVisit = new ANCVisit();
+                    modelMapper.map(it, ancVisit);
+                    ancVisit.setId(null);
+                }
                 ancList.add(ancVisit);
             });
             ancVisitRepo.save(ancList);
             logger.info("ANC visit details saved");
-            return "saved successfully";
+            return "no of anc details saved: " + ancVisitDTOs.size();
         } catch (Exception e) {
-            logger.info("Saving ANC visit details failed");
+            logger.info("Saving ANC visit details failed with error : " + e.getMessage());
         }
         return null;
     }

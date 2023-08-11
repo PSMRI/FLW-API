@@ -14,8 +14,8 @@ public class EligibleCoupleTracking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "ecr_id")
-    private Long ecrId;
+    @Column(name = "ben_id")
+    private Long benId;
 
     @Column(name = "visit_date")
     private Timestamp visitDate;
@@ -40,4 +40,10 @@ public class EligibleCoupleTracking {
 
     @Column(name = "created_by")
     private String createdBy;
+
+    @Column(name = "updated_date")
+    private Timestamp updatedDate;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
 }

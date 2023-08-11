@@ -9,7 +9,7 @@ public class PregnantWomanDTO {
 
     private Long id;
 
-    private String benId;
+    private Long benId;
 
     private Timestamp registrationDate;
 
@@ -48,4 +48,8 @@ public class PregnantWomanDTO {
     private Timestamp createdDate;
 
     private String createdBy;
+
+    private Timestamp updatedDate;
+
+    private String updatedBy;
 }

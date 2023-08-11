@@ -67,4 +67,10 @@ public class DeliveryOutcome {
 
     @Column(name = "created_date")
     private Timestamp createdDate;
+
+    @Column(name = "updated_date")
+    private Timestamp updatedDate;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
 }

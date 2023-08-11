@@ -100,18 +100,27 @@ public class CoupleController {
 
     @CrossOrigin()
     @ApiOperation(value = "get List of eligible couple tracking details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = {"/tracking/getAll"}, method = {RequestMethod.POST})
-    public ResponseEntity<?> getEligibleCoupleTracking(@RequestBody GetBenRequestHandler requestDTO,
-                                                       @RequestHeader(value = "Authorization") String Authorization) {
+    @RequestMapping(value = { "/tracking/getAll" }, method = { RequestMethod.POST })
+    public String getEligibleCoupleTracking(@RequestBody GetBenRequestHandler requestDTO,
+                                               @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
         try {
-            List<EligibleCoupleTrackingDTO> result = coupleService.getEligibleCoupleTracking(requestDTO);
-            return new ResponseEntity<>(
-                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+            logger.info("fetching All Eligible Couple Tracking Details for user: " + requestDTO.getAshaId());
+            if (requestDTO != null) {
+                List<EligibleCoupleTrackingDTO> result = coupleService.getEligibleCoupleTracking(requestDTO);
+                String s = (new Gson()).toJson(result);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+
         } catch (Exception e) {
             logger.error("Error in fetching eligible couple tracking details, " + e);
-            return new ResponseEntity<>(
-                    new ApiResponse(false, "Error in fetching eligible couple tracking details, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+            response.setError(5000, "Error in fetching eligible couple tracking details : " + e);
         }
+        return response.toString();
     }
 
 }

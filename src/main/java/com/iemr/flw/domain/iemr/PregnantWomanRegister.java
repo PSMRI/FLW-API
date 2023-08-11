@@ -16,7 +16,7 @@ public class PregnantWomanRegister {
     private Long id;
 
     @Column(name = "ben_id")
-    private String benId;
+    private Long benId;
 
     @Column(name = "registration_date")
     private Timestamp registrationDate;
@@ -74,5 +74,11 @@ public class PregnantWomanRegister {
 
     @Column(name = "created_by")
     private String createdBy;
+
+    @Column(name = "updated_date")
+    private Timestamp updatedDate;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
 }
 

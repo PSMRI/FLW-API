@@ -9,7 +9,7 @@ public class ANCVisitDTO {
 
     private Long id;
 
-    private Long pwrId;
+    private Long benId;
 
     private Timestamp ancDate;
 
@@ -70,5 +70,9 @@ public class ANCVisitDTO {
     private Timestamp createdDate;
 
     private String createdBy;
+
+    private Timestamp updatedDate;
+
+    private String updatedBy;
 }
 

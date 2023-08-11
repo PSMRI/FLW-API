@@ -14,8 +14,8 @@ public class ANCVisit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "pwr_id")
-    private Long pwrId;
+    @Column(name = "ben_id")
+    private Long benId;
 
     @Column(name = "anc_date")
     private Timestamp ancDate;
@@ -106,4 +106,10 @@ public class ANCVisit {
 
     @Column(name = "created_by")
     private String createdBy;
+
+    @Column(name = "updated_date")
+    private Timestamp updatedDate;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
 }

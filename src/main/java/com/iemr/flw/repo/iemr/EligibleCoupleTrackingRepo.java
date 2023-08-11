@@ -16,5 +16,5 @@ public interface EligibleCoupleTrackingRepo extends JpaRepository<EligibleCouple
     List<EligibleCoupleTracking> getECTrackRecords(@Param("userId") String userId,
                                                    @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
-    EligibleCoupleTracking findEligibleCoupleTrackingByEcrIdAndCreatedDate(Long ecrId, Timestamp createdDate);
+    EligibleCoupleTracking findEligibleCoupleTrackingByBenIdAndCreatedDate(Long benId, Timestamp createdDate);
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.InfantRegister;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.InfantRegisterDTO;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.InfantRegisterRepo;
 import com.iemr.flw.service.InfantService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +17,13 @@ import java.util.stream.Collectors;
 @Service
 public class InfantServiceImpl implements InfantService {
 
-    ObjectMapper mapper = new ObjectMapper();
     @Autowired
     private InfantRegisterRepo infantRegisterRepo;
+
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
+
+    ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public String registerInfant(List<InfantRegisterDTO> infantRegisterDTOs) {
@@ -40,9 +45,10 @@ public class InfantServiceImpl implements InfantService {
 
     @Override
     public List<InfantRegisterDTO> getInfantDetails(GetBenRequestHandler dto) {
-        try {
+        try{
+            String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<InfantRegister> infantRegisterList =
-                    infantRegisterRepo.getInfantDetailsForUser(dto.getAshaId(), dto.getFromDate(), dto.getToDate());
+                    infantRegisterRepo.getInfantDetailsForUser(user, dto.getFromDate(), dto.getToDate());
 
             return infantRegisterList.stream()
                     .map(infantRegister -> mapper.convertValue(infantRegister, InfantRegisterDTO.class))

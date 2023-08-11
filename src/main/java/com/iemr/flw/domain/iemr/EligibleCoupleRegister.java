@@ -134,11 +134,9 @@ public class EligibleCoupleRegister {
     @Column(name = "created_by")
     private String createdBy;
 
-    public Long getBenId() {
-        return benId;
-    }
+    @Column(name = "updated_date")
+    private Timestamp updatedDate;
 
-    public void setBenId(Long benId) {
-        this.benId = benId;
-    }
+    @Column(name = "updated_by")
+    private String updatedBy;
 }

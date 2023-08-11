@@ -62,7 +62,7 @@ public class CoupleServiceImpl implements CoupleService {
             List<EligibleCoupleTracking> ectList = new ArrayList<>();
             eligibleCoupleTrackingDTOs.forEach(it -> {
                 EligibleCoupleTracking ect =
-                        eligibleCoupleTrackingRepo.findEligibleCoupleTrackingByEcrIdAndCreatedDate(it.getEcrId(), it.getCreatedDate());
+                        eligibleCoupleTrackingRepo.findEligibleCoupleTrackingByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
 
                 if (ect != null) {
                     Long id = ect.getId();

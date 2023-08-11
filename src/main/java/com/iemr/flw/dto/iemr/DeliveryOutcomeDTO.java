@@ -44,4 +44,8 @@ public class DeliveryOutcomeDTO {
     private Timestamp createdDate;
 
     private String createdBy;
+
+    private Timestamp updatedDate;
+
+    private String updatedBy;
 }
