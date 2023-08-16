@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "ANC_VISIT")
+@Table(name = "t_anc_visit")
 @Data
 public class ANCVisit {
 
@@ -20,8 +20,8 @@ public class ANCVisit {
     @Column(name = "anc_date")
     private Timestamp ancDate;
 
-    @Column(name = "anc_period")
-    private String ancPeriod;
+    @Column(name = "anc_visit")
+    private Integer ancVisit;
 
     @Column(name = "is_aborted")
     private Boolean isAborted;
@@ -48,7 +48,7 @@ public class ANCVisit {
     private Integer pulseRate;
 
     @Column(name = "hb")
-    private Integer hb;
+    private Double hb;
 
     @Column(name = "fundal_height")
     private Integer fundalHeight;
@@ -80,6 +80,9 @@ public class ANCVisit {
     @Column(name = "high_risk_condition")
     private String highRiskCondition;
 
+    @Column(name = "other_high_risk_condition")
+    private String otherHighRiskCondition;
+
     @Column(name = "referral_facility")
     private String referralFacility;
 
@@ -94,6 +97,9 @@ public class ANCVisit {
 
     @Column(name = "probable_cause_of_death")
     private String probableCauseOfDeath;
+
+    @Column(name = "other_cause_of_death")
+    private String otherCauseOfDeath;
 
     @Column(name = "death_date")
     private Timestamp deathDate;

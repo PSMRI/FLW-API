@@ -13,7 +13,7 @@ public class ANCVisitDTO {
 
     private Timestamp ancDate;
 
-    private String ancPeriod;
+    private Integer ancVisit;
 
     private Boolean isAborted;
 
@@ -31,7 +31,7 @@ public class ANCVisitDTO {
 
     private Integer pulseRate;
 
-    private Integer hb;
+    private Double hb;
 
     private Integer fundalHeight;
 
@@ -53,6 +53,8 @@ public class ANCVisitDTO {
 
     private String highRiskCondition;
 
+    private String otherHighRiskCondition;
+
     private String referralFacility;
 
     private Boolean isHrpConfirmed;
@@ -62,6 +64,8 @@ public class ANCVisitDTO {
     private Boolean isMaternalDeath;
 
     private String probableCauseOfDeath;
+
+    private String otherCauseOfDeath;
 
     private Timestamp deathDate;
 

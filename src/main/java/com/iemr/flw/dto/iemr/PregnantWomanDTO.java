@@ -35,15 +35,19 @@ public class PregnantWomanDTO {
 
     private Timestamp dateOfHivTest;
 
+    private Timestamp dateOfHbsAgTest;
+
     private String pastIllness;
+
+    private String otherPastIllness;
 
     private Boolean isFirstPregnancyTest;
 
     private Integer numPrevPregnancy;
 
-    private String hadPregCompilation;
+    private String pregComplication;
 
-    private String pregCompilation;
+    private String otherComplication;
 
     private Timestamp createdDate;
 

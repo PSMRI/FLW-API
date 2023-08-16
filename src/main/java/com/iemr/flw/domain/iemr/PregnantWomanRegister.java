@@ -54,8 +54,14 @@ public class PregnantWomanRegister {
     @Column(name = "date_of_hiv_test")
     private Timestamp dateOfHivTest;
 
+    @Column(name = "date_of_hbs_ag_test")
+    private Timestamp dateOfHbsAgTest;
+
     @Column(name = "past_illness")
     private String pastIllness;
+
+    @Column(name = "other_past_illness")
+    private String otherPastIllness;
 
     @Column(name = "is_first_pregnancy_test")
     private Boolean isFirstPregnancyTest;
@@ -63,11 +69,11 @@ public class PregnantWomanRegister {
     @Column(name = "num_prev_pregnancy")
     private Integer numPrevPregnancy;
 
-    @Column(name = "had_preg_compilation")
-    private String hadPregCompilation;
+    @Column(name = "preg_complication")
+    private String pregComplication;
 
-    @Column(name = "preg_compilation")
-    private String pregCompilation;
+    @Column(name = "other_complication")
+    private String otherComplication;
 
     @Column(name = "created_date")
     private Timestamp createdDate;
