@@ -2,6 +2,7 @@ package com.iemr.flw.service;
 
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.ANCVisitDTO;
+import com.iemr.flw.dto.iemr.PmsmaDTO;
 import com.iemr.flw.dto.iemr.PregnantWomanDTO;
 import org.springframework.stereotype.Component;
 
@@ -17,4 +18,8 @@ public interface PregnantWomanService {
     List<ANCVisitDTO> getANCVisits(GetBenRequestHandler dto);
 
     String saveANCVisit(List<ANCVisitDTO> ancVisitDTOs);
+
+    List<PmsmaDTO> getPmsmaRecords(GetBenRequestHandler dto);
+
+    String savePmsmaRecords(List<PmsmaDTO> pmsmaDTOs);
 }

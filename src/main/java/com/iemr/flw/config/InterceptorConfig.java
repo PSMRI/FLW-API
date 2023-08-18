@@ -30,11 +30,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @Configuration
 public class InterceptorConfig extends WebMvcConfigurerAdapter {
 
-    @Autowired
-    HTTPRequestInterceptor requestInterceptor;
-
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(requestInterceptor);
-    }
+//    @Autowired
+//    HTTPRequestInterceptor requestInterceptor;
+//
+//    @Override
+//    public void addInterceptors(InterceptorRegistry registry) {
+//        registry.addInterceptor(requestInterceptor);
+//    }
 }

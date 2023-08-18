@@ -3,12 +3,15 @@ package com.iemr.flw.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.ANCVisit;
 import com.iemr.flw.domain.iemr.EligibleCoupleTracking;
+import com.iemr.flw.domain.iemr.PMSMA;
 import com.iemr.flw.domain.iemr.PregnantWomanRegister;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.ANCVisitDTO;
+import com.iemr.flw.dto.iemr.PmsmaDTO;
 import com.iemr.flw.dto.iemr.PregnantWomanDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.ANCVisitRepo;
+import com.iemr.flw.repo.iemr.PmsmaRepo;
 import com.iemr.flw.repo.iemr.PregnantWomanRegisterRepo;
 import com.iemr.flw.service.PregnantWomanService;
 import org.modelmapper.ModelMapper;
@@ -34,6 +37,9 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
 
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
+
+    @Autowired
+    private PmsmaRepo pmsmaRepo;
 
     ObjectMapper mapper = new ObjectMapper();
 
@@ -123,6 +129,47 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
             return "no of anc details saved: " + ancVisitDTOs.size();
         } catch (Exception e) {
             logger.info("Saving ANC visit details failed with error : " + e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public List<PmsmaDTO> getPmsmaRecords(GetBenRequestHandler dto) {
+        try {
+            String user = beneficiaryRepo.getUserName(dto.getAshaId());
+            List<PMSMA> pmsmaList = pmsmaRepo.getAllPmsmaByAshaId(user, dto.getFromDate(), dto.getToDate());
+            return pmsmaList.stream()
+                    .map(pmsma -> mapper.convertValue(pmsma, PmsmaDTO.class))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public String savePmsmaRecords(List<PmsmaDTO> pmsmaDTOs) {
+        try {
+            List<PMSMA> pmsmaList = new ArrayList<>();
+            pmsmaDTOs.forEach(it -> {
+                PMSMA pmsma =
+                        pmsmaRepo.findPMSMAByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+                if (pmsma != null) {
+                    Long id = pmsma.getId();
+                    modelMapper.map(it, pmsma);
+                    pmsma.setId(id);
+                } else {
+                    pmsma = new PMSMA();
+                    modelMapper.map(it, pmsma);
+                    pmsma.setId(null);
+                }
+                pmsmaList.add(pmsma);
+            });
+            pmsmaRepo.save(pmsmaList);
+            logger.info("PMSMA details saved");
+            return "No. of PMSMA records saved: " + pmsmaDTOs.size();
+        } catch (Exception e) {
+            logger.info("Saving PMSMA details failed with error : " + e.getMessage());
         }
         return null;
     }

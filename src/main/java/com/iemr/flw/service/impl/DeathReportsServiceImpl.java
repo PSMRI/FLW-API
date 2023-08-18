@@ -108,7 +108,7 @@ public class DeathReportsServiceImpl implements DeathReportsService {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
 
             List<MDSR> mdsrList =
-                    mdsrRepo.getAllMdsrByBenId(user, dto.getFromDate(), dto.getToDate());
+                    mdsrRepo.getAllMdsrByAshaId(user, dto.getFromDate(), dto.getToDate());
             return mdsrList.stream()
                     .map(mdsr -> mapper.convertValue(mdsr, MdsrDTO.class))
                     .collect(Collectors.toList());
