@@ -265,7 +265,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         benDetailsRMNCH_OBJ.setUser_image(benImageOBJ.getUser_image());
 
                     // new fields
-                    benDetailsRMNCH_OBJ.setRegistrationDate(benDetailsOBJ.getCreatedDate());
+//                    benDetailsRMNCH_OBJ.setRegistrationDate(benDetailsOBJ.getCreatedDate());
                     if (benID != null)
                         benDetailsRMNCH_OBJ.setBenficieryid(benID.longValue());
 
