@@ -67,7 +67,7 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
             });
             pregnantWomanRegisterRepo.save(pwrList);
 
-            logger.info(pregnantWomanDTOs.size() + " Pregnant Woman details saved");
+            logger.info(pwrList.size() + " Pregnant Woman details saved");
             return "no of pwr details saved: " + pregnantWomanDTOs.size();
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -111,7 +111,7 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
             List<ANCVisit> ancList = new ArrayList<>();
             ancVisitDTOs.forEach(it -> {
                 ANCVisit ancVisit =
-                        ancVisitRepo.findANCVisitByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+                        ancVisitRepo.findANCVisitByBenIdAndCreatedDateAndAncVisit(it.getBenId(), it.getCreatedDate(), it.getAncVisit());
 
                 if (ancVisit != null) {
                     Long id = ancVisit.getId();
@@ -126,7 +126,7 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
             });
             ancVisitRepo.save(ancList);
             logger.info("ANC visit details saved");
-            return "no of anc details saved: " + ancVisitDTOs.size();
+            return "no of anc details saved: " + ancList.size();
         } catch (Exception e) {
             logger.info("Saving ANC visit details failed with error : " + e.getMessage());
         }
@@ -167,7 +167,7 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
             });
             pmsmaRepo.save(pmsmaList);
             logger.info("PMSMA details saved");
-            return "No. of PMSMA records saved: " + pmsmaDTOs.size();
+            return "No. of PMSMA records saved: " + pmsmaList.size();
         } catch (Exception e) {
             logger.info("Saving PMSMA details failed with error : " + e.getMessage());
         }

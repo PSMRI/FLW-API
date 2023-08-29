@@ -2,7 +2,6 @@ package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
 
-import java.sql.Time;
 import java.sql.Timestamp;
 
 @Data
@@ -13,7 +12,7 @@ public class DeliveryOutcomeDTO {
 
     private Timestamp dateOfDelivery;
 
-    private Time timeOfDelivery;
+    private String timeOfDelivery;
 
     private String placeOfDelivery;
 
@@ -37,7 +36,7 @@ public class DeliveryOutcomeDTO {
 
     private Timestamp dateOfDischarge;
 
-    private Time timeOfDischarge;
+    private String timeOfDischarge;
 
     private Boolean isJSYBenificiary;
 
