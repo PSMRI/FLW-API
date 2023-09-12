@@ -28,6 +28,7 @@ public class PregnantWomanDTO {
     private Integer numPrevPregnancy;
     private String pregComplication;
     private String otherComplication;
+    private Boolean isActive;
     private Timestamp createdDate;
     private String createdBy;
     private Timestamp updatedDate;

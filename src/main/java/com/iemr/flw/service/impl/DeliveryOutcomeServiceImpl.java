@@ -30,8 +30,8 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
 
-    @Autowired
-    private EligibleCoupleRegisterRepo ecrRepo;
+//    @Autowired
+//    private EligibleCoupleRegisterRepo ecrRepo;
 
     private final Logger logger = LoggerFactory.getLogger(DeliveryOutcomeServiceImpl.class);
 
@@ -44,14 +44,14 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
 
         try {
             List<DeliveryOutcome> delOutList = new ArrayList<>();
-            List<EligibleCoupleRegister> ecrList = new ArrayList<>();
+//            List<EligibleCoupleRegister> ecrList = new ArrayList<>();
             deliveryOutcomeDTOS.forEach(it -> {
                 DeliveryOutcome deliveryoutcome = deliveryOutcomeRepo.findDeliveryOutcomeByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
 
-                EligibleCoupleRegister ecr = ecrRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
-                ecr.setNumLiveChildren(it.getLiveBirth() + ecr.getNumLiveChildren());
-                ecr.setNumChildren(it.getDeliveryOutcome() + ecr.getNumChildren());
-                ecrList.add(ecr);
+//                EligibleCoupleRegister ecr = ecrRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
+//                ecr.setNumLiveChildren(it.getLiveBirth() + ecr.getNumLiveChildren());
+//                ecr.setNumChildren(it.getDeliveryOutcome() + ecr.getNumChildren());
+//                ecrList.add(ecr);
 
                 if (deliveryoutcome != null) {
                     Long id = deliveryoutcome.getId();
@@ -65,7 +65,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                 delOutList.add(deliveryoutcome);
             });
             deliveryOutcomeRepo.save(delOutList);
-            ecrRepo.save(ecrList);
+//            ecrRepo.save(ecrList);
             return "no of delivery outcome details saved: " + delOutList.size();
         } catch (Exception e) {
             return "error while saving delivery outcome details: " + e.getMessage();
