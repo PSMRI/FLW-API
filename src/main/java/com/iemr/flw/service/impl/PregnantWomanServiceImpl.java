@@ -1,18 +1,13 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.flw.domain.iemr.ANCVisit;
-import com.iemr.flw.domain.iemr.EligibleCoupleTracking;
-import com.iemr.flw.domain.iemr.PMSMA;
-import com.iemr.flw.domain.iemr.PregnantWomanRegister;
+import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.ANCVisitDTO;
 import com.iemr.flw.dto.iemr.PmsmaDTO;
 import com.iemr.flw.dto.iemr.PregnantWomanDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
-import com.iemr.flw.repo.iemr.ANCVisitRepo;
-import com.iemr.flw.repo.iemr.PmsmaRepo;
-import com.iemr.flw.repo.iemr.PregnantWomanRegisterRepo;
+import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.PregnantWomanService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -20,7 +15,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +31,12 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
 
     @Autowired
     private ANCVisitRepo ancVisitRepo;
+
+    @Autowired
+    private AncCareRepo ancCareRepo;
+
+    @Autowired
+    private BenVisitDetailsRepo benVisitDetailsRepo;
 
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
@@ -68,7 +71,7 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
             pregnantWomanRegisterRepo.save(pwrList);
 
             logger.info(pwrList.size() + " Pregnant Woman details saved");
-            return "no of pwr details saved: " + pregnantWomanDTOs.size();
+            return "no of pwr details saved: " + pwrList.size();
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -109,6 +112,7 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
     public String saveANCVisit(List<ANCVisitDTO> ancVisitDTOs) {
         try {
             List<ANCVisit> ancList = new ArrayList<>();
+            List<AncCare> ancCareList = new ArrayList<>();
             ancVisitDTOs.forEach(it -> {
                 ANCVisit ancVisit =
                         ancVisitRepo.findANCVisitByBenIdAndCreatedDateAndAncVisit(it.getBenId(), it.getCreatedDate(), it.getAncVisit());
@@ -121,10 +125,40 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
                     ancVisit = new ANCVisit();
                     modelMapper.map(it, ancVisit);
                     ancVisit.setId(null);
+
+                    Long benRegId = beneficiaryRepo.getRegIDFromBenId(it.getBenId());
+
+                    // Saving data in BenVisitDetails table
+                    PregnantWomanRegister pwr = pregnantWomanRegisterRepo.findPregnantWomanRegisterByBenId(it.getBenId());
+                    BenVisitDetail benVisitDetail = new BenVisitDetail();
+                    modelMapper.map(it, benVisitDetail);
+                    benVisitDetail.setBeneficiaryRegId(benRegId);
+                    benVisitDetail.setVisitCategory("ANC");
+                    benVisitDetail.setVisitReason("Follow Up");
+                    benVisitDetail.setPregnancyStatus("Yes");
+                    benVisitDetail.setModifiedBy(it.getUpdatedBy());
+                    benVisitDetail.setLastModDate(it.getUpdatedDate());
+                    benVisitDetail = benVisitDetailsRepo.save(benVisitDetail);
+
+                    // Saving Data in AncCare table
+                    AncCare ancCare = new AncCare();
+                    modelMapper.map(it, ancCare);
+                    ancCare.setBenVisitId(benVisitDetail.getBenVisitId());
+                    ancCare.setBeneficiaryRegId(benRegId);
+                    ancCare.setLastMenstrualPeriodLmp(pwr.getLmpDate());
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime(pwr.getLmpDate());
+                    cal.add(Calendar.DAY_OF_WEEK, 280);
+                    ancCare.setExpectedDateofDelivery(new Timestamp(cal.getTime().getTime()));
+                    ancCare.setTrimesterNumber(it.getAncVisit().shortValue());
+                    ancCare.setModifiedBy(it.getUpdatedBy());
+                    ancCare.setLastModDate(it.getUpdatedDate());
+                    ancCareList.add(ancCare);
                 }
                 ancList.add(ancVisit);
             });
             ancVisitRepo.save(ancList);
+            ancCareRepo.save(ancCareList);
             logger.info("ANC visit details saved");
             return "no of anc details saved: " + ancList.size();
         } catch (Exception e) {

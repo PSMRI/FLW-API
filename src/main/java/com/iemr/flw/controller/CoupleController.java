@@ -80,8 +80,8 @@ public class CoupleController {
                                     @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
-            logger.info("fetching All Eligible Couple Details for user: " + requestDTO.getAshaId());
             if (requestDTO != null) {
+                logger.info("fetching All Eligible Couple Details for user: " + requestDTO.getAshaId());
                 List<EligibleCoupleDTO> result = coupleService.getEligibleCoupleRegRecords(requestDTO);
                 String s = (new Gson()).toJson(result);
                 if (s != null)
@@ -105,8 +105,8 @@ public class CoupleController {
                                                @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
-            logger.info("fetching All Eligible Couple Tracking Details for user: " + requestDTO.getAshaId());
             if (requestDTO != null) {
+                logger.info("fetching All Eligible Couple Tracking Details for user: " + requestDTO.getAshaId());
                 List<EligibleCoupleTrackingDTO> result = coupleService.getEligibleCoupleTracking(requestDTO);
                 String s = (new Gson()).toJson(result);
                 if (s != null)

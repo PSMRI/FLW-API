@@ -61,6 +61,7 @@ public class CbacServiceImpl implements CbacService {
                     cbacDTO.setBeneficiaryId(0L);
                 }
                 if (cbacAdditionalDetails != null) {
+                    cbacDTO.setFilledDate(cbacAdditionalDetails.getFilledDate());
                     cbacDTO.setCbacCloudy(cbacAdditionalDetails.getCbacCloudy());
                     cbacDTO.setCbacCloudyPosi(cbacAdditionalDetails.getCbacCloudyPosi());
                     cbacDTO.setCbacDiffreading(cbacAdditionalDetails.getCbacDiffreading());

@@ -3,6 +3,7 @@ package com.iemr.flw.domain.identity;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.sql.Timestamp;
 
 @Entity
 @Table(name = "i_cbac_additional_details", schema = "db_identity")
@@ -12,6 +13,7 @@ public class CbacAdditionalDetails {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long cbacAdditionalDetailId;
     private Long cbacDetailsId;
+    private Timestamp filledDate;
     private String cbacCloudy;
     private Integer cbacCloudyPosi;
     private String cbacDiffreading;

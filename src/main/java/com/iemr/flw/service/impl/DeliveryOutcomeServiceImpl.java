@@ -2,11 +2,13 @@ package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.DeliveryOutcome;
+import com.iemr.flw.domain.iemr.EligibleCoupleRegister;
 import com.iemr.flw.domain.iemr.EligibleCoupleTracking;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.DeliveryOutcomeDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.DeliveryOutcomeRepo;
+import com.iemr.flw.repo.iemr.EligibleCoupleRegisterRepo;
 import com.iemr.flw.service.DeliveryOutcomeService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -28,6 +30,9 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
 
+    @Autowired
+    private EligibleCoupleRegisterRepo ecrRepo;
+
     private final Logger logger = LoggerFactory.getLogger(DeliveryOutcomeServiceImpl.class);
 
     ObjectMapper mapper = new ObjectMapper();
@@ -39,8 +44,14 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
 
         try {
             List<DeliveryOutcome> delOutList = new ArrayList<>();
+            List<EligibleCoupleRegister> ecrList = new ArrayList<>();
             deliveryOutcomeDTOS.forEach(it -> {
                 DeliveryOutcome deliveryoutcome = deliveryOutcomeRepo.findDeliveryOutcomeByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+
+                EligibleCoupleRegister ecr = ecrRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
+                ecr.setNumLiveChildren(it.getLiveBirth() + ecr.getNumLiveChildren());
+                ecr.setNumChildren(it.getDeliveryOutcome() + ecr.getNumChildren());
+                ecrList.add(ecr);
 
                 if (deliveryoutcome != null) {
                     Long id = deliveryoutcome.getId();
@@ -54,7 +65,8 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                 delOutList.add(deliveryoutcome);
             });
             deliveryOutcomeRepo.save(delOutList);
-            return "no of delivery outcome details saved: " + deliveryOutcomeDTOS.size();
+            ecrRepo.save(ecrList);
+            return "no of delivery outcome details saved: " + delOutList.size();
         } catch (Exception e) {
             return "error while saving delivery outcome details: " + e.getMessage();
         }
@@ -63,7 +75,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
     public List<DeliveryOutcomeDTO> getDeliveryOutcome(GetBenRequestHandler dto) {
         try{
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
-            List<DeliveryOutcome> deliveryOutcomeList = deliveryOutcomeRepo.getDeliveryOutcomeByBenId(user, dto.getFromDate(), dto.getToDate());
+            List<DeliveryOutcome> deliveryOutcomeList = deliveryOutcomeRepo.getDeliveryOutcomeByAshaId(user, dto.getFromDate(), dto.getToDate());
             return deliveryOutcomeList.stream()
                     .map(deliveryOutcome -> mapper.convertValue(deliveryOutcome, DeliveryOutcomeDTO.class))
                     .collect(Collectors.toList());

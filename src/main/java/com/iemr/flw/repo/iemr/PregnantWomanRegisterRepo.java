@@ -19,4 +19,6 @@ public interface PregnantWomanRegisterRepo extends JpaRepository<PregnantWomanRe
 
     PregnantWomanRegister findPregnantWomanRegisterByBenIdAndCreatedDate(Long benId, Timestamp createdDate);
 
+    PregnantWomanRegister findPregnantWomanRegisterByBenId(Long benId);
+
 }
