@@ -11,6 +11,7 @@ public class CbacDTO {
     private Long cbacDetailsId;
     private Long beneficiaryRegId;
     private Long beneficiaryId;
+    private Timestamp filledDate;
     private String cbacAge;
     private Integer cbacAgePosi;
     private String cbacAlcohol;
@@ -178,6 +179,14 @@ public class CbacDTO {
 
     public void setBeneficiaryId(Long beneficiaryId) {
         this.beneficiaryId = beneficiaryId;
+    }
+
+    public Timestamp getFilledDate() {
+        return filledDate;
+    }
+
+    public void setFilledDate(Timestamp filledDate) {
+        this.filledDate = filledDate;
     }
 
     public String getCbacAge() {

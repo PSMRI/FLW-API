@@ -1,12 +1,14 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iemr.flw.domain.iemr.DeliveryOutcome;
 import com.iemr.flw.domain.iemr.InfantRegister;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.InfantRegisterDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.InfantRegisterRepo;
 import com.iemr.flw.service.InfantService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,22 +27,32 @@ public class InfantServiceImpl implements InfantService {
 
     ObjectMapper mapper = new ObjectMapper();
 
+    ModelMapper modelMapper = new ModelMapper();
+
     @Override
     public String registerInfant(List<InfantRegisterDTO> infantRegisterDTOs) {
 
         try {
             List<InfantRegister> infantList = new ArrayList<>();
             infantRegisterDTOs.forEach(it -> {
-                InfantRegister infantRegister =
-                        mapper.convertValue(it, InfantRegister.class);
+                InfantRegister infantRegister = infantRegisterRepo.findInfantRegisterByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+
+                if (infantRegister != null) {
+                    Long id = infantRegister.getId();
+                    modelMapper.map(it, infantRegister);
+                    infantRegister.setId(id);
+                } else {
+                    infantRegister = new InfantRegister();
+                    modelMapper.map(it, infantRegister);
+                    infantRegister.setId(null);
+                }
                 infantList.add(infantRegister);
             });
             infantRegisterRepo.save(infantList);
-            return "saved successfully";
+            return "no of infant register details saved: " + infantList.size();
         } catch (Exception e) {
-            // log
+            return "error while saving infant register details: " + e.getMessage();
         }
-        return null;
     }
 
     @Override

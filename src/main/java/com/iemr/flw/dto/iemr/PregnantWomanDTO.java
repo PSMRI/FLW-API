@@ -8,46 +8,27 @@ import java.sql.Timestamp;
 public class PregnantWomanDTO {
 
     private Long id;
-
     private Long benId;
-
     private Timestamp registrationDate;
-
     private Long rchId;
-
     private Long mcpCardId;
-
     private Timestamp lmpDate;
-
     private String bloodGroup;
-
     private Integer weight;
-
     private Integer height;
-
     private String rprTestResult;
-
     private Timestamp dateOfRprTest;
-
     private String hivTestResult;
-
     private String hbsAgTestResult;
-
     private Timestamp dateOfHivTest;
-
     private Timestamp dateOfHbsAgTest;
-
     private String pastIllness;
-
     private String otherPastIllness;
-
     private Boolean isFirstPregnancyTest;
-
     private Integer numPrevPregnancy;
-
     private String pregComplication;
-
     private String otherComplication;
+    private Boolean isActive;
 
     private String rhNegative;
 
@@ -56,10 +37,7 @@ public class PregnantWomanDTO {
     private String badObstetric;
 
     private Timestamp createdDate;
-
     private String createdBy;
-
     private Timestamp updatedDate;
-
     private String updatedBy;
 }

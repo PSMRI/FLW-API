@@ -3,7 +3,6 @@ package com.iemr.flw.domain.iemr;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.sql.Time;
 import java.sql.Timestamp;
 
 @Entity
@@ -21,7 +20,7 @@ public class DeliveryOutcome {
     private Timestamp dateOfDelivery;
 
     @Column(name = "delivery_time")
-    private Time timeOfDelivery;
+    private String timeOfDelivery;
 
     @Column(name = "delivery_place")
     private String placeOfDelivery;
@@ -57,7 +56,7 @@ public class DeliveryOutcome {
     private Timestamp dateOfDischarge;
 
     @Column(name = "discharge_time")
-    private Time timeOfDischarge;
+    private String timeOfDischarge;
 
     @Column(name = "is_jsybeneficiary")
     private Boolean isJSYBenificiary;

@@ -30,7 +30,7 @@ public class EligibleCoupleRegister {
     private Long aadhaarNumber;
 
     @Column(name = "bank_account_number")
-    private Long bankAccountNumber;
+    private String bankAccountNumber;
 
     @Column(name = "bank_name")
     private String bankName;

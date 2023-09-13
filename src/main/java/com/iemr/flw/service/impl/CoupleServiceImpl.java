@@ -11,6 +11,8 @@ import com.iemr.flw.repo.iemr.EligibleCoupleRegisterRepo;
 import com.iemr.flw.repo.iemr.EligibleCoupleTrackingRepo;
 import com.iemr.flw.service.CoupleService;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +31,8 @@ public class CoupleServiceImpl implements CoupleService {
     private EligibleCoupleTrackingRepo eligibleCoupleTrackingRepo;
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
+
+    private final Logger logger = LoggerFactory.getLogger(CoupleServiceImpl.class);
 
     @Override
     public String registerEligibleCouple(List<EligibleCoupleDTO> eligibleCoupleDTOs) {
@@ -50,7 +54,7 @@ public class CoupleServiceImpl implements CoupleService {
                 ecrList.add(existingECR);
             });
             eligibleCoupleRegisterRepo.save(ecrList);
-            return "no of ecr details saved: " + eligibleCoupleDTOs.size();
+            return "no of ecr details saved: " + ecrList.size();
         } catch (Exception e) {
             return "error while saving ecr details: " + e.getMessage();
         }
@@ -76,7 +80,7 @@ public class CoupleServiceImpl implements CoupleService {
                 ectList.add(ect);
             });
             eligibleCoupleTrackingRepo.save(ectList);
-            return "no of ect details saved: " + eligibleCoupleTrackingDTOs.size();
+            return "no of ect details saved: " + ectList.size();
         } catch (Exception e) {
             return "error while saving ect details: " + e.getMessage();
         }
@@ -92,7 +96,7 @@ public class CoupleServiceImpl implements CoupleService {
                     .map(eligibleCoupleRegister -> mapper.convertValue(eligibleCoupleRegister, EligibleCoupleDTO.class))
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            // log
+            logger.error(e.getMessage());
         }
         return null;
     }
@@ -109,7 +113,7 @@ public class CoupleServiceImpl implements CoupleService {
                     .map(ect -> mapper.convertValue(ect, EligibleCoupleTrackingDTO.class))
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            // log
+            logger.error(e.getMessage());
         }
         return null;
     }

@@ -1,6 +1,7 @@
 package com.iemr.flw.controller;
 
 import com.google.gson.Gson;
+import com.iemr.flw.domain.iemr.PMSMA;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.ChildService;
@@ -272,6 +273,56 @@ public class MaternalHealthController {
         } catch (Exception e) {
             logger.error("Error in save child register details : " + e);
             response.setError(5000, "Error in save child register details : " + e);
+        }
+        return response.toString();
+    }
+
+    @CrossOrigin()
+    @ApiOperation(value = "get PMSMA data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/pmsma/getAll"}, method = {RequestMethod.POST})
+    public String getAllPmsmaDetails(@RequestBody GetBenRequestHandler requestDTO,
+                                             @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+            if (requestDTO != null) {
+                logger.info("fetch pmsma request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                List<PmsmaDTO> result = pregnantWomanService.getPmsmaRecords(requestDTO);
+                String s = (new Gson()).toJson(result);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in pmsma get data : " + e);
+            response.setError(5000, "Error in pmsma get data : " + e);
+        }
+        return response.toString();
+    }
+
+
+    @CrossOrigin()
+    @ApiOperation(value = "save PMSMA data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/pmsma/saveAll"}, method = {RequestMethod.POST})
+    public String saveAllPmsmaRecords(@RequestBody List<PmsmaDTO> pmsmaDTOs,
+                                      @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+
+            if (pmsmaDTOs.size() != 0) {
+                logger.info("Saving PMSMA Records with timestamp : " + new Timestamp(System.currentTimeMillis()));
+                String s = pregnantWomanService.savePmsmaRecords(pmsmaDTOs);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "Error in save pmsma details");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in save pmsma details : " + e);
+            response.setError(5000, "Error in save pmsma details : " + e);
         }
         return response.toString();
     }

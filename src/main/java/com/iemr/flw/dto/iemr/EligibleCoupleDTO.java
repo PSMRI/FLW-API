@@ -20,7 +20,7 @@ public class EligibleCoupleDTO implements Serializable {
 
     private Long aadhaarNumber;
 
-    private Long bankAccountNumber;
+    private String bankAccountNumber;
 
     private String bankName;
 
