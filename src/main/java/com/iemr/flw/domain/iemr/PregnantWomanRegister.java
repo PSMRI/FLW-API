@@ -75,6 +75,15 @@ public class PregnantWomanRegister {
     @Column(name = "other_complication")
     private String otherComplication;
 
+    @Column(name = "rh_negative_check")
+    private String rhNegative;
+
+    @Column(name = "home_delivery_check")
+    private String homeDelivery;
+
+    @Column(name = "bad_obstetric_check")
+    private String badObstetric;
+
     @Column(name = "created_date")
     private Timestamp createdDate;
 

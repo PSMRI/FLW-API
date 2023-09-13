@@ -84,6 +84,16 @@ public class EligibleCoupleDTO implements Serializable {
 
     private String gender9;
 
+    private String misCarriage;
+
+    private String homeDelivery;
+
+    private String medicalIssues;
+
+    private String pastCSection;
+
+    private Boolean isHighRisk;
+
 //    private Integer eighthAndNinthChildGap;
 
     private Timestamp createdDate;

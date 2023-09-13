@@ -49,6 +49,12 @@ public class PregnantWomanDTO {
 
     private String otherComplication;
 
+    private String rhNegative;
+
+    private String homeDelivery;
+
+    private String badObstetric;
+
     private Timestamp createdDate;
 
     private String createdBy;

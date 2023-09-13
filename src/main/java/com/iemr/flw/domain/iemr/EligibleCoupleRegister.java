@@ -125,6 +125,22 @@ public class EligibleCoupleRegister {
     @Column(name = "gender9")
     private String gender9;
 
+    @Column(name = "mis_carriage_check")
+    private String misCarriage;
+
+    @Column(name = "home_delivery_check")
+    private String homeDelivery;
+
+    @Column(name = "medical_issues_check")
+    private String medicalIssues;
+
+    @Column(name = "past_csection_check")
+    private String pastCSection;
+
+
+    @Column(name = "is_high_risk")
+    private Boolean isHighRisk;
+
 //    @Column(name = "eighth_and_ninth_child_gap")
 //    private Integer eighthAndNinthChildGap;
 

@@ -46,4 +46,7 @@ public class NonPregnantWomanHighRiskTrack {
 
     @Column(name = "is_pregnant")
     private String isPregnant;
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted;
 }

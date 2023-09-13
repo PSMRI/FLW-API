@@ -77,6 +77,57 @@ public class HighRiskController {
     }
 
     @CrossOrigin()
+    @ApiOperation(value = "get high risk pregnant assessment data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/assess/getAll"}, method = {RequestMethod.POST})
+    public String getAllAssessByUserId(@RequestBody GetBenRequestHandler requestDTO,
+                                               @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                String s = highRiskPregnantService.getAllAssessments(requestDTO);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in high risk pregnant assessment data : " + e);
+            response.setError(5000, "Error in high risk pregnant assessment data : " + e);
+        }
+        return response.toString();
+    }
+
+
+    @CrossOrigin()
+    @ApiOperation(value = "save high risk pregnant assessment data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/assess/saveAll"}, method = {RequestMethod.POST})
+    public String saveAllAssessByUserId(@RequestBody UserDataDTO<HRPregnantAssessDTO> requestDTO,
+                                                @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                String s = highRiskPregnantService.saveAllAssessment(requestDTO);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in  saving high risk pregnant assessment data : " + e);
+            response.setError(5000, "Error in saving high risk pregnant assessment data : " + e);
+        }
+        return response.toString();
+    }
+
+    @CrossOrigin()
     @ApiOperation(value = "get high risk pregnant tracking data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
     @RequestMapping(value = {"/pregnant/track/getAll"}, method = {RequestMethod.POST})
     public String getAllPregnantTrackByUserId(@RequestBody GetBenRequestHandler requestDTO,

@@ -56,4 +56,7 @@ public class PregnantWomanHighRiskTrack {
     @Column(name = "visit")
     private String visit;
 
+    @Column(name = "is_deleted")
+    private Boolean isDeleted;
+
 }
