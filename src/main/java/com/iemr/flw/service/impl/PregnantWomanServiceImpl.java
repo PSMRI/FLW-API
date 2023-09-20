@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,6 +55,9 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
     ObjectMapper mapper = new ObjectMapper();
 
     ModelMapper modelMapper = new ModelMapper();
+
+    public static final List<String> PNC_PERIODS = Arrays.asList(
+            "1st Day", "3rd Day", "7th Day", "14th Day", "21st Day", "28th Day", "42nd Day");
 
     @Override
     public String registerPregnantWoman(List<PregnantWomanDTO> pregnantWomanDTOs) {
@@ -238,7 +242,7 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
             List<PNCCare> pncCareList = new ArrayList<>();
             pncVisitDTOs.forEach(it -> {
                 PNCVisit pncVisit =
-                        pncVisitRepo.findPNCVisitByBenIdAndCreatedDateAndPncVisit(it.getBenId(), it.getCreatedDate(), it.getPncVisit());
+                        pncVisitRepo.findPNCVisitByBenIdAndCreatedDateAndPncPeriod(it.getBenId(), it.getCreatedDate(), it.getPncPeriod());
 
                 if (pncVisit != null) {
                     Long id = pncVisit.getId();
@@ -274,7 +278,7 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
 //                    cal.setTime(pwr.getLmpDate());
 //                    cal.add(Calendar.DAY_OF_WEEK, 280);
 //                    pncCare.setExpectedDateofDelivery(new Timestamp(cal.getTime().getTime()));
-                    pncCare.setVisitNo(it.getPncVisit().shortValue());
+                    pncCare.setVisitNo((short) PNC_PERIODS.indexOf(it.getPncPeriod()));
                     pncCare.setModifiedBy(it.getUpdatedBy());
                     pncCare.setLastModDate(it.getUpdatedDate());
                     pncCare.setProcessed("N");
@@ -283,7 +287,7 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
                 pncList.add(pncVisit);
             });
             pncVisitRepo.save(pncList);
-//            ancCareRepo.save(pncCareList);
+            pncCareRepo.save(pncCareList);
             logger.info("PNC visit details saved");
             return "no of pnc details saved: " + pncList.size();
         } catch (Exception e) {
