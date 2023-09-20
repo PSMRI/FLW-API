@@ -4,6 +4,7 @@ import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.HighRiskNonPregnantService;
 import com.iemr.flw.service.HighRiskPregnantService;
+import com.iemr.flw.service.HighRiskService;
 import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
@@ -24,6 +25,9 @@ public class HighRiskController {
 
     @Autowired
     private HighRiskPregnantService highRiskPregnantService;
+
+    @Autowired
+    private HighRiskService highRiskService;
 
     @CrossOrigin()
     @ApiOperation(value = "get high risk pregnant assessment data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
@@ -77,7 +81,7 @@ public class HighRiskController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get high risk pregnant assessment data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @ApiOperation(value = "get high risk assessment data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
     @RequestMapping(value = {"/assess/getAll"}, method = {RequestMethod.POST})
     public String getAllAssessByUserId(@RequestBody GetBenRequestHandler requestDTO,
                                                @RequestHeader(value = "Authorization") String Authorization) {
@@ -87,7 +91,7 @@ public class HighRiskController {
             if (requestDTO != null) {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
-                String s = highRiskPregnantService.getAllAssessments(requestDTO);
+                String s = highRiskService.getAllAssessments(requestDTO);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -95,8 +99,8 @@ public class HighRiskController {
             } else
                 response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in high risk pregnant assessment data : " + e);
-            response.setError(5000, "Error in high risk pregnant assessment data : " + e);
+            logger.error("Error in high risk assessment data : " + e);
+            response.setError(5000, "Error in high risk assessment data : " + e);
         }
         return response.toString();
     }
@@ -105,7 +109,7 @@ public class HighRiskController {
     @CrossOrigin()
     @ApiOperation(value = "save high risk pregnant assessment data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
     @RequestMapping(value = {"/assess/saveAll"}, method = {RequestMethod.POST})
-    public String saveAllAssessByUserId(@RequestBody UserDataDTO<HRPregnantAssessDTO> requestDTO,
+    public String saveAllAssessByUserId(@RequestBody UserDataDTO<HighRiskAssessDTO> requestDTO,
                                                 @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
@@ -113,7 +117,7 @@ public class HighRiskController {
             if (requestDTO != null) {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
-                String s = highRiskPregnantService.saveAllAssessment(requestDTO);
+                String s = highRiskService.saveAllAssessment(requestDTO);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -121,8 +125,8 @@ public class HighRiskController {
             } else
                 response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in  saving high risk pregnant assessment data : " + e);
-            response.setError(5000, "Error in saving high risk pregnant assessment data : " + e);
+            logger.error("Error in  saving high risk assessment data : " + e);
+            response.setError(5000, "Error in saving high risk assessment data : " + e);
         }
         return response.toString();
     }

@@ -75,8 +75,17 @@ public class PregnantWomanRegister {
     @Column(name = "other_complication")
     private String otherComplication;
 
+    @Column(name = "is_registered")
+    private Boolean isRegistered;
+
     @Column(name = "is_active")
     private Boolean isActive;
+
+    @Column(name = "is_hrp_case")
+    private Boolean isHrpCase;
+
+    @Column(name = "assigned_hrp_by")
+    private String assignedAsHrpBy;
 
     @Column(name = "rh_negative_check")
     private String rhNegative;

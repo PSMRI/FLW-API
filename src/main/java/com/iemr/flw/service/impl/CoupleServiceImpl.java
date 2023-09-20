@@ -40,7 +40,8 @@ public class CoupleServiceImpl implements CoupleService {
             List<EligibleCoupleRegister> ecrList = new ArrayList<>();
             eligibleCoupleDTOs.forEach(it -> {
                 EligibleCoupleRegister existingECR =
-                        eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+//                        eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+                        eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
 
                 if (existingECR != null) {
                     Long id = existingECR.getId();

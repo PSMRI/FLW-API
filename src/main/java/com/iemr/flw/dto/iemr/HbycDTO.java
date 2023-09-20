@@ -53,7 +53,7 @@ public class HbycDTO {
 
     private Boolean qmOrAnmInformed;
 
-    private String  deathPlace;
+    private String deathPlace;
 
     private Boolean superVisorOn;
 

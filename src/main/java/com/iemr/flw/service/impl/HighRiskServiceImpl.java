@@ -1,12 +1,9 @@
 package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
-import com.iemr.flw.controller.HighRiskService;
+import com.iemr.flw.service.HighRiskService;
 import com.iemr.flw.domain.iemr.HighRiskAssess;
-import com.iemr.flw.domain.iemr.NonPregnantWomanHighRiskAssess;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
-import com.iemr.flw.dto.iemr.HRNonPregnantAssessDTO;
-import com.iemr.flw.dto.iemr.HRPregnantAssessDTO;
 import com.iemr.flw.dto.iemr.HighRiskAssessDTO;
 import com.iemr.flw.dto.iemr.UserDataDTO;
 import com.iemr.flw.repo.iemr.HighRiskAssessRepo;

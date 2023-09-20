@@ -30,11 +30,16 @@ public class PregnantWomanDTO {
     private String otherComplication;
     private Boolean isActive;
 
+    private Boolean isRegistered;
     private String rhNegative;
 
     private String homeDelivery;
 
     private String badObstetric;
+
+    private Boolean isHrpCase;
+
+    private String assignedAsHrpBy;
 
     private Timestamp createdDate;
     private String createdBy;
