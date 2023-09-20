@@ -49,7 +49,7 @@ public class MaternalHealthController {
                 if (s != null)
                     response.setResponse(s);
                 else
-                    response.setError(5000, "No record found");
+                    response.setError(5000, "Saving pwr data to db failed");
             } else
                 response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
@@ -97,7 +97,7 @@ public class MaternalHealthController {
                 if (s != null)
                     response.setResponse(s);
                 else
-                    response.setError(5000, "No record found");
+                    response.setError(5000, "Saving anc data to db failed");
             } else
                 response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
@@ -145,7 +145,7 @@ public class MaternalHealthController {
                 if (s != null)
                     response.setResponse(s);
                 else
-                    response.setError(5000, "No record found");
+                    response.setError(5000, "Saving delivery outcome to db failed");
             } else
                 response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
@@ -193,7 +193,7 @@ public class MaternalHealthController {
                 if (s != null)
                     response.setResponse(s);
                 else
-                    response.setError(5000, "No record found");
+                    response.setError(5000, "Saving infant register data to db failed");
             } else
                 response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
@@ -267,7 +267,7 @@ public class MaternalHealthController {
                 if (s != null)
                     response.setResponse(s);
                 else
-                    response.setError(5000, "No record found");
+                    response.setError(5000, "Saving child register data to db failed");
             } else
                 response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
@@ -317,12 +317,60 @@ public class MaternalHealthController {
                 if (s != null)
                     response.setResponse(s);
                 else
-                    response.setError(5000, "Error in save pmsma details");
+                    response.setError(5000, "Saving pmsma to db failed");
             } else
                 response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
             logger.error("Error in save pmsma details : " + e);
             response.setError(5000, "Error in save pmsma details : " + e);
+        }
+        return response.toString();
+    }
+
+    @CrossOrigin()
+    @ApiOperation(value = "save pnc visit details", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/pnc/saveAll"}, method = {RequestMethod.POST})
+    public String savePNCVisit(@RequestBody List<PNCVisitDTO> pncVisitDTOs,
+                               @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+            if (pncVisitDTOs.size() != 0) {
+                logger.info("Saving PNC visits with timestamp : " + new Timestamp(System.currentTimeMillis()));
+                String s = pregnantWomanService.savePNCVisit(pncVisitDTOs);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "Saving pnc to db failed");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in save PNC visit details : " + e);
+            response.setError(5000, "Error in save PNC visit details : " + e);
+        }
+        return response.toString();
+    }
+
+    @CrossOrigin()
+    @ApiOperation(value = "get pnc visit details", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/pnc/getAll"}, method = {RequestMethod.POST})
+    public String getPNCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,
+                                     @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                List<PNCVisitDTO> result = pregnantWomanService.getPNCVisits(requestDTO);
+                String s = new Gson().toJson(result);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in Pnc visit get data : " + e);
+            response.setError(5000, "Error in Pnc visit get data : " + e);
         }
         return response.toString();
     }

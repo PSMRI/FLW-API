@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.ANCVisitDTO;
+import com.iemr.flw.dto.iemr.PNCVisitDTO;
 import com.iemr.flw.dto.iemr.PmsmaDTO;
 import com.iemr.flw.dto.iemr.PregnantWomanDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
@@ -34,6 +35,12 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
 
     @Autowired
     private AncCareRepo ancCareRepo;
+
+    @Autowired
+    private PNCVisitRepo pncVisitRepo;
+
+    @Autowired
+    private PNCCareRepo pncCareRepo;
 
     @Autowired
     private BenVisitDetailsRepo benVisitDetailsRepo;
@@ -136,6 +143,7 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
                     benVisitDetail.setVisitCategory("ANC");
                     benVisitDetail.setVisitReason("Follow Up");
                     benVisitDetail.setPregnancyStatus("Yes");
+                    benVisitDetail.setProcessed("N");
                     benVisitDetail.setModifiedBy(it.getUpdatedBy());
                     benVisitDetail.setLastModDate(it.getUpdatedDate());
                     benVisitDetail = benVisitDetailsRepo.save(benVisitDetail);
@@ -153,6 +161,7 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
                     ancCare.setTrimesterNumber(it.getAncVisit().shortValue());
                     ancCare.setModifiedBy(it.getUpdatedBy());
                     ancCare.setLastModDate(it.getUpdatedDate());
+                    ancCare.setProcessed("N");
                     ancCareList.add(ancCare);
                 }
                 ancList.add(ancVisit);
@@ -204,6 +213,81 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
             return "No. of PMSMA records saved: " + pmsmaList.size();
         } catch (Exception e) {
             logger.info("Saving PMSMA details failed with error : " + e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public List<PNCVisitDTO> getPNCVisits(GetBenRequestHandler dto) {
+        try {
+            String user = beneficiaryRepo.getUserName(dto.getAshaId());
+            List<PNCVisit> pncVisits = pncVisitRepo.getPNCForPW(user, dto.getFromDate(), dto.getToDate());
+            return pncVisits.stream()
+                    .map(pnc -> mapper.convertValue(pnc, PNCVisitDTO.class))
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public String savePNCVisit(List<PNCVisitDTO> pncVisitDTOs) {
+        try {
+            List<PNCVisit> pncList = new ArrayList<>();
+            List<PNCCare> pncCareList = new ArrayList<>();
+            pncVisitDTOs.forEach(it -> {
+                PNCVisit pncVisit =
+                        pncVisitRepo.findPNCVisitByBenIdAndCreatedDateAndPncVisit(it.getBenId(), it.getCreatedDate(), it.getPncVisit());
+
+                if (pncVisit != null) {
+                    Long id = pncVisit.getId();
+                    modelMapper.map(it, pncVisit);
+                    pncVisit.setId(id);
+                } else {
+                    pncVisit = new PNCVisit();
+                    modelMapper.map(it, pncVisit);
+                    pncVisit.setId(null);
+
+                    Long benRegId = beneficiaryRepo.getRegIDFromBenId(it.getBenId());
+
+                    // Saving data in BenVisitDetails table
+                    PregnantWomanRegister pwr = pregnantWomanRegisterRepo.findPregnantWomanRegisterByBenId(it.getBenId());
+                    BenVisitDetail benVisitDetail = new BenVisitDetail();
+                    modelMapper.map(it, benVisitDetail);
+                    benVisitDetail.setBeneficiaryRegId(benRegId);
+                    benVisitDetail.setVisitCategory("PNC");
+                    benVisitDetail.setVisitReason("Follow Up");
+                    benVisitDetail.setPregnancyStatus("No");
+                    benVisitDetail.setProcessed("N");
+                    benVisitDetail.setModifiedBy(it.getUpdatedBy());
+                    benVisitDetail.setLastModDate(it.getUpdatedDate());
+                    benVisitDetail = benVisitDetailsRepo.save(benVisitDetail);
+
+                    // Saving Data in AncCare table
+                    PNCCare pncCare = new PNCCare();
+                    modelMapper.map(it, pncCare);
+                    pncCare.setBenVisitId(benVisitDetail.getBenVisitId());
+                    pncCare.setBeneficiaryRegId(benRegId);
+//                    pncCare.setLastMenstrualPeriodLmp(pwr.getLmpDate());
+//                    Calendar cal = Calendar.getInstance();
+//                    cal.setTime(pwr.getLmpDate());
+//                    cal.add(Calendar.DAY_OF_WEEK, 280);
+//                    pncCare.setExpectedDateofDelivery(new Timestamp(cal.getTime().getTime()));
+                    pncCare.setVisitNo(it.getPncVisit().shortValue());
+                    pncCare.setModifiedBy(it.getUpdatedBy());
+                    pncCare.setLastModDate(it.getUpdatedDate());
+                    pncCare.setProcessed("N");
+                    pncCareList.add(pncCare);
+                }
+                pncList.add(pncVisit);
+            });
+            pncVisitRepo.save(pncList);
+//            ancCareRepo.save(pncCareList);
+            logger.info("PNC visit details saved");
+            return "no of pnc details saved: " + pncList.size();
+        } catch (Exception e) {
+            logger.info("Saving PNC visit details failed with error : " + e.getMessage());
         }
         return null;
     }

@@ -45,6 +45,7 @@ public class BenVisitDetail {
 
     @Id
     @Column(name = "BenVisitID")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public long getBenVisitId() {
         return benVisitId;
     }
