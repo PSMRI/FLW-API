@@ -1,28 +1,14 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.flw.domain.iemr.ANCVisit;
-import com.iemr.flw.domain.iemr.PregnantWomanRegister;
-import com.iemr.flw.dto.identity.GetBenRequestHandler;
-import com.iemr.flw.dto.iemr.ANCVisitDTO;
-import com.iemr.flw.dto.iemr.PregnantWomanDTO;
 import com.iemr.flw.repo.iemr.ANCVisitRepo;
 import com.iemr.flw.repo.iemr.PregnantWomanRegisterRepo;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-class PregnantWomanServiceImplTest {
+class MaternalHealthServiceImplTest {
 
     @Mock
     private PregnantWomanRegisterRepo pregnantWomanRegisterRepo;
@@ -31,7 +17,7 @@ class PregnantWomanServiceImplTest {
     private ANCVisitRepo ancVisitRepo;
 
     @InjectMocks
-    private PregnantWomanServiceImpl pregnantWomanService;
+    private MaternalHealthServiceImpl pregnantWomanService;
 
     private ObjectMapper mapper = new ObjectMapper();
 

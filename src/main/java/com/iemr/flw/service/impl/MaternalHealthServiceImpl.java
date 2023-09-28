@@ -3,13 +3,10 @@ package com.iemr.flw.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
-import com.iemr.flw.dto.iemr.ANCVisitDTO;
-import com.iemr.flw.dto.iemr.PNCVisitDTO;
-import com.iemr.flw.dto.iemr.PmsmaDTO;
-import com.iemr.flw.dto.iemr.PregnantWomanDTO;
+import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
-import com.iemr.flw.service.PregnantWomanService;
+import com.iemr.flw.service.MaternalHealthService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +21,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class PregnantWomanServiceImpl implements PregnantWomanService {
+public class MaternalHealthServiceImpl implements MaternalHealthService {
 
-    private final Logger logger = LoggerFactory.getLogger(PregnantWomanServiceImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(MaternalHealthServiceImpl.class);
 
     @Autowired
     PregnantWomanRegisterRepo pregnantWomanRegisterRepo;
@@ -295,4 +292,5 @@ public class PregnantWomanServiceImpl implements PregnantWomanService {
         }
         return null;
     }
+
 }

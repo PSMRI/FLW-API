@@ -1,13 +1,12 @@
 package com.iemr.flw.controller;
 
 import com.google.gson.Gson;
-import com.iemr.flw.domain.iemr.PMSMA;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.ChildService;
 import com.iemr.flw.service.DeliveryOutcomeService;
 import com.iemr.flw.service.InfantService;
-import com.iemr.flw.service.PregnantWomanService;
+import com.iemr.flw.service.MaternalHealthService;
 import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
@@ -25,7 +24,7 @@ public class MaternalHealthController {
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
 
     @Autowired
-    private PregnantWomanService pregnantWomanService;
+    private MaternalHealthService maternalHealthService;
 
     @Autowired
     private DeliveryOutcomeService deliveryOutcomeService;
@@ -45,7 +44,7 @@ public class MaternalHealthController {
         try {
             if (pregnantWomanDTOs.size() != 0) {
                 logger.info("Saving pregnant woman details with timestamp : " + new Timestamp(System.currentTimeMillis()));
-                String s = pregnantWomanService.registerPregnantWoman(pregnantWomanDTOs);
+                String s = maternalHealthService.registerPregnantWoman(pregnantWomanDTOs);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -69,7 +68,7 @@ public class MaternalHealthController {
             if (requestDTO != null) {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
-                List<PregnantWomanDTO> result = pregnantWomanService.getPregnantWoman(requestDTO);
+                List<PregnantWomanDTO> result = maternalHealthService.getPregnantWoman(requestDTO);
                 String s = new Gson().toJson(result);
                 if (s != null)
                     response.setResponse(s);
@@ -93,7 +92,7 @@ public class MaternalHealthController {
         try {
             if (ancVisitDTOs.size() != 0) {
                 logger.info("Saving ANC visits with timestamp : " + new Timestamp(System.currentTimeMillis()));
-                String s = pregnantWomanService.saveANCVisit(ancVisitDTOs);
+                String s = maternalHealthService.saveANCVisit(ancVisitDTOs);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -117,7 +116,7 @@ public class MaternalHealthController {
             if (requestDTO != null) {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
-                List<ANCVisitDTO> result = pregnantWomanService.getANCVisits(requestDTO);
+                List<ANCVisitDTO> result = maternalHealthService.getANCVisits(requestDTO);
                 String s = new Gson().toJson(result);
                 if (s != null)
                     response.setResponse(s);
@@ -287,7 +286,7 @@ public class MaternalHealthController {
             if (requestDTO != null) {
                 logger.info("fetch pmsma request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
-                List<PmsmaDTO> result = pregnantWomanService.getPmsmaRecords(requestDTO);
+                List<PmsmaDTO> result = maternalHealthService.getPmsmaRecords(requestDTO);
                 String s = (new Gson()).toJson(result);
                 if (s != null)
                     response.setResponse(s);
@@ -313,7 +312,7 @@ public class MaternalHealthController {
 
             if (pmsmaDTOs.size() != 0) {
                 logger.info("Saving PMSMA Records with timestamp : " + new Timestamp(System.currentTimeMillis()));
-                String s = pregnantWomanService.savePmsmaRecords(pmsmaDTOs);
+                String s = maternalHealthService.savePmsmaRecords(pmsmaDTOs);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -336,7 +335,7 @@ public class MaternalHealthController {
         try {
             if (pncVisitDTOs.size() != 0) {
                 logger.info("Saving PNC visits with timestamp : " + new Timestamp(System.currentTimeMillis()));
-                String s = pregnantWomanService.savePNCVisit(pncVisitDTOs);
+                String s = maternalHealthService.savePNCVisit(pncVisitDTOs);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -360,7 +359,7 @@ public class MaternalHealthController {
             if (requestDTO != null) {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
-                List<PNCVisitDTO> result = pregnantWomanService.getPNCVisits(requestDTO);
+                List<PNCVisitDTO> result = maternalHealthService.getPNCVisits(requestDTO);
                 String s = new Gson().toJson(result);
                 if (s != null)
                     response.setResponse(s);
@@ -374,4 +373,5 @@ public class MaternalHealthController {
         }
         return response.toString();
     }
+
 }

@@ -1,16 +1,13 @@
 package com.iemr.flw.service;
 
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
-import com.iemr.flw.dto.iemr.ANCVisitDTO;
-import com.iemr.flw.dto.iemr.PNCVisitDTO;
-import com.iemr.flw.dto.iemr.PmsmaDTO;
-import com.iemr.flw.dto.iemr.PregnantWomanDTO;
+import com.iemr.flw.dto.iemr.*;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public interface PregnantWomanService {
+public interface MaternalHealthService {
 
     String registerPregnantWoman(List<PregnantWomanDTO> pregnantWomanDTOs);
 
