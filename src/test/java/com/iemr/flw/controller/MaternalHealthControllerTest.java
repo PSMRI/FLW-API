@@ -1,28 +1,12 @@
 package com.iemr.flw.controller;
 
-import static org.mockito.Mockito.*;
-
-import com.iemr.flw.dto.identity.GetBenRequestHandler;
-import com.iemr.flw.dto.iemr.ANCVisitDTO;
-import com.iemr.flw.dto.iemr.DeliveryOutcomeDTO;
-import com.iemr.flw.dto.iemr.InfantRegisterDTO;
-import com.iemr.flw.dto.iemr.PregnantWomanDTO;
 import com.iemr.flw.service.DeliveryOutcomeService;
 import com.iemr.flw.service.InfantService;
-import com.iemr.flw.service.PregnantWomanService;
-import com.iemr.flw.utils.ApiResponse;
+import com.iemr.flw.service.MaternalHealthService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class MaternalHealthControllerTest {
 
@@ -30,7 +14,7 @@ class MaternalHealthControllerTest {
     private MaternalHealthController maternalHealthController;
 
     @Mock
-    private PregnantWomanService pregnantWomanService;
+    private MaternalHealthService maternalHealthService;
 
     @Mock
     private DeliveryOutcomeService deliveryOutcomeService;
