@@ -21,16 +21,16 @@ public class PNCVisit {
 //    private Integer pncVisit;
 
     @Column(name = "pnc_period")
-    private String pncPeriod;
+    private Integer pncPeriod;
 
     @Column(name = "pnc_date")
-    private String pncDate;
+    private Timestamp pncDate;
 
     @Column(name = "ifa_tabs_given")
-    private String ifaTabsGiven;
+    private Integer ifaTabsGiven;
 
     @Column(name = "any_contraception_method")
-    private String anyContraceptionMethod;
+    private Boolean anyContraceptionMethod;
 
     @Column(name = "contraception_method")
     private String contraceptionMethod;
@@ -48,10 +48,10 @@ public class PNCVisit {
     private String referralFacility;
 
     @Column(name = "mother_death")
-    private String motherDeath;
+    private Boolean motherDeath;
 
     @Column(name = "death_date")
-    private String deathDate;
+    private Timestamp deathDate;
 
     @Column(name = "death_cause")
     private String causeOfDeath;
@@ -64,6 +64,9 @@ public class PNCVisit {
 
     @Column(name = "remarks")
     private String remarks;
+
+    @Column(name = "is_active")
+    private Boolean isActive;
 
     @Column(name = "created_date")
     private Timestamp createdDate;

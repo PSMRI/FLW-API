@@ -41,10 +41,10 @@ public class PMSMA {
     private Integer weight;
 
     @Column(name = "systolic_bp")
-    private Integer systolicBP;
+    private Integer systolicBloodPressure;
 
     @Column(name = "diatolic_bp")
-    private Integer diastolicBP;
+    private Integer diastolicBloodPressure;
 
     @Column(name = "abdominal_check_up")
     private String abdominalCheckUp;
@@ -117,6 +117,9 @@ public class PMSMA {
 
     @Column(name = "medical_officer_sign")
     private String medicalOfficerSign;
+
+    @Column(name = "is_active")
+    private Boolean isActive;
 
     @Column(name = "created_by")
     private String createdBy;

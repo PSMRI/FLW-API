@@ -39,6 +39,7 @@ public class ANCVisitDTO {
     private String otherCauseOfDeath;
     private Timestamp deathDate;
     private Boolean isBabyDelivered;
+    private Boolean isActive;
     private Timestamp createdDate;
     private String createdBy;
     private Timestamp updatedDate;

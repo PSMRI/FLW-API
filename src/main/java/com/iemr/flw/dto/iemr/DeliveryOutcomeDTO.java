@@ -23,6 +23,7 @@ public class DeliveryOutcomeDTO {
     private Timestamp dateOfDischarge;
     private String timeOfDischarge;
     private Boolean isJSYBenificiary;
+    private Boolean isActive;
     private Timestamp createdDate;
     private String createdBy;
     private Timestamp updatedDate;

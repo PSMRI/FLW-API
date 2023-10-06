@@ -107,6 +107,9 @@ public class ANCVisit {
     @Column(name = "is_baby_delivered")
     private Boolean isBabyDelivered;
 
+    @Column(name = "is_active")
+    private Boolean isActive;
+
     @Column(name = "created_date")
     private Timestamp createdDate;
 

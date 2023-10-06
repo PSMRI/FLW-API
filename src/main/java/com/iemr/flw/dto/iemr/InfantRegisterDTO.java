@@ -10,6 +10,7 @@ public class InfantRegisterDTO {
     private Long id;
     private Long benId;
     private String babyName;
+    private Integer babyIndex;
     private String infantTerm;
     private String corticosteroidGiven;
     private String gender;
@@ -25,6 +26,7 @@ public class InfantRegisterDTO {
     private Timestamp bcgDose;
     private Timestamp hepBDose;
     private Timestamp vitkDose;
+    private Boolean isActive;
     private Timestamp createdDate;
     private String createdBy;
     private Timestamp updatedDate;

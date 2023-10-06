@@ -61,6 +61,9 @@ public class DeliveryOutcome {
     @Column(name = "is_jsybeneficiary")
     private Boolean isJSYBenificiary;
 
+    @Column(name = "is_active")
+    private Boolean isActive;
+
     @Column(name = "created_by")
     private String createdBy;
 

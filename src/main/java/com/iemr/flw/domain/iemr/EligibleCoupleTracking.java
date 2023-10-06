@@ -35,6 +35,9 @@ public class EligibleCoupleTracking {
     @Column(name = "method_of_contraception")
     private String methodOfContraception;
 
+    @Column(name = "is_active")
+    private Boolean isActive;
+
     @Column(name = "created_date")
     private Timestamp createdDate;
 

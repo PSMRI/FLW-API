@@ -20,6 +20,9 @@ public class InfantRegister {
     @Column(name = "baby_name")
     private String babyName;
 
+    @Column(name = "baby_index")
+    private Integer babyIndex;
+
     @Column(name = "infant_term")
     private String infantTerm;
 
@@ -64,6 +67,9 @@ public class InfantRegister {
 
     @Column(name = "vitk_dose")
     private Timestamp vitkDose;
+
+    @Column(name = "is_active")
+    private Boolean isActive;
 
     @Column(name = "created_date")
     private Timestamp createdDate;

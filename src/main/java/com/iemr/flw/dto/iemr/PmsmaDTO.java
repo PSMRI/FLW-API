@@ -42,6 +42,7 @@ public class PmsmaDTO {
     private Boolean highRiskPregnancyReferred;
     private Boolean birthPrepNutriAndFamilyPlanning;
     private String medicalOfficerSign;
+    private Boolean isActive;
     private String createdBy;
     private Timestamp createdDate;
     private Timestamp updatedDate;

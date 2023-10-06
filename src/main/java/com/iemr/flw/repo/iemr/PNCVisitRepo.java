@@ -16,5 +16,5 @@ public interface PNCVisitRepo extends JpaRepository<PNCVisit, Long> {
     List<PNCVisit> getPNCForPW(@Param("userId") String userId,
                                @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
-    PNCVisit findPNCVisitByBenIdAndCreatedDateAndPncPeriod(Long benId, Timestamp createdDate, String ancVisit);
+    PNCVisit findPNCVisitByBenIdAndPncPeriodAndIsActive(Long benId, Integer ancVisit, Boolean isActive);
 }

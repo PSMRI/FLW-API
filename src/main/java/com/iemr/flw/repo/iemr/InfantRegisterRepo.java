@@ -1,6 +1,5 @@
 package com.iemr.flw.repo.iemr;
 
-import com.iemr.flw.domain.iemr.DeliveryOutcome;
 import com.iemr.flw.domain.iemr.InfantRegister;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,5 +16,5 @@ public interface InfantRegisterRepo extends JpaRepository<InfantRegister, Long> 
     List<InfantRegister> getInfantDetailsForUser(@Param("userId") String userId,
                                                  @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
-    InfantRegister findInfantRegisterByBenIdAndCreatedDate(Long benId, Timestamp createdDate);
+    InfantRegister findInfantRegisterByBenIdAndBabyIndexAndIsActive(Long benId, Boolean isActive, Integer babyIndex);
 }

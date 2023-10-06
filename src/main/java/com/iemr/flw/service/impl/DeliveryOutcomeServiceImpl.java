@@ -2,13 +2,10 @@ package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.DeliveryOutcome;
-import com.iemr.flw.domain.iemr.EligibleCoupleRegister;
-import com.iemr.flw.domain.iemr.EligibleCoupleTracking;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.DeliveryOutcomeDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.DeliveryOutcomeRepo;
-import com.iemr.flw.repo.iemr.EligibleCoupleRegisterRepo;
 import com.iemr.flw.service.DeliveryOutcomeService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -46,7 +43,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
             List<DeliveryOutcome> delOutList = new ArrayList<>();
 //            List<EligibleCoupleRegister> ecrList = new ArrayList<>();
             deliveryOutcomeDTOS.forEach(it -> {
-                DeliveryOutcome deliveryoutcome = deliveryOutcomeRepo.findDeliveryOutcomeByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+                DeliveryOutcome deliveryoutcome = deliveryOutcomeRepo.findDeliveryOutcomeByBenIdAndIsActive(it.getBenId(), true);
 
 //                EligibleCoupleRegister ecr = ecrRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
 //                ecr.setNumLiveChildren(it.getLiveBirth() + ecr.getNumLiveChildren());

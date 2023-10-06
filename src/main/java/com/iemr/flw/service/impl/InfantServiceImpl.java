@@ -1,7 +1,6 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.flw.domain.iemr.DeliveryOutcome;
 import com.iemr.flw.domain.iemr.InfantRegister;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.InfantRegisterDTO;
@@ -9,6 +8,8 @@ import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.InfantRegisterRepo;
 import com.iemr.flw.service.InfantService;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class InfantServiceImpl implements InfantService {
+
+    private final Logger logger = LoggerFactory.getLogger(InfantServiceImpl.class);
 
     @Autowired
     private InfantRegisterRepo infantRegisterRepo;
@@ -35,7 +38,7 @@ public class InfantServiceImpl implements InfantService {
         try {
             List<InfantRegister> infantList = new ArrayList<>();
             infantRegisterDTOs.forEach(it -> {
-                InfantRegister infantRegister = infantRegisterRepo.findInfantRegisterByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+                InfantRegister infantRegister = infantRegisterRepo.findInfantRegisterByBenIdAndBabyIndexAndIsActive(it.getBenId(), true, it.getBabyIndex());
 
                 if (infantRegister != null) {
                     Long id = infantRegister.getId();
@@ -51,8 +54,9 @@ public class InfantServiceImpl implements InfantService {
             infantRegisterRepo.save(infantList);
             return "no of infant register details saved: " + infantList.size();
         } catch (Exception e) {
-            return "error while saving infant register details: " + e.getMessage();
+            logger.info("error while saving infant register details: " + e.getMessage());
         }
+        return null;
     }
 
     @Override
@@ -66,7 +70,7 @@ public class InfantServiceImpl implements InfantService {
                     .map(infantRegister -> mapper.convertValue(infantRegister, InfantRegisterDTO.class))
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            // log
+            logger.info("error while fetching infant register details: " + e.getMessage());
         }
         return null;
     }

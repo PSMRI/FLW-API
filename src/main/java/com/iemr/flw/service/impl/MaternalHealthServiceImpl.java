@@ -53,8 +53,8 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
     ModelMapper modelMapper = new ModelMapper();
 
-    public static final List<String> PNC_PERIODS = Arrays.asList(
-            "1st Day", "3rd Day", "7th Day", "14th Day", "21st Day", "28th Day", "42nd Day");
+    public static final List<String> PNC_PERIODS =
+            Arrays.asList("1st Day", "3rd Day", "7th Day", "14th Day", "21st Day", "28th Day", "42nd Day");
 
     @Override
     public String registerPregnantWoman(List<PregnantWomanDTO> pregnantWomanDTOs) {
@@ -63,7 +63,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             List<PregnantWomanRegister> pwrList = new ArrayList<>();
             pregnantWomanDTOs.forEach(it -> {
                 PregnantWomanRegister pwr =
-                        pregnantWomanRegisterRepo.findPregnantWomanRegisterByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+                        pregnantWomanRegisterRepo.findPregnantWomanRegisterByBenIdAndIsActive(it.getBenId(), true);
 
                 if (pwr != null) {
                     Long id = pwr.getId();
@@ -123,7 +123,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             List<AncCare> ancCareList = new ArrayList<>();
             ancVisitDTOs.forEach(it -> {
                 ANCVisit ancVisit =
-                        ancVisitRepo.findANCVisitByBenIdAndCreatedDateAndAncVisit(it.getBenId(), it.getCreatedDate(), it.getAncVisit());
+                        ancVisitRepo.findANCVisitByBenIdAndAncVisitAndIsActive(it.getBenId(), it.getAncVisit(), true);
 
                 if (ancVisit != null) {
                     Long id = ancVisit.getId();
@@ -137,7 +137,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     Long benRegId = beneficiaryRepo.getRegIDFromBenId(it.getBenId());
 
                     // Saving data in BenVisitDetails table
-                    PregnantWomanRegister pwr = pregnantWomanRegisterRepo.findPregnantWomanRegisterByBenId(it.getBenId());
+                    PregnantWomanRegister pwr = pregnantWomanRegisterRepo.findPregnantWomanRegisterByBenIdAndIsActive(it.getBenId(), true);
                     BenVisitDetail benVisitDetail = new BenVisitDetail();
                     modelMapper.map(it, benVisitDetail);
                     benVisitDetail.setBeneficiaryRegId(benRegId);
@@ -197,7 +197,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             List<PMSMA> pmsmaList = new ArrayList<>();
             pmsmaDTOs.forEach(it -> {
                 PMSMA pmsma =
-                        pmsmaRepo.findPMSMAByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+                        pmsmaRepo.findPMSMAByBenIdAndIsActive(it.getBenId(), true);
                 if (pmsma != null) {
                     Long id = pmsma.getId();
                     modelMapper.map(it, pmsma);
@@ -239,7 +239,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             List<PNCCare> pncCareList = new ArrayList<>();
             pncVisitDTOs.forEach(it -> {
                 PNCVisit pncVisit =
-                        pncVisitRepo.findPNCVisitByBenIdAndCreatedDateAndPncPeriod(it.getBenId(), it.getCreatedDate(), it.getPncPeriod());
+                        pncVisitRepo.findPNCVisitByBenIdAndPncPeriodAndIsActive(it.getBenId(), it.getPncPeriod(), true);
 
                 if (pncVisit != null) {
                     Long id = pncVisit.getId();
@@ -253,7 +253,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     Long benRegId = beneficiaryRepo.getRegIDFromBenId(it.getBenId());
 
                     // Saving data in BenVisitDetails table
-                    PregnantWomanRegister pwr = pregnantWomanRegisterRepo.findPregnantWomanRegisterByBenId(it.getBenId());
+                    PregnantWomanRegister pwr = pregnantWomanRegisterRepo.findPregnantWomanRegisterByBenIdAndIsActive(it.getBenId(), true);
                     BenVisitDetail benVisitDetail = new BenVisitDetail();
                     modelMapper.map(it, benVisitDetail);
                     benVisitDetail.setBeneficiaryRegId(benRegId);
