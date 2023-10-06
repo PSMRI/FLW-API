@@ -26,6 +26,12 @@ public class PregnantWomanHighRiskTrack {
     @Column(name = "rd_pmsa")
     private String rdPmsa;
 
+    @Column(name = "rd_dengue")
+    private String rdDengue;
+
+    @Column(name = "rd_filaria")
+    private String rdFilaria;
+
     @Column(name = "severe_anemia")
     private String severeAnemia;
 

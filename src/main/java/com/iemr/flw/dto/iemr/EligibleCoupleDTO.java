@@ -92,6 +92,8 @@ public class EligibleCoupleDTO implements Serializable {
 
     private String pastCSection;
 
+    private Boolean isRegistered;
+
     private Boolean isHighRisk;
 
 //    private Integer eighthAndNinthChildGap;

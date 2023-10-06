@@ -17,6 +17,10 @@ public class HRPregnantTrackDTO {
 
     private String rdPmsa;
 
+    private String rdDengue;
+
+    private String rdFilaria;
+
     private String severeAnemia;
 
     private String pregInducedHypertension;

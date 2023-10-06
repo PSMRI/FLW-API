@@ -137,6 +137,8 @@ public class EligibleCoupleRegister {
     @Column(name = "past_csection_check")
     private String pastCSection;
 
+    @Column(name = "is_registered")
+    private Boolean isRegistered;
 
     @Column(name = "is_high_risk")
     private Boolean isHighRisk;
