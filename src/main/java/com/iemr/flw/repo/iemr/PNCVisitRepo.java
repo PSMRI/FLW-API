@@ -12,9 +12,9 @@ import java.util.List;
 @Repository
 public interface PNCVisitRepo extends JpaRepository<PNCVisit, Long> {
 
-    @Query(value = "SELECT anc FROM  PNCVisit anc WHERE anc.createdBy = :userId and anc.createdDate >= :fromDate and anc.createdDate <= :toDate")
+    @Query(value = "SELECT pnc FROM  PNCVisit pnc WHERE pnc.createdBy = :userId and pnc.isActive = true and pnc.createdDate >= :fromDate and pnc.createdDate <= :toDate")
     List<PNCVisit> getPNCForPW(@Param("userId") String userId,
                                @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
-    PNCVisit findPNCVisitByBenIdAndPncPeriodAndIsActive(Long benId, Integer ancVisit, Boolean isActive);
+    PNCVisit findPNCVisitByBenIdAndPncPeriodAndIsActive(Long benId, Integer pncVisit, Boolean isActive);
 }

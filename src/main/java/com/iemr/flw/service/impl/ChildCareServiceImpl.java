@@ -1,7 +1,6 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.flw.controller.DeathReportsController;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
@@ -15,9 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -163,7 +160,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                     hbncVisitDTO.setBenId(it.getBenId());
                     hbncVisitDTO.setVisitNo(it.getHomeVisitDate());
                     HbncVisit hbncVisit =
-                            hbncVisitRepo.findHbncVisitByBenIdAndCreatedDateAndVisitNo(hbncVisitDTO.getBenId(), hbncVisitDTO.getCreatedDate(), hbncVisitDTO.getVisitNo());
+                            hbncVisitRepo.findHbncVisitByBenIdAndVisitNo(hbncVisitDTO.getBenId(), hbncVisitDTO.getVisitNo());
 
                     if (hbncVisit != null) {
                         Long id = hbncVisit.getId();
@@ -181,7 +178,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                     hbncVisitCardDTO.setBenId(it.getBenId());
                     hbncVisitCardDTO.setVisitNo(it.getHomeVisitDate());
                     HbncVisitCard hbncVisitCard =
-                            hbncVisitCardRepo.findHbncVisitCardByBenIdAndCreatedDate(hbncVisitCardDTO.getBenId(), hbncVisitCardDTO.getCreatedDate());
+                            hbncVisitCardRepo.findHbncVisitCardByBenIdAndVisitNo(hbncVisitCardDTO.getBenId(), hbncVisitCardDTO.getVisitNo());
 
                     if (hbncVisitCard != null) {
                         Long id = hbncVisitCard.getId();
@@ -199,7 +196,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                     hbncPart1DTO.setBenId(it.getBenId());
                     hbncPart1DTO.setVisitNo(it.getHomeVisitDate());
                     HbncPart1 hbncPart1 =
-                            hbncPart1Repo.findHbncPart1ByBenIdAndCreatedDate(hbncPart1DTO.getBenId(), hbncPart1DTO.getCreatedDate());
+                            hbncPart1Repo.findHbncPart1ByBenIdAndVisitNo(hbncPart1DTO.getBenId(), hbncPart1DTO.getVisitNo());
 
                     if (hbncPart1 != null) {
                         Long id = hbncPart1.getId();
@@ -217,7 +214,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                     hbncPart2DTO.setBenId(it.getBenId());
                     hbncPart2DTO.setVisitNo(it.getHomeVisitDate());
                     HbncPart2 hbncPart2 =
-                            hbncPart2repo.findHbncPart2ByBenIdAndCreatedDate(hbncPart2DTO.getBenId(), hbncPart2DTO.getCreatedDate());
+                            hbncPart2repo.findHbncPart2ByBenIdAndVisitNo(hbncPart2DTO.getBenId(), hbncPart2DTO.getVisitNo());
 
                     if (hbncPart2 != null) {
                         Long id = hbncPart2.getId();

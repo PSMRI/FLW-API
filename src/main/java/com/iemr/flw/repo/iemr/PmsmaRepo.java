@@ -14,7 +14,7 @@ public interface PmsmaRepo extends JpaRepository<PMSMA, Long> {
 
     PMSMA findPMSMAByBenIdAndIsActive(Long benId, Boolean isActive);
 
-    @Query(" SELECT pmsma FROM PMSMA pmsma WHERE pmsma.createdBy = :userId and pmsma.createdDate >= :fromDate and pmsma.createdDate <= :toDate")
+    @Query(" SELECT pmsma FROM PMSMA pmsma WHERE pmsma.createdBy = :userId and pmsma.isActive = true and pmsma.createdDate >= :fromDate and pmsma.createdDate <= :toDate")
     List<PMSMA> getAllPmsmaByAshaId(@Param("userId") String userId,
                                  @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 }

@@ -12,9 +12,6 @@ import java.util.List;
 @Repository
 public interface EligibleCoupleRegisterRepo extends JpaRepository<EligibleCoupleRegister, Long> {
 
-//    @Query(" SELECT ecr FROM EligibleCoupleRegister ecr WHERE ecr.benId = :benId")
-    EligibleCoupleRegister findEligibleCoupleRegisterByBenIdAndCreatedDate(Long benId, Timestamp createdDate);
-
     EligibleCoupleRegister findEligibleCoupleRegisterByBenId(Long benId);
 
     @Query(" SELECT ecr FROM EligibleCoupleRegister ecr WHERE ecr.createdBy = :userId and ecr.createdDate >= :fromDate and ecr.createdDate <= :toDate")

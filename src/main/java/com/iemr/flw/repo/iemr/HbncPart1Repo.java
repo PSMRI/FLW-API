@@ -16,6 +16,6 @@ public interface HbncPart1Repo extends JpaRepository<HbncPart1, Long> {
     List<HbncPart1> getHbncPart1Details(@Param("userId") String userId,
                                                 @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
-    HbncPart1 findHbncPart1ByBenIdAndCreatedDate(Long benId, Timestamp createdDate);
+    HbncPart1 findHbncPart1ByBenIdAndVisitNo(Long benId, Integer visitNo);
 
 }

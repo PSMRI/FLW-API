@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface InfantRegisterRepo extends JpaRepository<InfantRegister, Long> {
 
-    @Query(" SELECT ir FROM InfantRegister ir WHERE ir.createdBy = :userId and ir.createdDate >= :fromDate and ir.createdDate <= :toDate")
+    @Query(" SELECT ir FROM InfantRegister ir WHERE ir.createdBy = :userId and ir.isActive = true and ir.createdDate >= :fromDate and ir.createdDate <= :toDate")
     List<InfantRegister> getInfantDetailsForUser(@Param("userId") String userId,
                                                  @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 

@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface CdrRepo extends JpaRepository<CDR, Long> {
 
-    CDR findCDRByBenIdAndCreatedDate(Long benId, Timestamp createdDate);
+    CDR findCDRByBenId(Long benId);
 
     @Query(" SELECT c FROM CDR c WHERE c.createdBy = :userId and c.createdDate >= :fromDate and c.createdDate <= :toDate")
     List<CDR> getAllCdrByBenId(@Param("userId") String userId,

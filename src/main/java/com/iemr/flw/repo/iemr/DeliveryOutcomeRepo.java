@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface DeliveryOutcomeRepo extends JpaRepository<DeliveryOutcome, Long> {
 
-    @Query(" SELECT do FROM DeliveryOutcome do WHERE do.createdBy = :userId and do.createdDate >= :fromDate and do.createdDate <= :toDate")
+    @Query(" SELECT do FROM DeliveryOutcome do WHERE do.createdBy = :userId and do.isActive = true and do.createdDate >= :fromDate and do.createdDate <= :toDate")
     List<DeliveryOutcome> getDeliveryOutcomeByAshaId(@Param("userId") String userId,
                                                     @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 

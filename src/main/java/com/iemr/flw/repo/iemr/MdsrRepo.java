@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface MdsrRepo extends JpaRepository<MDSR, Long> {
 
-    MDSR findMDSRByBenIdAndCreatedDate(Long benId, Timestamp createdDate);
+    MDSR findMDSRByBenId(Long benId);
 
     @Query(" SELECT m FROM MDSR m WHERE m.createdBy = :userId and m.createdDate >= :fromDate and m.createdDate <= :toDate")
     List<MDSR> getAllMdsrByAshaId(@Param("userId") String userId,

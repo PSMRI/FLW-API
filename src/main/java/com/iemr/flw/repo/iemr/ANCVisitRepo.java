@@ -13,7 +13,7 @@ import java.util.List;
 @Repository
 public interface ANCVisitRepo extends JpaRepository<ANCVisit, Long> {
 
-    @Query(value = "SELECT anc FROM  ANCVisit anc WHERE anc.createdBy = :userId and anc.createdDate >= :fromDate and anc.createdDate <= :toDate")
+    @Query(value = "SELECT anc FROM  ANCVisit anc WHERE anc.createdBy = :userId and anc.isActive = true and anc.createdDate >= :fromDate and anc.createdDate <= :toDate")
     List<ANCVisit> getANCForPW(@Param("userId") String userId,
                                @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 

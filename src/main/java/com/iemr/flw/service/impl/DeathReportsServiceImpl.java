@@ -40,7 +40,7 @@ public class DeathReportsServiceImpl implements DeathReportsService {
             List<CDR> cdrList = new ArrayList<>();
             cdrDTOs.forEach(it ->{
                 CDR existingCDR =
-                        cdrRepo.findCDRByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+                        cdrRepo.findCDRByBenId(it.getBenId());
 
                 if(existingCDR != null) {
                     Long id = existingCDR.getId();
@@ -66,7 +66,7 @@ public class DeathReportsServiceImpl implements DeathReportsService {
             List<MDSR> mdsrList = new ArrayList<>();
             mdsrDTOs.forEach(it ->{
                 MDSR mdsr =
-                        mdsrRepo.findMDSRByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
+                        mdsrRepo.findMDSRByBenId(it.getBenId());
 
                 if(mdsr != null) {
                     Long id = mdsr.getId();

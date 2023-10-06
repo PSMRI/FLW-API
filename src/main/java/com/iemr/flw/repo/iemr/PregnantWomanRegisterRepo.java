@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface PregnantWomanRegisterRepo extends JpaRepository<PregnantWomanRegister, Long> {
 
-    @Query(" SELECT pw FROM PregnantWomanRegister pw WHERE pw.createdBy = :userId and pw.createdDate >= :fromDate and pw.createdDate <= :toDate")
+    @Query(" SELECT pw FROM PregnantWomanRegister pw WHERE pw.createdBy = :userId and pw.isActive = true and pw.createdDate >= :fromDate and pw.createdDate <= :toDate")
     List<PregnantWomanRegister> getPWRWithBen(@Param("userId") String userId,
                                               @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
