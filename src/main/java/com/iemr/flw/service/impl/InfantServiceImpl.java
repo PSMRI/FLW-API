@@ -38,7 +38,7 @@ public class InfantServiceImpl implements InfantService {
         try {
             List<InfantRegister> infantList = new ArrayList<>();
             infantRegisterDTOs.forEach(it -> {
-                InfantRegister infantRegister = infantRegisterRepo.findInfantRegisterByBenIdAndBabyIndexAndIsActive(it.getBenId(), true, it.getBabyIndex());
+                InfantRegister infantRegister = infantRegisterRepo.findInfantRegisterByBenIdAndBabyIndexAndIsActive(it.getBenId(), it.getBabyIndex(), true);
 
                 if (infantRegister != null) {
                     Long id = infantRegister.getId();

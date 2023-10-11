@@ -16,5 +16,5 @@ public interface InfantRegisterRepo extends JpaRepository<InfantRegister, Long> 
     List<InfantRegister> getInfantDetailsForUser(@Param("userId") String userId,
                                                  @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
-    InfantRegister findInfantRegisterByBenIdAndBabyIndexAndIsActive(Long benId, Boolean isActive, Integer babyIndex);
+    InfantRegister findInfantRegisterByBenIdAndBabyIndexAndIsActive(Long benId, Integer babyIndex, Boolean isActive);
 }

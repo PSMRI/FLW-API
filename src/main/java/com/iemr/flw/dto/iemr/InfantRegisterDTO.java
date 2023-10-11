@@ -9,6 +9,7 @@ public class InfantRegisterDTO {
 
     private Long id;
     private Long benId;
+    private Long childBenId;
     private String babyName;
     private Integer babyIndex;
     private String infantTerm;

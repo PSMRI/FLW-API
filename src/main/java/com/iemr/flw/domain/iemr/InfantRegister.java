@@ -17,6 +17,9 @@ public class InfantRegister {
     @Column(name = "ben_id")
     private Long benId;
 
+    @Column(name = "child_ben_id")
+    private Long childBenId;
+
     @Column(name = "baby_name")
     private String babyName;
 
