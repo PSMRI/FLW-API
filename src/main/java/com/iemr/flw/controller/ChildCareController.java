@@ -2,10 +2,7 @@ package com.iemr.flw.controller;
 
 import com.google.gson.Gson;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
-import com.iemr.flw.dto.iemr.ChildVaccinationDTO;
-import com.iemr.flw.dto.iemr.HbncRequestDTO;
-import com.iemr.flw.dto.iemr.HbncVisitDTO;
-import com.iemr.flw.dto.iemr.HbycDTO;
+import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.ChildCareService;
 import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.annotations.ApiOperation;
@@ -167,6 +164,28 @@ public class ChildCareController {
             logger.error("Error in Child Vaccination get data : " + e);
             response.setError(5000, "Error in Child Vaccination get data : " + e);
         }
+        return response.toString();
+    }
+
+    @CrossOrigin()
+    @ApiOperation(value = "get child vaccination details", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/vaccine/getAll"}, method = {RequestMethod.GET})
+    public String getChildVaccinationDetails(@RequestParam(value = "category") String category,
+                                             @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+            logger.info("request object for getting all vaccines with timestamp : " + new Timestamp(System.currentTimeMillis()) +
+                    " for category: " + category);
+            List<VaccineDTO> result = childCareService.getAllChildVaccines(category);
+            String s = new Gson().toJson(result);
+            if (s != null)
+                response.setResponse(s);
+            else
+                response.setError(5000, "No record found");
+            } catch (Exception e) {
+                logger.error("Error in Vaccines get data : " + e);
+                response.setError(5000, "Error in Vaccines get data : " + e);
+            }
         return response.toString();
     }
 }

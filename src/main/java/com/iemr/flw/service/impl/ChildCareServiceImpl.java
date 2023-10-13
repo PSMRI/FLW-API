@@ -44,6 +44,9 @@ public class ChildCareServiceImpl implements ChildCareService {
     @Autowired
     private ChildVaccinationRepo childVaccinationRepo;
 
+    @Autowired
+    private VaccineRepo vaccineRepo;
+
     ObjectMapper mapper = new ObjectMapper();
 
     ModelMapper modelMapper = new ModelMapper();
@@ -289,6 +292,55 @@ public class ChildCareServiceImpl implements ChildCareService {
             return "No of child vaccination details saved: " + vaccinationList.size();
         } catch (Exception e) {
             logger.info("Saving Child Vaccination details failed with error : " + e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public List<VaccineDTO> getAllChildVaccines(String category) {
+        try {
+            List<Vaccine> vaccines = vaccineRepo.getAllByCategory(category);
+
+            List<VaccineDTO> result = new ArrayList<>();
+            vaccines.forEach(vaccine -> {
+                VaccineDTO vaccineDTO = mapper.convertValue(vaccine, VaccineDTO.class);
+                switch (vaccineDTO.getImmunizationService()) {
+                    case "Birth Dose Vaccines":
+                        vaccineDTO.setImmunizationService("BIRTH");
+                        break;
+                    case "6 Weeks Vaccines":
+                        vaccineDTO.setImmunizationService("WEEK_6");
+                        break;
+                    case "10 Weeks Vaccines":
+                        vaccineDTO.setImmunizationService("WEEK_10");
+                        break;
+                    case "14 Weeks Vaccines":
+                        vaccineDTO.setImmunizationService("WEEK_14");
+                        break;
+                    case "9-12 Months":
+                        vaccineDTO.setImmunizationService("MONTH_9_12");
+                        break;
+                    case "16-24 Months Vaccines":
+                        vaccineDTO.setImmunizationService("MONTH_16_24");
+                        break;
+                    case "5-6 Years Vaccine":
+                        vaccineDTO.setImmunizationService("YEAR_5_6");
+                        break;
+                    case "10 Years Vaccine":
+                        vaccineDTO.setImmunizationService("YEAR_10");
+                        break;
+                    case "16 Years Vaccine":
+                        vaccineDTO.setImmunizationService("YEAR_16");
+                        break;
+                    default:
+                        vaccineDTO.setImmunizationService("CATCH_UP");
+                        break;
+                }
+                result.add(vaccineDTO);
+            });
+            return result;
+        } catch (Exception e) {
+            logger.error(e.getMessage());
         }
         return null;
     }

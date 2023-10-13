@@ -23,9 +23,6 @@ public class ANCVisitDTO {
     private Integer fundalHeight;
     private Boolean urineAlbuminPresent;
     private Boolean bloodSugarTestDone;
-    private Timestamp tdDose1Date;
-    private Timestamp tdDose2Date;
-    private Timestamp tdDoseBoosterDate;
     private Integer folicAcidTabs;
     private Integer ifaTabs;
     private Boolean isHighRisk;

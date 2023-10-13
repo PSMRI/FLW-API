@@ -57,6 +57,15 @@ public class PregnantWomanRegister {
     @Column(name = "date_of_hbs_ag_test")
     private Timestamp dateOfHbsAgTest;
 
+    @Column(name = "td_dose1_date")
+    private Timestamp tdDose1Date;
+
+    @Column(name = "td_dose2_date")
+    private Timestamp tdDose2Date;
+
+    @Column(name = "td_dose_booster_date")
+    private Timestamp tdDoseBoosterDate;
+
     @Column(name = "past_illness")
     private String pastIllness;
 

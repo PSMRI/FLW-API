@@ -22,6 +22,9 @@ public class PregnantWomanDTO {
     private String hbsAgTestResult;
     private Timestamp dateOfHivTest;
     private Timestamp dateOfHbsAgTest;
+    private Timestamp tdDose1Date;
+    private Timestamp tdDose2Date;
+    private Timestamp tdDoseBoosterDate;
     private String pastIllness;
     private String otherPastIllness;
     private Boolean isFirstPregnancyTest;

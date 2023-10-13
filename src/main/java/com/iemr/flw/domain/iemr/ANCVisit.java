@@ -59,15 +59,6 @@ public class ANCVisit {
     @Column(name = "blood_sugar_test_done")
     private Boolean bloodSugarTestDone;
 
-    @Column(name = "td_dose1_date")
-    private Timestamp tdDose1Date;
-
-    @Column(name = "td_dose2_date")
-    private Timestamp tdDose2Date;
-
-    @Column(name = "td_dose_booster_date")
-    private Timestamp tdDoseBoosterDate;
-
     @Column(name = "folic_acid_tabs")
     private Integer folicAcidTabs;
 
