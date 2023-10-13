@@ -24,7 +24,7 @@ nbbuild/
 dist/
 nbdist/
 .nb-gradle/
-
+target/*
 ### Other Entries ###
 mvnw
 mvnw.cmd
