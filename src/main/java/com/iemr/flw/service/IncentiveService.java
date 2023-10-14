@@ -10,7 +10,7 @@ public interface IncentiveService {
 
     String saveIncentivesMaster(List<IncentiveActivityDTO> activityDTOS);
 
-    String getInentiveMaster(IncentiveRequestDTO incentiveRequestDTO);
+    String getIncentiveMaster(IncentiveRequestDTO incentiveRequestDTO);
 
     String getAllIncentivesByUserId(GetBenRequestHandler requestDTO);
 }

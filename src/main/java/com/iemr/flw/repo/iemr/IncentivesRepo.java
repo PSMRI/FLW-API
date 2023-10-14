@@ -17,8 +17,8 @@ public interface IncentivesRepo extends JpaRepository<IncentiveActivity, Long> {
     @Query("select inc from IncentiveActivity inc where inc.name = :name and inc.group = :group and inc.isDeleted = false")
     IncentiveActivity findIncentiveMasterByNameAndGroup(@Param("name") String name, @Param("group") String group);
 
-    @Query("select record from IncentiveActivityRecord record where record.activityId = :id and record.createdDate = :createdDate and record.benId = :benId")
-    IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(@Param("id") Long id, @Param("createdDate") Timestamp createdDate, @Param("benId") Long benId);
-
-    List<IncentiveActivityRecord> getByUserId(Integer ashaId, Timestamp fromDate, Timestamp toDate);
+//    @Query("select record from IncentiveActivityRecord record where record.activityId = :id and record.createdDate = :createdDate and record.benId = :benId")
+//    IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(@Param("id") Long id, @Param("createdDate") Timestamp createdDate, @Param("benId") Long benId);
+//
+//    List<IncentiveActivityRecord> getByUserId(Integer ashaId, Timestamp fromDate, Timestamp toDate);
 }

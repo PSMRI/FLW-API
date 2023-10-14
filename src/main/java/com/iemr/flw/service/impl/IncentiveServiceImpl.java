@@ -55,7 +55,7 @@ public class IncentiveServiceImpl implements IncentiveService {
     }
 
     @Override
-    public String getInentiveMaster(IncentiveRequestDTO incentiveRequestDTO) {
+    public String getIncentiveMaster(IncentiveRequestDTO incentiveRequestDTO) {
 
         try {
             List<IncentiveActivity> incs =  incentivesRepo.findAll();
@@ -74,9 +74,9 @@ public class IncentiveServiceImpl implements IncentiveService {
         List<IncentiveRecordDTO> dtos = new ArrayList<>();
         List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getAshaId(), request.getFromDate(), request.getToDate());
         entities.forEach(entry -> dtos.add(modelMapper.map(entry, IncentiveRecordDTO.class)));
-        UserDataDTO<IncentiveRecordDTO> userDataDTO = new UserDataDTO<>();
-        userDataDTO.setUserId(request.getAshaId());
-        userDataDTO.setEntries(dtos);
-        return (new Gson().toJson(userDataDTO));
+//        UserDataDTO<IncentiveRecordDTO> userDataDTO = new UserDataDTO<>();
+//        userDataDTO.setUserId(request.getAshaId());
+//        userDataDTO.setEntries(dtos);
+        return (new Gson().toJson(dtos));
     }
 }

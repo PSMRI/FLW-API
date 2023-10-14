@@ -18,7 +18,7 @@ public class IncentiveActivityRecord {
     private Long activityId;
 
     @Column(name = "asha_id")
-    private Long ashaId;
+    private Integer ashaId;
 
     @Column(name = "ben_id")
     private Long benId;

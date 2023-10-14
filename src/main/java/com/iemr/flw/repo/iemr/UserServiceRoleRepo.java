@@ -19,5 +19,5 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
 
 
     @Query("select u.userId from UserServiceRole u where u.userName = :userName")
-    Long getUserIdByName(@Param("userName") String userName);
+    Integer getUserIdByName(@Param("userName") String userName);
 }
