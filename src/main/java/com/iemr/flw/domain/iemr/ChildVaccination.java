@@ -11,6 +11,7 @@ public class ChildVaccination {
     private Long beneficiaryRegId;
     private Long benVisitId;
     private String defaultReceivingAge;
+    private Integer vaccineId;
     private String vaccineName;
     private Boolean status;
     private String actualReceivingAge;
@@ -85,6 +86,16 @@ public class ChildVaccination {
 
     public void setVaccineName(String vaccineName) {
         this.vaccineName = vaccineName;
+    }
+
+    @Basic
+    @Column(name = "vaccineId")
+    public Integer getVaccineId() {
+        return vaccineId;
+    }
+
+    public void setVaccineId(Integer vaccineId) {
+        this.vaccineId = vaccineId;
     }
 
     @Basic

@@ -18,8 +18,26 @@ public interface ChildVaccinationRepo extends JpaRepository<ChildVaccination, Lo
 
     ChildVaccination findChildVaccinationByBeneficiaryRegIdAndCreatedDateAndVaccineName(Long benRegId, Timestamp createdDate, String vaccine);
 
-    @Query(value = "select count(cv) from ChildVaccination cv where cv.beneficiaryRegId = :benRegId")
+    @Query(value = "select count(*) from db_iemr.t_childvaccinedetail1 cv left outer join db_iemr.m_immunizationservicevaccination v on " +
+            "cv.VaccineName = v.VaccineName where cv.beneficiaryRegId = :benRegId and v.Currentimmunizationserviceid in (1,2,3,4,5) and " +
+            "v.category = 'CHILD'", nativeQuery = true)
     Integer getFirstYearVaccineCountForBenId(@Param("benRegId") Long benRegId);
 
+    @Query(value = "select count(*) from db_iemr.m_immunizationservicevaccination v where v.Currentimmunizationserviceid in (1,2,3,4,5) " +
+            "and v.category = 'CHILD'", nativeQuery = true)
     Integer getFirstYearVaccineCount();
+
+    @Query(value = "select count(*) from db_iemr.t_childvaccinedetail1 cv left outer join db_iemr.m_immunizationservicevaccination v on " +
+            "cv.VaccineName = v.VaccineName where cv.beneficiaryRegId = :benRegId and v.Currentimmunizationserviceid = 7 and " +
+            "v.category = 'CHILD'", nativeQuery = true)
+    Integer getSecondYearVaccineCountForBenId(@Param("benRegId") Long benRegId);
+
+    @Query(value = "select count(*) from db_iemr.m_immunizationservicevaccination v where v.Currentimmunizationserviceid = 7 " +
+            "and v.category = 'CHILD'", nativeQuery = true)
+    Integer getSecondYearVaccineCount();
+
+    @Query(value = "SELECT IF(EXISTS(SELECT * from db_iemr.t_childvaccinedetail1 cv left outer join db_iemr.m_immunizationservicevaccination v on " +
+            "cv.VaccineName = v.VaccineName where cv.beneficiaryRegId = :benRegId and v.Currentimmunizationserviceid = 8 and v.VaccineName = " +
+            "'DPT Booster-2' and v.category = 'CHILD'), 1, 0);", nativeQuery = true)
+    Integer checkDptVaccinatedUser(@Param("benRegId") Long benRegId);
 }

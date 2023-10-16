@@ -13,6 +13,7 @@ public class ChildVaccinationDTO {
     private Long beneficiaryRegId;
 //    private String defaultReceivingAge;
     private String vaccineName;
+    private Integer vaccineId;
     private Timestamp receivedDate;
     private String vaccinationreceivedat;
     private String vaccinatedBy;

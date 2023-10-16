@@ -313,7 +313,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
         if (anc1Activity != null) {
             ancList.forEach( ancVisit -> {
-                Long userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
+                Integer userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
                 if (ancVisit.getAncVisit() == 1) {
                     IncentiveActivityRecord record = recordRepo
                             .findRecordByActivityIdCreatedDateBenId(anc1Activity.getId(), ancVisit.getCreatedDate(), ancVisit.getBenId());

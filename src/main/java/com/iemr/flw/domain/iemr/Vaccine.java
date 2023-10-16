@@ -19,6 +19,9 @@ public class Vaccine {
     @Column(name = "Currentimmunizationservice")
     private String immunizationService;
 
+    @Column(name = "Currentimmunizationserviceid")
+    private Integer immunizationServiceId;
+
     @Column(name = "VisitCategoryID")
     private Integer visitCategoryId;
 
