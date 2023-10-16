@@ -49,6 +49,16 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     @Autowired
     private PmsmaRepo pmsmaRepo;
 
+    @Autowired
+    private IncentivesRepo incentivesRepo;
+
+    @Autowired
+    private UserServiceRoleRepo userRepo;
+
+    @Autowired
+    private IncentiveRecordRepo recordRepo;
+
+
     ObjectMapper mapper = new ObjectMapper();
 
     ModelMapper modelMapper = new ModelMapper();
@@ -169,6 +179,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             });
             ancVisitRepo.save(ancList);
             ancCareRepo.save(ancCareList);
+            checkAndAddIncentives(ancList);
             logger.info("ANC visit details saved");
             return "no of anc details saved: " + ancList.size();
         } catch (Exception e) {
@@ -291,6 +302,66 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             logger.info("Saving PNC visit details failed with error : " + e.getMessage());
         }
         return null;
+    }
+
+    private void checkAndAddIncentives(List<ANCVisit> ancList) {
+        IncentiveActivity anc1Activity =
+                incentivesRepo.findIncentiveMasterByNameAndGroup("ANC-1", "MATERNAL HEALTH");
+
+        IncentiveActivity ancFullActivity =
+                incentivesRepo.findIncentiveMasterByNameAndGroup("ANC-FULL", "MATERNAL HEALTH");
+
+        if (anc1Activity != null) {
+            ancList.forEach( ancVisit -> {
+                Long userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
+                if (ancVisit.getAncVisit() == 1) {
+                    IncentiveActivityRecord record = recordRepo
+                            .findRecordByActivityIdCreatedDateBenId(anc1Activity.getId(), ancVisit.getCreatedDate(), ancVisit.getBenId());
+                    if (record == null) {
+                        record = new IncentiveActivityRecord();
+                        record.setActivityId(anc1Activity.getId());
+                        record.setCreatedDate(ancVisit.getCreatedDate());
+                        record.setCreatedBy(ancVisit.getCreatedBy());
+                        record.setStartDate(ancVisit.getCreatedDate());
+                        record.setEndDate(ancVisit.getCreatedDate());
+                        record.setUpdatedDate(ancVisit.getCreatedDate());
+                        record.setUpdatedBy(ancVisit.getCreatedBy());
+                        record.setBenId(ancVisit.getBenId());
+                        record.setAshaId(userId);
+                        record.setAmount(Long.valueOf(anc1Activity.getRate()));
+                        recordRepo.save(record);
+                    }
+                }
+
+                if (ancVisit.getAncVisit() == 4) {
+                    IncentiveActivityRecord record = recordRepo
+                            .findRecordByActivityIdCreatedDateBenId(ancFullActivity.getId(), ancVisit.getCreatedDate(), ancVisit.getBenId());
+                    ANCVisit visit1 = ancVisitRepo
+                            .findANCVisitByBenIdAndAncVisitAndIsActive(ancVisit.getBenId(), 1, true);
+                    ANCVisit visit2 = ancVisitRepo
+                            .findANCVisitByBenIdAndAncVisitAndIsActive(ancVisit.getBenId(), 2, true);
+                    ANCVisit visit3 = ancVisitRepo
+                            .findANCVisitByBenIdAndAncVisitAndIsActive(ancVisit.getBenId(), 3, true);
+                    ANCVisit visit4 = ancVisitRepo
+                            .findANCVisitByBenIdAndAncVisitAndIsActive(ancVisit.getBenId(), 4, true);
+
+                    if (record == null && (visit1 != null) && (visit2 != null) && (visit3 != null) && (visit4 != null)) {
+                        record = new IncentiveActivityRecord();
+                        record.setActivityId(ancFullActivity.getId());
+                        record.setCreatedDate(ancVisit.getCreatedDate());
+                        record.setCreatedBy(ancVisit.getCreatedBy());
+                        record.setUpdatedDate(ancVisit.getCreatedDate());
+                        record.setUpdatedBy(ancVisit.getCreatedBy());
+                        record.setStartDate(visit1.getCreatedDate());
+                        record.setEndDate(visit4.getCreatedDate());
+                        record.setBenId(ancVisit.getBenId());
+                        record.setAshaId(userId);
+                        record.setAmount(Long.valueOf(ancFullActivity.getRate()));
+                        recordRepo.save(record);
+                    }
+                }
+            });
+        }
     }
 
 }

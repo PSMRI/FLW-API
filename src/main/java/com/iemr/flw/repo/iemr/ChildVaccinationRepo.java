@@ -17,4 +17,9 @@ public interface ChildVaccinationRepo extends JpaRepository<ChildVaccination, Lo
                                @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
     ChildVaccination findChildVaccinationByBeneficiaryRegIdAndCreatedDateAndVaccineName(Long benRegId, Timestamp createdDate, String vaccine);
+
+    @Query(value = "select count(cv) from ChildVaccination cv where cv.beneficiaryRegId = :benRegId")
+    Integer getFirstYearVaccineCountForBenId(@Param("benRegId") Long benRegId);
+
+    Integer getFirstYearVaccineCount();
 }

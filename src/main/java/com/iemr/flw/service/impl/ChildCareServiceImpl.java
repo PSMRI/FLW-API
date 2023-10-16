@@ -42,6 +42,15 @@ public class ChildCareServiceImpl implements ChildCareService {
     private HbncPart2repo hbncPart2repo;
 
     @Autowired
+    private IncentivesRepo incentivesRepo;
+
+    @Autowired
+    private UserServiceRoleRepo userRepo;
+
+    @Autowired
+    private IncentiveRecordRepo recordRepo;
+
+    @Autowired
     private ChildVaccinationRepo childVaccinationRepo;
 
     @Autowired
@@ -288,6 +297,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 vaccinationList.add(vaccination);
             });
             childVaccinationRepo.save(vaccinationList);
+            checkAndAddIncentives(vaccinationList);
             logger.info("Child Vaccination details saved");
             return "No of child vaccination details saved: " + vaccinationList.size();
         } catch (Exception e) {
@@ -343,5 +353,35 @@ public class ChildCareServiceImpl implements ChildCareService {
             logger.error(e.getMessage());
         }
         return null;
+    }
+    private void checkAndAddIncentives(List<ChildVaccination> vaccinationList) {
+        IncentiveActivity immunizationActivity =
+                incentivesRepo.findIncentiveMasterByNameAndGroup("IMMUNIZATION_0_1", "IMMUNIZATION");
+
+        if (immunizationActivity != null) {
+            vaccinationList.forEach( vaccination -> {
+                Long benId = beneficiaryRepo.getBenIdFromRegID(vaccination.getBeneficiaryRegId()).longValue();
+                Integer userId = userRepo.getUserIdByName(vaccination.getCreatedBy());
+                if (childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
+                        == childVaccinationRepo.getFirstYearVaccineCount()) {
+                    IncentiveActivityRecord record = recordRepo
+                            .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), vaccination.getCreatedDate(), benId);
+                    if (record == null) {
+                        record = new IncentiveActivityRecord();
+                        record.setActivityId(immunizationActivity.getId());
+                        record.setCreatedDate(vaccination.getCreatedDate());
+                        record.setCreatedBy(vaccination.getCreatedBy());
+                        record.setStartDate(vaccination.getCreatedDate());
+                        record.setEndDate(vaccination.getCreatedDate());
+                        record.setUpdatedDate(vaccination.getCreatedDate());
+                        record.setUpdatedBy(vaccination.getCreatedBy());
+                        record.setBenId(benId);
+                        record.setAshaId(userId);
+                        record.setAmount(Long.valueOf(immunizationActivity.getRate()));
+                        recordRepo.save(record);
+                    }
+                }
+            });
+        }
     }
 }
