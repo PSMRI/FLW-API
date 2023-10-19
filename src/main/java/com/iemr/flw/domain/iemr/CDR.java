@@ -48,16 +48,16 @@ public class CDR {
     private Long mobile;
 
     @Column(name = "death_date")
-    private String deathDate;
+    private Timestamp deathDate;
 
     @Column(name = "death_place")
-    private Timestamp placeOfDeath;
+    private String placeOfDeath;
 
     @Column(name = "informant")
     private String nameOfInformant;
 
     @Column(name = "death_time")
-    private Time deathTime;
+    private String deathTime;
 
     @Column(name = "signature")
     private String signature;

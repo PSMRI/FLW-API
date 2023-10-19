@@ -15,7 +15,7 @@ public class CdrDTO {
 
     private String fatherName;
 
-    private String visitDate;
+    private Timestamp visitDate;
 
     private String address;
 
@@ -31,13 +31,13 @@ public class CdrDTO {
 
     private Long mobile;
 
-    private String deathDate;
+    private Timestamp deathDate;
 
-    private Timestamp placeOfDeath;
+    private String placeOfDeath;
 
     private String nameOfInformant;
 
-    private Time deathTime;
+    private String deathTime;
 
     private String signature;
 

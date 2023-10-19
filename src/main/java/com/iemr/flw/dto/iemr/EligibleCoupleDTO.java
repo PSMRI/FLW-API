@@ -36,13 +36,13 @@ public class EligibleCoupleDTO implements Serializable {
 
     private String gender1;
 
-//    private Integer marriageFirstChildGap;
+    private Integer marriageFirstChildGap;
 
     private Timestamp dob2;
 
     private String gender2;
 
-//    private Integer firstAndSecondChildGap;
+    private Integer firstAndSecondChildGap;
 
     private Timestamp dob3;
 

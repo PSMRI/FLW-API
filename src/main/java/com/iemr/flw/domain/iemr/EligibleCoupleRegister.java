@@ -53,8 +53,8 @@ public class EligibleCoupleRegister {
     @Column(name = "gender1")
     private String gender1;
 
-//    @Column(name = "marriage_and_first_child_gap")
-//    private Integer marriageFirstChildGap;
+    @Column(name = "marriage_and_first_child_gap")
+    private Integer marriageFirstChildGap;
 
     @Column(name = "dob2")
     private Timestamp dob2;
@@ -62,8 +62,8 @@ public class EligibleCoupleRegister {
     @Column(name = "gender2")
     private String gender2;
 
-//    @Column(name = "first_and_second_child_gap")
-//    private Integer firstAndSecondChildGap;
+    @Column(name = "first_and_second_child_gap")
+    private Integer firstAndSecondChildGap;
 
     @Column(name = "dob3")
     private Timestamp dob3;

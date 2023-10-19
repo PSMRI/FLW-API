@@ -18,4 +18,7 @@ public interface EligibleCoupleTrackingRepo extends JpaRepository<EligibleCouple
 
     @Query(value = "SELECT * FROM db_iemr.eligible_couple_tracking where ben_id = :benId and is_active = true and MONTH(visit_date) = MONTH(:visitDate) limit 1", nativeQuery = true)
     EligibleCoupleTracking findActiveEligibleCoupleTrackingByBenId(@Param("benId") Long benId, @Param("visitDate") Timestamp visitDate);
+
+    @Query(value = "SELECT ect FROM EligibleCoupleTracking ect where ect.benId = :benId and ect.methodOfContraception = 'ANTRA Injection' and ect.isActive = true")
+    List<EligibleCoupleTracking> findCouplesHadAntara(@Param("benId") Long benId);
 }
