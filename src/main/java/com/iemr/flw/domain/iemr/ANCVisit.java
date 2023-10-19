@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "t_anc_visit")
+@Table(name = "t_anc_visit", schema = "db_iemr")
 @Data
 public class ANCVisit {
 
