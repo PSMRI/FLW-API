@@ -10,7 +10,7 @@ public class HbncPart1DTO {
     private Long id;
     private Long benId;
     private Integer visitNo;
-    private String dateOfVisit;
+    private Timestamp dateOfVisit;
     private Boolean babyAlive;
     private Timestamp dateOfBabyDeath;
     private String timeOfBabyDeath;

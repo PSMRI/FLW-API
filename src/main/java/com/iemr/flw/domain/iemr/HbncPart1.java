@@ -59,7 +59,7 @@ public class HbncPart1 {
     @Column(name = "mother_death_time")
     private String timeOfMotherDeath;
 
-    @Column(name = "mother_death_pace")
+    @Column(name = "mother_death_place")
     private String placeOfMotherDeath;
 
     @Column(name = "other_mother_death_place")
