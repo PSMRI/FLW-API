@@ -359,7 +359,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         vaccinationList.forEach( vaccination -> {
             Long benId = beneficiaryRepo.getBenIdFromRegID(vaccination.getBeneficiaryRegId()).longValue();
             Integer userId = userRepo.getUserIdByName(vaccination.getCreatedBy());
-            Integer immunizationServiceId = getImmunizationServiceIdForVaccine(vaccination.getVaccineId());
+            Integer immunizationServiceId = getImmunizationServiceIdForVaccine(vaccination.getVaccineId().shortValue());
             if(immunizationServiceId < 6) {
                 IncentiveActivity immunizationActivity =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("IMMUNIZATION_0_1", "IMMUNIZATION");
@@ -404,7 +404,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         }
     }
 
-    private Integer getImmunizationServiceIdForVaccine(Integer vaccineId) {
+    private Integer getImmunizationServiceIdForVaccine(Short vaccineId) {
         return vaccineRepo.getImmunizationServiceIdByVaccineId(vaccineId);
     }
 }

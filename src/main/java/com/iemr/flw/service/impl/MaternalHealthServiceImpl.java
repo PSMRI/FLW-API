@@ -164,11 +164,13 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     modelMapper.map(it, ancCare);
                     ancCare.setBenVisitId(benVisitDetail.getBenVisitId());
                     ancCare.setBeneficiaryRegId(benRegId);
-                    ancCare.setLastMenstrualPeriodLmp(pwr.getLmpDate());
-                    Calendar cal = Calendar.getInstance();
-                    cal.setTime(pwr.getLmpDate());
-                    cal.add(Calendar.DAY_OF_WEEK, 280);
-                    ancCare.setExpectedDateofDelivery(new Timestamp(cal.getTime().getTime()));
+                    if(pwr != null) {
+                        ancCare.setLastMenstrualPeriodLmp(pwr.getLmpDate());
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTime(pwr.getLmpDate());
+                        cal.add(Calendar.DAY_OF_WEEK, 280);
+                        ancCare.setExpectedDateofDelivery(new Timestamp(cal.getTime().getTime()));
+                    }
                     ancCare.setTrimesterNumber(it.getAncVisit().shortValue());
                     ancCare.setModifiedBy(it.getUpdatedBy());
                     ancCare.setLastModDate(it.getUpdatedDate());

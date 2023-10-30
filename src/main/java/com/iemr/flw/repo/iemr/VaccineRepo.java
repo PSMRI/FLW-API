@@ -14,5 +14,5 @@ public interface VaccineRepo extends JpaRepository<Vaccine, Short> {
     List<Vaccine> getAllByCategory(String category);
 
     @Query(value = "Select v.immunizationServiceId from Vaccine v where v.vaccineId = :vaccineId")
-    Integer getImmunizationServiceIdByVaccineId(@Param("vaccineId") Integer vaccineId);
+    Integer getImmunizationServiceIdByVaccineId(@Param("vaccineId") Short vaccineId);
 }
