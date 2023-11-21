@@ -35,6 +35,12 @@ public class IncentiveActivity {
     @Column(name = "group_name")
     private String group;
 
+    @Column(name = "fmr_code")
+    private String fmrCode;
+
+    @Column(name = "fmr_code_old")
+    private String fmrCodeOld;
+
     @Column(name = "created_date")
     private Timestamp createdDate;
 

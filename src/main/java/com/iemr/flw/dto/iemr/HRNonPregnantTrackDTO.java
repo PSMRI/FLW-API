@@ -19,9 +19,27 @@ public class HRNonPregnantTrackDTO {
 
     private String hypertension;
 
+    private Integer systolic;
+
+    private Integer diastolic;
+
     private String diabetes;
 
+    private String bloodGlucoseTest;
+
+    private Integer fbg;
+
+    private Integer rbg;
+
+    private Integer ppbg;
+
     private String severeAnemia;
+
+    private String hemoglobinTest;
+
+    private String ifaGiven;
+
+    private Integer ifaQuantity;
 
     private String fp;
 

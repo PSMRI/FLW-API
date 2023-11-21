@@ -35,11 +35,44 @@ public class PregnantWomanHighRiskTrack {
     @Column(name = "severe_anemia")
     private String severeAnemia;
 
+    @Column(name = "hemoglobin_test")
+    private String hemoglobinTest;
+
+    @Column(name = "ifa_given")
+    private String ifaGiven;
+
+    @Column(name = "ifa_quantity")
+    private Integer ifaQuantity;
+
     @Column(name = "preg_induced_hypertension")
     private String pregInducedHypertension;
 
+    @Column(name = "systolic")
+    private Integer systolic;
+
+    @Column(name = "diastolic")
+    private Integer diastolic;
+
     @Column(name = "gest_diabetes_mellitus")
     private String gestDiabetesMellitus;
+
+    @Column(name = "blood_glucose_test")
+    private String bloodGlucoseTest;
+
+    @Column(name = "fbg")
+    private Integer fbg;
+
+    @Column(name = "rbg")
+    private Integer rbg;
+
+    @Column(name = "ppbg")
+    private Integer ppbg;
+
+    @Column(name = "fasting_ogtt")
+    private Integer fastingOgtt;
+
+    @Column(name = "after2hrs_ogtt")
+    private Integer after2hrsOgtt;
 
     @Column(name = "hypothyrodism")
     private String hypothyrodism;

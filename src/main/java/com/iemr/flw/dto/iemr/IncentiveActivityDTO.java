@@ -25,6 +25,10 @@ public class IncentiveActivityDTO implements Serializable {
 
     private String group;
 
+    private String fmrCode;
+
+    private String fmrCodeOld;
+
     private Timestamp createdDate;
 
     private String createdBy;

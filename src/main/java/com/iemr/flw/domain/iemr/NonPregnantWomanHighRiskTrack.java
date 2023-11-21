@@ -29,11 +29,39 @@ public class NonPregnantWomanHighRiskTrack {
     @Column(name = "hypertension_check")
     private String hypertension;
 
+    @Column(name = "systolic")
+    private Integer systolic;
+
+    @Column(name = "diastolic")
+    private Integer diastolic;
+
     @Column(name = "diabetes_check")
     private String diabetes;
 
+    @Column(name = "blood_glucose_test")
+    private String bloodGlucoseTest;
+
+    @Column(name = "fbg")
+    private Integer fbg;
+
+    @Column(name = "rbg")
+    private Integer rbg;
+
+    @Column(name = "ppbg")
+    private Integer ppbg;
+
+
     @Column(name = "severe_anemia_check")
     private String severeAnemia;
+
+    @Column(name = "hemoglobin_test")
+    private String hemoglobinTest;
+
+    @Column(name = "ifa_given")
+    private String ifaGiven;
+
+    @Column(name = "ifa_quantity")
+    private Integer ifaQuantity;
 
     @Column(name = "fp_check")
     private String fp;

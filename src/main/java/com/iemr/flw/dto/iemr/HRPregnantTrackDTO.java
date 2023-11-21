@@ -23,9 +23,32 @@ public class HRPregnantTrackDTO {
 
     private String severeAnemia;
 
+    private String hemoglobinTest;
+
+    private String ifaGiven;
+
+    private Integer ifaQuantity;
+
     private String pregInducedHypertension;
 
+
+    private Integer systolic;
+
+    private Integer diastolic;
+
     private String gestDiabetesMellitus;
+
+    private String bloodGlucoseTest;
+
+    private Integer fbg;
+
+    private Integer rbg;
+
+    private Integer ppbg;
+    
+    private Integer fastingOgtt;
+
+    private Integer after2hrsOgtt;
 
     private String hypothyrodism;
 
