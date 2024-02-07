@@ -138,42 +138,6 @@ public class CbacDetails {
     private Integer deviceId;
     @Transient
     private Long beneficiaryId;
-//    @Transient
-//    private String cbacCloudy;
-//    @Transient
-//    private Integer cbacCloudyPosi;
-//    @Transient
-//    private String cbacDiffreading;
-//    @Transient
-//    private Integer cbacDiffreadingPosi;
-//    @Transient
-//    private String cbacPainIneyes;
-//    @Transient
-//    private Integer cbacPainIneyesPosi;
-//    @Transient
-//    private String cbacRednessIneyes;
-//    @Transient
-//    private Integer cbacRednessIneyesPosi;
-//    @Transient
-//    private String cbacDiffInhearing;
-//    @Transient
-//    private Integer cbacDiffInhearingPosi;
-//    @Transient
-//    private String cbacFeelingUnsteady;
-//    @Transient
-//    private Integer cbacFeelingUnsteadyPosi;
-//    @Transient
-//    private String cbacSufferPhysicalDisability;
-//    @Transient
-//    private Integer cbacSufferPhysicalDisabilityPosi;
-//    @Transient
-//    private String cbacNeedingHelp;
-//    @Transient
-//    private Integer cbacNeedingHelpPosi;
-//    @Transient
-//    private String cbacForgettingNames;
-//    @Transient
-//    private Integer cbacForgettingNamesPosi;
 
     @Id
     @Column(name = "CBACDetailsid")
