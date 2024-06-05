@@ -30,7 +30,7 @@ public class EligibleCoupleRegister {
     private Long aadhaarNumber;
 
     @Column(name = "bank_account_number")
-    private Long bankAccountNumber;
+    private String bankAccountNumber;
 
     @Column(name = "bank_name")
     private String bankName;
@@ -53,8 +53,8 @@ public class EligibleCoupleRegister {
     @Column(name = "gender1")
     private String gender1;
 
-//    @Column(name = "marriage_and_first_child_gap")
-//    private Integer marriageFirstChildGap;
+    @Column(name = "marriage_and_first_child_gap")
+    private Integer marriageFirstChildGap;
 
     @Column(name = "dob2")
     private Timestamp dob2;
@@ -62,8 +62,8 @@ public class EligibleCoupleRegister {
     @Column(name = "gender2")
     private String gender2;
 
-//    @Column(name = "first_and_second_child_gap")
-//    private Integer firstAndSecondChildGap;
+    @Column(name = "first_and_second_child_gap")
+    private Integer firstAndSecondChildGap;
 
     @Column(name = "dob3")
     private Timestamp dob3;
@@ -125,6 +125,36 @@ public class EligibleCoupleRegister {
     @Column(name = "gender9")
     private String gender9;
 
+    @Column(name = "mis_carriage_check")
+    private String misCarriage;
+
+    @Column(name = "home_delivery_check")
+    private String homeDelivery;
+
+    @Column(name = "medical_issues_check")
+    private String medicalIssues;
+
+    @Column(name = "past_csection_check")
+    private String pastCSection;
+
+    @Column(name = "is_registered")
+    private Boolean isRegistered;
+
+    @Column(name = "is_high_risk")
+    private Boolean isHighRisk;
+
 //    @Column(name = "eighth_and_ninth_child_gap")
 //    private Integer eighthAndNinthChildGap;
+
+    @Column(name = "created_date")
+    private Timestamp createdDate;
+
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "updated_date")
+    private Timestamp updatedDate;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
 }

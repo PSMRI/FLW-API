@@ -11,14 +11,20 @@ import java.sql.Timestamp;
 public class InfantRegister {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "ben_id")
     private Long benId;
 
+    @Column(name = "child_ben_id")
+    private Long childBenId;
+
     @Column(name = "baby_name")
     private String babyName;
+
+    @Column(name = "baby_index")
+    private Integer babyIndex;
 
     @Column(name = "infant_term")
     private String infantTerm;
@@ -64,4 +70,19 @@ public class InfantRegister {
 
     @Column(name = "vitk_dose")
     private Timestamp vitkDose;
+
+    @Column(name = "is_active")
+    private Boolean isActive;
+
+    @Column(name = "created_date")
+    private Timestamp createdDate;
+
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "updated_date")
+    private Timestamp updatedDate;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
 }

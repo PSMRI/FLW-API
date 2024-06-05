@@ -8,8 +8,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "i_cbacdetails", schema = "db_identity")
-//@Data
-//@IdClass(CbacId.class)
+@Data
 public class CbacDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -137,21 +136,27 @@ public class CbacDetails {
     private Timestamp syncedDate;
     private Integer providerServiceMapId;
     private Integer deviceId;
-    private Integer beneficiaryId;
+    @Transient
+    private Long beneficiaryId;
 
     @Id
-    @Column(name = "CBACDetailsId")
+    @Column(name = "CBACDetailsid")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public long getCbacDetailsId() {
+        if(cbacDetailsId == null)
+            return 0L;
         return cbacDetailsId;
     }
 
-    public void setCbacDetailsId(long cbacDetailsId) {
+    public void setCbacDetailsId(Long cbacDetailsId) {
         this.cbacDetailsId = cbacDetailsId;
     }
 
     @Basic
     @Column(name = "BeneficiaryRegID")
     public Long getBeneficiaryRegId() {
+        if(beneficiaryRegId == null)
+            return 0L;
         return beneficiaryRegId;
     }
 
@@ -1379,16 +1384,6 @@ public class CbacDetails {
         this.deviceId = deviceId;
     }
 
-    @Basic
-    @Column(name = "beneficiaryId")
-    public Integer getBeneficiaryId() {
-        return beneficiaryId;
-    }
-
-    public void setBeneficiaryId(Integer beneficiaryId) {
-        this.beneficiaryId = beneficiaryId;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -1517,12 +1512,11 @@ public class CbacDetails {
                 Objects.equals(syncedBy, that.syncedBy) &&
                 Objects.equals(syncedDate, that.syncedDate) &&
                 Objects.equals(providerServiceMapId, that.providerServiceMapId) &&
-                Objects.equals(deviceId, that.deviceId) &&
-                Objects.equals(beneficiaryId, that.beneficiaryId);
+                Objects.equals(deviceId, that.deviceId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(cbacDetailsId, beneficiaryRegId, cbacAge, cbacAgePosi, cbacAlcohol, cbacAlcoholPosi, cbacAntitbdrugs, cbacAntitbdrugsPos, cbacBleedingafterintercourse, cbacBleedingafterintercoursePos, cbacBleedingaftermenopause, cbacBleedingaftermenopausePos, cbacBleedingbtwnperiods, cbacBleedingbtwnperiodsPos, cbacBlooddischage, cbacBlooddischagePos, cbacBloodsputum, cbacBloodsputumPos, cbacChangeinbreast, cbacChangeinbreastPos, cbacCoughing, cbacCoughingPos, cbacDifficultyinmouth, cbacDifficultyinmouthPos, cbacFamilyhistory, cbacFamilyhistoryPosi, cbacFivermore, cbacFivermorePos, cbacFoulveginaldischarge, cbacFoulveginaldischargePos, cbacHistoryoffits, cbacHistoryoffitsPos, cbacLoseofweight, cbacLoseofweightPos, cbacLumpinbreast, cbacLumpinbreastPos, cbacNightsweats, cbacNightsweatsPos, cbacPa, cbacPaPosi, cbacReferpatientMo, cbacSmoke, cbacSmokePosi, cbacSortnesofbirth, cbacSortnesofbirthPos, cbacSputemcollection, cbacSufferingtb, cbacSufferingtbPos, cbacTbhistory, cbacTbhistoryPos, cbacToneofvoice, cbacToneofvoicePos, cbacTracingAllFm, cbacUicers, cbacUicersPos, cbacWaist, cbacWaistPosi, houseoldId, countryid, stateid, districtid, districtname, villageid, serverUpdatedStatus, totalScore, cbacPainWhileChewing, cbacPainWhileChewingPosi, cbacAnyThickendSkin, cbacAnyThickendSkinPosi, cbacClawingOfFingers, cbacClawingOfFingersPosi, cbacDiffHoldingObj, cbacDiffHoldingObjPosi, cbacFeelingDown, cbacFeelingDownPosi, cbacFeelingDownScore, cbacFuelUsed, cbacFuelUsedPosi, cbacGrowthInMouth, cbacGrowthInMouthPosi, cbacHyperPigmentedPatch, cbacHyperPigmentedPatchPosi, cbacInabilityCloseEyelid, cbacInabilityCloseEyelidPosi, cbacLittleInterest, cbacLittleInterestPosi, cbacLittleInterestScore, cbacNodulesOnSkin, cbacNodulesOnSkinPosi, cbacNumbnessOnPalm, cbacNumbnessOnPalmPosi, cbacOccupationalExposure, cbacOccupationalExposurePosi, cbacTinglingOrNumbness, cbacTinglingOrNumbnessPosi, cbacWeeknessInFeet, cbacWeeknessInFeetPosi, suspectedHrp, suspectedNcd, suspectedTb, suspectedNcdDiseases, confirmedNcd, confirmedHrp, confirmedTb, confirmedNcdDiseases, diagnosisStatus, deleted, processed, createdBy, createdDate, reserved, reservedFor, reservedOn, reservedById, modifiedBy, lastModDate, vanSerialNo, vanId, vehicalNo, parkingPlaceId, syncedBy, syncedDate, providerServiceMapId, deviceId, beneficiaryId);
+        return Objects.hash(cbacDetailsId, beneficiaryRegId, cbacAge, cbacAgePosi, cbacAlcohol, cbacAlcoholPosi, cbacAntitbdrugs, cbacAntitbdrugsPos, cbacBleedingafterintercourse, cbacBleedingafterintercoursePos, cbacBleedingaftermenopause, cbacBleedingaftermenopausePos, cbacBleedingbtwnperiods, cbacBleedingbtwnperiodsPos, cbacBlooddischage, cbacBlooddischagePos, cbacBloodsputum, cbacBloodsputumPos, cbacChangeinbreast, cbacChangeinbreastPos, cbacCoughing, cbacCoughingPos, cbacDifficultyinmouth, cbacDifficultyinmouthPos, cbacFamilyhistory, cbacFamilyhistoryPosi, cbacFivermore, cbacFivermorePos, cbacFoulveginaldischarge, cbacFoulveginaldischargePos, cbacHistoryoffits, cbacHistoryoffitsPos, cbacLoseofweight, cbacLoseofweightPos, cbacLumpinbreast, cbacLumpinbreastPos, cbacNightsweats, cbacNightsweatsPos, cbacPa, cbacPaPosi, cbacReferpatientMo, cbacSmoke, cbacSmokePosi, cbacSortnesofbirth, cbacSortnesofbirthPos, cbacSputemcollection, cbacSufferingtb, cbacSufferingtbPos, cbacTbhistory, cbacTbhistoryPos, cbacToneofvoice, cbacToneofvoicePos, cbacTracingAllFm, cbacUicers, cbacUicersPos, cbacWaist, cbacWaistPosi, houseoldId, countryid, stateid, districtid, districtname, villageid, serverUpdatedStatus, totalScore, cbacPainWhileChewing, cbacPainWhileChewingPosi, cbacAnyThickendSkin, cbacAnyThickendSkinPosi, cbacClawingOfFingers, cbacClawingOfFingersPosi, cbacDiffHoldingObj, cbacDiffHoldingObjPosi, cbacFeelingDown, cbacFeelingDownPosi, cbacFeelingDownScore, cbacFuelUsed, cbacFuelUsedPosi, cbacGrowthInMouth, cbacGrowthInMouthPosi, cbacHyperPigmentedPatch, cbacHyperPigmentedPatchPosi, cbacInabilityCloseEyelid, cbacInabilityCloseEyelidPosi, cbacLittleInterest, cbacLittleInterestPosi, cbacLittleInterestScore, cbacNodulesOnSkin, cbacNodulesOnSkinPosi, cbacNumbnessOnPalm, cbacNumbnessOnPalmPosi, cbacOccupationalExposure, cbacOccupationalExposurePosi, cbacTinglingOrNumbness, cbacTinglingOrNumbnessPosi, cbacWeeknessInFeet, cbacWeeknessInFeetPosi, suspectedHrp, suspectedNcd, suspectedTb, suspectedNcdDiseases, confirmedNcd, confirmedHrp, confirmedTb, confirmedNcdDiseases, diagnosisStatus, deleted, processed, createdBy, createdDate, reserved, reservedFor, reservedOn, reservedById, modifiedBy, lastModDate, vanSerialNo, vanId, vehicalNo, parkingPlaceId, syncedBy, syncedDate, providerServiceMapId, deviceId);
     }
 }

@@ -1,7 +1,6 @@
 package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
-import lombok.ToString;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
@@ -21,7 +20,7 @@ public class EligibleCoupleDTO implements Serializable {
 
     private Long aadhaarNumber;
 
-    private Long bankAccountNumber;
+    private String bankAccountNumber;
 
     private String bankName;
 
@@ -37,13 +36,13 @@ public class EligibleCoupleDTO implements Serializable {
 
     private String gender1;
 
-//    private Integer marriageFirstChildGap;
+    private Integer marriageFirstChildGap;
 
     private Timestamp dob2;
 
     private String gender2;
 
-//    private Integer firstAndSecondChildGap;
+    private Integer firstAndSecondChildGap;
 
     private Timestamp dob3;
 
@@ -85,5 +84,25 @@ public class EligibleCoupleDTO implements Serializable {
 
     private String gender9;
 
+    private String misCarriage;
+
+    private String homeDelivery;
+
+    private String medicalIssues;
+
+    private String pastCSection;
+
+    private Boolean isRegistered;
+
+    private Boolean isHighRisk;
+
 //    private Integer eighthAndNinthChildGap;
+
+    private Timestamp createdDate;
+
+    private String createdBy;
+
+    private Timestamp updatedDate;
+
+    private String updatedBy;
 }

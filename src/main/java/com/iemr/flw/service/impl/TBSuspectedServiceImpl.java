@@ -19,12 +19,10 @@ import java.util.List;
 @Service
 public class TBSuspectedServiceImpl implements TBSuspectedService {
 
+    private final Logger logger = LoggerFactory.getLogger(TBSuspectedServiceImpl.class);
+    private final ModelMapper modelMapper = new ModelMapper();
     @Autowired
     private TBSuspectedRepo tbSuspectedRepo;
-
-    private final Logger logger = LoggerFactory.getLogger(TBSuspectedServiceImpl.class);
-
-    private final ModelMapper modelMapper = new ModelMapper();
 
     @Override
     public String getByBenId(Long benId, String authorisation) throws Exception {

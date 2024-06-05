@@ -6,22 +6,22 @@ import javax.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "ANC_VISIT")
+@Table(name = "t_anc_visit", schema = "db_iemr")
 @Data
 public class ANCVisit {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "pwr_id")
-    private Long pwrId;
+    @Column(name = "ben_id")
+    private Long benId;
 
     @Column(name = "anc_date")
     private Timestamp ancDate;
 
-    @Column(name = "anc_period")
-    private String ancPeriod;
+    @Column(name = "anc_visit")
+    private Integer ancVisit;
 
     @Column(name = "is_aborted")
     private Boolean isAborted;
@@ -48,7 +48,7 @@ public class ANCVisit {
     private Integer pulseRate;
 
     @Column(name = "hb")
-    private Integer hb;
+    private Double hb;
 
     @Column(name = "fundal_height")
     private Integer fundalHeight;
@@ -58,15 +58,6 @@ public class ANCVisit {
 
     @Column(name = "blood_sugar_test_done")
     private Boolean bloodSugarTestDone;
-
-    @Column(name = "td_dose1_date")
-    private Timestamp tdDose1Date;
-
-    @Column(name = "td_dose2_date")
-    private Timestamp tdDose2Date;
-
-    @Column(name = "td_dose_booster_date")
-    private Timestamp tdDoseBoosterDate;
 
     @Column(name = "folic_acid_tabs")
     private Integer folicAcidTabs;
@@ -79,6 +70,9 @@ public class ANCVisit {
 
     @Column(name = "high_risk_condition")
     private String highRiskCondition;
+
+    @Column(name = "other_high_risk_condition")
+    private String otherHighRiskCondition;
 
     @Column(name = "referral_facility")
     private String referralFacility;
@@ -95,10 +89,27 @@ public class ANCVisit {
     @Column(name = "probable_cause_of_death")
     private String probableCauseOfDeath;
 
+    @Column(name = "other_cause_of_death")
+    private String otherCauseOfDeath;
+
     @Column(name = "death_date")
     private Timestamp deathDate;
 
     @Column(name = "is_baby_delivered")
     private Boolean isBabyDelivered;
 
+    @Column(name = "is_active")
+    private Boolean isActive;
+
+    @Column(name = "created_date")
+    private Timestamp createdDate;
+
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "updated_date")
+    private Timestamp updatedDate;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
 }

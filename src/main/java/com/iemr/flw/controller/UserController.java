@@ -21,13 +21,12 @@ public class UserController {
     private UserService userService;
 
     @CrossOrigin()
-    @ApiOperation(value = "get user Role of userId and roleId", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/getUserRole" }, method = { RequestMethod.GET })
-    public ResponseEntity<?> getEligibleCouple(@RequestParam(value = "userId") Integer userId,
-                                               @RequestParam(value = "roleId") Integer roleId,
-                                               @RequestHeader(value = "Authorization") String Authorization) {
+    @ApiOperation(value = "get user Detail of userId and roleId", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/getUserDetail"}, method = {RequestMethod.GET})
+    public ResponseEntity<?> getUserDetail(@RequestParam(value = "userId") Integer userId,
+                                           @RequestHeader(value = "Authorization") String Authorization) {
         try {
-            UserServiceRoleDTO result = userService.getUserRole(userId, roleId);
+            UserServiceRoleDTO result = userService.getUserDetail(userId);
             return new ResponseEntity<>(
                     new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
         } catch (Exception e) {

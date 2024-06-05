@@ -1,9 +1,12 @@
 package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 @Data
+@Getter
+@Setter
 public class UserServiceRoleDTO {
     private Integer userId;
     private String name;

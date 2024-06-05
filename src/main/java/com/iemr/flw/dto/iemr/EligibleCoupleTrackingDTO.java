@@ -10,7 +10,7 @@ public class EligibleCoupleTrackingDTO implements Serializable {
 
     private Long id;
 
-    private Long ecrId;
+    private Long benId;
 
     private Timestamp visitDate;
 
@@ -24,4 +24,13 @@ public class EligibleCoupleTrackingDTO implements Serializable {
 
     private String methodOfContraception;
 
+    private Boolean isActive;
+
+    private Timestamp createdDate;
+
+    private String createdBy;
+
+    private Timestamp updatedDate;
+
+    private String updatedBy;
 }

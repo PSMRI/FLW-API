@@ -55,4 +55,7 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
 
     @Query(value = " SELECT t FROM RMNCHBornBirthDetails t WHERE t.BenRegId =:benRegID ")
     RMNCHBornBirthDetails getBornBirthByRegID(@Param("benRegID") Long benRegID);
+
+    @Query(" SELECT t.benRegId FROM RMNCHMBeneficiaryregidmapping t  WHERE t.beneficiaryID = :benID ")
+    Long getRegIDFromBenId(@Param("benID") Long benID);
 }

@@ -3,31 +3,6 @@ package com.iemr.flw.domain.iemr;
 import javax.persistence.*;
 import java.util.Objects;
 
-//@SqlResultSetMapping(
-//        name = "UserServiceRoleMapping",
-//        classes = {
-//                @ConstructorResult(
-//                        targetClass = UserServiceRoleDTO.class,
-//                        columns = {
-//                                @ColumnResult(name = "userId", type = Integer.class),
-//                                @ColumnResult(name = "name", type = String.class),
-//                                @ColumnResult(name = "userName", type = String.class),
-//                                @ColumnResult(name = "stateId", type = Integer.class),
-//                                @ColumnResult(name = "stateName", type = String.class),
-//                                @ColumnResult(name = "workingDistrictId", type = Integer.class),
-//                                @ColumnResult(name = "workingDistrictName", type = String.class),
-//                                @ColumnResult(name = "roleId", type = Integer.class),
-//                                @ColumnResult(name = "roleName", type = String.class),
-//                                @ColumnResult(name = "blockId", type = Integer.class),
-//                                @ColumnResult(name = "blockName", type = String.class),
-//                                @ColumnResult(name = "villageId", type = Integer.class),
-//                                @ColumnResult(name = "villageName", type = String.class),
-//                                @ColumnResult(name = "providerServiceMapId", type = Integer.class)
-//                        }
-//                )
-//        }
-//)
-
 @Entity
 @Table(name = "v_userservicerolemapping", schema = "db_iemr")
 public class UserServiceRole {
@@ -77,7 +52,7 @@ public class UserServiceRole {
     @Basic
     @Column(name = "USRMappingID")
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public int getUsrMappingId() {
         return usrMappingId;
     }

@@ -1,21 +1,20 @@
 package com.iemr.flw.controller;
 
-import com.iemr.flw.dto.iemr.ANCVisitDTO;
-import com.iemr.flw.dto.iemr.DeliveryOutcomeDTO;
-import com.iemr.flw.dto.iemr.InfantRegisterDTO;
-import com.iemr.flw.dto.iemr.PregnantWomanDTO;
+import com.google.gson.Gson;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
+import com.iemr.flw.dto.iemr.*;
+import com.iemr.flw.service.ChildService;
 import com.iemr.flw.service.DeliveryOutcomeService;
 import com.iemr.flw.service.InfantService;
-import com.iemr.flw.service.PregnantWomanService;
-import com.iemr.flw.utils.ApiResponse;
+import com.iemr.flw.service.MaternalHealthService;
+import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
@@ -25,7 +24,7 @@ public class MaternalHealthController {
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
 
     @Autowired
-    private PregnantWomanService pregnantWomanService;
+    private MaternalHealthService maternalHealthService;
 
     @Autowired
     private DeliveryOutcomeService deliveryOutcomeService;
@@ -33,131 +32,346 @@ public class MaternalHealthController {
     @Autowired
     private InfantService infantService;
 
+    @Autowired
+    private ChildService childService;
+
     @CrossOrigin()
     @ApiOperation(value = "save pregnant woman registration details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/pregnantWomanRegister" }, method = { RequestMethod.POST })
-    public ResponseEntity<?> savePregnantWomanRegistrations(@RequestBody List<PregnantWomanDTO> pregnantWomanDTOs,
-                                                @RequestHeader(value = "Authorization") String Authorization) {
+    @RequestMapping(value = {"/pregnantWoman/saveAll"}, method = {RequestMethod.POST})
+    public String savePregnantWomanRegistrations(@RequestBody List<PregnantWomanDTO> pregnantWomanDTOs,
+                                                 @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
         try {
-            String result = pregnantWomanService.registerPregnantWoman(pregnantWomanDTOs);
-            return new ResponseEntity<>(
-                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+            if (pregnantWomanDTOs.size() != 0) {
+                logger.info("Saving pregnant woman details with timestamp : " + new Timestamp(System.currentTimeMillis()));
+                String s = maternalHealthService.registerPregnantWoman(pregnantWomanDTOs);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "Saving pwr data to db failed");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in saving pregnant woman registration details, " + e);
-            return new ResponseEntity<>(
-                    new ApiResponse(false, e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Error in save pregnant woman register details : " + e);
+            response.setError(5000, "Error in save pregnant woman register details : " + e);
         }
+        return response.toString();
     }
 
     @CrossOrigin()
     @ApiOperation(value = "get List of pregnant woman registration details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/pregnantWoman" }, method = { RequestMethod.GET })
-    public ResponseEntity<?> getPregnantWoman(@RequestParam(value = "benId") Long benId,
-                                               @RequestHeader(value = "Authorization") String Authorization) {
+    @RequestMapping(value = {"/pregnantWoman/getAll"}, method = {RequestMethod.POST})
+    public String getPregnantWomanList(@RequestBody GetBenRequestHandler requestDTO,
+                                       @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
         try {
-            PregnantWomanDTO result = pregnantWomanService.getPregnantWoman(benId);
-            return new ResponseEntity<>(
-                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                List<PregnantWomanDTO> result = maternalHealthService.getPregnantWoman(requestDTO);
+                String s = new Gson().toJson(result);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in fetching pregnant woman registration details, " + e);
-            return new ResponseEntity<>(
-                    new ApiResponse(false, "Error in fetching pregnant woman registration details, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Error in pregnant woman get data : " + e);
+            response.setError(5000, "Error in pregnant woman get data : " + e);
         }
+        return response.toString();
     }
 
     @CrossOrigin()
     @ApiOperation(value = "save anc visit details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/saveANCVisit" }, method = { RequestMethod.POST })
-    public ResponseEntity<?> saveANCVisit(@RequestBody List<ANCVisitDTO> ancVisitDTOs,
-                                          @RequestHeader(value = "Authorization") String Authorization) {
+    @RequestMapping(value = {"/ancVisit/saveAll"}, method = {RequestMethod.POST})
+    public String saveANCVisit(@RequestBody List<ANCVisitDTO> ancVisitDTOs,
+                               @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
         try {
-            String result = pregnantWomanService.saveANCVisit(ancVisitDTOs);
-            return new ResponseEntity<>(
-                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+            if (ancVisitDTOs.size() != 0) {
+                logger.info("Saving ANC visits with timestamp : " + new Timestamp(System.currentTimeMillis()));
+                String s = maternalHealthService.saveANCVisit(ancVisitDTOs);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "Saving anc data to db failed");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in saving anc details, " + e);
-            return new ResponseEntity<>(
-                    new ApiResponse(false, e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Error in save ANC visit details : " + e);
+            response.setError(5000, "Error in save ANC visit details : " + e);
         }
+        return response.toString();
     }
 
     @CrossOrigin()
     @ApiOperation(value = "get anc visit details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/getANCVisitsForPW" }, method = { RequestMethod.GET })
-    public ResponseEntity<?> getANCVisitDetails(@RequestParam("pwrId") Long pwrId,
-                                                @RequestHeader(value = "Authorization") String Authorization) {
+    @RequestMapping(value = {"/ancVisit/getAll"}, method = {RequestMethod.POST})
+    public String getANCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,
+                                     @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
         try {
-            List<ANCVisitDTO> serviceResponse = pregnantWomanService.getANCVisits(pwrId);
-            return new ResponseEntity<>(
-                    new ApiResponse(true, null, serviceResponse), HttpStatus.ACCEPTED);
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                List<ANCVisitDTO> result = maternalHealthService.getANCVisits(requestDTO);
+                String s = new Gson().toJson(result);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in fetching anc visit details, " + e);
-            return new ResponseEntity<>(
-                    new ApiResponse(false, "Error in fetching anc visit details, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Error in Anc visit get data : " + e);
+            response.setError(5000, "Error in Anc visit get data : " + e);
         }
+        return response.toString();
     }
 
     @CrossOrigin()
     @ApiOperation(value = "save Delivery Outcome details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/saveDeliveryOutcome" }, method = { RequestMethod.POST })
-    public ResponseEntity<?> saveDeliveryOutcome(@RequestBody List<DeliveryOutcomeDTO> deliveryOutcomeDTOS,
-                                          @RequestHeader(value = "Authorization") String Authorization) {
+    @RequestMapping(value = {"/deliveryOutcome/saveAll"}, method = {RequestMethod.POST})
+    public String saveDeliveryOutcome(@RequestBody List<DeliveryOutcomeDTO> deliveryOutcomeDTOS,
+                                      @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
         try {
-            String result = deliveryOutcomeService.registerDeliveryOutcome(deliveryOutcomeDTOS);
-            return new ResponseEntity<>(
-                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+            if (deliveryOutcomeDTOS.size() != 0) {
+                logger.info("Saving delivery outcomes with timestamp : " + new Timestamp(System.currentTimeMillis()));
+                String s = deliveryOutcomeService.registerDeliveryOutcome(deliveryOutcomeDTOS);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "Saving delivery outcome to db failed");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in saving Delivery Outcome details, " + e);
-            return new ResponseEntity<>(
-                    new ApiResponse(false, e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Error in save delivery outcome details : " + e);
+            response.setError(5000, "Error in save delivery outcome details : " + e);
         }
+        return response.toString();
     }
 
     @CrossOrigin()
     @ApiOperation(value = "get Delivery Outcome details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/getDeliveryOutcome" }, method = { RequestMethod.GET })
-    public ResponseEntity<?> getDeliveryOutcome(@RequestParam("benId") Long benId,
-                                                @RequestHeader(value = "Authorization") String Authorization) {
+    @RequestMapping(value = {"/deliveryOutcome/getAll"}, method = {RequestMethod.POST})
+    public String getDeliveryOutcome(@RequestBody GetBenRequestHandler requestDTO,
+                                     @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
         try {
-            DeliveryOutcomeDTO serviceResponse = deliveryOutcomeService.getDeliveryOutcome(benId);
-            return new ResponseEntity<>(
-                    new ApiResponse(true, null, serviceResponse), HttpStatus.ACCEPTED);
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                List<DeliveryOutcomeDTO> result = deliveryOutcomeService.getDeliveryOutcome(requestDTO);
+                String s = new Gson().toJson(result);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in fetching Delivery Outcome details, " + e);
-            return new ResponseEntity<>(
-                    new ApiResponse(false, "Error in fetching Delivery Outcome details, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Error in delivery outcomes get data : " + e);
+            response.setError(5000, "Error in delivery outcomes get data : " + e);
         }
+        return response.toString();
     }
 
     @CrossOrigin()
     @ApiOperation(value = "save Infant registration details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/registerInfant" }, method = { RequestMethod.POST })
-    public ResponseEntity<?> saveEligibleCouple(@RequestBody List<InfantRegisterDTO> infantRegisterDTOs,
-                                                @RequestHeader(value = "Authorization") String Authorization) {
+    @RequestMapping(value = {"/infant/saveAll"}, method = {RequestMethod.POST})
+    public String saveInfantList(@RequestBody List<InfantRegisterDTO> infantRegisterDTOs,
+                                 @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
         try {
-            String result = infantService.registerInfant(infantRegisterDTOs);
-            return new ResponseEntity<>(
-                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+            if (infantRegisterDTOs.size() != 0) {
+                logger.info("Saving infant Register with timestamp : " + new Timestamp(System.currentTimeMillis()));
+                String s = infantService.registerInfant(infantRegisterDTOs);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "Saving infant register data to db failed");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in saving infant registration details, " + e);
-            return new ResponseEntity<>(
-                    new ApiResponse(false, e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Error in save infant register details : " + e);
+            response.setError(5000, "Error in save infant register details : " + e);
         }
+        return response.toString();
     }
 
     @CrossOrigin()
     @ApiOperation(value = "get infant registration details", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = { "/infantDetails" }, method = { RequestMethod.GET })
-    public ResponseEntity<?> getEligibleCouple(@RequestParam(value = "benId") Long benId,
-                                               @RequestHeader(value = "Authorization") String Authorization) {
+    @RequestMapping(value = {"/infant/getAll"}, method = {RequestMethod.POST})
+    public String getInfantList(@RequestBody GetBenRequestHandler requestDTO,
+                                @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
         try {
-            InfantRegisterDTO result = infantService.getInfantDetails(benId);
-            return new ResponseEntity<>(
-                    new ApiResponse(true, null, result), HttpStatus.ACCEPTED);
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                List<InfantRegisterDTO> result = infantService.getInfantDetails(requestDTO);
+                String s = new Gson().toJson(result);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in fetching infant registration details, " + e);
-            return new ResponseEntity<>(
-                    new ApiResponse(false, "Error in fetching infant registration details, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Error in infant register get data : " + e);
+            response.setError(5000, "Error in infant register get data : " + e);
         }
+        return response.toString();
     }
+
+    @CrossOrigin()
+    @ApiOperation(value = "get child register data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/child/getAll"}, method = {RequestMethod.POST})
+    public String getAllChildRegisterDetails(@RequestBody GetBenRequestHandler requestDTO,
+                                             @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                String s = childService.getByUserId(requestDTO);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in child register get data : " + e);
+            response.setError(5000, "Error in child register get data : " + e);
+        }
+        return response.toString();
+    }
+
+
+    @CrossOrigin()
+    @ApiOperation(value = "save child register data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/child/saveAll"}, method = {RequestMethod.POST})
+    public String saveAllChildDetails(@RequestBody List<ChildRegisterDTO> childRegisterDTOs,
+                                      @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+
+            if (childRegisterDTOs.size() != 0) {
+                logger.info("Saving Child Register with timestamp : " + new Timestamp(System.currentTimeMillis()));
+                String s = childService.save(childRegisterDTOs);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "Saving child register data to db failed");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in save child register details : " + e);
+            response.setError(5000, "Error in save child register details : " + e);
+        }
+        return response.toString();
+    }
+
+    @CrossOrigin()
+    @ApiOperation(value = "get PMSMA data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/pmsma/getAll"}, method = {RequestMethod.POST})
+    public String getAllPmsmaDetails(@RequestBody GetBenRequestHandler requestDTO,
+                                             @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+            if (requestDTO != null) {
+                logger.info("fetch pmsma request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                List<PmsmaDTO> result = maternalHealthService.getPmsmaRecords(requestDTO);
+                String s = (new Gson()).toJson(result);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in pmsma get data : " + e);
+            response.setError(5000, "Error in pmsma get data : " + e);
+        }
+        return response.toString();
+    }
+
+
+    @CrossOrigin()
+    @ApiOperation(value = "save PMSMA data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/pmsma/saveAll"}, method = {RequestMethod.POST})
+    public String saveAllPmsmaRecords(@RequestBody List<PmsmaDTO> pmsmaDTOs,
+                                      @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+
+            if (pmsmaDTOs.size() != 0) {
+                logger.info("Saving PMSMA Records with timestamp : " + new Timestamp(System.currentTimeMillis()));
+                String s = maternalHealthService.savePmsmaRecords(pmsmaDTOs);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "Saving pmsma to db failed");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in save pmsma details : " + e);
+            response.setError(5000, "Error in save pmsma details : " + e);
+        }
+        return response.toString();
+    }
+
+    @CrossOrigin()
+    @ApiOperation(value = "save pnc visit details", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/pnc/saveAll"}, method = {RequestMethod.POST})
+    public String savePNCVisit(@RequestBody List<PNCVisitDTO> pncVisitDTOs,
+                               @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+            if (pncVisitDTOs.size() != 0) {
+                logger.info("Saving PNC visits with timestamp : " + new Timestamp(System.currentTimeMillis()));
+                String s = maternalHealthService.savePNCVisit(pncVisitDTOs);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "Saving pnc to db failed");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in save PNC visit details : " + e);
+            response.setError(5000, "Error in save PNC visit details : " + e);
+        }
+        return response.toString();
+    }
+
+    @CrossOrigin()
+    @ApiOperation(value = "get pnc visit details", consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = {"/pnc/getAll"}, method = {RequestMethod.POST})
+    public String getPNCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,
+                                     @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                List<PNCVisitDTO> result = maternalHealthService.getPNCVisits(requestDTO);
+                String s = new Gson().toJson(result);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in Pnc visit get data : " + e);
+            response.setError(5000, "Error in Pnc visit get data : " + e);
+        }
+        return response.toString();
+    }
+
 }

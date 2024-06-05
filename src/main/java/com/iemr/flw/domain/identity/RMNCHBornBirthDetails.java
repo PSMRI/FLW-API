@@ -5,6 +5,7 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Timestamp;
 
 @Entity
@@ -23,7 +24,7 @@ public class RMNCHBornBirthDetails {
 
 	@Expose
 	@Column(name = "beneficiaryId")
-	private Integer beneficiaryId;
+	private BigInteger beneficiaryId;
 
 	@Expose
 	@Column(name = "countryid")
