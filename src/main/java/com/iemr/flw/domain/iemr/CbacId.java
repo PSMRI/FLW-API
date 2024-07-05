@@ -1,9 +1,10 @@
 package com.iemr.flw.domain.iemr;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
 import java.io.Serializable;
 import java.sql.Timestamp;
+
+import jakarta.persistence.Basic;
+import jakarta.persistence.Column;
 
 public class CbacId implements Serializable {
     private Long beneficiaryRegId;

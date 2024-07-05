@@ -51,7 +51,7 @@ public class InfantServiceImpl implements InfantService {
                 }
                 infantList.add(infantRegister);
             });
-            infantRegisterRepo.save(infantList);
+            infantRegisterRepo.saveAll(infantList);
             return "no of infant register details saved: " + infantList.size();
         } catch (Exception e) {
             logger.info("error while saving infant register details: " + e.getMessage());

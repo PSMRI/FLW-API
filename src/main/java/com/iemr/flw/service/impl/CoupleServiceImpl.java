@@ -74,8 +74,8 @@ public class CoupleServiceImpl implements CoupleService {
                 }
                 ecrList.add(existingECR);
             });
-            eligibleCoupleRegisterRepo.save(ecrList);
-            recordRepo.save(recordList);
+            eligibleCoupleRegisterRepo.saveAll(ecrList);
+            recordRepo.saveAll(recordList);
             return "no of ecr details saved: " + ecrList.size();
         } catch (Exception e) {
             return "error while saving ecr details: " + e.getMessage();
@@ -126,8 +126,8 @@ public class CoupleServiceImpl implements CoupleService {
                 ectList.add(ect);
                 checkAndAddAntaraIncentive(recordList, ect);
             });
-            eligibleCoupleTrackingRepo.save(ectList);
-            recordRepo.save(recordList);
+            eligibleCoupleTrackingRepo.saveAll(ectList);
+            recordRepo.saveAll(recordList);
             return "no of ect details saved: " + ectList.size();
         } catch (Exception e) {
             return "error while saving ect details: " + e.getMessage();

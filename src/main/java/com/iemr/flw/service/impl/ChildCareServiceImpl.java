@@ -79,7 +79,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 }
                 hbycList.add(hbyc);
             });
-            hbycRepo.save(hbycList);
+            hbycRepo.saveAll(hbycList);
             return "no of hbyc details saved: " + hbycDTOs.size();
         } catch (Exception e) {
             logger.info("error while saving hbyc details: " + e.getMessage());
@@ -240,10 +240,10 @@ public class ChildCareServiceImpl implements ChildCareService {
                     hbncPart2List.add(hbncPart2);
                 }
             });
-            hbncVisitRepo.save(hbncList);
-            hbncVisitCardRepo.save(hbncCardList);
-            hbncPart1Repo.save(hbncPart1List);
-            hbncPart2repo.save(hbncPart2List);
+            hbncVisitRepo.saveAll(hbncList);
+            hbncVisitCardRepo.saveAll(hbncCardList);
+            hbncPart1Repo.saveAll(hbncPart1List);
+            hbncPart2repo.saveAll(hbncPart2List);
             logger.info("HBNC details saved");
             return "no of hbnc details saved: " + (hbncList.size() + hbncCardList.size() +
                     hbncPart1List.size() + hbncPart2List.size());
@@ -296,7 +296,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 }
                 vaccinationList.add(vaccination);
             });
-            childVaccinationRepo.save(vaccinationList);
+            childVaccinationRepo.saveAll(vaccinationList);
             checkAndAddIncentives(vaccinationList);
             logger.info("Child Vaccination details saved");
             return "No of child vaccination details saved: " + vaccinationList.size();

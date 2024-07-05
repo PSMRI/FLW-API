@@ -2,7 +2,7 @@ package com.iemr.flw.domain.iemr;
 
 import lombok.Data;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.sql.Timestamp;
 import java.util.Objects;
 

@@ -1,10 +1,14 @@
 package com.iemr.flw.domain.iemr;
 
-import lombok.Data;
-
-import javax.persistence.*;
-import java.sql.Time;
 import java.sql.Timestamp;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Data;
 
 @Entity
 @Table(name = "t_cdr", schema = "db_iemr")

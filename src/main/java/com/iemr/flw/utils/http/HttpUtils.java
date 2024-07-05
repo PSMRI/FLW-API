@@ -46,7 +46,7 @@ public class HttpUtils {
 		String body;
 		HttpEntity<String> requestEntity = new HttpEntity<String>(headers);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.GET, requestEntity, String.class);
-		setStatus(responseEntity.getStatusCode());
+		setStatus((HttpStatus) responseEntity.getStatusCode());
 		body = responseEntity.getBody();
 		return body;
 	}
@@ -64,7 +64,7 @@ public class HttpUtils {
 		}
 		HttpEntity<String> requestEntity = new HttpEntity<String>("", headers);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.GET, requestEntity, String.class);
-		setStatus(responseEntity.getStatusCode());
+		setStatus((HttpStatus) responseEntity.getStatusCode());
 		body = responseEntity.getBody();
 		return body;
 	}
@@ -73,7 +73,7 @@ public class HttpUtils {
 		String body;
 		HttpEntity<String> requestEntity = new HttpEntity<String>(json, headers);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.POST, requestEntity, String.class);
-		setStatus(responseEntity.getStatusCode());
+		setStatus((HttpStatus) responseEntity.getStatusCode());
 		body = responseEntity.getBody();
 		return body;
 	}
@@ -85,7 +85,7 @@ public class HttpUtils {
 		}
 		HttpEntity<String> requestEntity = new HttpEntity<String>(data, headers);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.POST, requestEntity, String.class);
-		setStatus(responseEntity.getStatusCode());
+		setStatus((HttpStatus) responseEntity.getStatusCode());
 		return responseEntity.getBody();
 	}
 

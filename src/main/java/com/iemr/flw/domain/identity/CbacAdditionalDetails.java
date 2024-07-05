@@ -2,7 +2,7 @@ package com.iemr.flw.domain.identity;
 
 import lombok.Data;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
