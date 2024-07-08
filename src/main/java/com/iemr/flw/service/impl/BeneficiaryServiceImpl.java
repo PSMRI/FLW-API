@@ -43,7 +43,7 @@ import com.iemr.flw.utils.http.HttpUtils;
 
 @Service
 @Qualifier("rmnchServiceImpl")
-@PropertySource("classpath:application.properties")
+
 public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     private final Logger logger = LoggerFactory.getLogger(BeneficiaryServiceImpl.class);

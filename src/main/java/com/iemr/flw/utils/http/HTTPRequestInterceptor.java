@@ -61,6 +61,8 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object object) throws Exception {
 		boolean status = true;
+		if (request.getRequestURI().toLowerCase().contains("swagger-ui"))
+			return status;
 		logger.debug("In preHandle we are Intercepting the Request");
 		String authorization = request.getHeader("Authorization");
 		logger.debug("RequestURI::" + request.getRequestURI() + " || Authorization ::" + authorization

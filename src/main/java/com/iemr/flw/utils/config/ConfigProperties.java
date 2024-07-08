@@ -38,7 +38,7 @@ import org.springframework.stereotype.Component;
 @Configuration /*
 				 * (defaultAutowire = Autowire.BY_TYPE, defaultLazy = Lazy.FALSE
 				 */
-@PropertySource("classpath:/application.properties")
+//@PropertySource("classpath:/application.properties")
 // @Component
 @Component
 public class ConfigProperties {
