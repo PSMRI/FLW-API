@@ -6,7 +6,9 @@ import com.iemr.flw.service.HighRiskNonPregnantService;
 import com.iemr.flw.service.HighRiskPregnantService;
 import com.iemr.flw.service.HighRiskService;
 import com.iemr.flw.utils.response.OutputResponse;
-import io.swagger.annotations.ApiOperation;
+
+import io.swagger.v3.oas.annotations.Operation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.sql.Timestamp;
 
 @RestController
-@RequestMapping(value = "/highRisk", headers = "Authorization")
+@RequestMapping(value = "/highRisk", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class HighRiskController {
 
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
@@ -30,7 +32,7 @@ public class HighRiskController {
     private HighRiskService highRiskService;
 
     @CrossOrigin()
-    @ApiOperation(value = "get high risk pregnant assessment data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get high risk pregnant assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/pregnant/assess/getAll"}, method = {RequestMethod.POST})
     public String getAllPregnantAssessByUserId(@RequestBody GetBenRequestHandler requestDTO,
                                                @RequestHeader(value = "Authorization") String Authorization) {
@@ -56,7 +58,7 @@ public class HighRiskController {
 
 
     @CrossOrigin()
-    @ApiOperation(value = "save high risk pregnant assessment data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save high risk pregnant assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/pregnant/assess/saveAll"}, method = {RequestMethod.POST})
     public String saveAllPregnantAssessByUserId(@RequestBody UserDataDTO<HRPregnantAssessDTO> requestDTO,
                                                 @RequestHeader(value = "Authorization") String Authorization) {
@@ -81,7 +83,7 @@ public class HighRiskController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get high risk assessment data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get high risk assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/assess/getAll"}, method = {RequestMethod.POST})
     public String getAllAssessByUserId(@RequestBody GetBenRequestHandler requestDTO,
                                                @RequestHeader(value = "Authorization") String Authorization) {
@@ -107,7 +109,7 @@ public class HighRiskController {
 
 
     @CrossOrigin()
-    @ApiOperation(value = "save high risk pregnant assessment data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save high risk pregnant assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/assess/saveAll"}, method = {RequestMethod.POST})
     public String saveAllAssessByUserId(@RequestBody UserDataDTO<HighRiskAssessDTO> requestDTO,
                                                 @RequestHeader(value = "Authorization") String Authorization) {
@@ -132,7 +134,7 @@ public class HighRiskController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get high risk pregnant tracking data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get high risk pregnant tracking data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/pregnant/track/getAll"}, method = {RequestMethod.POST})
     public String getAllPregnantTrackByUserId(@RequestBody GetBenRequestHandler requestDTO,
                                               @RequestHeader(value = "Authorization") String Authorization) {
@@ -158,7 +160,7 @@ public class HighRiskController {
 
 
     @CrossOrigin()
-    @ApiOperation(value = "save high risk pregnant tracking data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save high risk pregnant tracking data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/pregnant/track/saveAll"}, method = {RequestMethod.POST})
     public String saveAllPregnantTrackByUserId(@RequestBody UserDataDTO<HRPregnantTrackDTO> requestDTO,
                                                @RequestHeader(value = "Authorization") String Authorization) {
@@ -183,7 +185,7 @@ public class HighRiskController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get high risk non pregnant assessment data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get high risk non pregnant assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/nonPregnant/assess/getAll"}, method = {RequestMethod.POST})
     public String getAllNonPregnantAssessByUserId(@RequestBody GetBenRequestHandler requestDTO,
                                                   @RequestHeader(value = "Authorization") String Authorization) {
@@ -209,7 +211,7 @@ public class HighRiskController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "save high risk non pregnant assessment data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save high risk non pregnant assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/nonPregnant/assess/saveAll"}, method = {RequestMethod.POST})
     public String saveAllNonPregnantAssessByUserId(@RequestBody UserDataDTO<HRNonPregnantAssessDTO> requestDTO,
                                                    @RequestHeader(value = "Authorization") String Authorization) {
@@ -235,7 +237,7 @@ public class HighRiskController {
 
 
     @CrossOrigin()
-    @ApiOperation(value = "get high risk non pregnant track data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get high risk non pregnant track data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/nonPregnant/track/getAll"}, method = {RequestMethod.POST})
     public String getAllNonPregnantTrackByUserId(@RequestBody GetBenRequestHandler requestDTO,
                                                  @RequestHeader(value = "Authorization") String Authorization) {
@@ -261,7 +263,7 @@ public class HighRiskController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "save high risk non pregnant track data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save high risk non pregnant track data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/nonPregnant/track/saveAll"}, method = {RequestMethod.POST})
     public String saveAllNonPregnantTrackByUserId(@RequestBody UserDataDTO<HRNonPregnantTrackDTO> requestDTO,
                                                   @RequestHeader(value = "Authorization") String Authorization) {

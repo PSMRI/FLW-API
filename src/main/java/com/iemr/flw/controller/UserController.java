@@ -3,7 +3,9 @@ package com.iemr.flw.controller;
 import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.ApiResponse;
-import io.swagger.annotations.ApiOperation;
+
+import io.swagger.v3.oas.annotations.Operation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +23,7 @@ public class UserController {
     private UserService userService;
 
     @CrossOrigin()
-    @ApiOperation(value = "get user Detail of userId and roleId", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get user Detail of userId and roleId")
     @RequestMapping(value = {"/getUserDetail"}, method = {RequestMethod.GET})
     public ResponseEntity<?> getUserDetail(@RequestParam(value = "userId") Integer userId,
                                            @RequestHeader(value = "Authorization") String Authorization) {

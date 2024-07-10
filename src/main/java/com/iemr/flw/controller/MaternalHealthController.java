@@ -8,7 +8,9 @@ import com.iemr.flw.service.DeliveryOutcomeService;
 import com.iemr.flw.service.InfantService;
 import com.iemr.flw.service.MaternalHealthService;
 import com.iemr.flw.utils.response.OutputResponse;
-import io.swagger.annotations.ApiOperation;
+
+import io.swagger.v3.oas.annotations.Operation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +20,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/maternalCare", headers = "Authorization")
+@RequestMapping(value = "/maternalCare", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class MaternalHealthController {
 
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
@@ -36,7 +38,7 @@ public class MaternalHealthController {
     private ChildService childService;
 
     @CrossOrigin()
-    @ApiOperation(value = "save pregnant woman registration details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save pregnant woman registration details")
     @RequestMapping(value = {"/pregnantWoman/saveAll"}, method = {RequestMethod.POST})
     public String savePregnantWomanRegistrations(@RequestBody List<PregnantWomanDTO> pregnantWomanDTOs,
                                                  @RequestHeader(value = "Authorization") String Authorization) {
@@ -59,7 +61,7 @@ public class MaternalHealthController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get List of pregnant woman registration details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get List of pregnant woman registration details")
     @RequestMapping(value = {"/pregnantWoman/getAll"}, method = {RequestMethod.POST})
     public String getPregnantWomanList(@RequestBody GetBenRequestHandler requestDTO,
                                        @RequestHeader(value = "Authorization") String Authorization) {
@@ -84,7 +86,7 @@ public class MaternalHealthController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "save anc visit details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save anc visit details")
     @RequestMapping(value = {"/ancVisit/saveAll"}, method = {RequestMethod.POST})
     public String saveANCVisit(@RequestBody List<ANCVisitDTO> ancVisitDTOs,
                                @RequestHeader(value = "Authorization") String Authorization) {
@@ -107,7 +109,7 @@ public class MaternalHealthController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get anc visit details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get anc visit details")
     @RequestMapping(value = {"/ancVisit/getAll"}, method = {RequestMethod.POST})
     public String getANCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,
                                      @RequestHeader(value = "Authorization") String Authorization) {
@@ -132,7 +134,7 @@ public class MaternalHealthController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "save Delivery Outcome details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save Delivery Outcome details")
     @RequestMapping(value = {"/deliveryOutcome/saveAll"}, method = {RequestMethod.POST})
     public String saveDeliveryOutcome(@RequestBody List<DeliveryOutcomeDTO> deliveryOutcomeDTOS,
                                       @RequestHeader(value = "Authorization") String Authorization) {
@@ -155,7 +157,7 @@ public class MaternalHealthController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get Delivery Outcome details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get Delivery Outcome details")
     @RequestMapping(value = {"/deliveryOutcome/getAll"}, method = {RequestMethod.POST})
     public String getDeliveryOutcome(@RequestBody GetBenRequestHandler requestDTO,
                                      @RequestHeader(value = "Authorization") String Authorization) {
@@ -180,7 +182,7 @@ public class MaternalHealthController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "save Infant registration details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save Infant registration details")
     @RequestMapping(value = {"/infant/saveAll"}, method = {RequestMethod.POST})
     public String saveInfantList(@RequestBody List<InfantRegisterDTO> infantRegisterDTOs,
                                  @RequestHeader(value = "Authorization") String Authorization) {
@@ -203,7 +205,7 @@ public class MaternalHealthController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get infant registration details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get infant registration details")
     @RequestMapping(value = {"/infant/getAll"}, method = {RequestMethod.POST})
     public String getInfantList(@RequestBody GetBenRequestHandler requestDTO,
                                 @RequestHeader(value = "Authorization") String Authorization) {
@@ -228,7 +230,7 @@ public class MaternalHealthController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get child register data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get child register data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/child/getAll"}, method = {RequestMethod.POST})
     public String getAllChildRegisterDetails(@RequestBody GetBenRequestHandler requestDTO,
                                              @RequestHeader(value = "Authorization") String Authorization) {
@@ -253,7 +255,7 @@ public class MaternalHealthController {
 
 
     @CrossOrigin()
-    @ApiOperation(value = "save child register data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save child register data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/child/saveAll"}, method = {RequestMethod.POST})
     public String saveAllChildDetails(@RequestBody List<ChildRegisterDTO> childRegisterDTOs,
                                       @RequestHeader(value = "Authorization") String Authorization) {
@@ -277,7 +279,7 @@ public class MaternalHealthController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get PMSMA data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get PMSMA data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/pmsma/getAll"}, method = {RequestMethod.POST})
     public String getAllPmsmaDetails(@RequestBody GetBenRequestHandler requestDTO,
                                              @RequestHeader(value = "Authorization") String Authorization) {
@@ -303,7 +305,7 @@ public class MaternalHealthController {
 
 
     @CrossOrigin()
-    @ApiOperation(value = "save PMSMA data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save PMSMA data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/pmsma/saveAll"}, method = {RequestMethod.POST})
     public String saveAllPmsmaRecords(@RequestBody List<PmsmaDTO> pmsmaDTOs,
                                       @RequestHeader(value = "Authorization") String Authorization) {
@@ -327,7 +329,7 @@ public class MaternalHealthController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "save pnc visit details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save pnc visit details")
     @RequestMapping(value = {"/pnc/saveAll"}, method = {RequestMethod.POST})
     public String savePNCVisit(@RequestBody List<PNCVisitDTO> pncVisitDTOs,
                                @RequestHeader(value = "Authorization") String Authorization) {
@@ -350,7 +352,7 @@ public class MaternalHealthController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get pnc visit details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get pnc visit details")
     @RequestMapping(value = {"/pnc/getAll"}, method = {RequestMethod.POST})
     public String getPNCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,
                                      @RequestHeader(value = "Authorization") String Authorization) {

@@ -1,27 +1,28 @@
 package com.iemr.flw.controller;
 
-import com.google.gson.Gson;
-import com.iemr.flw.dto.identity.GetBenRequestHandler;
-import com.iemr.flw.dto.iemr.CdrDTO;
-import com.iemr.flw.dto.iemr.EligibleCoupleDTO;
-import com.iemr.flw.dto.iemr.EligibleCoupleTrackingDTO;
-import com.iemr.flw.dto.iemr.MdsrDTO;
-import com.iemr.flw.service.CoupleService;
-import com.iemr.flw.service.DeathReportsService;
-import com.iemr.flw.utils.ApiResponse;
-import com.iemr.flw.utils.response.OutputResponse;
-import io.swagger.annotations.ApiOperation;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.google.gson.Gson;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
+import com.iemr.flw.dto.iemr.CdrDTO;
+import com.iemr.flw.dto.iemr.MdsrDTO;
+import com.iemr.flw.service.DeathReportsService;
+import com.iemr.flw.utils.response.OutputResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
-@RequestMapping(value = "/death-reports", headers = "Authorization")
+@RequestMapping(value = "/death-reports", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class DeathReportsController {
 
     private final Logger logger = LoggerFactory.getLogger(DeathReportsController.class);
@@ -30,7 +31,7 @@ public class DeathReportsController {
     private DeathReportsService deathReportsService;
 
     @CrossOrigin()
-    @ApiOperation(value = "save CDR details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save CDR details")
     @RequestMapping(value = { "/cdr/saveAll" }, method = { RequestMethod.POST })
     public String saveCdrRecords(@RequestBody List<CdrDTO> cdrDTOS,
                                      @RequestHeader(value = "Authorization") String Authorization) {
@@ -53,7 +54,7 @@ public class DeathReportsController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "save MDSR details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save MDSR details")
     @RequestMapping(value = { "/mdsr/saveAll" }, method = { RequestMethod.POST })
     public String saveMdsrRecords(@RequestBody List<MdsrDTO> mdsrDTOS,
                                              @RequestHeader(value = "Authorization") String Authorization) {
@@ -76,7 +77,7 @@ public class DeathReportsController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get List of CDR details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get List of CDR details")
     @RequestMapping(value = { "/cdr/getAll" }, method = { RequestMethod.POST })
     public String getCdrRecords(@RequestBody GetBenRequestHandler requestDTO,
                                     @RequestHeader(value = "Authorization") String Authorization) {
@@ -101,7 +102,7 @@ public class DeathReportsController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get List of MDSR details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get List of MDSR details")
     @RequestMapping(value = { "/mdsr/getAll" }, method = { RequestMethod.POST })
     public String getMdsrRecords(@RequestBody GetBenRequestHandler requestDTO,
                                                        @RequestHeader(value = "Authorization") String Authorization) {

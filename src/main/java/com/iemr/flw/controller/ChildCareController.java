@@ -5,7 +5,9 @@ import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.ChildCareService;
 import com.iemr.flw.utils.response.OutputResponse;
-import io.swagger.annotations.ApiOperation;
+
+import io.swagger.v3.oas.annotations.Operation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +17,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/child-care", headers = "Authorization")
+@RequestMapping(value = "/child-care", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class ChildCareController {
 
     private final Logger logger = LoggerFactory.getLogger(DeathReportsController.class);
@@ -24,7 +26,7 @@ public class ChildCareController {
     private ChildCareService childCareService;
 
     @CrossOrigin()
-    @ApiOperation(value = "save HBYC details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save HBYC details")
     @RequestMapping(value = { "/hbyc/saveAll" }, method = { RequestMethod.POST })
     public String saveHbycRecords(@RequestBody List<HbycDTO> hbycDTOs,
                                  @RequestHeader(value = "Authorization") String Authorization) {
@@ -47,7 +49,7 @@ public class ChildCareController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get List of HBYC details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get List of HBYC details")
     @RequestMapping(value = { "/hbyc/getAll" }, method = { RequestMethod.POST })
     public String getHbycRecords(@RequestBody GetBenRequestHandler requestDTO,
                                 @RequestHeader(value = "Authorization") String Authorization) {
@@ -72,7 +74,7 @@ public class ChildCareController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "save hbnc visit details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save hbnc visit details")
     @RequestMapping(value = {"/hbncVisit/saveAll"}, method = {RequestMethod.POST})
     public String saveHBNCVisit(@RequestBody List<HbncRequestDTO> hbncRequestDTOs,
                                 @RequestHeader(value = "Authorization") String Authorization) {
@@ -95,7 +97,7 @@ public class ChildCareController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get hbnc visit details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get hbnc visit details")
     @RequestMapping(value = {"/hbncVisit/getAll"}, method = {RequestMethod.POST})
     public String getHBNCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,
                                       @RequestHeader(value = "Authorization") String Authorization) {
@@ -120,7 +122,7 @@ public class ChildCareController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "save child vaccination details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save child vaccination details")
     @RequestMapping(value = {"/vaccination/saveAll"}, method = {RequestMethod.POST})
     public String saveChildVaccinationDetails(@RequestBody List<ChildVaccinationDTO> childVaccinationDTOS,
                                 @RequestHeader(value = "Authorization") String Authorization) {
@@ -143,7 +145,7 @@ public class ChildCareController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get child vaccination details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get child vaccination details")
     @RequestMapping(value = {"/vaccination/getAll"}, method = {RequestMethod.POST})
     public String getChildVaccinationDetails(@RequestBody GetBenRequestHandler requestDTO,
                                       @RequestHeader(value = "Authorization") String Authorization) {
@@ -168,7 +170,7 @@ public class ChildCareController {
     }
 
     @CrossOrigin()
-    @ApiOperation(value = "get child vaccination details", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get child vaccination details")
     @RequestMapping(value = {"/vaccine/getAll"}, method = {RequestMethod.GET})
     public String getChildVaccinationDetails(@RequestParam(value = "category") String category,
                                              @RequestHeader(value = "Authorization") String Authorization) {
