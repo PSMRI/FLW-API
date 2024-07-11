@@ -65,7 +65,7 @@ public class ChildServiceImpl implements ChildService {
             }
             listToBeSaved.add(childRegister);
         });
-        childRepo.save(listToBeSaved);
+        childRepo.saveAll(listToBeSaved);
         return "no of child details saved: " + childRegisterDTOs.size();
     }
 }

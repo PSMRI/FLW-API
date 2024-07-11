@@ -23,33 +23,21 @@ package com.iemr.flw.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import springfox.documentation.builders.ApiInfoBuilder;
-import springfox.documentation.builders.PathSelectors;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 
 @Configuration
-@EnableSwagger2
 public class SwaggerConfig {
-    @Bean
-    public Docket productApi() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .select()
-                .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.any())
-                .build()
-                .apiInfo(metaData());
-    }
-
-    private ApiInfo metaData() {
-        ApiInfoBuilder builder = new ApiInfoBuilder();
-//		builder.contact(new Contact("AMRIT", "https://psmri.github.io/PSMRI/", "amrit@piramalswasthya.org"));
-        builder.description("A microservice for the creation and management of beneficiaries related data");
-        builder.version("1.0");
-        builder.title("Flw API");
-        return builder.build();
+	@Bean
+    OpenAPI customOpenAPI() {
+        return new OpenAPI().info(new 
+             Info().title("FLW API").version("version").description("A microservice for the creation and management of beneficiaries."))
+                .addSecurityItem(new SecurityRequirement().addList("my security"))
+                .components(new Components().addSecuritySchemes("my security",
+                        new SecurityScheme().name("my security").type(SecurityScheme.Type.HTTP).scheme("bearer")));
     }
 }

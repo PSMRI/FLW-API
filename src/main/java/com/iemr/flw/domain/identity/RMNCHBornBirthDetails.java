@@ -3,7 +3,7 @@ package com.iemr.flw.domain.identity;
 import com.google.gson.annotations.Expose;
 import lombok.Data;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;

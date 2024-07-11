@@ -4,7 +4,9 @@ import com.iemr.flw.dto.identity.CbacDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.service.CbacService;
 import com.iemr.flw.utils.response.OutputResponse;
-import io.swagger.annotations.ApiOperation;
+
+import io.swagger.v3.oas.annotations.Operation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +16,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/cbac", headers = "Authorization")
+@RequestMapping(value = "/cbac", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class CbacController {
 
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
@@ -23,7 +25,7 @@ public class CbacController {
     private CbacService cbacService;
 
     @CrossOrigin()
-    @ApiOperation(value = "get cbac details of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "get cbac details of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/getAll"}, method = {RequestMethod.POST})
     public String getAllCbacDetailsByUserId(@RequestBody GetBenRequestHandler requestDTO,
                                             @RequestHeader(value = "Authorization") String Authorization) {
@@ -48,7 +50,7 @@ public class CbacController {
 
 
     @CrossOrigin()
-    @ApiOperation(value = "save cbac details of all beneficiaries registered with given user name", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "save cbac details of all beneficiaries registered with given user name")
     @RequestMapping(value = {"/saveAll"}, method = {RequestMethod.POST})
     public String saveAllCbacDetailsByUserId(@RequestBody List<CbacDTO> cbacDTOS,
                                              @RequestHeader(value = "Authorization") String Authorization) {

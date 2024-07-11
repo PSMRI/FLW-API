@@ -46,7 +46,7 @@ public class CbacServiceImpl implements CbacService {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             int pageSize = Integer.parseInt(cbac_page_size);
             int totalPage;
-            PageRequest pageRequest = new PageRequest(dto.getPageNo(), pageSize);
+            PageRequest pageRequest = PageRequest.of(dto.getPageNo(), pageSize);
             Page<CbacDetails> cbacList = cbacRepo.getAllByCreatedBy(user, dto.getFromDate(), dto.getToDate(), pageRequest);
             totalPage = cbacList.getTotalPages();
 
@@ -118,17 +118,12 @@ public class CbacServiceImpl implements CbacService {
                 cbacAdditionalDetailsList.add(cbacAdditionalDetails);
 
             } else {
-//                responseMessage.append("cbac with benRegId: " + cbacDTO.getBeneficiaryId() +
-//                        " and createdDate " + cbacDetails.getCreatedDate() + " already exists.");
-//                responseMessage.append(System.getProperty("line.separator"));
                 result.add(new CbacStatus(cbacDTO.getBeneficiaryId(), cbacDTO.getCreatedDate(), "Fail"));
             }
         });
         if (cbacAdditionalDetailsList.size() > 0) {
-            cbacAddRepo.save(cbacAdditionalDetailsList);
-//            responseMessage.append(cbacAdditionalDetailsList.size() + " CBAC Details Saved!");
+            cbacAddRepo.saveAll(cbacAdditionalDetailsList);
         }
-//        return responseMessage.toString();
         return new Gson().toJson(result);
     }
 }

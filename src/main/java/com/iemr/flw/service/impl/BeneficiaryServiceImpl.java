@@ -1,17 +1,14 @@
 package com.iemr.flw.service.impl;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.iemr.flw.domain.identity.*;
-import com.iemr.flw.dto.identity.GetBenRequestHandler;
-import com.iemr.flw.mapper.InputMapper;
-import com.iemr.flw.repo.identity.BeneficiaryRepo;
-import com.iemr.flw.repo.identity.HouseHoldRepo;
-import com.iemr.flw.service.BeneficiaryService;
-import com.iemr.flw.utils.config.ConfigProperties;
-import com.iemr.flw.utils.http.HttpUtils;
+import java.math.BigInteger;
+import java.sql.Date;
+import java.time.Period;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,14 +19,31 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.math.BigInteger;
-import java.sql.Date;
-import java.time.Period;
-import java.util.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.iemr.flw.domain.identity.BenHealthIDDetails;
+import com.iemr.flw.domain.identity.RMNCHBeneficiaryDetailsRmnch;
+import com.iemr.flw.domain.identity.RMNCHBornBirthDetails;
+import com.iemr.flw.domain.identity.RMNCHHouseHoldDetails;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiaryAccount;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiaryImage;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiaryaddress;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiarycontact;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiarymapping;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
+import com.iemr.flw.mapper.InputMapper;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
+import com.iemr.flw.repo.identity.HouseHoldRepo;
+import com.iemr.flw.service.BeneficiaryService;
+import com.iemr.flw.utils.config.ConfigProperties;
+import com.iemr.flw.utils.http.HttpUtils;
 
 @Service
 @Qualifier("rmnchServiceImpl")
-@PropertySource("classpath:application.properties")
+
 public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     private final Logger logger = LoggerFactory.getLogger(BeneficiaryServiceImpl.class);
@@ -58,7 +72,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
                     request.setUserName(userName);
 
-                    PageRequest pr = new PageRequest(request.getPageNo(), pageSize);
+                    PageRequest pr = PageRequest.of(request.getPageNo(), pageSize);
                     if (request.getFromDate() != null && request.getToDate() != null) {
                         Page<RMNCHMBeneficiaryaddress> p = beneficiaryRepo.getBenDataWithinDates(
                                 request.getUserName(), request.getFromDate(), request.getToDate(), pr);

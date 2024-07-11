@@ -61,7 +61,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                 }
                 delOutList.add(deliveryoutcome);
             });
-            deliveryOutcomeRepo.save(delOutList);
+            deliveryOutcomeRepo.saveAll(delOutList);
 //            ecrRepo.save(ecrList);
             return "no of delivery outcome details saved: " + delOutList.size();
         } catch (Exception e) {

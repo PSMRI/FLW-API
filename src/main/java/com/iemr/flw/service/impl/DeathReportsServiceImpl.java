@@ -53,7 +53,7 @@ public class DeathReportsServiceImpl implements DeathReportsService {
                 }
                 cdrList.add(existingCDR);
             });
-            cdrRepo.save(cdrList);
+            cdrRepo.saveAll(cdrList);
             return "no of cdr details saved: " + cdrDTOs.size();
         } catch (Exception e) {
             return "error while saving cdr details: " + e.getMessage();
@@ -79,7 +79,7 @@ public class DeathReportsServiceImpl implements DeathReportsService {
                 }
                 mdsrList.add(mdsr);
             });
-            mdsrRepo.save(mdsrList);
+            mdsrRepo.saveAll(mdsrList);
             return "no of mdsr details saved: " + mdsrDTOs.size();
         } catch (Exception e) {
             return "error while saving mdsr details: " + e.getMessage();
