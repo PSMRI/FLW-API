@@ -2,6 +2,7 @@ package com.iemr.flw.service.impl;
 
 import java.math.BigInteger;
 import java.sql.Date;
+import java.text.SimpleDateFormat;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -20,9 +21,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
 import com.iemr.flw.domain.identity.BenHealthIDDetails;
 import com.iemr.flw.domain.identity.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.flw.domain.identity.RMNCHBornBirthDetails;
@@ -378,7 +382,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         response.put("data", resultList);
         response.put("pageSize", Integer.parseInt(door_to_door_page_size));
         response.put("totalPage", totalPage);
-        return new Gson().toJson(response);
+        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy HH:mm:ss a").create();
+        return gson.toJson(response);
     }
 
     public void fetchHealthIdByBenRegID(Long benRegID, String authorization, Map<String, Object> resultMap) {
