@@ -13,7 +13,7 @@ import java.sql.Timestamp;
 @Data
 public class RMNCHBeneficiaryDetailsRmnch {
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Expose
 	@Column(name = "beneficiaryDetails_RmnchId", insertable = false, updatable = false)
 	private Long beneficiaryDetails_RmnchId;

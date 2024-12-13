@@ -12,7 +12,7 @@ import java.sql.Timestamp;
 @Data
 public class RMNCHMBeneficiaryregidmapping {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true, nullable = false)
     private Long benRegId;
 

@@ -11,7 +11,7 @@ import java.sql.Timestamp;
 public class NonPregnantWomanHighRiskTrack {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "user_id")

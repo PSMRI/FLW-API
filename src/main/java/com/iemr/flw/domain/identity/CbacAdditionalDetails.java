@@ -10,7 +10,7 @@ import java.sql.Timestamp;
 @Data
 public class CbacAdditionalDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cbacAdditionalDetailId;
     private Long cbacDetailsId;
     private Timestamp filledDate;

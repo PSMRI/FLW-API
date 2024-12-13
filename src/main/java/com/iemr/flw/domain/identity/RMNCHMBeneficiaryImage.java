@@ -13,7 +13,7 @@ import java.sql.Timestamp;
 @Data
 public class RMNCHMBeneficiaryImage {
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "BenImageId")
 	private BigInteger benImageId;
 

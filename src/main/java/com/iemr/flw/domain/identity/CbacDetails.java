@@ -11,7 +11,7 @@ import java.util.Objects;
 @Data
 public class CbacDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cbacDetailsId;
     private Long beneficiaryRegId;
     private String cbacAge;
