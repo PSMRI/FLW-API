@@ -157,6 +157,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     benVisitDetail.setProcessed("N");
                     benVisitDetail.setModifiedBy(it.getUpdatedBy());
                     benVisitDetail.setLastModDate(it.getUpdatedDate());
+                    benVisitDetail.setProviderServiceMapID(it.getProviderServiceMapID());
                     benVisitDetail = benVisitDetailsRepo.save(benVisitDetail);
 
                     // Saving Data in AncCare table

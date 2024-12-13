@@ -41,5 +41,6 @@ public class ANCVisitDTO {
     private String createdBy;
     private Timestamp updatedDate;
     private String updatedBy;
+    private Integer providerServiceMapID;
 }
 
