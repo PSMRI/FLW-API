@@ -7,7 +7,7 @@ It is designed to reduce manual labor, enhance efficiency, and ensure timely and
 
 # Modules of FLW Application
 1. Household Registration:
- The application enables Household Registration with a unique HHID for households and Beneficiary IDs for family members, with the option to create Ayushman Bharat Health Account (ABHA), ensuring accurate tracking and line listing.
+The application enables Household Registration with a unique HHID for households and Beneficiary IDs for family members, with the option to create Ayushman Bharat Health Account (ABHA), ensuring accurate tracking and line listing.
 
 2.Eligible Couple List
 Maintain line listing of married couples (Married Women aged 15–49) and tracks for family planning needs and reproductive health.
