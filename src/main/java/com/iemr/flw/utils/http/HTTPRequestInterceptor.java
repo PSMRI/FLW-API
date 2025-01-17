@@ -74,6 +74,7 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 				switch (requestAPI) {
 //				case "getUserRole":
 				case "swagger-ui.html":
+				case "swagger-config":
 				case "ui":
 				case "swagger-resources":
 				case "version":
