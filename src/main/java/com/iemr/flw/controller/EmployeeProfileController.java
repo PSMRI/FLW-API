@@ -24,7 +24,7 @@ public class EmployeeProfileController {
     
 
     @RequestMapping(value = "employee/editProfile", method = { RequestMethod.POST }, produces = {
-            "application/json" })
+            "application/json" },headers = "Authorization")
     public ResponseEntity<Map<String,Object>> editEmployee(@RequestBody M_User editEmployee) {
 
         try {
@@ -51,7 +51,7 @@ public class EmployeeProfileController {
 
     }
     @Operation(summary = "Profile Detail")
-    @RequestMapping(value = "employee/getProfile",method = RequestMethod.POST)
+    @RequestMapping(value = "employee/getProfile",method = RequestMethod.POST,headers = "Authorization")
      public ResponseEntity<Map<String,Object>> getProfile(@RequestParam ("UserID")Integer userId){
         try {
             response.put("data",employeeProfileService.getProfileData(userId));

@@ -23,7 +23,7 @@ public class BeneficiaryOTPGatewayController {
     private OTPHandler otpHandler;
 
     @Operation(summary = "Send OTP")
-    @RequestMapping(value = "/sendOTP", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
+    @RequestMapping(value = "/sendOTP", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON,headers = "Authorization")
     public String sendOTP(@RequestParam String phoneNumber) {
         OutputResponse response = new OutputResponse();
 
@@ -44,7 +44,7 @@ public class BeneficiaryOTPGatewayController {
 
     @CrossOrigin()
     @Operation(summary = "Validate OTP")
-    @RequestMapping(value = "/validateOTP", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON)
+    @RequestMapping(value = "/validateOTP", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON,headers = "Authorization")
     public String validateOTP(
             @Param(value = "{\"mobNo\":\"String\",\"otp\":\"Integer\"}") @RequestBody String requestOBJ) {
 
@@ -68,7 +68,7 @@ public class BeneficiaryOTPGatewayController {
 
     @CrossOrigin()
     @Operation(summary = "Resend OTP")
-    @RequestMapping(value = "/resendOTP", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
+    @RequestMapping(value = "/resendOTP", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON,headers = "Authorization")
     public String resendOTP(@RequestParam String  phoneNumber) {
 
         OutputResponse response = new OutputResponse();
