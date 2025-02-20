@@ -17,7 +17,6 @@ public class M_User {
     @Expose
     @Column(name="UserID")
     private Integer userID;
-
     @Expose
     @Column(name="TitleID")
     private Integer titleID;
