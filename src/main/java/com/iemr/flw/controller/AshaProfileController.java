@@ -1,7 +1,7 @@
 package com.iemr.flw.controller;
 
-import com.iemr.flw.domain.iemr.M_User;
-import com.iemr.flw.service.EmployeeProfileService;
+import com.iemr.flw.domain.iemr.AshaWorker;
+import com.iemr.flw.service.AshaProfileService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,26 +13,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-public class EmployeeProfileController {
+@RequestMapping(value = "/employee", headers = "Authorization", produces = "application/json")
+public class AshaProfileController {
     private Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
     @Autowired
-    EmployeeProfileService employeeProfileService;
+    AshaProfileService ashaProfileService;
     private Map<String,Object> response = new HashMap<>();
 
     @CrossOrigin()
     @Operation(summary = "Edit employee")
     
 
-    @RequestMapping(value = "employee/editProfile", method = { RequestMethod.POST }, produces = {
-            "application/json" },headers = "Authorization")
-    public ResponseEntity<Map<String,Object>> editEmployee(@RequestBody M_User editEmployee) {
+    @RequestMapping(value = "editProfile", method = { RequestMethod.POST }, produces = {
+            "application/json" },consumes = "application/json" )
+    public ResponseEntity<Map<String,Object>> editEmployee(@RequestBody AshaWorker editEmployee) {
 
         try {
             System.out.println(editEmployee.toString());
 
 
-
-            M_User editdata1 = employeeProfileService.saveEditData(editEmployee);
+            AshaWorker editdata1 = ashaProfileService.saveEditData(editEmployee);
             response.put("data",editdata1);
             response.put("statusCode",200);
             response.put("status","Success");
@@ -51,10 +51,10 @@ public class EmployeeProfileController {
 
     }
     @Operation(summary = "Profile Detail")
-    @RequestMapping(value = "employee/getProfile",method = RequestMethod.POST,headers = "Authorization")
-     public ResponseEntity<Map<String,Object>> getProfile(@RequestParam ("UserID")Integer userId){
+    @RequestMapping(value = "getProfile",method = RequestMethod.GET)
+     public ResponseEntity<Map<String,Object>> getProfile(@RequestParam ("employeeId")Integer userId){
         try {
-            response.put("data",employeeProfileService.getProfileData(userId));
+            response.put("data",ashaProfileService.getProfileData(userId));
             response.put("statusCode",200);
             response.put("status","Success");
             response.put("errorMessage","Success");
