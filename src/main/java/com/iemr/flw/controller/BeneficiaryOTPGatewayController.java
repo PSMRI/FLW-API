@@ -1,6 +1,8 @@
 package com.iemr.flw.controller;
 
+import com.iemr.flw.domain.iemr.OtpBeneficiary;
 import com.iemr.flw.dto.iemr.OTPRequestParsor;
+import com.iemr.flw.dto.iemr.OtpRequestDTO;
 import com.iemr.flw.mapper.InputMapper;
 import com.iemr.flw.service.OTPHandler;
 import com.iemr.flw.utils.response.OutputResponse;
@@ -30,6 +32,7 @@ public class BeneficiaryOTPGatewayController {
         try {
 
             String success = otpHandler.sendOTP(phoneNumber);
+
             if (success.contains("success"))
                 response.setResponse(success);
             else
@@ -45,15 +48,14 @@ public class BeneficiaryOTPGatewayController {
     @CrossOrigin()
     @Operation(summary = "Validate OTP")
     @RequestMapping(value = "/validateOTP", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON,headers = "Authorization")
-    public String validateOTP(
-            @Param(value = "{\"mobNo\":\"String\",\"otp\":\"Integer\"}") @RequestBody String requestOBJ) {
+    public String validateOTP(@RequestBody OtpRequestDTO requestOBJ) {
 
         OutputResponse response = new OutputResponse();
 
         try {
-            OTPRequestParsor obj = InputMapper.gson().fromJson(requestOBJ, OTPRequestParsor.class);
+//            OTPRequestParsor obj = InputMapper.gson().fromJson(requestOBJ, OTPRequestParsor.class);
 
-            JSONObject responseOBJ = otpHandler.validateOTP(obj);
+            JSONObject responseOBJ = otpHandler.validateOTP(requestOBJ);
             if (responseOBJ != null)
                 response.setResponse(responseOBJ.toString());
             else

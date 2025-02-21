@@ -1,41 +1,65 @@
 package com.iemr.flw.service.impl;
 
 import com.iemr.flw.domain.iemr.AshaWorker;
+import com.iemr.flw.domain.iemr.M_User;
 import com.iemr.flw.repo.iemr.AshaProfileRepo;
 import com.iemr.flw.service.AshaProfileService;
+import com.iemr.flw.service.EmployeeMasterInter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+
 @Service
 public class AshaProfileImpl implements AshaProfileService {
     @Autowired
     AshaProfileRepo ashaProfileRepo;
+    @Autowired
+    EmployeeMasterInter employeeMasterInter;
 
     private final Logger logger = LoggerFactory.getLogger(AshaProfileImpl.class);
 
     @Override
     public AshaWorker saveEditData(AshaWorker ashaWorker) {
         AshaWorker ashaWorker1;
-        if(Objects.equals(ashaProfileRepo.findByEmployeeId(ashaWorker.getEmployeeId()).getEmployeeId(), ashaWorker.getEmployeeId())){
-             ashaWorker1 = ashaProfileRepo.saveAndFlush(updateProfile(ashaWorker));
+        if (ashaWorker.getId() != null) {
+            ashaWorker1 = ashaProfileRepo.saveAndFlush(updateProfile(ashaWorker));
 
-        }else {
-             ashaWorker1 = ashaProfileRepo.saveAndFlush(ashaWorker);
+        } else {
+            ashaWorker1 = ashaProfileRepo.saveAndFlush(ashaWorker);
 
         }
-        System.out.println("ashaWorker->>>"+ashaWorker1.toString());
+        System.out.println("ashaWorker->>>" + ashaWorker1.toString());
 
-        return   ashaWorker1;
+        return ashaWorker1;
 
 
     }
 
     @Override
     public AshaWorker getProfileData(Integer employeeId) {
-        return ashaProfileRepo.findByEmployeeId(employeeId);
+        if (ashaProfileRepo.findByEmployeeId(employeeId)!=null) {
+            return ashaProfileRepo.findByEmployeeId(employeeId);
+        } else {
+            return getDetails(employeeId);
+        }
+    }
+
+    private AshaWorker getDetails(Integer userID) {
+        AshaWorker ashaWorker = new AshaWorker();
+        M_User m_user = employeeMasterInter.getUserDetails(userID);
+
+        ashaWorker.setEmployeeId(m_user.getUserID());
+        ashaWorker.setEmployeeId(m_user.getUserID());
+        ashaWorker.setDob(m_user.getDOB());
+        ashaWorker.setDateOfJoining(m_user.getDOJ());
+        ashaWorker.setName(m_user.getFirstName() + " " + m_user.getLastName());
+        ashaWorker.setMobileNumber(m_user.getContactNo());
+        ashaWorker.setAlternateMobileNumber(m_user.getEmergencyContactNo());
+        ashaWorker.setProviderServiceMapID(m_user.getServiceProviderID());
+        return ashaWorker;
     }
 
 
@@ -44,7 +68,6 @@ public class AshaProfileImpl implements AshaProfileService {
 
         AshaWorker editdata = new AshaWorker();
         editdata.setId(editEmployee.getId());
-        editdata.setAge(editEmployee.getAge());
         editdata.setAbhaNumber(editEmployee.getAbhaNumber());
         editdata.setEmployeeId(editEmployee.getEmployeeId());
         editdata.setDob(editEmployee.getDob());
@@ -56,18 +79,21 @@ public class AshaProfileImpl implements AshaProfileService {
         editdata.setName(editEmployee.getName());
         editdata.setVillage(editEmployee.getVillage());
         editdata.setBankAccount(editEmployee.getBankAccount());
+        editdata.setChoName(editEmployee.getChoName());
         editdata.setChoMobile(editEmployee.getChoMobile());
         editdata.setAbhaNumber(editEmployee.getAbhaNumber());
         editdata.setAshaFamilyMember(editEmployee.getAshaFamilyMember());
+        editdata.setDateOfJoining(editEmployee.getDateOfJoining());
+        editdata.setMobileNumber(editEmployee.getMobileNumber());
         editdata.setAshaHouseholdRegistration(editEmployee.getAshaHouseholdRegistration());
         editdata.setFatherOrSpouseName(editEmployee.getFatherOrSpouseName());
         editdata.setPopulationCovered(editEmployee.getPopulationCovered());
         editdata.setAnm1Name(editEmployee.getAnm1Name());
         editdata.setAnm2Mobile(editEmployee.getAnm2Mobile());  // Corrected line
         editdata.setAwwMobile(editEmployee.getAwwMobile());
+        editdata.setProviderServiceMapID(editEmployee.getProviderServiceMapID());
 
         return editdata;
-
 
 
     }

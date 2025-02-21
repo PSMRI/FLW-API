@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "m_User",schema = "db_iemr")
@@ -48,10 +49,10 @@ public class M_User {
     private String pAN;
     @Expose
     @Column(name="DOB")
-    private Date dOB;
+    private LocalDate dOB;
     @Expose
     @Column(name="DOJ")
-    private Date dOJ;
+    private LocalDate dOJ;
     @Expose
     @Column(name="QualificationID")
     private Integer qualificationID;

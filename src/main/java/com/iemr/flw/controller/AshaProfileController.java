@@ -1,7 +1,12 @@
 package com.iemr.flw.controller;
 
 import com.iemr.flw.domain.iemr.AshaWorker;
+import com.iemr.flw.domain.iemr.M_User;
+import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
+import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.AshaProfileService;
+import com.iemr.flw.service.EmployeeMasterInter;
+import com.iemr.flw.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping(value = "/employee", headers = "Authorization", produces = "application/json")
@@ -20,6 +26,8 @@ public class AshaProfileController {
     AshaProfileService ashaProfileService;
     private Map<String,Object> response = new HashMap<>();
 
+    @Autowired
+    private EmployeeMasterInter employeeMasterInter;
     @CrossOrigin()
     @Operation(summary = "Edit employee")
     
@@ -54,6 +62,7 @@ public class AshaProfileController {
     @RequestMapping(value = "getProfile",method = RequestMethod.GET)
      public ResponseEntity<Map<String,Object>> getProfile(@RequestParam ("employeeId")Integer userId){
         try {
+
             response.put("data",ashaProfileService.getProfileData(userId));
             response.put("statusCode",200);
             response.put("status","Success");

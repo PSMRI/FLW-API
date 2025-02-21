@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 @Entity
 @Data
-@Table(name = "asha_worker",schema = "db_iemr")
+@Table(name = "asha_profile",schema = "db_iemr")
 public class AshaWorker {
 
     @Id
@@ -27,9 +27,6 @@ public class AshaWorker {
 
     @Column(name = "dob")
     private LocalDate dob; // Changed from String to LocalDate
-
-    @Transient
-    private int age; // Auto-calculated from DOB
 
 
     @Column(name = "mobile_number")
@@ -56,7 +53,7 @@ public class AshaWorker {
     private Integer populationCovered;
 
 
-    @Column(name = "cho_name")
+    @Column(name = "cho_name",nullable = false)
     private String choName;
 
 
@@ -96,4 +93,7 @@ public class AshaWorker {
 
     @Column(name = "asha_family_member")
     private String ashaFamilyMember;
+
+    @Column(name = "ProviderServiceMapID")
+    private Integer ProviderServiceMapID;
 }
