@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 
+
 @Entity
 @Data
 @Table(name = "asha_profile",schema = "db_iemr")

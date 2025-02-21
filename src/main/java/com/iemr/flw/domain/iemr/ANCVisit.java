@@ -112,7 +112,4 @@ public class ANCVisit {
 
     @Column(name = "updated_by")
     private String updatedBy;
-
-    @Column(name = "file_path")
-    private String filePath;
 }
