@@ -4,7 +4,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.primitives.Ints;
+import com.iemr.flw.domain.iemr.OtpBeneficiary;
 import com.iemr.flw.dto.iemr.OTPRequestParsor;
+import com.iemr.flw.repo.iemr.OtpBeneficiaryRepository;
 import com.iemr.flw.service.OTPHandler;
 import com.iemr.flw.utils.config.ConfigProperties;
 import com.iemr.flw.utils.http.HttpUtils;
@@ -17,6 +19,8 @@ import org.springframework.stereotype.Service;
 
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.sql.Timestamp;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -25,7 +29,8 @@ public class OTPHandlerServiceImpl implements OTPHandler {
     @Autowired
     HttpUtils httpUtils;
 
-
+    @Autowired
+    OtpBeneficiaryRepository otpBeneficiaryRepository;
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     private LoadingCache<String, String> otpCache;
@@ -53,8 +58,9 @@ public class OTPHandlerServiceImpl implements OTPHandler {
     public String sendOTP(String  mobNo) throws Exception {
         System.out.println("mobNo:"+mobNo);
         int otp = generateOTP(mobNo);
-      //  sendSMS(otp, mobNo, "OTP is ");
-        return "success+\n"+otp;
+        sendSMS(otp, mobNo, "OTP is ");
+        saveOtp(mobNo,otp);
+        return "success";
     }
 
     /***
@@ -72,6 +78,8 @@ public class OTPHandlerServiceImpl implements OTPHandler {
             JSONObject responseObj = new JSONObject();
             responseObj.put("userName", obj.getMobNo());
             responseObj.put("userID", obj.getMobNo());
+            verifyOtp(obj.getMobNo(),obj.getOtp(),null);
+
 
 
             return responseObj;
@@ -80,6 +88,21 @@ public class OTPHandlerServiceImpl implements OTPHandler {
         }
 
     }
+    public String verifyOtp(String phoneNumber, Integer otp,Long otpBeneficiaryId) {
+        Optional<OtpBeneficiary> otpEntry = otpBeneficiaryRepository.findByPhoneNumberAndOtp(phoneNumber, otp);
+
+        if (otpEntry.isPresent()) {
+            OtpBeneficiary otpBeneficiary = otpEntry.get();
+            otpBeneficiary.setBeneficiaryId(otpBeneficiaryId);
+            otpBeneficiary.setIsOtpVerify(true);
+            otpBeneficiary.setIsExpired(true);
+            otpBeneficiaryRepository.save(otpBeneficiary);
+            return "OTP verified successfully.";
+        } else {
+            return "Invalid or expired OTP.";
+        }
+    }
+
 
     /***
      * @param
@@ -88,8 +111,19 @@ public class OTPHandlerServiceImpl implements OTPHandler {
     @Override
     public String resendOTP(String mobNo) throws Exception {
         int otp = generateOTP(mobNo);
-      //  sendSMS(otp, mobNo, "OTP is ");
-        return "success+\n"+otp;
+        sendSMS(otp, mobNo, "OTP is ");
+        saveOtp(mobNo,otp);
+
+        return "success";
+    }
+    private void saveOtp(String phoneNo,Integer otp){
+        OtpBeneficiary otpEntry = new OtpBeneficiary();
+        otpEntry.setBeneficiaryId(null);
+        otpEntry.setPhoneNumber(phoneNo);
+        otpEntry.setOtp(otp);
+        otpEntry.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+
+        otpBeneficiaryRepository.save(otpEntry);
     }
 
     // generate 6 digit random no #
