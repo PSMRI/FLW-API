@@ -12,10 +12,10 @@ public class MicroBirthPlan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "userId")
+    @Column(name = "user_id")
     private Integer UserId;
 
-    @Column(name = "benId")
+    @Column(name = "ben_id")
     private  Integer benId;
 
     @Column(name = "pw_name")

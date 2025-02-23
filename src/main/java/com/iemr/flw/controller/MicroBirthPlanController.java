@@ -1,7 +1,7 @@
 package com.iemr.flw.controller;
 
 import com.iemr.flw.domain.iemr.MicroBirthPlan;
-import com.iemr.flw.domain.iemr.MicroBirthPlanDTO;
+import com.iemr.flw.dto.iemr.MicroBirthPlanDTO;
 import com.iemr.flw.service.MicroBirthPlanService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +18,13 @@ public class MicroBirthPlanController {
     @CrossOrigin()
     @Operation(summary = "Micro BirthPlan")
 
-    @RequestMapping(value = "save",method = RequestMethod.POST)
+    @RequestMapping(value = "saveAll",method = RequestMethod.POST)
     public ResponseEntity<MicroBirthPlan> createMicroBirthPlan(@RequestBody MicroBirthPlanDTO birthPlan) {
         return ResponseEntity.ok(service.createMicroBirthPlan(birthPlan));
     }
 
 
-    @RequestMapping(value = "downSync",method = RequestMethod.GET)
+    @RequestMapping(value = "getAll",method = RequestMethod.GET)
     public ResponseEntity<List<MicroBirthPlan>> getAllMicroBirthPlans() {
         return ResponseEntity.ok(service.getAllMicroBirthPlans());
     }
