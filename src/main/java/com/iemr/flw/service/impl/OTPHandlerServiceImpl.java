@@ -71,17 +71,17 @@ public class OTPHandlerServiceImpl implements OTPHandler {
      *
      */
     @Override
-    public JSONObject validateOTP(OtpRequestDTO obj) throws Exception {
-        String cachedOTP = otpCache.get(obj.getPhoneNumber());
+    public JSONObject validateOTP(OTPRequestParsor obj) throws Exception {
+        String cachedOTP = otpCache.get(obj.getMobNo());
         String inputOTPEncrypted = getEncryptedOTP(obj.getOtp());
         System.out.println(cachedOTP.toString() +" "+inputOTPEncrypted.toString());
 
         if (cachedOTP.equalsIgnoreCase(inputOTPEncrypted)) {
             JSONObject responseObj = new JSONObject();
-            responseObj.put("userName", obj.getPhoneNumber());
-            responseObj.put("userID", obj.getPhoneNumber());
+            responseObj.put("userName", obj.getMobNo());
+            responseObj.put("userID", obj.getMobNo());
 
-            verifyOtp(obj.getPhoneNumber(),obj.getOtp(),obj.getBeneficiaryId());
+            verifyOtp(obj.getMobNo(),obj.getOtp(),null);
             return responseObj;
         } else {
             throw new Exception("Please enter valid OTP");
@@ -100,6 +100,12 @@ public class OTPHandlerServiceImpl implements OTPHandler {
         saveOtp(mobNo,otp);
         return "success+\n"+otp;
     }
+
+    @Override
+    public JSONObject saveBenficiary(OtpRequestDTO otpRequestDTO) {
+        return null;
+    }
+
     public String verifyOtp(String phoneNumber, Integer otp,Long otpBeneficiaryId) {
         Optional<OtpBeneficiary> otpEntry = otpBeneficiaryRepository.findByPhoneNumberAndOtp(phoneNumber, otp);
 

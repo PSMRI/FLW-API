@@ -1,6 +1,7 @@
 package com.iemr.flw.service;
 
 import com.iemr.flw.domain.iemr.MicroBirthPlan;
+import com.iemr.flw.domain.iemr.MicroBirthPlanDTO;
 import com.iemr.flw.repo.iemr.MicroBirthPlanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +15,13 @@ public class MicroBirthPlanService {
      @Autowired
     private  MicroBirthPlanRepository repository;
 
-    public MicroBirthPlan createMicroBirthPlan(MicroBirthPlan birthPlan) {
-        return repository.save(birthPlan);
+    public MicroBirthPlan createMicroBirthPlan(MicroBirthPlanDTO birthPlan) {
+        MicroBirthPlan microBirthPlan = new MicroBirthPlan();
+        for(int i =0 ;i< birthPlan.getEntries().size();i++){
+            microBirthPlan = birthPlan.getEntries().get(i);
+            microBirthPlan.setUserId(birthPlan.getUserId());
+        }
+        return repository.save(microBirthPlan);
     }
 
     public List<MicroBirthPlan> getAllMicroBirthPlans() {

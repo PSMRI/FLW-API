@@ -48,14 +48,36 @@ public class BeneficiaryOTPGatewayController {
     @CrossOrigin()
     @Operation(summary = "Validate OTP")
     @RequestMapping(value = "/validateOTP", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON,headers = "Authorization")
-    public String validateOTP(@RequestBody OtpRequestDTO requestOBJ) {
+    public String validateOTP(@Param(value = "{\"mobNo\":\"String\",\"otp\":\"Integer\"}") @RequestBody String requestOBJ) {
 
         OutputResponse response = new OutputResponse();
 
         try {
-//            OTPRequestParsor obj = InputMapper.gson().fromJson(requestOBJ, OTPRequestParsor.class);
+            OTPRequestParsor obj = InputMapper.gson().fromJson(requestOBJ, OTPRequestParsor.class);
 
-            JSONObject responseOBJ = otpHandler.validateOTP(requestOBJ);
+            JSONObject responseOBJ = otpHandler.validateOTP(obj);
+            if (responseOBJ != null)
+                response.setResponse(responseOBJ.toString());
+            else
+                response.setError(5000, "failure");
+
+        } catch (Exception e) {
+            logger.error("error in validating OTP : " + e);
+            response.setError(5000, "error : " + e);
+        }
+        return response.toString();
+    }
+
+    @CrossOrigin()
+    @Operation(summary = "Save BeneficiaryId")
+    @RequestMapping(value = "/saveBeneficiaryId", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON,headers = "Authorization")
+    public String saveBeneficiaryId(@RequestBody OtpRequestDTO requestOBJ) {
+
+        OutputResponse response = new OutputResponse();
+
+        try {
+
+            JSONObject responseOBJ = otpHandler.saveBenficiary(requestOBJ);
             if (responseOBJ != null)
                 response.setResponse(responseOBJ.toString());
             else

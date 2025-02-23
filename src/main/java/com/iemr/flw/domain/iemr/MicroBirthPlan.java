@@ -12,6 +12,12 @@ public class MicroBirthPlan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "userId")
+    private Integer UserId;
+
+    @Column(name = "benId")
+    private  Integer benId;
+
     @Column(name = "pw_name")
     private String pwName; // Auto-populated
 
@@ -65,4 +71,7 @@ public class MicroBirthPlan {
 
     @Column(name = "is_synced")
     private Boolean isSynced;
+
+
+
 }
