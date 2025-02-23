@@ -29,10 +29,9 @@ import java.util.concurrent.TimeUnit;
 public class OTPHandlerServiceImpl implements OTPHandler {
     @Autowired
     HttpUtils httpUtils;
+
     @Autowired
     OtpBeneficiaryRepository otpBeneficiaryRepository;
-
-
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     private LoadingCache<String, String> otpCache;
@@ -60,9 +59,9 @@ public class OTPHandlerServiceImpl implements OTPHandler {
     public String sendOTP(String  mobNo) throws Exception {
         System.out.println("mobNo:"+mobNo);
         int otp = generateOTP(mobNo);
+        sendSMS(otp, mobNo, "OTP is ");
         saveOtp(mobNo,otp);
-      //  sendSMS(otp, mobNo, "OTP is ");
-        return "success+\n"+otp;
+        return "success";
     }
 
     /***
@@ -80,33 +79,17 @@ public class OTPHandlerServiceImpl implements OTPHandler {
             JSONObject responseObj = new JSONObject();
             responseObj.put("userName", obj.getMobNo());
             responseObj.put("userID", obj.getMobNo());
+            saveBeneficiaryId(obj.getMobNo(),obj.getOtp(),null);
 
-            verifyOtp(obj.getMobNo(),obj.getOtp(),null);
+
+
             return responseObj;
         } else {
             throw new Exception("Please enter valid OTP");
         }
 
     }
-
-    /***
-     * @param
-     * @return success if OTP re-sent successfully
-     */
-    @Override
-    public String resendOTP(String mobNo) throws Exception {
-        int otp = generateOTP(mobNo);
-      //  sendSMS(otp, mobNo, "OTP is ");
-        saveOtp(mobNo,otp);
-        return "success+\n"+otp;
-    }
-
-    @Override
-    public JSONObject saveBenficiary(OtpRequestDTO otpRequestDTO) {
-        return null;
-    }
-
-    public String verifyOtp(String phoneNumber, Integer otp,Long otpBeneficiaryId) {
+    public String saveBeneficiaryId(String phoneNumber, Integer otp,Long otpBeneficiaryId) {
         Optional<OtpBeneficiary> otpEntry = otpBeneficiaryRepository.findByPhoneNumberAndOtp(phoneNumber, otp);
 
         if (otpEntry.isPresent()) {
@@ -115,10 +98,44 @@ public class OTPHandlerServiceImpl implements OTPHandler {
             otpBeneficiary.setIsOtpVerify(true);
             otpBeneficiary.setIsExpired(true);
             otpBeneficiaryRepository.save(otpBeneficiary);
-            return "OTP verified successfully.";
+            return "Beneficiary Id created.";
         } else {
-            return "Invalid or expired OTP.";
+            return "Invalid Beneficiary";
         }
+    }
+
+
+    /***
+     * @param
+     * @return success if OTP re-sent successfully
+     */
+    @Override
+    public String resendOTP(String mobNo) throws Exception {
+        int otp = generateOTP(mobNo);
+        sendSMS(otp, mobNo, "OTP is ");
+        saveOtp(mobNo,otp);
+
+        return "success";
+    }
+
+    @Override
+    public JSONObject saveBenficiary(OtpRequestDTO requestOBJ) {
+        JSONObject jsonObject = new JSONObject();
+
+        saveBeneficiaryId(requestOBJ.getPhoneNumber(),requestOBJ.getOtp(),requestOBJ.getBeneficiaryId());
+        jsonObject.put("data",requestOBJ);
+
+        return jsonObject;
+    }
+
+    private void saveOtp(String phoneNo,Integer otp){
+        OtpBeneficiary otpEntry = new OtpBeneficiary();
+        otpEntry.setBeneficiaryId(null);
+        otpEntry.setPhoneNumber(phoneNo);
+        otpEntry.setOtp(otp);
+        otpEntry.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+
+        otpBeneficiaryRepository.save(otpEntry);
     }
 
     // generate 6 digit random no #
@@ -138,15 +155,6 @@ public class OTPHandlerServiceImpl implements OTPHandler {
             obj.otpCache.put(authKey, generatedPassword);
         }
         return otp;
-    }
-    private void saveOtp(String phoneNo,Integer otp){
-        OtpBeneficiary otpEntry = new OtpBeneficiary();
-        otpEntry.setBeneficiaryId(null);
-        otpEntry.setPhoneNumber(phoneNo);
-        otpEntry.setOtp(otp);
-        otpEntry.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-
-        otpBeneficiaryRepository.save(otpEntry);
     }
 
     // SHA-256 encoding logic implemented

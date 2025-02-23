@@ -2,6 +2,8 @@ package com.iemr.flw.domain.iemr;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
+import java.math.BigInteger;
 import java.sql.Timestamp;
 
 @Entity

@@ -1,5 +1,6 @@
 package com.iemr.flw.service;
 
+import com.iemr.flw.domain.iemr.OtpBeneficiary;
 import com.iemr.flw.dto.iemr.OTPRequestParsor;
 import com.iemr.flw.dto.iemr.OtpRequestDTO;
 import org.json.JSONObject;
@@ -12,6 +13,5 @@ public interface OTPHandler {
 
     public String resendOTP(String mobNo) throws Exception;
 
-    public  JSONObject saveBenficiary(OtpRequestDTO otpRequestDTO);
-
+    JSONObject saveBenficiary(OtpRequestDTO requestOBJ);
 }
