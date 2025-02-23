@@ -6,6 +6,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.primitives.Ints;
 import com.iemr.flw.domain.iemr.OtpBeneficiary;
 import com.iemr.flw.dto.iemr.OTPRequestParsor;
+import com.iemr.flw.dto.iemr.OtpRequestDTO;
 import com.iemr.flw.repo.iemr.OtpBeneficiaryRepository;
 import com.iemr.flw.service.OTPHandler;
 import com.iemr.flw.utils.config.ConfigProperties;
@@ -78,7 +79,7 @@ public class OTPHandlerServiceImpl implements OTPHandler {
             JSONObject responseObj = new JSONObject();
             responseObj.put("userName", obj.getMobNo());
             responseObj.put("userID", obj.getMobNo());
-            verifyOtp(obj.getMobNo(),obj.getOtp(),null);
+            saveBeneficiaryId(obj.getMobNo(),obj.getOtp(),null);
 
 
 
@@ -88,7 +89,7 @@ public class OTPHandlerServiceImpl implements OTPHandler {
         }
 
     }
-    public String verifyOtp(String phoneNumber, Integer otp,Long otpBeneficiaryId) {
+    public String saveBeneficiaryId(String phoneNumber, Integer otp,Long otpBeneficiaryId) {
         Optional<OtpBeneficiary> otpEntry = otpBeneficiaryRepository.findByPhoneNumberAndOtp(phoneNumber, otp);
 
         if (otpEntry.isPresent()) {
@@ -97,9 +98,9 @@ public class OTPHandlerServiceImpl implements OTPHandler {
             otpBeneficiary.setIsOtpVerify(true);
             otpBeneficiary.setIsExpired(true);
             otpBeneficiaryRepository.save(otpBeneficiary);
-            return "OTP verified successfully.";
+            return "Beneficiary Id created.";
         } else {
-            return "Invalid or expired OTP.";
+            return "Invalid Beneficiary";
         }
     }
 
@@ -116,6 +117,17 @@ public class OTPHandlerServiceImpl implements OTPHandler {
 
         return "success";
     }
+
+    @Override
+    public JSONObject saveBenficiary(OtpRequestDTO requestOBJ) {
+        JSONObject jsonObject = new JSONObject();
+
+        saveBeneficiaryId(requestOBJ.getPhoneNumber(),requestOBJ.getOtp(),requestOBJ.getBeneficiaryId());
+        jsonObject.put("data",requestOBJ);
+
+        return jsonObject;
+    }
+
     private void saveOtp(String phoneNo,Integer otp){
         OtpBeneficiary otpEntry = new OtpBeneficiary();
         otpEntry.setBeneficiaryId(null);

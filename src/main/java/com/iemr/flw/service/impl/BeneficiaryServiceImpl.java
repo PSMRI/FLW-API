@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.iemr.flw.repo.iemr.OtpBeneficiaryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,11 +51,15 @@ import com.iemr.flw.utils.http.HttpUtils;
 
 public class BeneficiaryServiceImpl implements BeneficiaryService {
 
+
     private final Logger logger = LoggerFactory.getLogger(BeneficiaryServiceImpl.class);
     @Value("${door-to-door-page-size}")
     private String door_to_door_page_size;
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
+    @Autowired
+    OtpBeneficiaryRepository otpBeneficiaryRepository;
+
 
     @Autowired
     private HouseHoldRepo houseHoldRepo;
@@ -172,6 +177,17 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         benDetailsRMNCH_OBJ.setMotherName(benDetailsOBJ.getMotherName());
                     if (benDetailsOBJ.getLiteracyStatus() != null)
                         benDetailsRMNCH_OBJ.setLiteracyStatus(benDetailsOBJ.getLiteracyStatus());
+
+                      if(!otpBeneficiaryRepository.findAll().isEmpty()){
+                          for(int i=0; i<otpBeneficiaryRepository.findAll().size(); i++){
+                              if(BigInteger.valueOf(otpBeneficiaryRepository.findAll().get(i).getBeneficiaryId()).equals(benAccountOBJ.getId())){
+                                  benDetailsOBJ.setIsVerified(true);
+                              }else {
+                                  benDetailsOBJ.setIsVerified(false);
+
+                              }
+                          }
+                      }
 
                     // bank
                     if (benAccountOBJ.getNameOfBank() != null)

@@ -185,4 +185,6 @@ public class RMNCHMBeneficiarydetail {
 	@Expose
 	@Transient
 	private Integer ProviderServiceMapID;
+
+	private Boolean isVerified = false;
 }
