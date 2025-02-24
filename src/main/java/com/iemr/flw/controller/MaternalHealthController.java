@@ -3,18 +3,20 @@ package com.iemr.flw.controller;
 import com.google.gson.Gson;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
-import com.iemr.flw.service.ChildService;
-import com.iemr.flw.service.DeliveryOutcomeService;
-import com.iemr.flw.service.InfantService;
-import com.iemr.flw.service.MaternalHealthService;
+import com.iemr.flw.service.*;
 import com.iemr.flw.utils.response.OutputResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -24,6 +26,8 @@ import java.util.List;
 public class MaternalHealthController {
 
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
+    @Autowired
+    FileStorageService fileStorageService;
 
     @Autowired
     private MaternalHealthService maternalHealthService;
@@ -106,6 +110,49 @@ public class MaternalHealthController {
             response.setError(5000, "Error in save ANC visit details : " + e);
         }
         return response.toString();
+    }
+
+    @CrossOrigin()
+    @Operation(summary = "save ANC visit details with file")
+    @RequestMapping(value = {"/ancVisit/saveAll"}, method = {RequestMethod.POST}, consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<OutputResponse> saveANCVisit(
+            @RequestPart("ancVisitDTOs") @Valid @RequestBody List<ANCVisitDTO> ancVisitDTOs,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestHeader(value = "Authorization") String Authorization) {
+
+        OutputResponse response = new OutputResponse();
+        try {
+            if (ancVisitDTOs.isEmpty()) {
+                response.setError(5000, "Invalid/NULL request obj");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Save File if provided
+            String filePath = null;
+            if (file != null && !file.isEmpty()) {
+                filePath = fileStorageService.storeFile(file);  // Save the file
+            }
+
+            // Set the filePath in DTOs
+            for (ANCVisitDTO dto : ancVisitDTOs) {
+                dto.setFilePath(filePath);
+            }
+
+            logger.info("Saving ANC visits with timestamp : " + new Timestamp(System.currentTimeMillis()));
+            String s = maternalHealthService.saveANCVisit(ancVisitDTOs);
+
+            if (s != null) {
+                response.setResponse(s);
+                return ResponseEntity.ok(response);
+            } else {
+                response.setError(5000, "Saving ANC data to DB failed");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+        } catch (Exception e) {
+            logger.error("Error in saving ANC visit details : " + e);
+            response.setError(5000, "Error in saving ANC visit details: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @CrossOrigin()
