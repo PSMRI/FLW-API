@@ -13,8 +13,8 @@ import java.util.Optional;
 @Service
 public interface MicroBirthPlanService {
     public MicroBirthPlan createMicroBirthPlan(MicroBirthPlanDTO birthPlan);
-    public List<MicroBirthPlan> getAllMicroBirthPlans();
-    public Optional<MicroBirthPlan> getMicroBirthPlanById(Long id) ;
+    public List<MicroBirthPlan> getAllMicroBirthPlans(Integer userId);
+    public Optional<MicroBirthPlan> getMicroBirthPlanById(Integer id) ;
 
 
 
