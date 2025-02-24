@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface MicroBirthPlanRepository extends JpaRepository<MicroBirthPlan, Long> {
+public interface MicroBirthPlanRepository extends JpaRepository<MicroBirthPlan, Integer> {
 }

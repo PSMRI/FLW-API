@@ -5,6 +5,7 @@ import com.iemr.flw.dto.iemr.MicroBirthPlanDTO;
 import com.iemr.flw.service.MicroBirthPlanService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,12 +26,12 @@ public class MicroBirthPlanController {
 
 
     @RequestMapping(value = "getAll",method = RequestMethod.GET)
-    public ResponseEntity<List<MicroBirthPlan>> getAllMicroBirthPlans() {
-        return ResponseEntity.ok(service.getAllMicroBirthPlans());
+    public ResponseEntity<List<MicroBirthPlan>> getAllMicroBirthPlans(@Param("userId")Integer userId) {
+        return ResponseEntity.ok(service.getAllMicroBirthPlans(userId));
     }
 
     @RequestMapping(value = "getAllMicroBirthPlansBy{id}",method = RequestMethod.GET)
-    public ResponseEntity<MicroBirthPlan> getMicroBirthPlanById(@PathVariable Long id) {
+    public ResponseEntity<MicroBirthPlan> getMicroBirthPlanById(@PathVariable Integer id) {
         return service.getMicroBirthPlanById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

@@ -7,13 +7,16 @@ import com.iemr.flw.service.MicroBirthPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class MicroBirthPlanServiceImpl  implements MicroBirthPlanService {
      @Autowired
-    private  MicroBirthPlanRepository repository;
+    private MicroBirthPlanRepository microBirthPlanRepository;
 
 
     @Override
@@ -23,24 +26,22 @@ public class MicroBirthPlanServiceImpl  implements MicroBirthPlanService {
             microBirthPlan = birthPlan.getEntries().get(i);
             microBirthPlan.setUserId(birthPlan.getUserId());
         }
-        return repository.save(microBirthPlan);
+        return microBirthPlanRepository.save(microBirthPlan);
     }
 
     @Override
-    public List<MicroBirthPlan> getAllMicroBirthPlans() {
-        return repository.findAll();
+    public List<MicroBirthPlan> getAllMicroBirthPlans(Integer userId) {
+        return microBirthPlanRepository.findAll().stream().filter(microBirthPlan -> Objects.equals(microBirthPlan.getUserId(), userId)).collect(Collectors.toList());
     }
 
     @Override
-    public Optional<MicroBirthPlan> getMicroBirthPlanById(Long id) {
+    public Optional<MicroBirthPlan> getMicroBirthPlanById(Integer id) {
         return Optional.empty();
     }
 
 
-
-
-    public MicroBirthPlan updateMicroBirthPlan(Long id, MicroBirthPlan updatedPlan) {
-        return repository.findById(id).map(existingPlan -> {
+    public MicroBirthPlan updateMicroBirthPlan(Integer id, MicroBirthPlan updatedPlan) {
+        return microBirthPlanRepository.findById(id).map(existingPlan -> {
             existingPlan.setPwName(updatedPlan.getPwName());
             existingPlan.setAge(updatedPlan.getAge());
             existingPlan.setContactNo1(updatedPlan.getContactNo1());
@@ -58,11 +59,11 @@ public class MicroBirthPlanServiceImpl  implements MicroBirthPlanService {
             existingPlan.setChildCaretaker(updatedPlan.getChildCaretaker());
             existingPlan.setCommunitySupport(updatedPlan.getCommunitySupport());
             existingPlan.setTransportationMode(updatedPlan.getTransportationMode());
-            return repository.save(existingPlan);
+            return microBirthPlanRepository.save(existingPlan);
         }).orElseThrow(() -> new RuntimeException("Micro Birth Plan not found"));
     }
 
-    public void deleteMicroBirthPlan(Long id) {
-        repository.deleteById(id);
+    public void deleteMicroBirthPlan(Integer id) {
+        microBirthPlanRepository.deleteById(id);
     }
 }
