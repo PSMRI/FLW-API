@@ -33,10 +33,8 @@ public class BeneficiaryOTPGatewayController {
 
             String success = otpHandler.sendOTP(phoneNumber);
 
-            if (success.contains("success"))
-                response.setResponse(success);
-            else
-                response.setError(5000, "failure");
+            response.setResponse(success);
+
 
         } catch (Exception e) {
             logger.error("error in sending OTP : " + e);
@@ -47,7 +45,7 @@ public class BeneficiaryOTPGatewayController {
 
     @CrossOrigin()
     @Operation(summary = "Validate OTP")
-    @RequestMapping(value = "/validateOTP", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON,headers = "Authorization")
+    @RequestMapping(value = "/validateOTP", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON,headers = "Authorization")
     public String validateOTP(@Param(value = "{\"mobNo\":\"String\",\"otp\":\"Integer\"}") @RequestBody String requestOBJ) {
 
         OutputResponse response = new OutputResponse();
@@ -67,27 +65,7 @@ public class BeneficiaryOTPGatewayController {
         }
         return response.toString();
     }
-    @CrossOrigin()
-    @Operation(summary = "Save BeneficiaryId")
-    @RequestMapping(value = "/saveBeneficiaryId", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON,headers = "Authorization")
-    public String saveBeneficiaryId(@RequestBody OtpRequestDTO requestOBJ) {
 
-        OutputResponse response = new OutputResponse();
-
-        try {
-
-            JSONObject responseOBJ = otpHandler.saveBenficiary(requestOBJ);
-            if (responseOBJ != null)
-                response.setResponse(responseOBJ.toString());
-            else
-                response.setError(5000, "failure");
-
-        } catch (Exception e) {
-            logger.error("error in validating OTP : " + e);
-            response.setError(5000, "error : " + e);
-        }
-        return response.toString();
-    }
 
     @CrossOrigin()
     @Operation(summary = "Save BeneficiaryId")

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
+import java.util.Base64;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -59,9 +60,9 @@ public class OTPHandlerServiceImpl implements OTPHandler {
     public String sendOTP(String  mobNo) throws Exception {
         System.out.println("mobNo:"+mobNo);
         int otp = generateOTP(mobNo);
-        sendSMS(otp, mobNo, "OTP is ");
+        //sendSMS(otp, mobNo, "OTP is ");
         saveOtp(mobNo,otp);
-        return "success";
+        return String.valueOf(otp);
     }
 
     /***
@@ -112,10 +113,10 @@ public class OTPHandlerServiceImpl implements OTPHandler {
     @Override
     public String resendOTP(String mobNo) throws Exception {
         int otp = generateOTP(mobNo);
-        sendSMS(otp, mobNo, "OTP is ");
+      //  sendSMS(otp, mobNo, "OTP is ");
         saveOtp(mobNo,otp);
 
-        return "success";
+        return String.valueOf(otp);
     }
 
     @Override
@@ -144,8 +145,7 @@ public class OTPHandlerServiceImpl implements OTPHandler {
 
 //		Random random = new Random();
         Random random = SecureRandom.getInstanceStrong();
-        int otp = 100000 + random.nextInt(900000);
-
+        int otp = 1000 + random.nextInt(9000);
         generatedPassword = getEncryptedOTP(otp);
 
         if (otpCache != null)
@@ -156,6 +156,7 @@ public class OTPHandlerServiceImpl implements OTPHandler {
         }
         return otp;
     }
+
 
     // SHA-256 encoding logic implemented
     private String getEncryptedOTP(int otp) throws Exception {
