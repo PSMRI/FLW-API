@@ -1,8 +1,8 @@
 /*
-* AMRIT – Accessible Medical Records via Integrated Technology 
-* Integrated EHR (Electronic Health Records) Solution 
+* AMRIT – Accessible Medical Records via Integrated Technology
+* Integrated EHR (Electronic Health Records) Solution
 *
-* Copyright (C) "Piramal Swasthya Management and Research Institute" 
+* Copyright (C) "Piramal Swasthya Management and Research Institute"
 *
 * This file is part of AMRIT.
 *
@@ -49,6 +49,8 @@ public class RedisStorage {
 			redCon.set(key.getBytes(), value.getBytes(), Expiration.seconds(expirationTime), SetOption.UPSERT);
 		}
 		return key;
+
+
 	}
 
 	public String getObject(String key, Boolean extendExpirationTime, int expirationTime) throws RedisSessionException {
