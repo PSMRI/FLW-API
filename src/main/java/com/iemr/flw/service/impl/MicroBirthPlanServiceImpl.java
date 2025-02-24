@@ -21,13 +21,25 @@ public class MicroBirthPlanServiceImpl  implements MicroBirthPlanService {
 
     @Override
     public MicroBirthPlan createMicroBirthPlan(MicroBirthPlanDTO birthPlan) {
-        MicroBirthPlan microBirthPlan = new MicroBirthPlan();
-        for(int i =0 ;i< birthPlan.getEntries().size();i++){
-            microBirthPlan = birthPlan.getEntries().get(i);
-            microBirthPlan.setUserId(birthPlan.getUserId());
+        MicroBirthPlan microBirthPlan = null;
+
+        for (MicroBirthPlan entry : birthPlan.getEntries()) {
+            // Check if the entry already exists in the database
+            Optional<MicroBirthPlan> existingEntry = microBirthPlanRepository.findById(entry.getId());
+
+            if (existingEntry.isPresent()) {
+                updateMicroBirthPlan(entry.getId(),microBirthPlan);
+                continue;
+            }
+
+            // Set user ID and prepare for saving
+            entry.setUserId(birthPlan.getUserId());
+            microBirthPlan = microBirthPlanRepository.save(entry);
         }
-        return microBirthPlanRepository.save(microBirthPlan);
+
+        return microBirthPlan;
     }
+
 
     @Override
     public List<MicroBirthPlan> getAllMicroBirthPlans(Integer userId) {
@@ -40,7 +52,9 @@ public class MicroBirthPlanServiceImpl  implements MicroBirthPlanService {
     }
 
 
-    public MicroBirthPlan updateMicroBirthPlan(Integer id, MicroBirthPlan updatedPlan) {
+
+
+    private MicroBirthPlan  updateMicroBirthPlan(Integer id, MicroBirthPlan updatedPlan){
         return microBirthPlanRepository.findById(id).map(existingPlan -> {
             existingPlan.setPwName(updatedPlan.getPwName());
             existingPlan.setAge(updatedPlan.getAge());
@@ -59,6 +73,8 @@ public class MicroBirthPlanServiceImpl  implements MicroBirthPlanService {
             existingPlan.setChildCaretaker(updatedPlan.getChildCaretaker());
             existingPlan.setCommunitySupport(updatedPlan.getCommunitySupport());
             existingPlan.setTransportationMode(updatedPlan.getTransportationMode());
+            existingPlan.setIsSynced(true);
+            existingPlan.setBenId(updatedPlan.getBenId());
             return microBirthPlanRepository.save(existingPlan);
         }).orElseThrow(() -> new RuntimeException("Micro Birth Plan not found"));
     }
