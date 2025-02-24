@@ -9,7 +9,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/micro-birthPlan",headers = "Authorization", produces = "application/json")
@@ -26,8 +28,11 @@ public class MicroBirthPlanController {
 
 
     @RequestMapping(value = "getAll",method = RequestMethod.GET)
-    public ResponseEntity<List<MicroBirthPlan>> getAllMicroBirthPlans(@Param("userId")Integer userId) {
-        return ResponseEntity.ok(service.getAllMicroBirthPlans(userId));
+    public ResponseEntity<Map<String, Object>> getAllMicroBirthPlans(@Param("userId")Integer userId) {
+         Map<String, Object> response  = new HashMap<>();
+         response.put("entries",service.getMicroBirthPlanById(userId));
+
+        return ResponseEntity.ok(response);
     }
 
     @RequestMapping(value = "getAllMicroBirthPlansBy{id}",method = RequestMethod.GET)
