@@ -1,6 +1,7 @@
 package com.iemr.flw.controller;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.EligibleCoupleDTO;
 import com.iemr.flw.dto.iemr.EligibleCoupleTrackingDTO;
@@ -97,7 +98,8 @@ public class CoupleController {
             logger.error("Error in fetching eligible couple registration details, " + e);
             response.setError(5000, "Error in fetching eligible couple registration details : " + e);
         }
-        return response.toString();
+       Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy HH:mm:ss a").create();
+       return gson.toJson(response);
     }
 
     @CrossOrigin()
