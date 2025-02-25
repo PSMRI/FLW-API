@@ -21,7 +21,7 @@ import java.util.List;
 @RequestMapping(value = "/cbac", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class CbacController {
 	private final Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy HH:mm:ss a").create();
-    private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
+    private final Logger logger = LoggerFactory.getLogger(CbacController.class);
 
     @Autowired
     private CbacService cbacService;
