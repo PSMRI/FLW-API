@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public interface AshaProfileService {
-    AshaWorker saveEditData(AshaWorker editdata);
+    AshaWorker saveEditData(AshaWorker ashaWorkerRequest);
     AshaWorker getProfileData(Integer employeeId);
 
 }

@@ -22,18 +22,18 @@ public class AshaProfileImpl implements AshaProfileService {
     private final Logger logger = LoggerFactory.getLogger(AshaProfileImpl.class);
 
     @Override
-    public AshaWorker saveEditData(AshaWorker ashaWorker) {
-        AshaWorker ashaWorker1;
-        if (ashaWorker.getId() != null) {
-            ashaWorker1 = ashaProfileRepo.saveAndFlush(updateProfile(ashaWorker));
+    public AshaWorker saveEditData(AshaWorker ashaWorkerRequest) {
+        AshaWorker ashaWorker;
+        if (ashaWorkerRequest.getId() != null) {
+            ashaWorker = ashaProfileRepo.saveAndFlush(updateProfile(ashaWorkerRequest));
 
         } else {
-            ashaWorker1 = ashaProfileRepo.saveAndFlush(ashaWorker);
+            ashaWorker = ashaProfileRepo.saveAndFlush(ashaWorkerRequest);
 
         }
-        System.out.println("ashaWorker->>>" + ashaWorker1.toString());
+        System.out.println("ashaWorker->>>" + ashaWorker.toString());
 
-        return ashaWorker1;
+        return ashaWorker;
 
 
     }
@@ -63,35 +63,35 @@ public class AshaProfileImpl implements AshaProfileService {
     }
 
 
-    private AshaWorker updateProfile(AshaWorker editEmployee) {
-        System.out.println(editEmployee.toString());
+    private AshaWorker updateProfile(AshaWorker editAshaWorkerRequest) {
+        System.out.println(editAshaWorkerRequest.toString());
 
         AshaWorker editdata = new AshaWorker();
-        editdata.setId(editEmployee.getId());
-        editdata.setAbhaNumber(editEmployee.getAbhaNumber());
-        editdata.setEmployeeId(editEmployee.getEmployeeId());
-        editdata.setDob(editEmployee.getDob());
-        editdata.setAlternateMobileNumber(editEmployee.getAlternateMobileNumber());
-        editdata.setAnm1Mobile(editEmployee.getAnm1Mobile());
-        editdata.setAnm2Name(editEmployee.getAnm2Name());
-        editdata.setIfsc(editEmployee.getIfsc());
-        editdata.setAwwName(editEmployee.getAwwName());
-        editdata.setName(editEmployee.getName());
-        editdata.setVillage(editEmployee.getVillage());
-        editdata.setBankAccount(editEmployee.getBankAccount());
-        editdata.setChoName(editEmployee.getChoName());
-        editdata.setChoMobile(editEmployee.getChoMobile());
-        editdata.setAbhaNumber(editEmployee.getAbhaNumber());
-        editdata.setAshaFamilyMember(editEmployee.getAshaFamilyMember());
-        editdata.setDateOfJoining(editEmployee.getDateOfJoining());
-        editdata.setMobileNumber(editEmployee.getMobileNumber());
-        editdata.setAshaHouseholdRegistration(editEmployee.getAshaHouseholdRegistration());
-        editdata.setFatherOrSpouseName(editEmployee.getFatherOrSpouseName());
-        editdata.setPopulationCovered(editEmployee.getPopulationCovered());
-        editdata.setAnm1Name(editEmployee.getAnm1Name());
-        editdata.setAnm2Mobile(editEmployee.getAnm2Mobile());  // Corrected line
-        editdata.setAwwMobile(editEmployee.getAwwMobile());
-        editdata.setProviderServiceMapID(editEmployee.getProviderServiceMapID());
+        editdata.setId(editAshaWorkerRequest.getId());
+        editdata.setAbhaNumber(editAshaWorkerRequest.getAbhaNumber());
+        editdata.setEmployeeId(editAshaWorkerRequest.getEmployeeId());
+        editdata.setDob(editAshaWorkerRequest.getDob());
+        editdata.setAlternateMobileNumber(editAshaWorkerRequest.getAlternateMobileNumber());
+        editdata.setAnm1Mobile(editAshaWorkerRequest.getAnm1Mobile());
+        editdata.setAnm2Name(editAshaWorkerRequest.getAnm2Name());
+        editdata.setIfsc(editAshaWorkerRequest.getIfsc());
+        editdata.setAwwName(editAshaWorkerRequest.getAwwName());
+        editdata.setName(editAshaWorkerRequest.getName());
+        editdata.setVillage(editAshaWorkerRequest.getVillage());
+        editdata.setBankAccount(editAshaWorkerRequest.getBankAccount());
+        editdata.setChoName(editAshaWorkerRequest.getChoName());
+        editdata.setChoMobile(editAshaWorkerRequest.getChoMobile());
+        editdata.setAbhaNumber(editAshaWorkerRequest.getAbhaNumber());
+        editdata.setAshaFamilyMember(editAshaWorkerRequest.getAshaFamilyMember());
+        editdata.setDateOfJoining(editAshaWorkerRequest.getDateOfJoining());
+        editdata.setMobileNumber(editAshaWorkerRequest.getMobileNumber());
+        editdata.setAshaHouseholdRegistration(editAshaWorkerRequest.getAshaHouseholdRegistration());
+        editdata.setFatherOrSpouseName(editAshaWorkerRequest.getFatherOrSpouseName());
+        editdata.setPopulationCovered(editAshaWorkerRequest.getPopulationCovered());
+        editdata.setAnm1Name(editAshaWorkerRequest.getAnm1Name());
+        editdata.setAnm2Mobile(editAshaWorkerRequest.getAnm2Mobile());  // Corrected line
+        editdata.setAwwMobile(editAshaWorkerRequest.getAwwMobile());
+        editdata.setProviderServiceMapID(editAshaWorkerRequest.getProviderServiceMapID());
 
         return editdata;
 
