@@ -1,5 +1,7 @@
 package com.iemr.flw.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.dto.identity.CbacDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.service.CbacService;
@@ -18,7 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/cbac", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class CbacController {
-
+	private final Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy HH:mm:ss a").create();
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
 
     @Autowired
@@ -69,6 +71,6 @@ public class CbacController {
             logger.error("Error in saving cbac details by user, " + e);
             response.setError(5000, "Error in saving cbac details : " + e);
         }
-        return response.toString();
+        return gson.toJson(response);
     }
 }
