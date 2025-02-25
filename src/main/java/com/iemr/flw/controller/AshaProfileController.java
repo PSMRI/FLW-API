@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @RestController
-@RequestMapping(value = "/employee", headers = "Authorization", produces = "application/json")
+@RequestMapping(value = "/ashaWorker", headers = "Authorization", produces = "application/json")
 public class AshaProfileController {
     private Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
     @Autowired
@@ -28,9 +28,8 @@ public class AshaProfileController {
 
     @Autowired
     private EmployeeMasterInter employeeMasterInter;
-    @CrossOrigin()
-    @Operation(summary = "Edit employee")
-    
+
+    @Operation(summary = "Edit Asha Profile")
 
     @RequestMapping(value = "editProfile", method = { RequestMethod.POST }, produces = {
             "application/json" },consumes = "application/json" )
@@ -40,8 +39,8 @@ public class AshaProfileController {
             System.out.println(editEmployee.toString());
 
 
-            AshaWorker editdata1 = ashaProfileService.saveEditData(editEmployee);
-            response.put("data",editdata1);
+            AshaWorker ashaWorkerData = ashaProfileService.saveEditData(editEmployee);
+            response.put("data",ashaWorkerData);
             response.put("statusCode",200);
             response.put("status","Success");
             response.put("errorMessage","Success");
@@ -60,13 +59,21 @@ public class AshaProfileController {
     }
     @Operation(summary = "Profile Detail")
     @RequestMapping(value = "getProfile",method = RequestMethod.GET)
-     public ResponseEntity<Map<String,Object>> getProfile(@RequestParam ("employeeId")Integer userId){
+     public ResponseEntity<Map<String,Object>> getProfile(@RequestParam ("employeeId")Integer employeeId){
         try {
+            AshaWorker ashaWorker = ashaProfileService.getProfileData(employeeId);
+            if(ashaWorker!=null){
+                response.put("data",ashaWorker);
+                response.put("statusCode",200);
+                response.put("status","Success");
+                response.put("errorMessage","Success");
+            }else {
+                response.put("data",ashaProfileService.getProfileData(employeeId));
+                response.put("statusCode",200);
+                response.put("status","Success");
+                response.put("errorMessage","Data not found");
+            }
 
-            response.put("data",ashaProfileService.getProfileData(userId));
-            response.put("statusCode",200);
-            response.put("status","Success");
-            response.put("errorMessage","Success");
         }catch (Exception e) {
             logger.error("Unexpected error:", e);
             ResponseEntity.status(500).body(e.getMessage());

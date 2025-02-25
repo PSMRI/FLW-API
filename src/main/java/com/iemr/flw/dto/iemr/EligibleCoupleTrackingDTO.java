@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.Date;
 
 @Data
 public class EligibleCoupleTrackingDTO implements Serializable {
@@ -33,4 +34,5 @@ public class EligibleCoupleTrackingDTO implements Serializable {
     private Timestamp updatedDate;
 
     private String updatedBy;
+    private Date lmpDate;
 }

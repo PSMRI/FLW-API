@@ -38,7 +38,7 @@ public class BeneficiaryOTPGatewayController {
 
         } catch (Exception e) {
             logger.error("error in sending OTP : " + e);
-            response.setError(5000, "error : " + e);
+            response.setError(500, "error : " + e);
         }
         return response.toString();
     }
@@ -57,11 +57,11 @@ public class BeneficiaryOTPGatewayController {
             if (responseOBJ != null)
                 response.setResponse(responseOBJ.toString());
             else
-                response.setError(5000, "failure");
+                response.setError(500, "failure");
 
         } catch (Exception e) {
             logger.error("error in validating OTP : " + e);
-            response.setError(5000, "error : " + e);
+            response.setError(500, "error : " + e);
         }
         return response.toString();
     }

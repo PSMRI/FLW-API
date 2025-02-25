@@ -1,5 +1,6 @@
 package com.iemr.flw.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.MicroBirthPlan;
 import com.iemr.flw.dto.iemr.MicroBirthPlanDTO;
 import com.iemr.flw.service.MicroBirthPlanService;
@@ -17,27 +18,71 @@ import java.util.Map;
 @RequestMapping(value = "/micro-birthPlan",headers = "Authorization", produces = "application/json")
 public class MicroBirthPlanController {
     @Autowired
-    private  MicroBirthPlanService service;
+    private  MicroBirthPlanService microBirthPlanService;
     @CrossOrigin()
     @Operation(summary = "Micro BirthPlan")
 
     @RequestMapping(value = "saveAll",method = RequestMethod.POST)
-    public ResponseEntity<MicroBirthPlan> createMicroBirthPlan(@RequestBody MicroBirthPlanDTO birthPlan) {
-        return ResponseEntity.ok(service.createMicroBirthPlan(birthPlan));
+    public ResponseEntity<String> createMicroBirthPlan(@RequestBody MicroBirthPlanDTO birthPlan) {
+        MicroBirthPlan microBirthPlan = new MicroBirthPlan();
+        microBirthPlan=    microBirthPlanService.createMicroBirthPlan(birthPlan);
+        Map<String, Object> response = new HashMap<>();
+        String jsonResponse ="";
+
+        try {
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("userId", birthPlan.getUserId());
+            data.put("entries", microBirthPlan); // Empty array
+
+            response.put("data", data);
+            response.put("statusCode", 200);
+            response.put("errorMessage", "Success");
+            response.put("status", "Success");
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            jsonResponse = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+
+
+        }catch (Exception e){
+
+
+        }
+        return ResponseEntity.ok(jsonResponse);
     }
 
 
     @RequestMapping(value = "getAll",method = RequestMethod.GET)
-    public ResponseEntity<Map<String, Object>> getAllMicroBirthPlans(@Param("userId")Integer userId) {
-         Map<String, Object> response  = new HashMap<>();
-         response.put("entries",service.getMicroBirthPlanById(userId));
+    public ResponseEntity<String> getAllMicroBirthPlans(@Param("userId")Integer userId) {
+        Map<String, Object> response = new HashMap<>();
+        String jsonResponse ="";
 
-        return ResponseEntity.ok(response);
+        try {
+
+             Map<String, Object> data = new HashMap<>();
+             data.put("userId", userId);
+             data.put("entries", microBirthPlanService.getAllMicroBirthPlans(userId)); // Empty array
+
+             response.put("data", data);
+             response.put("statusCode", 200);
+             response.put("errorMessage", "Success");
+             response.put("status", "Success");
+
+             ObjectMapper objectMapper = new ObjectMapper();
+              jsonResponse = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+
+
+         }catch (Exception e){
+
+         }
+        return ResponseEntity.ok(jsonResponse);
+
+
     }
 
     @RequestMapping(value = "getAllMicroBirthPlansBy{id}",method = RequestMethod.GET)
     public ResponseEntity<MicroBirthPlan> getMicroBirthPlanById(@PathVariable Integer id) {
-        return service.getMicroBirthPlanById(id)
+        return microBirthPlanService.getMicroBirthPlanById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

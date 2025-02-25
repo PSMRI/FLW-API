@@ -22,18 +22,18 @@ public class AshaProfileImpl implements AshaProfileService {
     private final Logger logger = LoggerFactory.getLogger(AshaProfileImpl.class);
 
     @Override
-    public AshaWorker saveEditData(AshaWorker ashaWorker) {
-        AshaWorker ashaWorker1;
-        if (ashaWorker.getId() != null) {
-            ashaWorker1 = ashaProfileRepo.saveAndFlush(updateProfile(ashaWorker));
+    public AshaWorker saveEditData(AshaWorker ashaWorkerRequest) {
+        AshaWorker ashaWorker;
+        if (ashaWorkerRequest.getId() != null) {
+            ashaWorker = ashaProfileRepo.saveAndFlush(updateProfile(ashaWorkerRequest));
 
         } else {
-            ashaWorker1 = ashaProfileRepo.saveAndFlush(ashaWorker);
+            ashaWorker = ashaProfileRepo.saveAndFlush(ashaWorkerRequest);
 
         }
-        System.out.println("ashaWorker->>>" + ashaWorker1.toString());
+        System.out.println("ashaWorker->>>" + ashaWorker.toString());
 
-        return ashaWorker1;
+        return ashaWorker;
 
 
     }
