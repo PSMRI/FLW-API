@@ -15,21 +15,29 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
 public class OTPHandlerServiceImpl implements OTPHandler {
     @Autowired
     HttpUtils httpUtils;
+    @Value("${sendSMSUrl}")
+    private String sendSMSUrl;
 
+    @Value("${sendOTPUrl}")
+    private String OTP_SERVICE_URL;
+
+    @Autowired
+    RestTemplate restTemplate;
     @Autowired
     OtpBeneficiaryRepository otpBeneficiaryRepository;
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
@@ -56,12 +64,21 @@ public class OTPHandlerServiceImpl implements OTPHandler {
      * @return success if OTP sent successfully
      */
     @Override
-    public String sendOTP(String  mobNo) throws Exception {
-        System.out.println("mobNo:"+mobNo);
-        int otp = generateOTP(mobNo);
-        sendSMS(otp, mobNo, "OTP is ");
-        saveOtp(mobNo,otp);
-        return "success";
+    public String sendOTP(String  mobNo,String auth) throws Exception {
+        String url = OTP_SERVICE_URL + "/sendOTP";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", auth);
+
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("mobNo", mobNo);
+
+        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+        return response.getBody();
     }
 
     /***
@@ -70,23 +87,22 @@ public class OTPHandlerServiceImpl implements OTPHandler {
      *
      */
     @Override
-    public JSONObject validateOTP(OTPRequestParsor obj) throws Exception {
-        String cachedOTP = otpCache.get(obj.getMobNo());
-        String inputOTPEncrypted = getEncryptedOTP(obj.getOtp());
-        System.out.println(cachedOTP.toString() +" "+inputOTPEncrypted.toString());
+    public String validateOTP(OTPRequestParsor obj,String auth) throws Exception {
+        String url = OTP_SERVICE_URL + "/validateOTP";
 
-        if (cachedOTP.equalsIgnoreCase(inputOTPEncrypted)) {
-            JSONObject responseObj = new JSONObject();
-            responseObj.put("userName", obj.getMobNo());
-            responseObj.put("userID", obj.getMobNo());
-            saveBeneficiaryId(obj.getMobNo(),obj.getOtp(),null);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", auth);
 
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("mobNo", obj.getMobNo());
+        requestBody.put("otp", obj.getMobNo());
 
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
-            return responseObj;
-        } else {
-            throw new Exception("Please enter valid OTP");
-        }
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+        return response.getBody();
 
     }
     public String saveBeneficiaryId(String phoneNumber, Integer otp,Long otpBeneficiaryId) {
@@ -97,7 +113,6 @@ public class OTPHandlerServiceImpl implements OTPHandler {
             otpBeneficiary.setBeneficiaryId(otpBeneficiaryId);
             otpBeneficiary.setIsOtpVerify(true);
             otpBeneficiary.setIsExpired(true);
-            otpBeneficiaryRepository.save(otpBeneficiary);
             return "Beneficiary Id created.";
         } else {
             return "Invalid Beneficiary";
@@ -110,12 +125,21 @@ public class OTPHandlerServiceImpl implements OTPHandler {
      * @return success if OTP re-sent successfully
      */
     @Override
-    public String resendOTP(String mobNo) throws Exception {
-        int otp = generateOTP(mobNo);
-        sendSMS(otp, mobNo, "OTP is ");
-        saveOtp(mobNo,otp);
+    public String resendOTP(String mobNo,String auth) throws Exception {
+        String url = OTP_SERVICE_URL + "/resendOTP";
 
-        return "success";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", auth);
+
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("mobNo", mobNo);
+
+        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+        return response.getBody();
     }
 
     @Override
@@ -126,6 +150,17 @@ public class OTPHandlerServiceImpl implements OTPHandler {
         jsonObject.put("data",requestOBJ);
 
         return jsonObject;
+    }
+
+    @Override
+    public String sendSMS(String request, String Authorization) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+        headers.set("AUTHORIZATION", Authorization);
+
+        HttpEntity<Object> requestOBJ = new HttpEntity<Object>(request, headers);
+
+        return restTemplate.exchange(sendSMSUrl, HttpMethod.POST, requestOBJ, String.class).getBody();
     }
 
     private void saveOtp(String phoneNo,Integer otp){
@@ -170,55 +205,7 @@ public class OTPHandlerServiceImpl implements OTPHandler {
     }
 
     // send SMS to user
-    private void sendSMS(int otp, String phoneNo, String msgText) throws Exception {
-        String sendSMSURL = ConfigProperties.getPropertyByName("send-message-url");
-        String sendSMSAPI = SMS_GATEWAY_URL + "/" + sendSMSURL;
-        String senderName = ConfigProperties.getPropertyByName("sms-username");
-        String senderPassword = ConfigProperties.getPropertyByName("sms-password");
-        String senderNumber = ConfigProperties.getPropertyByName("sms-sender-number");
-        System.out.println("OTP"+otp+"Phone"+phoneNo+"SMSURL"+sendSMSAPI+"sendName"+senderName+"senderPassword"+senderPassword+"senderNumber"+senderNumber);
 
 
-        sendSMSAPI = sendSMSAPI.replace("USERNAME", senderName).replace("PASSWORD", senderPassword)
-                .replace("SENDER_NUMBER", senderNumber);
 
-        sendSMSAPI = sendSMSAPI
-                .replace("SMS_TEXT",
-                        msgText.concat(String.valueOf(otp))
-                                .concat(" for Tele-consultation verification and validity is 5 mins"))
-                .replace("RECEIVER_NUMBER", phoneNo);
-
-        ResponseEntity<String> response = httpUtils.getV1(sendSMSAPI);
-        System.out.println("Otp Response"+response);
-        if (response.getStatusCodeValue() == 200) {
-            String smsResponse = response.getBody();
-            // JSONObject obj = new JSONObject(smsResponse);
-            // String jobID = obj.getString("JobId");
-            switch (smsResponse) {
-                case "0x200 - Invalid Username or Password":
-                case "0x201 - Account suspended due to one of several defined reasons":
-                case "0x202 - Invalid Source Address/Sender ID. As per GSM standard, the sender ID should "
-                        + "be within 11 characters":
-                case "0x203 - Message length exceeded (more than 160 characters) if concat is set to 0":
-                case "0x204 - Message length exceeded (more than 459 characters) in concat is set to 1":
-                case "0x205 - DRL URL is not set":
-                case "0x206 - Only the subscribed service type can be accessed – "
-                        + "make sure of the service type you are trying to connect with":
-                case "0x207 - Invalid Source IP – kindly check if the IP is responding":
-                case "0x208 - Account deactivated/expired":
-                case "0x209 - Invalid message length (less than 160 characters) if concat is set to 1":
-                case "0x210 - Invalid Parameter values":
-                case "0x211 - Invalid Message Length (more than 280 characters)":
-                case "0x212 - Invalid Message Length":
-                case "0x213 - Invalid Destination Number":
-                    throw new Exception(smsResponse);
-                default:
-                    logger.info("SMS Sent successfully by calling API " + sendSMSAPI);
-                    logger.info("SMS Sent successfully sent to : " + phoneNo);
-                    break;
-            }
-        } else {
-            throw new Exception(response.getStatusCodeValue() + " and error " + response.getStatusCode().toString());
-        }
-    }
 }

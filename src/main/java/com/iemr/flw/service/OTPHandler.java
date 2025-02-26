@@ -7,11 +7,14 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
 public interface OTPHandler {
-    public String sendOTP(String mobNo) throws Exception;
+    public String sendOTP(String mobNo,String auth) throws Exception;
 
-    public JSONObject validateOTP(OTPRequestParsor obj) throws Exception;
+    public String validateOTP(OTPRequestParsor obj,String auth) throws Exception;
 
-    public String resendOTP(String mobNo) throws Exception;
+    public String resendOTP(String mobNo,String auth) throws Exception;
 
     JSONObject saveBenficiary(OtpRequestDTO requestOBJ);
+
+    public String sendSMS(String request, String Authorization);
+
 }

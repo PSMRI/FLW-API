@@ -25,20 +25,20 @@ public class BeneficiaryOTPGatewayController {
 
     @Operation(summary = "Send OTP")
     @RequestMapping(value = "/sendOTP", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
-    public String sendOTP(@RequestParam String phoneNumber) {
+    public String sendOTP(@RequestParam String phoneNumber,@RequestHeader String auth) {
         OutputResponse response = new OutputResponse();
 
         try {
 
-            String success = otpHandler.sendOTP(phoneNumber);
+            String success = otpHandler.sendOTP(phoneNumber,auth);
             if (success.contains("success"))
                 response.setResponse(success);
             else
-                response.setError(5000, "failure");
+                response.setError(500, "failure");
 
         } catch (Exception e) {
             logger.error("error in sending OTP : " + e);
-            response.setError(5000, "error : " + e);
+            response.setError(500, "error : " + e);
         }
         return response.toString();
     }
@@ -46,44 +46,22 @@ public class BeneficiaryOTPGatewayController {
     @CrossOrigin()
     @Operation(summary = "Validate OTP")
     @RequestMapping(value = "/validateOTP", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON)
-    public String validateOTP(
-            @Param(value = "{\"mobNo\":\"String\",\"otp\":\"Integer\"}") @RequestBody String requestOBJ) {
+    public String validateOTP(@Param(value = "{\"mobNo\":\"String\",\"otp\":\"Integer\"}") @RequestBody String requestOBJ,@RequestHeader String auth) {
 
         OutputResponse response = new OutputResponse();
 
         try {
             OTPRequestParsor obj = InputMapper.gson().fromJson(requestOBJ, OTPRequestParsor.class);
 
-            JSONObject responseOBJ = otpHandler.validateOTP(obj);
+            String responseOBJ = otpHandler.validateOTP(obj,auth);
             if (responseOBJ != null)
                 response.setResponse(responseOBJ.toString());
             else
-                response.setError(5000, "failure");
+                response.setError(500, "failure");
 
         } catch (Exception e) {
             logger.error("error in validating OTP : " + e);
-            response.setError(5000, "error : " + e);
-        }
-        return response.toString();
-    }
-    @CrossOrigin()
-    @Operation(summary = "Save BeneficiaryId")
-    @RequestMapping(value = "/saveBeneficiaryId", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON,headers = "Authorization")
-    public String saveBeneficiaryId(@RequestBody OtpRequestDTO requestOBJ) {
-
-        OutputResponse response = new OutputResponse();
-
-        try {
-
-            JSONObject responseOBJ = otpHandler.saveBenficiary(requestOBJ);
-            if (responseOBJ != null)
-                response.setResponse(responseOBJ.toString());
-            else
-                response.setError(5000, "failure");
-
-        } catch (Exception e) {
-            logger.error("error in validating OTP : " + e);
-            response.setError(5000, "error : " + e);
+            response.setError(500, "error : " + e);
         }
         return response.toString();
     }
@@ -91,21 +69,21 @@ public class BeneficiaryOTPGatewayController {
     @CrossOrigin()
     @Operation(summary = "Resend OTP")
     @RequestMapping(value = "/resendOTP", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
-    public String resendOTP(@RequestParam String  phoneNumber) {
+    public String resendOTP(@RequestParam String  phoneNumber,@RequestParam String auth) {
 
         OutputResponse response = new OutputResponse();
 
         try {
 
-            String success = otpHandler.resendOTP(phoneNumber);
+            String success = otpHandler.resendOTP(phoneNumber,auth);
             if (success.contains("success"))
                 response.setResponse(success);
             else
-                response.setError(5000, "failure");
+                response.setError(500, "failure");
 
         } catch (Exception e) {
             logger.error("error in re-sending OTP : " + e);
-            response.setError(5000, "error : " + e);
+            response.setError(500, "error : " + e);
         }
         return response.toString();
     }
