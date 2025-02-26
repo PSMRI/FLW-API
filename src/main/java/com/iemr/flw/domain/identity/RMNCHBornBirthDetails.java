@@ -314,4 +314,6 @@ public class RMNCHBornBirthDetails {
 	@Column(name = "birthOPV")
 	private Boolean birthOPV;
 
+
+
 }

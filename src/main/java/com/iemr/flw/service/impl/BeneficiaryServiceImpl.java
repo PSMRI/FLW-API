@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.iemr.flw.repo.iemr.OtpBeneficiaryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,9 +56,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     private String door_to_door_page_size;
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
-    @Autowired
-    OtpBeneficiaryRepository otpBeneficiaryRepository;
-
 
     @Autowired
     private HouseHoldRepo houseHoldRepo;
@@ -178,16 +174,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     if (benDetailsOBJ.getLiteracyStatus() != null)
                         benDetailsRMNCH_OBJ.setLiteracyStatus(benDetailsOBJ.getLiteracyStatus());
 
-                      if(!otpBeneficiaryRepository.findAll().isEmpty()){
-                          for(int i=0; i<otpBeneficiaryRepository.findAll().size(); i++){
-                              if(BigInteger.valueOf(otpBeneficiaryRepository.findAll().get(i).getBeneficiaryId()).equals(benAccountOBJ.getId())){
-                                  benDetailsOBJ.setIsVerified(true);
-                              }else {
-                                  benDetailsOBJ.setIsVerified(false);
 
-                              }
-                          }
-                      }
 
                     // bank
                     if (benAccountOBJ.getNameOfBank() != null)
