@@ -59,7 +59,7 @@ public class AshaProfileController {
 
     }
     @Operation(summary = "Profile Detail")
-    @RequestMapping(value = "getProfile",method = RequestMethod.GET)
+    @RequestMapping(value = "getProfile",method = RequestMethod.GET ,headers = "Authorization" )
      public ResponseEntity<Map<String,Object>> getProfile(@RequestParam ("employeeId")Integer employeeId){
         try {
             AshaWorker ashaWorker = ashaProfileService.getProfileData(employeeId);
