@@ -2,6 +2,7 @@ package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.identity.CbacAdditionalDetails;
 import com.iemr.flw.domain.identity.CbacDetails;
 import com.iemr.flw.dto.identity.CbacDTO;
@@ -124,6 +125,9 @@ public class CbacServiceImpl implements CbacService {
         if (cbacAdditionalDetailsList.size() > 0) {
             cbacAddRepo.saveAll(cbacAdditionalDetailsList);
         }
-        return new Gson().toJson(result);
+        Gson gson = new GsonBuilder()
+                .setDateFormat("MMM d, yyyy h:mm:ss a")  // Set the desired date format
+                .create();
+        return gson.toJson(result);
     }
 }

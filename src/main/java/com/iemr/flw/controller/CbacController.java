@@ -20,8 +20,8 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/cbac", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class CbacController {
-	private final Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy HH:mm:ss a").create();
-    private final Logger logger = LoggerFactory.getLogger(CbacController.class);
+	
+	private final Logger logger = LoggerFactory.getLogger(CbacController.class);
 
     @Autowired
     private CbacService cbacService;
@@ -71,6 +71,6 @@ public class CbacController {
             logger.error("Error in saving cbac details by user, " + e);
             response.setError(5000, "Error in saving cbac details : " + e);
         }
-        return gson.toJson(response);
+        return response.toString();
     }
 }
