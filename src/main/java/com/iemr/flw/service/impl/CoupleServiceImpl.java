@@ -1,6 +1,8 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.EligibleCoupleDTO;
@@ -54,7 +56,7 @@ public class CoupleServiceImpl implements CoupleService {
 //                        eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
                         eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
 
-                if (existingECR != null) {
+                if (existingECR != null && null != existingECR.getNumLiveChildren()) {
                     if(existingECR.getNumLiveChildren() == 0 && it.getNumLiveChildren() >= 1 && it.getMarriageFirstChildGap() >= 3) {
                         IncentiveActivity activity1 =
                                 incentivesRepo.findIncentiveMasterByNameAndGroup("MARRIAGE_1st_CHILD_GAP", "FAMILY PLANNING");
@@ -192,14 +194,16 @@ public class CoupleServiceImpl implements CoupleService {
     }
 
     @Override
-    public List<EligibleCoupleDTO> getEligibleCoupleRegRecords(GetBenRequestHandler dto) {
+    public String getEligibleCoupleRegRecords(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<EligibleCoupleRegister> eligibleCoupleRegisterList =
                     eligibleCoupleRegisterRepo.getECRegRecords(user, dto.getFromDate(), dto.getToDate());
-            return eligibleCoupleRegisterList.stream()
+            List<EligibleCoupleDTO> list = eligibleCoupleRegisterList.stream()
                     .map(eligibleCoupleRegister -> mapper.convertValue(eligibleCoupleRegister, EligibleCoupleDTO.class))
                     .collect(Collectors.toList());
+            Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy HH:mm:ss a").create();
+            return gson.toJson(list);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }

@@ -26,7 +26,6 @@ import io.swagger.v3.oas.annotations.Operation;
 @RequestMapping(value = "/couple", headers = "Authorization")
 public class CoupleController {
 
-	private final Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy HH:mm:ss a").create();
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
 
     @Autowired
@@ -87,8 +86,8 @@ public class CoupleController {
         try {
             if (requestDTO != null) {
                 logger.info("fetching All Eligible Couple Details for user: " + requestDTO.getAshaId());
-                List<EligibleCoupleDTO> result = coupleService.getEligibleCoupleRegRecords(requestDTO);
-                String s = (new Gson()).toJson(result);
+                String s = coupleService.getEligibleCoupleRegRecords(requestDTO);
+                
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -100,7 +99,9 @@ public class CoupleController {
             logger.error("Error in fetching eligible couple registration details, " + e);
             response.setError(5000, "Error in fetching eligible couple registration details : " + e);
         }
-       return gson.toJson(response);
+
+       return response.toString();
+
     }
 
     @CrossOrigin()
