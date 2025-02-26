@@ -23,6 +23,7 @@ public class CbacController {
 	
 	private final Logger logger = LoggerFactory.getLogger(CbacController.class);
 
+
     @Autowired
     private CbacService cbacService;
 
@@ -71,6 +72,6 @@ public class CbacController {
             logger.error("Error in saving cbac details by user, " + e);
             response.setError(5000, "Error in saving cbac details : " + e);
         }
-        return response.toString();
+        return gson.toJson(response);
     }
 }
