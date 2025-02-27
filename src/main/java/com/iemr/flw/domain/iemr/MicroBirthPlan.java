@@ -25,13 +25,13 @@ public class MicroBirthPlan {
     private Integer age; // Auto-populated
 
     @Column(name = "contact_no_1", length = 10)
-    private String contactNo1; // Auto-filled, must be 10 digits, starts with 6-9
+    private String contactNumber1; // Auto-filled, must be 10 digits, starts with 6-9
 
     @Column(name = "contact_no_2", length = 10)
-    private String contactNo2; // Optional, 10 digits, starts with 6-9
+    private String contactNumber2; // Optional, 10 digits, starts with 6-9
 
     @Column(name = "sc_hwc_tg_hosp", length = 100)
-    private String scHwcTgHosp; // Alphanumeric, all caps
+    private String scHosp; // Alphanumeric, all caps
 
     @Column(name = "block", length = 100)
     private String block; // Alphanumeric, all caps
@@ -40,7 +40,7 @@ public class MicroBirthPlan {
     private String husbandName; // Auto-populated
 
     @Column(name = "nearest_sc_hwc", length = 100)
-    private String nearestScHwc; // Alphanumeric, all caps
+    private String nearestSc; // Alphanumeric, all caps
 
     @Column(name = "nearest_phc", length = 100)
     private String nearestPhc; // Alphanumeric, all caps
@@ -49,25 +49,28 @@ public class MicroBirthPlan {
     private String nearestFru; // Alphanumeric, all caps
 
     @Column(name = "nearest_usg", length = 100)
-    private String nearestUsg; // Alphanumeric, all caps
+    private String usg; // Alphanumeric, all caps
 
     @Column(name = "blood_group")
     private String bloodGroup; // Spinner: A+, B+, etc.
 
     @Column(name = "blood_donors", length = 50)
-    private String bloodDonors; // Alphabets only, all caps
+    private String bloodDonors2; // Alphabets only, all caps
 
     @Column(name = "birth_companion", length = 50)
     private String birthCompanion; // Alphabets only, all caps
 
     @Column(name = "child_caretaker", length = 50)
-    private String childCaretaker; // Alphabets only, all caps
+    private String careTaker; // Alphabets only, all caps
 
     @Column(name = "community_support", length = 100)
-    private String communitySupport; // Alphabets only, all caps
+    private String communityMember; // Alphabets only, all caps
+
+    @Column(name = "community_support_contact", length = 100)
+    private String communityMemberContact; // Alphabets only, all caps
 
     @Column(name = "transportation_mode", length = 100)
-    private String transportationMode; // Mode of transport
+    private String modeOfTransportation; // Mode of transport
 
     @Column(name = "is_synced")
     private Boolean isSynced;
