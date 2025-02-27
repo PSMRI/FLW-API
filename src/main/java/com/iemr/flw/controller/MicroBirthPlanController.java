@@ -1,0 +1,47 @@
+package com.iemr.flw.controller;
+
+import com.iemr.flw.domain.iemr.MicroBirthPlan;
+import com.iemr.flw.dto.iemr.MicroBirthPlanDTO;
+import com.iemr.flw.service.MicroBirthPlanService;
+import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping(value = "/micro-birthPlan",headers = "Authorization", produces = "application/json")
+public class MicroBirthPlanController {
+    @Autowired
+    private  MicroBirthPlanService service;
+    @CrossOrigin()
+    @Operation(summary = "Micro BirthPlan")
+
+    @RequestMapping(value = "saveAll",method = RequestMethod.POST)
+    public ResponseEntity<MicroBirthPlan> createMicroBirthPlan(@RequestBody MicroBirthPlanDTO birthPlan) {
+        return ResponseEntity.ok(service.createMicroBirthPlan(birthPlan));
+    }
+
+
+
+    @RequestMapping(value = "getAll",method = RequestMethod.GET)
+    public ResponseEntity<Map<String, Object>> getAllMicroBirthPlans(@Param("userId")Integer userId) {
+         Map<String, Object> response  = new HashMap<>();
+         response.put("entries",service.getMicroBirthPlanById(userId));
+
+        return ResponseEntity.ok(response);
+    }
+
+    @RequestMapping(value = "getAllMicroBirthPlansBy{id}",method = RequestMethod.GET)
+    public ResponseEntity<MicroBirthPlan> getMicroBirthPlanById(@PathVariable Integer id) {
+        return service.getMicroBirthPlanById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+
+}
