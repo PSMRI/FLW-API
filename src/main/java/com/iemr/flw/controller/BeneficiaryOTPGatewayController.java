@@ -31,7 +31,7 @@ public class BeneficiaryOTPGatewayController {
         try {
 
             String success = otpHandler.sendOTP(phoneNumber,auth);
-            if (success.contains("success"))
+            if (success.contains("otp"))
                 response.setResponse(success);
             else
                 response.setError(500, "failure");
@@ -69,14 +69,14 @@ public class BeneficiaryOTPGatewayController {
     @CrossOrigin()
     @Operation(summary = "Resend OTP")
     @RequestMapping(value = "/resendOTP", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
-    public String resendOTP(@RequestParam String  phoneNumber,@RequestParam String auth) {
+    public String resendOTP(@RequestParam String  phoneNumber,@RequestHeader String auth) {
 
         OutputResponse response = new OutputResponse();
 
         try {
 
             String success = otpHandler.resendOTP(phoneNumber,auth);
-            if (success.contains("success"))
+            if (success.contains("otp"))
                 response.setResponse(success);
             else
                 response.setError(500, "failure");

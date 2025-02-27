@@ -36,7 +36,6 @@ public class OTPHandlerServiceImpl implements OTPHandler {
     @Value("${sendOTPUrl}")
     private String OTP_SERVICE_URL;
 
-    @Autowired
     RestTemplate restTemplate;
     @Autowired
     OtpBeneficiaryRepository otpBeneficiaryRepository;
@@ -65,7 +64,9 @@ public class OTPHandlerServiceImpl implements OTPHandler {
      */
     @Override
     public String sendOTP(String  mobNo,String auth) throws Exception {
+        restTemplate = new RestTemplate();
         String url = OTP_SERVICE_URL + "/sendOTP";
+        logger.info(url);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -88,6 +89,8 @@ public class OTPHandlerServiceImpl implements OTPHandler {
      */
     @Override
     public String validateOTP(OTPRequestParsor obj,String auth) throws Exception {
+        restTemplate = new RestTemplate();
+
         String url = OTP_SERVICE_URL + "/validateOTP";
 
         HttpHeaders headers = new HttpHeaders();
@@ -96,7 +99,7 @@ public class OTPHandlerServiceImpl implements OTPHandler {
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("mobNo", obj.getMobNo());
-        requestBody.put("otp", obj.getMobNo());
+        requestBody.put("otp", obj.getOtp());
 
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
@@ -126,6 +129,8 @@ public class OTPHandlerServiceImpl implements OTPHandler {
      */
     @Override
     public String resendOTP(String mobNo,String auth) throws Exception {
+        restTemplate = new RestTemplate();
+
         String url = OTP_SERVICE_URL + "/resendOTP";
 
         HttpHeaders headers = new HttpHeaders();
@@ -154,6 +159,8 @@ public class OTPHandlerServiceImpl implements OTPHandler {
 
     @Override
     public String sendSMS(String request, String Authorization) {
+        restTemplate = new RestTemplate();
+
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
         headers.set("AUTHORIZATION", Authorization);
