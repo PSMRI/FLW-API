@@ -20,7 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/cbac", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class CbacController {
-	
+
 	private final Logger logger = LoggerFactory.getLogger(CbacController.class);
 
     @Autowired
