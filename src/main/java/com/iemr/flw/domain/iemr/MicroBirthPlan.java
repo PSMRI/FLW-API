@@ -3,6 +3,8 @@ package com.iemr.flw.domain.iemr;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigInteger;
+
 @Entity
 @Table(name = "t_micro_birth_plan", schema = "db_iemr")
 @Data
@@ -16,7 +18,7 @@ public class MicroBirthPlan {
     private Integer UserId;
 
     @Column(name = "ben_id")
-    private  Integer benId;
+    private Long benId;
 
     @Column(name = "pw_name")
     private String pwName; // Auto-populated
@@ -72,8 +74,7 @@ public class MicroBirthPlan {
     @Column(name = "transportation_mode", length = 100)
     private String modeOfTransportation; // Mode of transport
 
-    @Column(name = "is_synced")
-    private Boolean isSynced;
+
 
 
 

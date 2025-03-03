@@ -25,10 +25,10 @@ public class MicroBirthPlanServiceImpl  implements MicroBirthPlanService {
 
         for (MicroBirthPlan entry : birthPlan.getEntries()) {
             // Check if the entry already exists in the database
-            Optional<MicroBirthPlan> existingEntry = microBirthPlanRepository.findById(entry.getId());
+            Optional<MicroBirthPlan> existingEntry = microBirthPlanRepository.findByBenId(entry.getBenId());
 
             if (existingEntry.isPresent()) {
-                updateMicroBirthPlan(entry.getId(),microBirthPlan);
+                updateMicroBirthPlan(entry.getBenId(),entry);
                 continue;
             }
 
@@ -54,15 +54,15 @@ public class MicroBirthPlanServiceImpl  implements MicroBirthPlanService {
 
 
 
-    private MicroBirthPlan  updateMicroBirthPlan(Integer id, MicroBirthPlan updatedPlan){
-        return microBirthPlanRepository.findById(id).map(existingPlan -> {
-            existingPlan.setPwName(updatedPlan.getPwName());
-            existingPlan.setAge(updatedPlan.getAge());
+    private MicroBirthPlan  updateMicroBirthPlan(Long id, MicroBirthPlan updatedPlan){
+        return microBirthPlanRepository.findByBenId(id).map(existingPlan -> {
+            existingPlan.setPwName("Name");
+            existingPlan.setAge(10);
             existingPlan.setContactNumber1(updatedPlan.getContactNumber1());
             existingPlan.setContactNumber2(updatedPlan.getContactNumber2());
             existingPlan.setScHosp(updatedPlan.getScHosp());
             existingPlan.setBlock(updatedPlan.getBlock());
-            existingPlan.setHusbandName(updatedPlan.getHusbandName());
+            existingPlan.setHusbandName("Name");
             existingPlan.setNearestSc(updatedPlan.getNearestSc());
             existingPlan.setNearestPhc(updatedPlan.getNearestPhc());
             existingPlan.setNearestFru(updatedPlan.getNearestFru());
@@ -74,13 +74,9 @@ public class MicroBirthPlanServiceImpl  implements MicroBirthPlanService {
             existingPlan.setCommunityMember(updatedPlan.getCommunityMember());
             existingPlan.setCommunityMemberContact(updatedPlan.getCommunityMemberContact());
             existingPlan.setModeOfTransportation(updatedPlan.getModeOfTransportation());
-            existingPlan.setIsSynced(true);
             existingPlan.setBenId(updatedPlan.getBenId());
             return microBirthPlanRepository.save(existingPlan);
         }).orElseThrow(() -> new RuntimeException("Micro Birth Plan not found"));
     }
 
-    public void deleteMicroBirthPlan(Integer id) {
-        microBirthPlanRepository.deleteById(id);
-    }
 }

@@ -61,6 +61,7 @@ public class AshaProfileController {
     @Operation(summary = "Profile Detail")
     @RequestMapping(value = "getProfile",method = RequestMethod.GET ,headers = "Authorization" )
      public ResponseEntity<Map<String,Object>> getProfile(@RequestParam ("employeeId")Integer employeeId){
+        logger.info("employee_id"+employeeId);
         try {
             AshaWorker ashaWorker = ashaProfileService.getProfileData(employeeId);
             if(ashaWorker!=null){

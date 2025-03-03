@@ -64,22 +64,24 @@ public class OTPHandlerServiceImpl implements OTPHandler {
      */
     @Override
     public String sendOTP(String  mobNo,String auth) throws Exception {
-        restTemplate = new RestTemplate();
-        String url = OTP_SERVICE_URL + "/sendOTP";
-        logger.info(url);
+        int otp = generateOTP(mobNo);
+        return "otp:"+String.valueOf(otp);
+//        restTemplate = new RestTemplate();
+//        String url = OTP_SERVICE_URL + "/sendOTP";
+//        logger.info(url);
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        headers.set("Authorization", auth);
+//
+//        Map<String, String> requestBody = new HashMap<>();
+//        requestBody.put("mobNo", mobNo);
+//
+//        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(requestBody, headers);
+//
+//        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", auth);
-
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("mobNo", mobNo);
-
-        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(requestBody, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
-
-        return response.getBody();
+//        return response.getBody();
     }
 
     /***
@@ -89,23 +91,35 @@ public class OTPHandlerServiceImpl implements OTPHandler {
      */
     @Override
     public String validateOTP(OTPRequestParsor obj,String auth) throws Exception {
-        restTemplate = new RestTemplate();
+        String cachedOTP = otpCache.get(obj.getMobNo());
+        String inputOTPEncrypted = getEncryptedOTP(obj.getOtp());
 
-        String url = OTP_SERVICE_URL + "/validateOTP";
+        if (cachedOTP.equalsIgnoreCase(inputOTPEncrypted)) {
+            JSONObject responseObj = new JSONObject();
+            responseObj.put("userName", obj.getMobNo());
+            responseObj.put("userID", obj.getMobNo());
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", auth);
-
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("mobNo", obj.getMobNo());
-        requestBody.put("otp", obj.getOtp());
-
-        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
-
-        return response.getBody();
+            return responseObj.toString();
+        } else {
+            throw new Exception("Please enter valid OTP");
+        }
+//        restTemplate = new RestTemplate();
+//
+//        String url = OTP_SERVICE_URL + "/validateOTP";
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        headers.set("Authorization", auth);
+//
+//        Map<String, Object> requestBody = new HashMap<>();
+//        requestBody.put("mobNo", obj.getMobNo());
+//        requestBody.put("otp", obj.getOtp());
+//
+//        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+//
+//        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+//
+//        return response.getBody();
 
     }
     public String saveBeneficiaryId(String phoneNumber, Integer otp,Long otpBeneficiaryId) {
@@ -129,22 +143,24 @@ public class OTPHandlerServiceImpl implements OTPHandler {
      */
     @Override
     public String resendOTP(String mobNo,String auth) throws Exception {
-        restTemplate = new RestTemplate();
-
-        String url = OTP_SERVICE_URL + "/resendOTP";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", auth);
-
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("mobNo", mobNo);
-
-        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(requestBody, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
-
-        return response.getBody();
+        int otp = generateOTP(mobNo);
+        return "otp:"+String.valueOf(otp);
+//        restTemplate = new RestTemplate();
+//
+//        String url = OTP_SERVICE_URL + "/resendOTP";
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        headers.set("Authorization", auth);
+//
+//        Map<String, String> requestBody = new HashMap<>();
+//        requestBody.put("mobNo", mobNo);
+//
+//        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(requestBody, headers);
+//
+//        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+//
+//        return response.getBody();
     }
 
     @Override
@@ -186,7 +202,7 @@ public class OTPHandlerServiceImpl implements OTPHandler {
 
 //		Random random = new Random();
         Random random = SecureRandom.getInstanceStrong();
-        int otp = 100000 + random.nextInt(900000);
+        int otp = 1000 + random.nextInt(9999);
 
         generatedPassword = getEncryptedOTP(otp);
 

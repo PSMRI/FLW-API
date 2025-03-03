@@ -40,17 +40,12 @@ public class AshaProfileImpl implements AshaProfileService {
 
     @Override
     public AshaWorker getProfileData(Integer employeeId) {
-        if (ashaProfileRepo.findByEmployeeId(employeeId)!=null) {
-            return ashaProfileRepo.findByEmployeeId(employeeId);
-        } else {
-            return getDetails(employeeId);
-        }
+        return ashaProfileRepo.findByEmployeeId(employeeId);
     }
 
     private AshaWorker getDetails(Integer userID) {
         AshaWorker ashaWorker = new AshaWorker();
         M_User m_user = employeeMasterInter.getUserDetails(userID);
-
         ashaWorker.setEmployeeId(m_user.getUserID());
         ashaWorker.setEmployeeId(m_user.getUserID());
         ashaWorker.setDob(m_user.getDOB());

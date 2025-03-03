@@ -35,5 +35,5 @@ public class EligibleCoupleTrackingDTO implements Serializable {
 
     private String updatedBy;
 
-    private Date lmpDate;
+    private String  lmpDate;
 }
