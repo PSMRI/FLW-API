@@ -64,12 +64,5 @@ public class MicroBirthPlanController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(value = "getAllMicroBirthPlansBy{id}",method = RequestMethod.GET)
-    public ResponseEntity<MicroBirthPlan> getMicroBirthPlanById(@PathVariable Integer id) {
-        return service.getMicroBirthPlanById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
 
 }
