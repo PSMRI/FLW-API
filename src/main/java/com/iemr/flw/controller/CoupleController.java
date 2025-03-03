@@ -99,9 +99,7 @@ public class CoupleController {
             logger.error("Error in fetching eligible couple registration details, " + e);
             response.setError(5000, "Error in fetching eligible couple registration details : " + e);
         }
-
        return response.toString();
-
     }
 
     @CrossOrigin()
