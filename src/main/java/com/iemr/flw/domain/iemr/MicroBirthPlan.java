@@ -21,10 +21,6 @@ public class MicroBirthPlan {
     private Long benId;
 
 
-
-    @Column(name = "age")
-    private Integer age; // Auto-populated
-
     @Column(name = "contact_no_1", length = 10)
     private String contactNumber1; // Auto-filled, must be 10 digits, starts with 6-9
 
@@ -36,7 +32,6 @@ public class MicroBirthPlan {
 
     @Column(name = "block", length = 100)
     private String block; // Alphanumeric, all caps
-
 
 
     @Column(name = "nearest_sc_hwc", length = 100)
@@ -71,9 +66,6 @@ public class MicroBirthPlan {
 
     @Column(name = "transportation_mode", length = 100)
     private String modeOfTransportation; // Mode of transport
-
-
-
 
 
 }

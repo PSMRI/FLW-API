@@ -52,7 +52,6 @@ public class MicroBirthPlanServiceImpl  implements MicroBirthPlanService {
 
     private MicroBirthPlan  updateMicroBirthPlan(Long id, MicroBirthPlan updatedPlan){
         return microBirthPlanRepository.findByBenId(id).map(existingPlan -> {
-            existingPlan.setAge(updatedPlan.getAge());
             existingPlan.setContactNumber1(updatedPlan.getContactNumber1());
             existingPlan.setContactNumber2(updatedPlan.getContactNumber2());
             existingPlan.setScHosp(updatedPlan.getScHosp());
