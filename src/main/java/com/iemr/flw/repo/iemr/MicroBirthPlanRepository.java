@@ -10,4 +10,5 @@ import java.util.Optional;
 @Repository
 public interface MicroBirthPlanRepository extends JpaRepository<MicroBirthPlan, Long> {
     Optional<MicroBirthPlan> findByBenId(Long benId);
+
 }

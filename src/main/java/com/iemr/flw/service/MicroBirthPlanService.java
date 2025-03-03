@@ -14,7 +14,6 @@ import java.util.Optional;
 public interface MicroBirthPlanService {
     public MicroBirthPlan createMicroBirthPlan(MicroBirthPlanDTO birthPlan);
     public List<MicroBirthPlan> getAllMicroBirthPlans(Integer userId);
-    public Optional<MicroBirthPlan> getMicroBirthPlanById(Integer id) ;
 
 
 

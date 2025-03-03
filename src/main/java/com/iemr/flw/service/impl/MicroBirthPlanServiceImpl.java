@@ -46,23 +46,17 @@ public class MicroBirthPlanServiceImpl  implements MicroBirthPlanService {
         return microBirthPlanRepository.findAll().stream().filter(microBirthPlan -> Objects.equals(microBirthPlan.getUserId(), userId)).collect(Collectors.toList());
     }
 
-    @Override
-    public Optional<MicroBirthPlan> getMicroBirthPlanById(Integer id) {
-        return Optional.empty();
-    }
 
 
 
 
     private MicroBirthPlan  updateMicroBirthPlan(Long id, MicroBirthPlan updatedPlan){
         return microBirthPlanRepository.findByBenId(id).map(existingPlan -> {
-            existingPlan.setPwName("Name");
-            existingPlan.setAge(10);
+            existingPlan.setAge(updatedPlan.getAge());
             existingPlan.setContactNumber1(updatedPlan.getContactNumber1());
             existingPlan.setContactNumber2(updatedPlan.getContactNumber2());
             existingPlan.setScHosp(updatedPlan.getScHosp());
             existingPlan.setBlock(updatedPlan.getBlock());
-            existingPlan.setHusbandName("Name");
             existingPlan.setNearestSc(updatedPlan.getNearestSc());
             existingPlan.setNearestPhc(updatedPlan.getNearestPhc());
             existingPlan.setNearestFru(updatedPlan.getNearestFru());
@@ -78,5 +72,6 @@ public class MicroBirthPlanServiceImpl  implements MicroBirthPlanService {
             return microBirthPlanRepository.save(existingPlan);
         }).orElseThrow(() -> new RuntimeException("Micro Birth Plan not found"));
     }
+
 
 }
