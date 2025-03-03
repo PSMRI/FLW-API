@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -64,6 +66,9 @@ public class AshaProfileController {
         logger.info("employee_id"+employeeId);
         try {
             AshaWorker ashaWorker = ashaProfileService.getProfileData(employeeId);
+
+            ashaWorker.setDob(LocalDate.parse(ashaWorker.getDob().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))));
+            ashaWorker.setDateOfJoining(LocalDate.parse(ashaWorker.getDateOfJoining().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))));
             if(ashaWorker!=null){
                 response.put("data",ashaWorker);
                 response.put("statusCode",200);

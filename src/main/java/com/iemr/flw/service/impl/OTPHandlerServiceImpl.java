@@ -65,6 +65,8 @@ public class OTPHandlerServiceImpl implements OTPHandler {
     @Override
     public String sendOTP(String  mobNo,String auth) throws Exception {
         int otp = generateOTP(mobNo);
+        saveOtp(mobNo,otp);
+
         return "otp:"+String.valueOf(otp);
 //        restTemplate = new RestTemplate();
 //        String url = OTP_SERVICE_URL + "/sendOTP";
@@ -98,7 +100,7 @@ public class OTPHandlerServiceImpl implements OTPHandler {
             JSONObject responseObj = new JSONObject();
             responseObj.put("userName", obj.getMobNo());
             responseObj.put("userID", obj.getMobNo());
-
+            saveBeneficiaryId(obj.getMobNo(),obj.getOtp());
             return responseObj.toString();
         } else {
             throw new Exception("Please enter valid OTP");
@@ -121,15 +123,14 @@ public class OTPHandlerServiceImpl implements OTPHandler {
 //
 //        return response.getBody();
 
+
     }
-    public String saveBeneficiaryId(String phoneNumber, Integer otp,Long otpBeneficiaryId) {
+    public String saveBeneficiaryId(String phoneNumber, Integer otp) {
         Optional<OtpBeneficiary> otpEntry = otpBeneficiaryRepository.findByPhoneNumberAndOtp(phoneNumber, otp);
 
         if (otpEntry.isPresent()) {
             OtpBeneficiary otpBeneficiary = otpEntry.get();
-            otpBeneficiary.setBeneficiaryId(otpBeneficiaryId);
             otpBeneficiary.setIsOtpVerify(true);
-            otpBeneficiary.setIsExpired(true);
             return "Beneficiary Id created.";
         } else {
             return "Invalid Beneficiary";
@@ -144,6 +145,8 @@ public class OTPHandlerServiceImpl implements OTPHandler {
     @Override
     public String resendOTP(String mobNo,String auth) throws Exception {
         int otp = generateOTP(mobNo);
+        saveOtp(mobNo,otp);
+
         return "otp:"+String.valueOf(otp);
 //        restTemplate = new RestTemplate();
 //
@@ -167,7 +170,7 @@ public class OTPHandlerServiceImpl implements OTPHandler {
     public JSONObject saveBenficiary(OtpRequestDTO requestOBJ) {
         JSONObject jsonObject = new JSONObject();
 
-        saveBeneficiaryId(requestOBJ.getPhoneNumber(),requestOBJ.getOtp(),requestOBJ.getBeneficiaryId());
+        saveBeneficiaryId(requestOBJ.getPhoneNumber(),requestOBJ.getOtp());
         jsonObject.put("data",requestOBJ);
 
         return jsonObject;
@@ -188,7 +191,6 @@ public class OTPHandlerServiceImpl implements OTPHandler {
 
     private void saveOtp(String phoneNo,Integer otp){
         OtpBeneficiary otpEntry = new OtpBeneficiary();
-        otpEntry.setBeneficiaryId(null);
         otpEntry.setPhoneNumber(phoneNo);
         otpEntry.setOtp(otp);
         otpEntry.setCreatedAt(new Timestamp(System.currentTimeMillis()));
