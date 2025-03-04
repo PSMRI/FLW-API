@@ -20,7 +20,6 @@ public class MicroBirthPlan {
     @Column(name = "ben_id")
     private Long benId;
 
-
     @Column(name = "contact_no_1", length = 10)
     private String contactNumber1; // Auto-filled, must be 10 digits, starts with 6-9
 
