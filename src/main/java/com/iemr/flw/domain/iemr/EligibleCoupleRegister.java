@@ -159,7 +159,7 @@ public class EligibleCoupleRegister {
     private String updatedBy;
 
     @Column(name = "lmp_date")
-    private Timestamp lmpDate;
+    private String lmpDate;
 
 
 }

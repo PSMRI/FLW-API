@@ -186,5 +186,8 @@ public class RMNCHMBeneficiarydetail {
 	@Transient
 	private Integer ProviderServiceMapID;
 
-	private Boolean isVerified = false;
+	@Expose
+	@Column(name = "isConsent")
+	private Boolean isConsent ;
+
 }

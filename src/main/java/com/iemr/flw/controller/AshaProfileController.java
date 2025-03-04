@@ -37,6 +37,7 @@ public class AshaProfileController {
     @RequestMapping(value = "editProfile", method = { RequestMethod.POST }, produces = {
             "application/json" },consumes = "application/json" )
     public ResponseEntity<Map<String,Object>> editEmployee(@RequestBody AshaWorker editEmployee) {
+        logger.info("Asha profile request"+editEmployee.toString());
 
         try {
             System.out.println(editEmployee.toString());
@@ -67,8 +68,6 @@ public class AshaProfileController {
         try {
             AshaWorker ashaWorker = ashaProfileService.getProfileData(employeeId);
 
-            ashaWorker.setDob(LocalDate.parse(ashaWorker.getDob().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))));
-            ashaWorker.setDateOfJoining(LocalDate.parse(ashaWorker.getDateOfJoining().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))));
             if(ashaWorker!=null){
                 response.put("data",ashaWorker);
                 response.put("statusCode",200);
