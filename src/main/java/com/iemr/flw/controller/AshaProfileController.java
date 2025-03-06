@@ -28,9 +28,6 @@ public class AshaProfileController {
 
     @Autowired
     private EmployeeMasterInter employeeMasterInter;
-    @CrossOrigin()
-    @Operation(summary = "Edit Asha Profile")
-    
 
     @RequestMapping(value = "editProfile", method = { RequestMethod.POST }, produces = {
             "application/json" },consumes = "application/json" )
@@ -58,7 +55,6 @@ public class AshaProfileController {
         return ResponseEntity.ok().body(response);
 
     }
-    @Operation(summary = "Profile Detail")
     @RequestMapping(value = "getProfile",method = RequestMethod.GET ,headers = "Authorization" )
      public ResponseEntity<Map<String,Object>> getProfile(@RequestParam ("employeeId")Integer employeeId){
         try {
