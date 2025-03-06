@@ -7,22 +7,30 @@ import com.iemr.flw.service.DiseaseControlService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class DiseaseControlServiceImpl implements DiseaseControlService {
     @Autowired
     private DiseaseControlRepo diseaseControlRepo;
 
     @Override
-    public DiseaseControl save(DiseaseControlDTO diseaseControlDTO) {
-        if(diseaseControlRepo.findByBenId(diseaseControlDTO.getBenId()).isPresent()){
-          return   update(diseaseControlDTO);
-        }else {
-            return   diseaseControlRepo.save(saveData(diseaseControlDTO));
+    public String save(List<DiseaseControlDTO> diseaseControlDTO) {
+        for(DiseaseControlDTO diseaseControlData: diseaseControlDTO){
+            if(diseaseControlRepo.findByBenId(diseaseControlData.getBenId()).isPresent()){
+                return   update(diseaseControlData);
+            }else {
+                diseaseControlRepo.save(saveData(diseaseControlData));
+                return   "Data add successfully";
 
+            }
         }
+        return "Fail";
+
+
     }
 
-    private DiseaseControl saveData(DiseaseControlDTO diseaseControlDTO){
+    private DiseaseControl  saveData(DiseaseControlDTO diseaseControlDTO){
         DiseaseControl diseaseControl = new DiseaseControl();
         diseaseControl.setBenId(diseaseControlDTO.getBenId());
         diseaseControl.setCaseDate(diseaseControlDTO.getCaseDate()); // Added
@@ -35,10 +43,10 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         diseaseControl.setRemarks(diseaseControlDTO.getRemarks());
         diseaseControl.setFollowUpPoint(diseaseControlDTO.getFollowUpPoint());
         diseaseControl.setFollowUpDate(diseaseControlDTO.getFollowUpDate());
-       return  diseaseControlRepo.save(diseaseControl);
+        return diseaseControl;
 
     }
-    private DiseaseControl update(DiseaseControlDTO diseaseControlDTO){
+    private String  update(DiseaseControlDTO diseaseControlDTO){
         return  diseaseControlRepo.findByBenId(diseaseControlDTO.getBenId()).map(diseaseControl -> {
             diseaseControl.setBenId(diseaseControlDTO.getBenId());
             diseaseControl.setCaseDate(diseaseControlDTO.getCaseDate()); // Added
@@ -51,7 +59,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             diseaseControl.setRemarks(diseaseControlDTO.getRemarks());
             diseaseControl.setFollowUpPoint(diseaseControlDTO.getFollowUpPoint());
             diseaseControl.setFollowUpDate(diseaseControlDTO.getFollowUpDate());
-            return diseaseControlRepo.save(diseaseControl);
+            return "Data update successfully";
 
         }).orElseThrow(()->new RuntimeException("Data not found"));
 

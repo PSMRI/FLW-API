@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -19,7 +20,7 @@ public class DiseaseControlController {
     private DiseaseControlService diseaseControlService;
 
     @RequestMapping(value = "save", method = RequestMethod.POST)
-    public ResponseEntity<Map<String, Object>> saveDiseaseData(@RequestBody DiseaseControlDTO diseaseControlDTO) {
+    public ResponseEntity<Map<String, Object>> saveDiseaseData(@RequestBody List<DiseaseControlDTO> diseaseControlDTO) {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "Success");
         response.put("statusCode", 200);
