@@ -30,6 +30,11 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     }
 
+    @Override
+    public List<DiseaseControl> getAll() {
+        return diseaseControlRepo.findAll();
+    }
+
     private DiseaseControl  saveData(DiseaseControlDTO diseaseControlDTO){
         DiseaseControl diseaseControl = new DiseaseControl();
         diseaseControl.setBenId(diseaseControlDTO.getBenId());
@@ -48,7 +53,6 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     }
     private String  update(DiseaseControlDTO diseaseControlDTO){
         return  diseaseControlRepo.findByBenId(diseaseControlDTO.getBenId()).map(diseaseControl -> {
-            diseaseControl.setBenId(diseaseControlDTO.getBenId());
             diseaseControl.setCaseDate(diseaseControlDTO.getCaseDate()); // Added
             diseaseControl.setCaseStatus(diseaseControlDTO.getCaseStatus());
             diseaseControl.setSymptoms(diseaseControlDTO.getSymptoms());
@@ -59,6 +63,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             diseaseControl.setRemarks(diseaseControlDTO.getRemarks());
             diseaseControl.setFollowUpPoint(diseaseControlDTO.getFollowUpPoint());
             diseaseControl.setFollowUpDate(diseaseControlDTO.getFollowUpDate());
+            diseaseControlRepo.save(diseaseControl);
+            
             return "Data update successfully";
 
         }).orElseThrow(()->new RuntimeException("Data not found"));

@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface DiseaseControlService {
     public String save(List<DiseaseControlDTO> diseaseControlDTO);
+    public List<DiseaseControl> getAll();
 }
