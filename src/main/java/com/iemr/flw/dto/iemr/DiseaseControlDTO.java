@@ -13,7 +13,7 @@ public class DiseaseControlDTO {
 
     private Integer caseStatus;
 
-    private List<String> symptoms;
+    private String symptoms;
 
     private int malariaCaseCount;
 
