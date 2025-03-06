@@ -15,7 +15,7 @@ public class MicroBirthPlan {
     private Integer id;
 
     @Column(name = "user_id")
-    private Integer UserId;
+    private Integer userId;
 
     @Column(name = "ben_id")
     private Long benId;

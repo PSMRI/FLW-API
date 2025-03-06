@@ -5,7 +5,7 @@ import lombok.Data;
 
 import java.util.List;
 @Data
-public class MicroBirthPlanDTO {
+public class MicroBirthPlanDTO  {
     Integer  userId;
     List<MicroBirthPlan> entries;
 }

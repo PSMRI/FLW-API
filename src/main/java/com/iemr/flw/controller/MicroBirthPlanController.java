@@ -23,8 +23,6 @@ public class MicroBirthPlanController {
     @Autowired
     private MicroBirthPlanService service;
 
-    @CrossOrigin()
-    @Operation(summary = "Micro BirthPlan")
 
     @RequestMapping(value = "saveAll", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> createMicroBirthPlan(@RequestBody MicroBirthPlanDTO birthPlan) {
@@ -35,7 +33,6 @@ public class MicroBirthPlanController {
         try {
             data.put("userId", birthPlan.getUserId());
             data.put("entries", service.createMicroBirthPlan(birthPlan));
-
             response.put("data", data);
             response.put("statusCode", 200);
             response.put("errorMessage", "Success");

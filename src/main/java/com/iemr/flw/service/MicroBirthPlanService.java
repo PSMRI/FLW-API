@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-@Service
 public interface MicroBirthPlanService {
     public MicroBirthPlan createMicroBirthPlan(MicroBirthPlanDTO birthPlan);
     public List<MicroBirthPlan> getAllMicroBirthPlans(Integer userId);

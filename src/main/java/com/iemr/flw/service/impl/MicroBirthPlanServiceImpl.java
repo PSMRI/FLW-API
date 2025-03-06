@@ -21,29 +21,30 @@ public class MicroBirthPlanServiceImpl  implements MicroBirthPlanService {
 
     @Override
     public MicroBirthPlan createMicroBirthPlan(MicroBirthPlanDTO birthPlan) {
-        MicroBirthPlan microBirthPlan = null;
+        MicroBirthPlan lastProcessedPlan = new MicroBirthPlan();
 
         for (MicroBirthPlan entry : birthPlan.getEntries()) {
             // Check if the entry already exists in the database
             Optional<MicroBirthPlan> existingEntry = microBirthPlanRepository.findByBenId(entry.getBenId());
 
             if (existingEntry.isPresent()) {
-                updateMicroBirthPlan(entry.getBenId(),entry);
+                lastProcessedPlan=  updateMicroBirthPlan(entry.getBenId(),entry);
                 continue;
             }
 
             // Set user ID and prepare for saving
             entry.setUserId(birthPlan.getUserId());
-            microBirthPlan = microBirthPlanRepository.save(entry);
+            lastProcessedPlan = microBirthPlanRepository.save(entry);
         }
 
-        return microBirthPlan;
+        return lastProcessedPlan;
     }
 
 
     @Override
     public List<MicroBirthPlan> getAllMicroBirthPlans(Integer userId) {
-        return microBirthPlanRepository.findAll().stream().filter(microBirthPlan -> Objects.equals(microBirthPlan.getUserId(), userId)).collect(Collectors.toList());
+           return microBirthPlanRepository.findByUserId(userId);
+
     }
 
 
