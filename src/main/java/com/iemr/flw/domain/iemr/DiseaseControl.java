@@ -19,19 +19,16 @@ public class DiseaseControl {
     @Column(name = "case_date", nullable = false)
     private Timestamp caseDate ; // Auto-populated as today's date, non-editable
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "case_status", nullable = false)
     private Integer caseStatus; // Dropdown for case status
 
-    @ElementCollection
-    @CollectionTable(name = "malaria_symptoms", joinColumns = @JoinColumn(name = "case_id"))
+
     @Column(name = "symptom")
-    private List<String> symptoms; // List of symptoms
+    private String symptoms; // List of symptoms
 
     @Column(name = "malaria_case_count", nullable = false)
     private int malariaCaseCount; // Auto-updated based on confirmed/treatment cases
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "referred_to", nullable = false)
     private Integer referredTo; // Dropdown for referral options
 
@@ -50,22 +47,5 @@ public class DiseaseControl {
     @Column(name = "follow_up_date")
     private Timestamp followUpDate; // Follow-up date
 
-    // Enums for case status and referral options
-    public enum CaseStatus {
-        SUSPECTED,
-        CONFIRMED,
-        NOT_CONFIRMED,
-        TREATMENT_GIVEN
-    }
 
-    public enum ReferredTo {
-        PRIMARY_HEALTH_CENTRE,
-        COMMUNITY_HEALTH_CENTRE,
-        DISTRICT_HOSPITAL,
-        MEDICAL_COLLEGE_AND_HOSPITAL,
-        REFERRAL_HOSPITAL,
-        OTHER_PRIVATE_HOSPITAL,
-        OTHER,
-        NONE
-    }
 }
