@@ -3,7 +3,6 @@ package com.iemr.flw.dto.iemr;
 import lombok.Data;
 
 import java.sql.Timestamp;
-import java.util.List;
 
 @Data
 public class DiseaseControlDTO {
@@ -29,6 +28,19 @@ public class DiseaseControlDTO {
 
     private Timestamp followUpDate;
 
+    private String status;
+
+    private String otherStatus;
+
+    private String body_part;
+
+    private Boolean sufferingFromFilariasis;
+
+    private Timestamp homeVisitDate;
+
+    private Timestamp LeprosyStatusDate;
+
+    private String MedicineSideEffect;
 
 
 }

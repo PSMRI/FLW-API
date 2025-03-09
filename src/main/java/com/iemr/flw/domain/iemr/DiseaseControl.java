@@ -47,5 +47,26 @@ public class DiseaseControl {
     @Column(name = "follow_up_date")
     private Timestamp followUpDate; // Follow-up date
 
+    @Column(name = "status")
+    private String  status;
+
+    @Column(name = "other_status")
+    private String otherStatus;
+
+    @Column(name = "body_part")
+    private String bodyPart;
+
+    @Column(name = "suffering_from_filariasis")
+    private Boolean sufferingFromFilariasis;
+
+    @Column(name = "home_visit_date")
+    private Timestamp homeVisitDate;
+
+    @Column(name = "leprosy_status_date")
+    private Timestamp LeprosyStatusDate;
+
+    @Column(name = "medicine_side_effect")
+    private String  MedicineSideEffect;
+
 
 }

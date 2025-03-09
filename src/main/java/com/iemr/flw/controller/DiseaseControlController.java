@@ -14,12 +14,12 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping(value = "/disease", consumes = "application/json", produces = "application/json")
+@RequestMapping(value = "/disease" ,headers = "Authorization")
 public class DiseaseControlController {
     @Autowired
     private DiseaseControlService diseaseControlService;
 
-    @RequestMapping(value = "saveAll", method = RequestMethod.POST)
+    @RequestMapping(value = "saveAll", method = RequestMethod.POST,consumes = "application/json",produces = "application/json")
     public ResponseEntity<Map<String, Object>> saveDiseaseData(@RequestBody List<DiseaseControlDTO> diseaseControlDTO) {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "Success");
@@ -30,7 +30,7 @@ public class DiseaseControlController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(value = "getAll",method = RequestMethod.GET)
+    @RequestMapping(value = "getAll",method = RequestMethod.GET,produces = "application/json")
     public ResponseEntity<Map<String, Object>> getAllData(){
         Map<String, Object> response = new HashMap<>();
         response.put("status", "Success");
