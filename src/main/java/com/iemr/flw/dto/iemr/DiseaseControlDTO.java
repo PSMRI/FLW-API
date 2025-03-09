@@ -32,7 +32,7 @@ public class DiseaseControlDTO {
 
     private String otherStatus;
 
-    private String body_part;
+    private String bodyPart;
 
     private Boolean sufferingFromFilariasis;
 

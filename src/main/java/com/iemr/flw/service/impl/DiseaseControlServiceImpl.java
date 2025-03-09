@@ -49,7 +49,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         diseaseControl.setFollowUpPoint(diseaseControlDTO.getFollowUpPoint());
         diseaseControl.setFollowUpDate(diseaseControlDTO.getFollowUpDate());
         diseaseControl.setStatus(diseaseControlDTO.getStatus());
-        diseaseControl.setBodyPart(diseaseControlDTO.getBody_part());
+        diseaseControl.setBodyPart(diseaseControlDTO.getBodyPart());
         diseaseControl.setSufferingFromFilariasis(diseaseControlDTO.getSufferingFromFilariasis());
         diseaseControl.setOtherStatus(diseaseControlDTO.getOtherStatus());
         diseaseControl.setHomeVisitDate(diseaseControlDTO.getHomeVisitDate());
@@ -72,7 +72,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             diseaseControl.setFollowUpDate(diseaseControlDTO.getFollowUpDate());
             diseaseControl.setFollowUpDate(diseaseControlDTO.getFollowUpDate());
             diseaseControl.setStatus(diseaseControlDTO.getStatus());
-            diseaseControl.setBodyPart(diseaseControlDTO.getBody_part());
+            diseaseControl.setBodyPart(diseaseControlDTO.getBodyPart());
             diseaseControl.setSufferingFromFilariasis(diseaseControlDTO.getSufferingFromFilariasis());
             diseaseControl.setOtherStatus(diseaseControlDTO.getOtherStatus());
             diseaseControl.setHomeVisitDate(diseaseControlDTO.getHomeVisitDate());
