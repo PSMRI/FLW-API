@@ -24,26 +24,23 @@ public class AshaProfileController {
     private Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
     @Autowired
     AshaProfileService ashaProfileService;
-    private Map<String,Object> response = new HashMap<>();
+    private Map<String, Object> response = new HashMap<>();
 
     @Autowired
     private EmployeeMasterInter employeeMasterInter;
 
-    @RequestMapping(value = "editProfile", method = { RequestMethod.POST }, produces = {
-            "application/json" },consumes = "application/json" )
-    public ResponseEntity<Map<String,Object>> editEmployee(@RequestBody AshaWorker editEmployee) {
+    @RequestMapping(value = "editProfile", method = {RequestMethod.POST}, produces = {
+            "application/json"}, consumes = "application/json")
+    public ResponseEntity<Map<String, Object>> editEmployee(@RequestBody AshaWorker editEmployee) {
 
         try {
             System.out.println(editEmployee.toString());
 
-
             AshaWorker ashaWorker = ashaProfileService.saveEditData(editEmployee);
-            response.put("data",ashaWorker);
-            response.put("statusCode",200);
-            response.put("status","Success");
-            response.put("errorMessage","Success");
-
-
+            response.put("data", ashaWorker);
+            response.put("statusCode", 200);
+            response.put("status", "Success");
+            response.put("errorMessage", "Success");
 
 
         } catch (Exception e) {
@@ -55,29 +52,30 @@ public class AshaProfileController {
         return ResponseEntity.ok().body(response);
 
     }
-    @RequestMapping(value = "getProfile",method = RequestMethod.GET ,headers = "Authorization" )
-     public ResponseEntity<Map<String,Object>> getProfile(@RequestParam ("employeeId")Integer employeeId){
+
+    @RequestMapping(value = "getProfile", method = RequestMethod.GET, headers = "Authorization")
+    public ResponseEntity<Map<String, Object>> getProfile(@RequestParam("employeeId") Integer employeeId) {
         try {
             AshaWorker ashaWorker = ashaProfileService.getProfileData(employeeId);
-            if(ashaWorker!=null){
-                response.put("data",ashaWorker);
-                response.put("statusCode",200);
-                response.put("status","Success");
-                response.put("errorMessage","Success");
-            }else {
-                response.put("data",ashaWorker);
-                response.put("statusCode",200);
-                response.put("status","Success");
-                response.put("errorMessage","Asha profile not found");
+            if (ashaWorker != null) {
+                response.put("data", ashaWorker);
+                response.put("statusCode", 200);
+                response.put("status", "Success");
+                response.put("errorMessage", "Success");
+            } else {
+                response.put("data", ashaWorker);
+                response.put("statusCode", 200);
+                response.put("status", "Success");
+                response.put("errorMessage", "Asha profile not found");
             }
 
-        }catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Unexpected error:", e);
             ResponseEntity.status(500).body(e.getMessage());
 
         }
 
-        return  ResponseEntity.ok().body(response);
+        return ResponseEntity.ok().body(response);
 
 
     }
