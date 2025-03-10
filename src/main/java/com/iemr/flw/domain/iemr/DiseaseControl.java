@@ -3,8 +3,10 @@ package com.iemr.flw.domain.iemr;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.List;
+
 @Data
 @Entity
 @Table(name = "disease")
@@ -17,10 +19,10 @@ public class DiseaseControl {
     private Long benId;
 
     @Column(name = "case_date", nullable = false)
-    private Timestamp caseDate ; // Auto-populated as today's date, non-editable
+    private Timestamp caseDate; // Auto-populated as today's date, non-editable
 
     @Column(name = "case_status", nullable = false)
-    private Integer caseStatus; // Dropdown for case status
+    private String caseStatus; // Dropdown for case status
 
 
     @Column(name = "symptom")
@@ -29,7 +31,7 @@ public class DiseaseControl {
     @Column(name = "malaria_case_count", nullable = false)
     private int malariaCaseCount; // Auto-updated based on confirmed/treatment cases
 
-    @Column(name = "referred_to", nullable = false)
+    @Column(name = "InstitutionID", nullable = false)
     private Integer referredTo; // Dropdown for referral options
 
     @Column(name = "other_referred_to")
@@ -48,7 +50,7 @@ public class DiseaseControl {
     private Timestamp followUpDate; // Follow-up date
 
     @Column(name = "status")
-    private String  status;
+    private String status;
 
     @Column(name = "other_status")
     private String otherStatus;
@@ -66,7 +68,10 @@ public class DiseaseControl {
     private Timestamp LeprosyStatusDate;
 
     @Column(name = "medicine_side_effect")
-    private String  MedicineSideEffect;
+    private String MedicineSideEffect;
+
+    @Column(name = "typeId")
+    private BigInteger diseaseTypeId;
 
 
 }

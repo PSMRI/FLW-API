@@ -55,6 +55,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         diseaseControl.setHomeVisitDate(diseaseControlDTO.getHomeVisitDate());
         diseaseControl.setLeprosyStatusDate(diseaseControlDTO.getLeprosyStatusDate());
         diseaseControl.setMedicineSideEffect(diseaseControlDTO.getMedicineSideEffect());
+        diseaseControl.setDiseaseTypeId(diseaseControlDTO.getDiseaseTypeId());
         return diseaseControl;
 
     }
@@ -78,6 +79,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             diseaseControl.setHomeVisitDate(diseaseControlDTO.getHomeVisitDate());
             diseaseControl.setLeprosyStatusDate(diseaseControlDTO.getLeprosyStatusDate());
             diseaseControl.setMedicineSideEffect(diseaseControlDTO.getMedicineSideEffect());
+            diseaseControl.setDiseaseTypeId(diseaseControlDTO.getDiseaseTypeId());
             diseaseControlRepo.save(diseaseControl);
             
             return "Data update successfully";

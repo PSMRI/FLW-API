@@ -2,6 +2,7 @@ package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
 
+import java.math.BigInteger;
 import java.sql.Timestamp;
 
 @Data
@@ -10,7 +11,7 @@ public class DiseaseControlDTO {
     private Long benId;
     private Timestamp caseDate;
 
-    private Integer caseStatus;
+    private String caseStatus;
 
     private String symptoms;
 
@@ -41,6 +42,8 @@ public class DiseaseControlDTO {
     private Timestamp LeprosyStatusDate;
 
     private String MedicineSideEffect;
+
+    private BigInteger diseaseTypeId;
 
 
 }
