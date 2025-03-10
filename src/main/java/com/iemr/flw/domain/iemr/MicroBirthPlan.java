@@ -9,7 +9,6 @@ import java.math.BigInteger;
 @Table(name = "t_micro_birth_plan", schema = "db_iemr")
 @Data
 public class MicroBirthPlan {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
