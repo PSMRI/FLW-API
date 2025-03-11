@@ -157,9 +157,4 @@ public class EligibleCoupleRegister {
 
     @Column(name = "updated_by")
     private String updatedBy;
-
-
-
-
 }
-
