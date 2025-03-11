@@ -1,6 +1,7 @@
 package com.iemr.flw.controller;
 
 import com.iemr.flw.domain.iemr.MicroBirthPlan;
+import com.iemr.flw.dto.iemr.GetMicroPlanHandler;
 import com.iemr.flw.dto.iemr.MicroBirthPlanDTO;
 import com.iemr.flw.service.MicroBirthPlanService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,7 +36,6 @@ public class MicroBirthPlanController {
             data.put("entries", service.createMicroBirthPlan(birthPlan));
             response.put("data", data);
             response.put("statusCode", 200);
-            response.put("errorMessage", "Success");
             response.put("status", "Success");
         } catch (Exception e) {
             response.put("statusCode", 500);
@@ -49,19 +49,18 @@ public class MicroBirthPlanController {
     }
 
 
-    @RequestMapping(value = "getAll", method = RequestMethod.GET)
-    public ResponseEntity<Map<String, Object>> getAllMicroBirthPlans(@RequestParam("userId") Integer userId) {
+    @RequestMapping(value = "getAll", method = RequestMethod.POST)
+    public ResponseEntity<Map<String, Object>> getAllMicroBirthPlans(@RequestBody GetMicroPlanHandler getMicroPlanHandler, @RequestHeader(value = "Authorization") String Authorization) {
 
         Map<String, Object> response = new HashMap<>();
 
 
         Map<String, Object> data = new HashMap<>();
         try {
-            data.put("userId", userId);
-            data.put("entries", service.getAllMicroBirthPlans(userId));
+            data.put("userId", getMicroPlanHandler.getUserId());
+            data.put("entries", service.getAllMicroBirthPlans(getMicroPlanHandler.getUserId()));
             response.put("data", data);
             response.put("statusCode", 200);
-            response.put("errorMessage", "Success");
             response.put("status", "Success");
         } catch (Exception e) {
             response.put("statusCode", 500);
@@ -69,7 +68,6 @@ public class MicroBirthPlanController {
 
 
         }
-
 
         return ResponseEntity.ok(response);
     }
