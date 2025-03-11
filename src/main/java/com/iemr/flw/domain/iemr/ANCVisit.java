@@ -3,7 +3,6 @@ package com.iemr.flw.domain.iemr;
 import lombok.Data;
 
 import jakarta.persistence.*;
-
 import java.sql.Timestamp;
 
 @Entity
@@ -113,5 +112,4 @@ public class ANCVisit {
 
     @Column(name = "updated_by")
     private String updatedBy;
-
 }
