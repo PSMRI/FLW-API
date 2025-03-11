@@ -43,7 +43,6 @@ public class ANCVisitDTO {
     private Timestamp updatedDate;
     private String updatedBy;
     private Integer providerServiceMapID;
-    private String filePath;
 
 
 }

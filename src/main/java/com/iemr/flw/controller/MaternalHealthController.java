@@ -111,8 +111,7 @@ public class MaternalHealthController {
     @CrossOrigin()
     @Operation(summary = "get anc visit details")
     @RequestMapping(value = {"/ancVisit/getAll"}, method = {RequestMethod.POST})
-    public String getANCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,
-                                     @RequestHeader(value = "Authorization") String Authorization) {
+    public String getANCVisitDetails(@RequestBody GetBenRequestHandler requestDTO, @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             if (requestDTO != null) {
