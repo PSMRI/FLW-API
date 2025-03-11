@@ -111,7 +111,8 @@ public class MaternalHealthController {
     @CrossOrigin()
     @Operation(summary = "get anc visit details")
     @RequestMapping(value = {"/ancVisit/getAll"}, method = {RequestMethod.POST})
-    public String getANCVisitDetails(@RequestBody GetBenRequestHandler requestDTO, @RequestHeader(value = "Authorization") String Authorization) {
+    public String getANCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,
+                                     @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             if (requestDTO != null) {
@@ -281,7 +282,7 @@ public class MaternalHealthController {
     @Operation(summary = "get PMSMA data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/pmsma/getAll"}, method = {RequestMethod.POST})
     public String getAllPmsmaDetails(@RequestBody GetBenRequestHandler requestDTO,
-                                     @RequestHeader(value = "Authorization") String Authorization) {
+                                             @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             if (requestDTO != null) {
