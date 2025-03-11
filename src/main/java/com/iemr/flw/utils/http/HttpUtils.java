@@ -111,6 +111,4 @@ public class HttpUtils {
 	public void setStatus(HttpStatus status) {
 		this.status = status;
 	}
-
-
 }
