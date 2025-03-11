@@ -21,7 +21,7 @@ import java.util.Objects;
 @RestController
 @RequestMapping(value = "/asha", headers = "Authorization", produces = "application/json")
 public class AshaProfileController {
-    private Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
     @Autowired
     AshaProfileService ashaProfileService;
     private Map<String, Object> response = new HashMap<>();
@@ -40,8 +40,6 @@ public class AshaProfileController {
             response.put("data", ashaWorker);
             response.put("statusCode", 200);
             response.put("status", "Success");
-            response.put("errorMessage", "Success");
-
 
         } catch (Exception e) {
             logger.error("Unexpected error:", e);
@@ -61,7 +59,6 @@ public class AshaProfileController {
                 response.put("data", ashaWorker);
                 response.put("statusCode", 200);
                 response.put("status", "Success");
-                response.put("errorMessage", "Success");
             } else {
                 response.put("data", ashaWorker);
                 response.put("statusCode", 200);
