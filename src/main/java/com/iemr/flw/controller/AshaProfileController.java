@@ -31,7 +31,7 @@ public class AshaProfileController {
 
     @RequestMapping(value = "editProfile", method = {RequestMethod.POST}, produces = {
             "application/json"}, consumes = "application/json")
-    public ResponseEntity<Map<String, Object>> editEmployee(@RequestBody AshaWorker editEmployee) {
+    public ResponseEntity<Map<String, Object>> editEmployee(@RequestBody AshaWorker editEmployee,@RequestHeader(value = "Authorization") String authorization) {
 
         try {
             System.out.println(editEmployee.toString());
