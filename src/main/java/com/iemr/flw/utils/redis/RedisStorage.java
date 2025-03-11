@@ -49,8 +49,6 @@ public class RedisStorage {
 			redCon.set(key.getBytes(), value.getBytes(), Expiration.seconds(expirationTime), SetOption.UPSERT);
 		}
 		return key;
-
-
 	}
 
 	public String getObject(String key, Boolean extendExpirationTime, int expirationTime) throws RedisSessionException {
