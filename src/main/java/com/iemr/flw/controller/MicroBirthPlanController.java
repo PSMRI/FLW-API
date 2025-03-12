@@ -4,6 +4,8 @@ import com.iemr.flw.domain.iemr.MicroBirthPlan;
 import com.iemr.flw.dto.iemr.GetMicroPlanHandler;
 import com.iemr.flw.dto.iemr.MicroBirthPlanDTO;
 import com.iemr.flw.service.MicroBirthPlanService;
+import com.iemr.flw.utils.JwtUtil;
+import io.jsonwebtoken.Jwe;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +25,9 @@ public class MicroBirthPlanController {
 
     @Autowired
     private MicroBirthPlanService service;
+
+    @Autowired
+    JwtUtil jwtUtil;
 
 
     @RequestMapping(value = "saveAll", method = RequestMethod.POST)
@@ -50,15 +55,15 @@ public class MicroBirthPlanController {
 
 
     @RequestMapping(value = "getAll", method = RequestMethod.POST)
-    public ResponseEntity<Map<String, Object>> getAllMicroBirthPlans(@RequestBody GetMicroPlanHandler getMicroPlanHandler, @RequestHeader(value = "Authorization") String Authorization) {
+    public ResponseEntity<Map<String, Object>> getAllMicroBirthPlans(@RequestHeader(value = "Authorization") String authorization) {
 
         Map<String, Object> response = new HashMap<>();
 
 
         Map<String, Object> data = new HashMap<>();
         try {
-            data.put("userId", getMicroPlanHandler.getUserId());
-            data.put("entries", service.getAllMicroBirthPlans(getMicroPlanHandler.getUserId()));
+            data.put("userId", jwtUtil.extractUserId(authorization));
+            data.put("entries", service.getAllMicroBirthPlans(jwtUtil.extractUserId(authorization)));
             response.put("data", data);
             response.put("statusCode", 200);
             response.put("status", "Success");
