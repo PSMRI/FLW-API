@@ -59,17 +59,14 @@ public class AshaProfileImpl implements AshaProfileService {
     public AshaWorker getProfileData(String authorization) {
 
         try {
-            Objects.requireNonNull(jwtUtil.extractUserId(authorization), "employeeId must not be null");
-            return ashaProfileRepo.findByEmployeeId(jwtUtil.extractUserId(authorization))
+            Integer userId = jwtUtil.extractUserId(authorization);
+
+            Objects.requireNonNull(userId, "employeeId must not be null");
+            return ashaProfileRepo.findByEmployeeId(userId)
                     .orElseGet(() -> {
-                        try {
-                            return getDetails(jwtUtil.extractUserId(authorization));
-                        } catch (IEMRException e) {
-                            throw new RuntimeException(e);
-                        }
+                        return getDetails(userId);
                     });
         } catch (Exception e) {
-            logger.error("Error retrieving ASHA worker profile for employeeId {}: {}", getProfileData(authorization), e.getMessage(), e);
             throw new RuntimeException("Failed to retrieve ASHA worker profile", e);
         }
     }
