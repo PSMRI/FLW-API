@@ -3,15 +3,22 @@ package com.iemr.flw.service.impl;
 import com.iemr.flw.domain.iemr.AshaWorker;
 import com.iemr.flw.domain.iemr.M_User;
 import com.iemr.flw.repo.iemr.AshaProfileRepo;
+import com.iemr.flw.repo.iemr.EmployeeMasterRepo;
 import com.iemr.flw.service.AshaProfileService;
 import com.iemr.flw.service.EmployeeMasterInter;
+import com.iemr.flw.utils.JwtAuthenticationUtil;
+import com.iemr.flw.utils.JwtUtil;
+import com.iemr.flw.utils.exception.IEMRException;
+import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class AshaProfileImpl implements AshaProfileService {
@@ -19,6 +26,15 @@ public class AshaProfileImpl implements AshaProfileService {
     AshaProfileRepo ashaProfileRepo;
     @Autowired
     EmployeeMasterInter employeeMasterInter;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    @Autowired
+    private EmployeeMasterRepo userLoginRepo;
+    @Autowired
+    JwtUtil jwtUtil;
+
+    @Autowired
+    JwtAuthenticationUtil jwtAuthenticationUtil ;
 
     private final Logger logger = LoggerFactory.getLogger(AshaProfileImpl.class);
 
@@ -40,14 +56,20 @@ public class AshaProfileImpl implements AshaProfileService {
     }
 
     @Override
-    public AshaWorker getProfileData(Integer employeeId) {
+    public AshaWorker getProfileData(String authorization) {
 
         try {
-            Objects.requireNonNull(employeeId, "employeeId must not be null");
-            return ashaProfileRepo.findByEmployeeId(employeeId)
-                    .orElseGet(() -> getDetails(employeeId));
+            Objects.requireNonNull(jwtUtil.extractUserId(authorization), "employeeId must not be null");
+            return ashaProfileRepo.findByEmployeeId(jwtUtil.extractUserId(authorization))
+                    .orElseGet(() -> {
+                        try {
+                            return getDetails(jwtUtil.extractUserId(authorization));
+                        } catch (IEMRException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
         } catch (Exception e) {
-            logger.error("Error retrieving ASHA worker profile for employeeId {}: {}", employeeId, e.getMessage(), e);
+            logger.error("Error retrieving ASHA worker profile for employeeId {}: {}", getProfileData(authorization), e.getMessage(), e);
             throw new RuntimeException("Failed to retrieve ASHA worker profile", e);
         }
     }
@@ -119,5 +141,7 @@ public class AshaProfileImpl implements AshaProfileService {
 
 
     }
+
+
 
 }

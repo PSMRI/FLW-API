@@ -7,6 +7,10 @@ import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.AshaProfileService;
 import com.iemr.flw.service.EmployeeMasterInter;
 import com.iemr.flw.service.UserService;
+import com.iemr.flw.utils.JwtAuthenticationUtil;
+import com.iemr.flw.utils.JwtUtil;
+import com.iemr.flw.utils.exception.IEMRException;
+import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,9 +56,9 @@ public class AshaProfileController {
     }
 
     @RequestMapping(value = "getProfile", method = RequestMethod.GET, headers = "Authorization")
-    public ResponseEntity<Map<String, Object>> getProfile(@RequestParam("employeeId") Integer employeeId) {
+    public ResponseEntity<Map<String, Object>> getProfile(@RequestHeader("Authorization") String  authorization) throws IEMRException {
         try {
-            AshaWorker ashaWorker = ashaProfileService.getProfileData(employeeId);
+            AshaWorker ashaWorker = ashaProfileService.getProfileData(authorization);
             if (ashaWorker != null) {
                 response.put("data", ashaWorker);
                 response.put("statusCode", 200);

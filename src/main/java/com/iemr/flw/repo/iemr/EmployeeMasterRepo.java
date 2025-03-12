@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 public interface EmployeeMasterRepo extends JpaRepository<M_User,Integer> {
     M_User findByUserID(Integer userID);
 
+    M_User getUserByUserID(Integer parseLong);
 }
