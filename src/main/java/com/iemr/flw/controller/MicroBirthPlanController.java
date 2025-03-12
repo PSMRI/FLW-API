@@ -62,11 +62,15 @@ public class MicroBirthPlanController {
 
         Map<String, Object> data = new HashMap<>();
         try {
-            data.put("userId", jwtUtil.extractUserId(authorization));
-            data.put("entries", service.getAllMicroBirthPlans(jwtUtil.extractUserId(authorization)));
-            response.put("data", data);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            Integer userID = jwtUtil.extractUserId(authorization);
+            if (userID != null) {
+                data.put("userId", userID);
+                data.put("entries", service.getAllMicroBirthPlans(userID));
+                response.put("data", data);
+                response.put("statusCode", 200);
+                response.put("status", "Success");
+            }
+
         } catch (Exception e) {
             response.put("statusCode", 500);
             response.put("errorMessage", e.getMessage());
