@@ -314,4 +314,16 @@ public class RMNCHBornBirthDetails {
 	@Column(name = "birthOPV")
 	private Boolean birthOPV;
 
+	@Expose
+	@Column(name = "birthCertificateFileFrontView")
+	private String birthCertificateFileFrontView;
+
+	@Expose
+	@Column(name = "birthCertificateFileBackView")
+	private String birthCertificateFileBackView;
+
+
+
+
+
 }

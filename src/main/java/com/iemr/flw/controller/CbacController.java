@@ -1,5 +1,7 @@
 package com.iemr.flw.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.dto.identity.CbacDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.service.CbacService;
@@ -19,7 +21,7 @@ import java.util.List;
 @RequestMapping(value = "/cbac", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class CbacController {
 
-    private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
+	private final Logger logger = LoggerFactory.getLogger(CbacController.class);
 
     @Autowired
     private CbacService cbacService;

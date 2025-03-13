@@ -12,7 +12,7 @@ public interface CoupleService {
 
     String registerEligibleCoupleTracking(List<EligibleCoupleTrackingDTO> eligibleCoupleTrackingDTOs);
 
-    List<EligibleCoupleDTO> getEligibleCoupleRegRecords(GetBenRequestHandler dto);
+    String getEligibleCoupleRegRecords(GetBenRequestHandler dto);
 
     List<EligibleCoupleTrackingDTO> getEligibleCoupleTracking(GetBenRequestHandler requestDto);
 

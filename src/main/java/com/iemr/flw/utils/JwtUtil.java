@@ -48,6 +48,11 @@ public class JwtUtil {
 		}
 	}
 
+
+	public String extractUsername(String token) {
+		return extractClaim(token, Claims::getSubject);
+	}
+
 	public Integer extractUserId(String  jwtToken) throws IEMRException {
 		try {
 			// Validate JWT token and extract claims
@@ -68,9 +73,6 @@ public class JwtUtil {
 
 	}
 
-	public String extractUsername(String token) {
-		return extractClaim(token, Claims::getSubject);
-	}
 
 	public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
 		final Claims claims = extractAllClaims(token);
