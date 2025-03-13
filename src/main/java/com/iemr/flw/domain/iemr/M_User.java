@@ -3,7 +3,6 @@ package com.iemr.flw.domain.iemr;
 import com.google.gson.annotations.Expose;
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
