@@ -54,7 +54,7 @@ public class MicroBirthPlanController {
     }
 
 
-    @RequestMapping(value = "getAll", method = RequestMethod.POST)
+    @RequestMapping(value = "getAll", method = RequestMethod.GET)
     public ResponseEntity<Map<String, Object>> getAllMicroBirthPlans(@RequestHeader(value = "Authorization") String authorization) {
 
         Map<String, Object> response = new HashMap<>();
