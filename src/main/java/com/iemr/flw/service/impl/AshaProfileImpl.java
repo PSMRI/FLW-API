@@ -109,6 +109,10 @@ public class AshaProfileImpl implements AshaProfileService {
             editdata.setAnm2Mobile(editAshaWorkerRequest.getAnm2Mobile());  // Corrected line
             editdata.setAwwMobile(editAshaWorkerRequest.getAwwMobile());
             editdata.setProviderServiceMapID(editAshaWorkerRequest.getProviderServiceMapID());
+            editdata.setProfileImage(editAshaWorkerRequest.getProfileImage());
+            editdata.setIsFatherOrSpouse(editAshaWorkerRequest.getIsFatherOrSpouse());
+            editdata.setSupervisorName(editAshaWorkerRequest.getSupervisorName());
+            editdata.setSupervisorMobile(editAshaWorkerRequest.getSupervisorMobile());
             return editdata;
 
         } catch (Exception e) {
