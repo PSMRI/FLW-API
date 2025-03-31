@@ -15,8 +15,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     private DiseaseControlRepo diseaseControlRepo;
 
     @Override
-    public String save(List<DiseaseControlDTO> diseaseControlDTO) {
-        for(DiseaseControlDTO diseaseControlData: diseaseControlDTO){
+    public String save(DiseaseControlDTO diseaseControlDTO) {
+        for(DiseaseControl diseaseControlData: diseaseControlDTO.getDiseaseControlList()){
             if(diseaseControlRepo.findByBenId(diseaseControlData.getBenId()).isPresent()){
                 return   update(diseaseControlData);
             }else {
@@ -35,7 +35,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         return diseaseControlRepo.findAll();
     }
 
-    private DiseaseControl  saveData(DiseaseControlDTO diseaseControlDTO){
+    private DiseaseControl  saveData(DiseaseControl diseaseControlDTO){
         DiseaseControl diseaseControl = new DiseaseControl();
         diseaseControl.setBenId(diseaseControlDTO.getBenId());
         diseaseControl.setCaseDate(diseaseControlDTO.getCaseDate()); // Added
@@ -59,7 +59,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         return diseaseControl;
 
     }
-    private String  update(DiseaseControlDTO diseaseControlDTO){
+    private String  update(DiseaseControl diseaseControlDTO){
         return  diseaseControlRepo.findByBenId(diseaseControlDTO.getBenId()).map(diseaseControl -> {
             diseaseControl.setCaseDate(diseaseControlDTO.getCaseDate()); // Added
             diseaseControl.setCaseStatus(diseaseControlDTO.getCaseStatus());

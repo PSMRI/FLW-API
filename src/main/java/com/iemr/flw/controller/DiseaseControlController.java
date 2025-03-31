@@ -20,12 +20,11 @@ public class DiseaseControlController {
     private DiseaseControlService diseaseControlService;
 
     @RequestMapping(value = "saveAll", method = RequestMethod.POST,consumes = "application/json",produces = "application/json")
-    public ResponseEntity<Map<String, Object>> saveDiseaseData(@RequestBody List<DiseaseControlDTO> diseaseControlDTO) {
+    public ResponseEntity<Map<String, Object>> saveDiseaseData(@RequestBody DiseaseControlDTO diseaseControlDTO) {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "Success");
         response.put("statusCode", 200);
         response.put("data", diseaseControlService.save(diseaseControlDTO));
-        diseaseControlService.save(diseaseControlDTO);
 
         return ResponseEntity.ok(response);
     }

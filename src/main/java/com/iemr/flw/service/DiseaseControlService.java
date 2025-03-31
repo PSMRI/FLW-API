@@ -7,6 +7,6 @@ import org.apache.commons.collections4.Put;
 import java.util.List;
 
 public interface DiseaseControlService {
-    public String save(List<DiseaseControlDTO> diseaseControlDTO);
+    public String save(DiseaseControlDTO diseaseControlDTO);
     public List<DiseaseControl> getAll();
 }
