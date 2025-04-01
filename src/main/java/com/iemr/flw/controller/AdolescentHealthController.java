@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping(value = "/adolescentHealth", headers = "Authorization")
@@ -40,6 +42,23 @@ public class AdolescentHealthController {
         }
         return response.toString();
 
+    }
+
+    @RequestMapping(name = "/getAll",method = RequestMethod.GET)
+    public String getAllAdolescentHealth() {
+        OutputResponse response = new OutputResponse();
+        try {
+            if (adolescentHealthService.getAllAdolescentHealth().size() != 0) {
+                response.setResponse(adolescentHealthService.getAllAdolescentHealth().toString());
+
+
+            } else
+                response.setError(500, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in get data : " + e);
+            response.setError(500, "Error in get data : " + e);
+        }
+        return response.toString();
     }
 
 }

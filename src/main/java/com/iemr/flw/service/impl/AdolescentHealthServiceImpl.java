@@ -7,7 +7,9 @@ import com.iemr.flw.service.AdolescentHealthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class AdolescentHealthServiceImpl implements AdolescentHealthService {
@@ -32,6 +34,19 @@ public class AdolescentHealthServiceImpl implements AdolescentHealthService {
         return "Records updated/added successfully!";
     }
 
+
+
+
+    public List<AdolescentHealth> getAllAdolescentHealth() {
+        // Fetch all records from the database
+        List<AdolescentHealth> adolescentHealths = adolescentHealthRepo.findAll();
+
+        // Convert the list of entity objects to DTO objects
+        return adolescentHealths.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     private void updateAdolescentHealth(Optional<AdolescentHealth> existingRecord, AdolescentHealth adolescentHealth) {
         AdolescentHealth existingAdolescentHealth = existingRecord.get();
 
@@ -54,6 +69,28 @@ public class AdolescentHealthServiceImpl implements AdolescentHealthService {
 
         // Save the updated record back to the database
         adolescentHealthRepo.save(existingAdolescentHealth);
+    }
+
+    private AdolescentHealth convertToDTO(AdolescentHealth adolescentHealth) {
+        AdolescentHealth dto = new AdolescentHealth();
+        dto.setId(adolescentHealth.getId());
+        dto.setBenId(adolescentHealth.getBenId());
+        dto.setUserID(adolescentHealth.getUserID());
+        dto.setVisitDate(adolescentHealth.getVisitDate());
+        dto.setHealthStatus(adolescentHealth.getHealthStatus());
+        dto.setIfaTabletDistribution(adolescentHealth.getIfaTabletDistribution());
+        dto.setQuantityOfIfaTablets(adolescentHealth.getQuantityOfIfaTablets());
+        dto.setMenstrualHygieneAwarenessGiven(adolescentHealth.getMenstrualHygieneAwarenessGiven());
+        dto.setSanitaryNapkinDistributed(adolescentHealth.getSanitaryNapkinDistributed());
+        dto.setNoOfPacketsDistributed(adolescentHealth.getNoOfPacketsDistributed());
+        dto.setPlace(adolescentHealth.getPlace());
+        dto.setReferredToHealthFacility(adolescentHealth.getReferredToHealthFacility());
+        dto.setCounselingProvided(adolescentHealth.getCounselingProvided());
+        dto.setCounselingType(adolescentHealth.getCounselingType());
+        dto.setFollowUpDate(adolescentHealth.getFollowUpDate());
+        dto.setReferralStatus(adolescentHealth.getReferralStatus());
+        dto.setIncentiveAmount(adolescentHealth.getIncentiveAmount());
+        return dto;
     }
 }
 
