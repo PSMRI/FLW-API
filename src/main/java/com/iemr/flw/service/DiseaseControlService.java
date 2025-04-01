@@ -14,5 +14,5 @@ public interface DiseaseControlService {
     public String saveAES(AesJeDTO diseaseControlDTO);
     public String saveFilaria(FilariaDTO diseaseControlDTO);
     public String saveLeprosy(LeprosyDTO diseaseControlDTO);
-    public List<DiseaseControl> getAll(BigInteger diseaseTypeID);
+    public List<DiseaseControl> getAll(GetDiseaseRequestHandler getDiseaseRequestHandler);
 }

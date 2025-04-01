@@ -79,12 +79,12 @@ public class DiseaseControlController {
 
     }
 
-    @RequestMapping(value = "getAll", method = RequestMethod.GET, produces = "application/json")
-    public ResponseEntity<Map<String, Object>> getAllData(@Param("diseaseTypeID") BigInteger diseaseTypeID) {
+    @RequestMapping(value = "getAll", method = RequestMethod.POST, produces = "application/json")
+    public ResponseEntity<Map<String, Object>> getAllData(@RequestBody GetDiseaseRequestHandler getDiseaseRequestHandler) {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "Success");
         response.put("statusCode", 200);
-        response.put("data", diseaseControlService.getAll(diseaseTypeID));
+        response.put("data", diseaseControlService.getAll(getDiseaseRequestHandler));
         return ResponseEntity.ok(response);
     }
 

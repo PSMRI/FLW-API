@@ -135,8 +135,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     }
 
     @Override
-    public List<DiseaseControl> getAll(BigInteger diseaseTypeID) {
-        return diseaseControlRepo.findAll().stream().filter(diseaseControl -> diseaseControl.getDiseaseTypeId()==diseaseTypeID).collect(Collectors.toList());
+    public List<DiseaseControl> getAll(GetDiseaseRequestHandler getDiseaseRequestHandler) {
+        return diseaseControlRepo.findAll().stream().filter(diseaseControl -> diseaseControl.getDiseaseTypeId()==getDiseaseRequestHandler.getDiseaseTypeID()).collect(Collectors.toList());
     }
 
     private DiseaseControl saveData(DiseaseControl diseaseControlDTO) {
