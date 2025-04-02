@@ -40,11 +40,6 @@ public class MalariaData {
     @Column(name = "follow_up")
     Integer followUp;
 
-    @Column(name = "irs_date")
-    Date irsDate;
-
-    @Column(name = "rounds")
-    Integer rounds;
 
     @Column(name = "DiseaseTypeID")
     Integer diseaseTypeID;

@@ -168,9 +168,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         return malariaControlRepo.findByBenId(updatedMalariaData.getBenId()).map(malariaData -> {
             malariaData.setId(updatedMalariaData.getId());
             malariaData.setBenId(updatedMalariaData.getBenId());
-            malariaData.setIrsDate(updatedMalariaData.getIrsDate());
             malariaData.setFollowUp(updatedMalariaData.getFollowUp());
-            malariaData.setRounds(updatedMalariaData.getRounds());
             malariaData.setRemarks(updatedMalariaData.getRemarks());
             malariaData.setMalariaCaseCount(updatedMalariaData.getMalariaCaseCount());
             malariaData.setMalariaCaseStatusDate(updatedMalariaData.getMalariaCaseStatusDate());
