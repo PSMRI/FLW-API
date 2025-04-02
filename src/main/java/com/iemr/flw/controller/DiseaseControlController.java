@@ -19,9 +19,9 @@ import java.util.Map;
 @RestController
 @RequestMapping(value = "/disease", headers = "Authorization")
 public class DiseaseControlController {
+
     @Autowired
     private DiseaseControlService diseaseControlService;
-
 
 
     @RequestMapping(value = "Malaria/saveAll", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
