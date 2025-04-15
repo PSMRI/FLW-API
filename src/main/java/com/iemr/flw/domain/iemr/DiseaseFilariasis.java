@@ -56,5 +56,6 @@ public class DiseaseFilariasis {
     @Column(name = "diseaseTypeID")
     private Integer diseaseTypeId;
 
-    // Getters and Setters
+    @Column(name = "userID")
+    private Integer userId;
 }

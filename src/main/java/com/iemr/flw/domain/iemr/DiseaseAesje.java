@@ -2,6 +2,7 @@ package com.iemr.flw.domain.iemr;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.checkerframework.checker.units.qual.N;
 
 import java.util.Date;
 
@@ -70,6 +71,9 @@ public class DiseaseAesje {
 
     @Column(name = "diseaseTypeID")
     private Integer diseaseTypeId;
+
+    @Column(name = "userID")
+    private Integer userId;
 
     // Getters and Setters
 }

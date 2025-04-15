@@ -76,5 +76,13 @@ public class DiseaseKalaAzar {
 
     @Column(name = "diseaseTypeID")
     private Integer diseaseTypeId;
-    // Getters and Setters
+
+    @Column(name = "userID")
+    private Integer userId;
+
+    @Column(name = "refer_to_name")
+    private String referToName;
+
+    @Column(name = "beneficiary_statusId")
+    private Integer beneficiaryStatusId;
 }

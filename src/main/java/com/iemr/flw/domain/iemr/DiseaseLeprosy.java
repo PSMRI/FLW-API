@@ -54,6 +54,7 @@ public class DiseaseLeprosy {
     @Column(name = "diseaseTypeID")
     private Integer diseaseTypeId;
 
+    @Column(name = "userID")
+    private Integer userId;
 
-    // Getters and Setters
 }
