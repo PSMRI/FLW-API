@@ -1,0 +1,17 @@
+package com.iemr.flw.service;
+
+import com.iemr.flw.dto.iemr.MalariaFollowListUpDTO;
+import com.iemr.flw.dto.iemr.MalariaFollowUpDTO;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public interface MalariaFollowUpService {
+
+
+    public String saveFollowUp(MalariaFollowUpDTO dto) ;
+
+
+    List<MalariaFollowListUpDTO> getByUserId(Integer userId);
+}

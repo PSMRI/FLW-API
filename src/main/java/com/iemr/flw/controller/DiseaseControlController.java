@@ -2,22 +2,18 @@ package com.iemr.flw.controller;
 
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.DiseaseControlService;
-import org.apache.commons.lang3.function.Failable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping(value = "/disease", headers = "Authorization")
+@RequestMapping(value = "/disease")
 public class DiseaseControlController {
 
     @Autowired
@@ -84,7 +80,23 @@ public class DiseaseControlController {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "Success");
         response.put("statusCode", 200);
-        response.put("data", diseaseControlService.getAll(getDiseaseRequestHandler));
+        if (getDiseaseRequestHandler.getDiseaseTypeID() == 1) {
+            response.put("data", diseaseControlService.getAllMalaria(getDiseaseRequestHandler));
+
+        } else if (getDiseaseRequestHandler.getDiseaseTypeID() == 2) {
+            response.put("data", diseaseControlService.getAllKalaAzar(getDiseaseRequestHandler));
+
+        } else if (getDiseaseRequestHandler.getDiseaseTypeID() == 3) {
+            response.put("data", diseaseControlService.getAllKalaAES(getDiseaseRequestHandler));
+
+        } else if (getDiseaseRequestHandler.getDiseaseTypeID() == 4) {
+            response.put("data", diseaseControlService.getAllFilaria(getDiseaseRequestHandler));
+
+        } else if (getDiseaseRequestHandler.getDiseaseTypeID() == 5) {
+            response.put("data", diseaseControlService.getAllLeprosy(getDiseaseRequestHandler));
+
+        }
+
         return ResponseEntity.ok(response);
     }
 

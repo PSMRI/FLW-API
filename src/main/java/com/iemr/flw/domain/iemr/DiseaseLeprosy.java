@@ -1,0 +1,59 @@
+package com.iemr.flw.domain.iemr;
+
+import jakarta.persistence.*;
+import lombok.Data;
+
+import java.util.Date;
+
+@Entity
+@Table(name = "disease_leprosy", schema = "db_iemr")
+@Data
+public class DiseaseLeprosy {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
+
+    @Column(name = "ben_id")
+    private Long benId;
+
+    @Column(name = "houseHoldDetailsId")
+    private Long houseHoldDetailsId;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "home_visit_date")
+    private Date homeVisitDate;
+
+    @Column(name = "leprosy_status", length = 225)
+    private String leprosyStatus;
+
+    @Column(name = "referred_to", length = 225)
+    private String referredTo;
+
+    @Column(name = "other_referred_to", columnDefinition = "TEXT")
+    private String otherReferredTo;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "leprosy_status_date")
+    private Date leprosyStatusDate;
+
+    @Column(name = "type_of_leprosy", length = 225)
+    private String typeOfLeprosy;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "follow_up_date")
+    private Date followUpDate;
+
+    @Column(name = "disease_status", length = 225)
+    private String diseaseStatus;
+
+    @Column(name = "remark", length = 225)
+    private String remark;
+
+    @Column(name = "diseaseTypeID")
+    private Integer diseaseTypeId;
+
+
+    // Getters and Setters
+}

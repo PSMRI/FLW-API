@@ -13,5 +13,5 @@ public class GetDiseaseRequestHandler {
     private Integer userId;
     private String userName;
     private Integer ashaId;
-    private BigInteger diseaseTypeID;
+    private Integer diseaseTypeID;
 }
