@@ -20,12 +20,14 @@ public class VillageFormEntry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "asha_id")
-    private String ashaId;
+    @Column(name = "ben_id")
+    private Long benId;
+    @Column(name = "userId")
+    private Integer userId;
 
     @Column(name = "form_type")
     private String formType;
-    @Column(name = "VHND_date")
+    @Column(name = "form_date")
     private Date date;
     @Column(name = "place")
     private String place;
@@ -36,12 +38,13 @@ public class VillageFormEntry {
     @Column(name = "image_urls")
     private String imageUrls;
 
-    @Column(name = "incentive_amount")
-    private double incentiveAmount;
-
-    @Column(name = "fmr_code")
-    private String fmrCode;
 
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
+
+    @Column(name = "created_date")
+    private Date createdDate;
+
+    @Column(name = "created_by")
+    private String createdBy;
 }
