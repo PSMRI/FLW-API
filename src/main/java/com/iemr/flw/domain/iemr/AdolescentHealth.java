@@ -61,8 +61,16 @@ public class AdolescentHealth {
     @Column(name = "referral_status")
     private String referralStatus;
 
-    @Column(name = "incentive_amount")
-    private BigDecimal incentiveAmount;
+    @Column(name = "userID")
+    private Integer userId;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "created_date")
+    private Date createdDate;
+
+    @Column(name = "created_by")
+    private String createdBy;
+
 
 
 }

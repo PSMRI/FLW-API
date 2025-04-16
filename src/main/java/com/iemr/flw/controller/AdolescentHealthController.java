@@ -1,5 +1,6 @@
 package com.iemr.flw.controller;
 
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.AdolescentHealthDTO;
 import com.iemr.flw.service.AdolescentHealthService;
 import com.iemr.flw.utils.response.OutputResponse;
@@ -22,7 +23,7 @@ public class AdolescentHealthController {
     @Autowired
     private AdolescentHealthService adolescentHealthService;
 
-    @RequestMapping(name = "/savAll", method = RequestMethod.POST)
+    @RequestMapping(name = "/savAll", method = RequestMethod.POST,headers = "Authorization")
     public String saveAdolescentHealth(@RequestBody AdolescentHealthDTO adolescentHealthDTO) {
         OutputResponse response = new OutputResponse();
         response.setResponse(adolescentHealthService.saveAll(adolescentHealthDTO));
@@ -44,12 +45,12 @@ public class AdolescentHealthController {
 
     }
 
-    @RequestMapping(name = "/getAll",method = RequestMethod.GET)
-    public String getAllAdolescentHealth() {
+    @RequestMapping(name = "/getAll",method = RequestMethod.POST,headers = "Authorization")
+    public String getAllAdolescentHealth(@RequestBody GetBenRequestHandler getBenRequestHandler) {
         OutputResponse response = new OutputResponse();
         try {
-            if (adolescentHealthService.getAllAdolescentHealth().size() != 0) {
-                response.setResponse(adolescentHealthService.getAllAdolescentHealth().toString());
+            if (adolescentHealthService.getAllAdolescentHealth(getBenRequestHandler).size() != 0) {
+                response.setResponse(adolescentHealthService.getAllAdolescentHealth(getBenRequestHandler).toString());
 
 
             } else
