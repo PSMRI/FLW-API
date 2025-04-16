@@ -10,10 +10,13 @@ import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
 import com.iemr.flw.repo.iemr.IncentivesRepo;
 import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.AdolescentHealthService;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -57,7 +60,7 @@ public class AdolescentHealthServiceImpl implements AdolescentHealthService {
 
     public List<AdolescentHealth> getAllAdolescentHealth(GetBenRequestHandler getBenRequestHandler) {
         // Fetch all records from the database
-        List<AdolescentHealth> adolescentHealths = adolescentHealthRepo.findByUserId(getBenRequestHandler.getUserId());
+        List<AdolescentHealth> adolescentHealths = adolescentHealthRepo.findByUserID(getBenRequestHandler.getUserId());
 
         // Convert the list of entity objects to DTO objects
         return adolescentHealths.stream()
@@ -113,21 +116,20 @@ public class AdolescentHealthServiceImpl implements AdolescentHealthService {
         IncentiveActivity incentiveActivity;
         incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("AHD", "ADOLESCENT_HEALTH");
 
-
         if (incentiveActivity != null) {
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), Timestamp.valueOf(adolescentHealth.getCreatedDate().toString()), adolescentHealth.getBenId().longValue());
+                    .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(),adolescentHealth.getCreatedDate(), adolescentHealth.getBenId().longValue());
             if (record == null) {
                 record = new IncentiveActivityRecord();
                 record.setActivityId(incentiveActivity.getId());
-                record.setCreatedDate(Timestamp.valueOf(adolescentHealth.getCreatedDate().toString()));
+                record.setCreatedDate(adolescentHealth.getCreatedDate());
                 record.setCreatedBy(adolescentHealth.getCreatedBy());
-                record.setStartDate(Timestamp.valueOf(adolescentHealth.getCreatedDate().toString()));
-                record.setEndDate(Timestamp.valueOf(adolescentHealth.getCreatedDate().toString()));
-                record.setUpdatedDate(Timestamp.valueOf(adolescentHealth.getCreatedDate().toString()));
+                record.setStartDate(adolescentHealth.getCreatedDate());
+                record.setEndDate(adolescentHealth.getCreatedDate());
+                record.setUpdatedDate(adolescentHealth.getCreatedDate());
                 record.setUpdatedBy(adolescentHealth.getCreatedBy());
                 record.setBenId(adolescentHealth.getBenId().longValue());
-                record.setAshaId(adolescentHealth.getUserId());
+                record.setAshaId(adolescentHealth.getUserID());
                 record.setName(incentiveActivity.getName());
                 record.setAmount(Long.valueOf(incentiveActivity.getRate())*adolescentHealth.getNoOfPacketsDistributed());
                 recordRepo.save(record);

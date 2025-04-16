@@ -11,5 +11,5 @@ import java.util.Optional;
 @Repository
 public  interface  AdolescentHealthRepo extends JpaRepository<AdolescentHealth,Long> {
     Optional<AdolescentHealth> findByBenId(BigInteger benId);
-    List<AdolescentHealth> findByUserId(Integer userId);
+    List<AdolescentHealth> findByUserID(Integer userId);
 }
