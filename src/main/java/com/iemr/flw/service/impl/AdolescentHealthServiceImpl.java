@@ -115,15 +115,15 @@ public class AdolescentHealthServiceImpl implements AdolescentHealthService {
     }
 
     private void checkAndAddIncentives(AdolescentHealth adolescentHealth) {
-        IncentiveActivity incentiveActivity;
-        incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("AHD", "ADOLESCENT_HEALTH");
+        IncentiveActivity sellingSanitaryActivity =  incentivesRepo.findIncentiveMasterByNameAndGroup("SELLING_SANITARY", "ADOLESCENT_HEALTH");
+        IncentiveActivity mobilizingADHActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("MOBILIZING_ADOLESCENTS", "ADOLESCENT_HEALTH");
 
-        if (incentiveActivity != null) {
+        if (sellingSanitaryActivity != null) {
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(),adolescentHealth.getCreatedDate(), adolescentHealth.getBenId().longValue());
+                    .findRecordByActivityIdCreatedDateBenId(sellingSanitaryActivity.getId(),adolescentHealth.getCreatedDate(), adolescentHealth.getBenId().longValue());
             if (record == null) {
                 record = new IncentiveActivityRecord();
-                record.setActivityId(incentiveActivity.getId());
+                record.setActivityId(sellingSanitaryActivity.getId());
                 record.setCreatedDate(adolescentHealth.getCreatedDate());
                 record.setCreatedBy(adolescentHealth.getCreatedBy());
                 record.setStartDate(adolescentHealth.getCreatedDate());
@@ -132,8 +132,29 @@ public class AdolescentHealthServiceImpl implements AdolescentHealthService {
                 record.setUpdatedBy(adolescentHealth.getCreatedBy());
                 record.setBenId(adolescentHealth.getBenId().longValue());
                 record.setAshaId(adolescentHealth.getUserID());
-                record.setName(incentiveActivity.getName());
-                record.setAmount(Long.valueOf(incentiveActivity.getRate())*adolescentHealth.getNoOfPacketsDistributed());
+                record.setName(sellingSanitaryActivity.getName());
+                record.setAmount(Long.valueOf(sellingSanitaryActivity.getRate())*adolescentHealth.getNoOfPacketsDistributed());
+                recordRepo.save(record);
+            }
+        }
+
+
+        if (mobilizingADHActivity != null) {
+            IncentiveActivityRecord record = recordRepo
+                    .findRecordByActivityIdCreatedDateBenId(mobilizingADHActivity.getId(),adolescentHealth.getCreatedDate(), adolescentHealth.getBenId().longValue());
+            if (record == null) {
+                record = new IncentiveActivityRecord();
+                record.setActivityId(mobilizingADHActivity.getId());
+                record.setCreatedDate(adolescentHealth.getCreatedDate());
+                record.setCreatedBy(adolescentHealth.getCreatedBy());
+                record.setStartDate(adolescentHealth.getCreatedDate());
+                record.setEndDate(adolescentHealth.getCreatedDate());
+                record.setUpdatedDate(adolescentHealth.getCreatedDate());
+                record.setUpdatedBy(adolescentHealth.getCreatedBy());
+                record.setBenId(adolescentHealth.getBenId().longValue());
+                record.setAshaId(adolescentHealth.getUserID());
+                record.setName(mobilizingADHActivity.getName());
+                record.setAmount(Long.valueOf(mobilizingADHActivity.getRate())*adolescentHealth.getNoOfPacketsDistributed());
                 recordRepo.save(record);
             }
         }
