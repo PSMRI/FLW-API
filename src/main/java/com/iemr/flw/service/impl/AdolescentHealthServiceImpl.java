@@ -86,6 +86,8 @@ public class AdolescentHealthServiceImpl implements AdolescentHealthService {
         existingAdolescentHealth.setCounselingType(adolescentHealth.getCounselingType());
         existingAdolescentHealth.setFollowUpDate(adolescentHealth.getFollowUpDate());
         existingAdolescentHealth.setReferralStatus(adolescentHealth.getReferralStatus());
+        existingAdolescentHealth.setCreatedBy(adolescentHealth.getCreatedBy());
+        existingAdolescentHealth.setCreatedDate(adolescentHealth.getCreatedDate());
 
         // Save the updated record back to the database
         adolescentHealthRepo.save(existingAdolescentHealth);
