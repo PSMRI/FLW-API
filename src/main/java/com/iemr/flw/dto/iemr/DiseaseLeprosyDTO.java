@@ -16,10 +16,17 @@ public class DiseaseLeprosyDTO {
     private Date leprosyStatusDate;
     private String typeOfLeprosy;
     private Date followUpDate;
-    private String diseaseStatus;
+    private String beneficiaryStatus;
     private String remark;
     private Integer userId;
     private Integer diseaseTypeId;
+    private String referToName;
+    private Integer beneficiaryStatusId;
+    private Date dateOfDeath;
+    private String placeOfDeath;
+    private String otherPlaceOfDeath;
+    private String reasonForDeath;
+    private String otherReasonForDeath;
 
     // Getters and Setters
 }

@@ -2,14 +2,13 @@ package com.iemr.flw.domain.iemr;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.checkerframework.checker.units.qual.N;
 
 import java.util.Date;
 
 @Entity
-@Table(name = "disease_aesje", schema = "db_iemr")
+@Table(name = "screening_kala_azar", schema = "db_iemr")
 @Data
-public class DiseaseAesje {
+public class ScreeningKalaAzar {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,14 +21,12 @@ public class DiseaseAesje {
     @Column(name = "houseHoldDetailsId")
     private Long houseHoldDetailsId;
 
-    @Temporal(TemporalType.DATE)
+    @Column(name = "userID")
+    private Integer userId;
+
     @Column(name = "visit_date")
     private Date visitDate;
 
-    @Column(name = "beneficiary_status")
-    private String beneficiaryStatus = "Not Applicable";
-
-    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_death")
     private Date dateOfDeath;
 
@@ -45,13 +42,19 @@ public class DiseaseAesje {
     @Column(name = "other_reason_for_death")
     private String otherReasonForDeath;
 
-    @Column(name = "aes_je_case_status")
-    private String aesJeCaseStatus;
+    @Column(name = "kala_azar_case_status")
+    private String kalaAzarCaseStatus;
 
-    @Column(name = "aes_je_case_count")
-    private Integer aesJeCaseCount = 0;
+    @Column(name = "kala_azar_case_count")
+    private Integer kalaAzarCaseCount;
 
-    @Column(name = "follow_up_point", columnDefinition = "INT CHECK (follow_up_point between 1 and 6)")
+    @Column(name = "rapid_diagnostic_test")
+    private String rapidDiagnosticTest;
+
+    @Column(name = "date_of_rdt")
+    private Date dateOfRdt;
+
+    @Column(name = "follow_up_point")
     private Integer followUpPoint;
 
     @Column(name = "referred_to")
@@ -60,20 +63,21 @@ public class DiseaseAesje {
     @Column(name = "other_referred_facility")
     private String otherReferredFacility;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_date")
-    private Date createdDate = new Date();
+    private Date createdDate;
 
     @Column(name = "created_by")
     private String createdBy;
 
-
-
     @Column(name = "diseaseTypeID")
     private Integer diseaseTypeId;
 
-    @Column(name = "userID")
-    private Integer userId;
+    @Column(name = "refer_to_name")
+    private String referToName;
 
-    // Getters and Setters
+    @Column(name = "beneficiary_statusId")
+    private Integer beneficiaryStatusId;
+
+    @Column(name = "beneficiary_status")
+    private String beneficiaryStatus;
 }

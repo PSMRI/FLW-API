@@ -13,13 +13,13 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping(value = "/api/follow-up")
+@RequestMapping(value = "/api/follow-up",headers = "Authorization")
 public class MalariaFollowUpController {
 
     @Autowired
     private MalariaFollowUpService followUpService;
 
-    @RequestMapping(value = "save",method = RequestMethod.POST)
+    @RequestMapping(value = "save",method = RequestMethod.POST,headers = "Authorization")
     public ResponseEntity<Map<String, Object>> save(@RequestBody MalariaFollowUpDTO dto) {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "Success");
@@ -29,7 +29,7 @@ public class MalariaFollowUpController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(value = "get",method = RequestMethod.POST)
+    @RequestMapping(value = "get",method = RequestMethod.POST,headers = "Authorization")
     public ResponseEntity<Map<String, Object>> getFollowUpsByUserId(@RequestBody GetDiseaseRequestHandler getDiseaseRequestHandler) {
         Map<String, Object> response = new HashMap<>();
 

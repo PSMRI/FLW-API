@@ -6,9 +6,9 @@ import lombok.Data;
 import java.util.Date;
 
 @Entity
-@Table(name = "disease_filariasis", schema = "db_iemr")
+@Table(name = "screening_filaria", schema = "db_iemr")
 @Data
-public class DiseaseFilariasis {
+public class ScreeningFilariasis {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,4 +58,5 @@ public class DiseaseFilariasis {
 
     @Column(name = "userID")
     private Integer userId;
+
 }

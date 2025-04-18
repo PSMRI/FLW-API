@@ -24,7 +24,6 @@ public class DiseaseAesjeDto {
     private String createdBy;
     private Integer userId;
     private Integer diseaseTypeId;
-
-
-    // Getters and Setters
+    private String referToName;
+    private Integer beneficiaryStatusId;
 }

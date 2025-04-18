@@ -6,9 +6,9 @@ import lombok.Data;
 import java.util.Date;
 
 @Entity
-@Table(name = "disease_malaria", schema = "db_iemr")
+@Table(name = "screening_malaria", schema = "db_iemr")
 @Data
-public class DiseaseMalaria {
+public class ScreeningMalaria {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -79,7 +79,6 @@ public class DiseaseMalaria {
     @Column(name = "remarks")
     private String remarks;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_visit_by_supervisor")
     private Date dateOfVisitBySupervisor;
 
@@ -89,14 +88,12 @@ public class DiseaseMalaria {
     @Column(name = "userID")
     private Integer userId;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_date")
     private Date createdDate;
 
     @Column(name = "created_by")
     private String createdBy;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_visit_supervisor")
     private Date dateOfVisitSupervisor;
 

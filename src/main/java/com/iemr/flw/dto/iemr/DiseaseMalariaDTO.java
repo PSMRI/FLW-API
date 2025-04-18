@@ -46,6 +46,4 @@ public class DiseaseMalariaDTO {
     private String referToName;
     private Integer caseStatusId;
 
-
-
 }
