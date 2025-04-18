@@ -36,13 +36,13 @@ public class DiseaseControlController {
         try {
 
             logger.info("Malaria DTO: {}", new ObjectMapper().writeValueAsString(malariaDTO));
-             if(!malariaDTO.getMalariaLists().isEmpty()){
+             if(malariaDTO!=null){
                  response.put("message", "Success");
                  response.put("statusCode", 200);
                  response.put("data", diseaseControlService.saveMalaria(malariaDTO));
              }else {
                  response.put("message", "Invalid request");
-                 response.put("statusCode", 200);
+                 response.put("statusCode", 400);
              }
 
         } catch (Exception e) {
@@ -59,10 +59,15 @@ public class DiseaseControlController {
 
         try {
             logger.info("KalaAzar DTO: {}", new ObjectMapper().writeValueAsString(kalaAzarDTO));
+             if(kalaAzarDTO!=null){
+                 response.put("message", "Success");
+                 response.put("statusCode", 200);
+                 response.put("data", diseaseControlService.saveKalaAzar(kalaAzarDTO));
+             }else {
+                 response.put("message", "Invalid request");
+                 response.put("statusCode", 400);
+             }
 
-            response.put("message", "Success");
-            response.put("statusCode", 200);
-            response.put("data", diseaseControlService.saveKalaAzar(kalaAzarDTO));
         } catch (Exception e) {
             response.put("status", "Error" + e.getMessage());
             response.put("statusCode", 500);
@@ -76,9 +81,15 @@ public class DiseaseControlController {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            response.put("message", "Success");
-            response.put("statusCode", 200);
-            response.put("data", diseaseControlService.saveAES(aesJeDTO));
+            if(aesJeDTO!=null){
+                response.put("message", "Success");
+                response.put("statusCode", 200);
+                response.put("data", diseaseControlService.saveAES(aesJeDTO));
+            }else {
+                response.put("message", "Invalid request");
+                response.put("statusCode", 400);
+            }
+
         } catch (Exception e) {
             response.put("status", "Error" + e.getMessage());
             response.put("statusCode", 500);
@@ -92,9 +103,15 @@ public class DiseaseControlController {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            response.put("message", "Success");
-            response.put("statusCode", 200);
-            response.put("data", diseaseControlService.saveFilaria(filariaDTO));
+            if(filariaDTO!=null){
+                response.put("message", "Success");
+                response.put("statusCode", 200);
+                response.put("data", diseaseControlService.saveFilaria(filariaDTO));
+            }else {
+                response.put("message", "Invalid request");
+                response.put("statusCode", 400);
+            }
+
         } catch (Exception e) {
             response.put("status", "Error" + e.getMessage());
             response.put("statusCode", 500);
@@ -107,9 +124,15 @@ public class DiseaseControlController {
     public ResponseEntity<Map<String, Object>> saveLeprosy(@RequestBody LeprosyDTO leprosyDTO) {
         Map<String, Object> response = new HashMap<>();
         try {
-            response.put("message", "Success");
-            response.put("statusCode", 200);
-            response.put("data", diseaseControlService.saveLeprosy(leprosyDTO));
+            if(leprosyDTO!=null){
+                response.put("message", "Success");
+                response.put("statusCode", 200);
+                response.put("data", diseaseControlService.saveLeprosy(leprosyDTO));
+            }else {
+                response.put("message", "Invalid request");
+                response.put("statusCode", 400);
+            }
+
         } catch (Exception e) {
             response.put("status", "Error" + e.getMessage());
             response.put("statusCode", 500);
