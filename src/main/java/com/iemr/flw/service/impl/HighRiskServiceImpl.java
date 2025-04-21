@@ -1,6 +1,7 @@
 package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.service.HighRiskService;
 import com.iemr.flw.domain.iemr.HighRiskAssess;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
@@ -34,7 +35,10 @@ public class HighRiskServiceImpl implements HighRiskService {
         UserDataDTO<HighRiskAssessDTO> userDataDTO = new UserDataDTO<>();
         userDataDTO.setUserId(request.getAshaId());
         userDataDTO.setEntries(dtos);
-        return (new Gson().toJson(userDataDTO));
+        Gson gson = new GsonBuilder()
+                .setDateFormat("MMM d, yyyy h:mm:ss a")  // Set the desired date format
+                .create();
+        return gson.toJson(userDataDTO);
     }
 
     @Override
