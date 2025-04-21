@@ -30,3 +30,7 @@ mvnw
 mvnw.cmd
 .mvn
 /logs/
+
+# Ignore the following files and directories
+node_modules/
+package-lock.json
