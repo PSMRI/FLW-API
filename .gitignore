@@ -33,4 +33,3 @@ mvnw.cmd
 
 # Ignore the following files and directories
 node_modules/
-package-lock.json
