@@ -92,7 +92,7 @@ public class CbacServiceImpl implements CbacService {
             response.put("data", result);
             response.put("pageSize", Integer.parseInt(cbac_page_size));
             response.put("totalPage", totalPage);
-            Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy HH:mm:ss a").create();
+            Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
             return gson.toJson(response);
         } catch (Exception e) {
             logger.error(e.getMessage());
