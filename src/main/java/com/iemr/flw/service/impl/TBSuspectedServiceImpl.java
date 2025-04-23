@@ -61,7 +61,7 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
         TBSuspectedRequestDTO tbSuspectedRequestDTO = new TBSuspectedRequestDTO();
         tbSuspectedRequestDTO.setTbSuspectedList(dtos);
         tbSuspectedRequestDTO.setUserId(request.getAshaId());
-        Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy h:mm:ss a").create();
+        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         return gson.toJson(tbSuspectedRequestDTO);
     }
 

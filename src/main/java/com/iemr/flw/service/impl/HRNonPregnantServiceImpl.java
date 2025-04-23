@@ -39,7 +39,7 @@ public class HRNonPregnantServiceImpl implements HighRiskNonPregnantService {
         UserDataDTO<HRNonPregnantAssessDTO> userDataDTO = new UserDataDTO<>();
         userDataDTO.setUserId(request.getAshaId());
         userDataDTO.setEntries(dtos);
-        Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy h:mm:ss a").create();
+        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         return gson.toJson(userDataDTO);
     }
 
@@ -75,7 +75,7 @@ public class HRNonPregnantServiceImpl implements HighRiskNonPregnantService {
         UserDataDTO<HRNonPregnantTrackDTO> userDataDTO = new UserDataDTO<>();
         userDataDTO.setUserId(request.getAshaId());
         userDataDTO.setEntries(dtos);
-        Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy h:mm:ss a").create();
+        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         return gson.toJson(userDataDTO);
     }
 

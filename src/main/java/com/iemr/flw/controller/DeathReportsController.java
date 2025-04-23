@@ -88,7 +88,7 @@ public class DeathReportsController {
             if (requestDTO != null) {
                 List<CdrDTO> result = deathReportsService.getCdrRecords(requestDTO);
                 Gson gson = new GsonBuilder()
-                        .setDateFormat("MMM d, yyyy h:mm:ss a")  // Set the desired date format
+                        .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
                         .create();
                 String s = gson.toJson(result);
                 if (s != null)
@@ -116,7 +116,7 @@ public class DeathReportsController {
             if (requestDTO != null) {
                 List<MdsrDTO> result = deathReportsService.getMdsrRecords(requestDTO);
                 Gson gson = new GsonBuilder()
-                        .setDateFormat("MMM d, yyyy h:mm:ss a")  // Set the desired date format
+                        .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
                         .create();
                 String s = gson.toJson(result);
                 if (s != null)
