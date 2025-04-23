@@ -1,6 +1,7 @@
 package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.TBSuspected;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.TBSuspectedDTO;
@@ -60,7 +61,8 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
         TBSuspectedRequestDTO tbSuspectedRequestDTO = new TBSuspectedRequestDTO();
         tbSuspectedRequestDTO.setTbSuspectedList(dtos);
         tbSuspectedRequestDTO.setUserId(request.getAshaId());
-        return (new Gson()).toJson(tbSuspectedRequestDTO);
+        Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy h:mm:ss a").create();
+        return gson.toJson(tbSuspectedRequestDTO);
     }
 
 }

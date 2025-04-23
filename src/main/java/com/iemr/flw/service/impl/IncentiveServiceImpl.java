@@ -1,6 +1,7 @@
 package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.IncentiveActivity;
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
@@ -62,7 +63,8 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             List<IncentiveActivityDTO> dtos =
                     incs.stream().map(inc -> modelMapper.map(inc, IncentiveActivityDTO.class)).collect(Collectors.toList());
-            return (new Gson().toJson(dtos));
+            Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy h:mm:ss a").create();
+            return gson.toJson(dtos);
         } catch (Exception e) {
 
         }
@@ -74,9 +76,7 @@ public class IncentiveServiceImpl implements IncentiveService {
         List<IncentiveRecordDTO> dtos = new ArrayList<>();
         List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getAshaId(), request.getFromDate(), request.getToDate());
         entities.forEach(entry -> dtos.add(modelMapper.map(entry, IncentiveRecordDTO.class)));
-//        UserDataDTO<IncentiveRecordDTO> userDataDTO = new UserDataDTO<>();
-//        userDataDTO.setUserId(request.getAshaId());
-//        userDataDTO.setEntries(dtos);
-        return (new Gson().toJson(dtos));
+        Gson gson = new GsonBuilder().setDateFormat("MMM d, yyyy h:mm:ss a").create();
+        return gson.toJson(dtos);
     }
 }

@@ -202,7 +202,7 @@ public class CoupleServiceImpl implements CoupleService {
             List<EligibleCoupleDTO> list = eligibleCoupleRegisterList.stream()
                     .map(eligibleCoupleRegister -> mapper.convertValue(eligibleCoupleRegister, EligibleCoupleDTO.class))
                     .collect(Collectors.toList());
-            Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy HH:mm:ss a").create();
+            Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
             return gson.toJson(list);
         } catch (Exception e) {
             logger.error(e.getMessage());

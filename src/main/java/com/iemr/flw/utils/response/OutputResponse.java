@@ -190,44 +190,27 @@ public class OutputResponse {
 
 	@Override
 	public String toString() {
-		// return new Gson().toJson(this);
-		// Gson gson = OutputMapper.gson();
 		GsonBuilder builder = new GsonBuilder();
+		builder.setDateFormat("MMM dd, yyyy h:mm:ss a");
 		builder.excludeFieldsWithoutExposeAnnotation();
-		// builder.serializeNulls();
-		// builder.disableInnerClassSerialization();
 		return builder.create().toJson(this);
-		// JSONObject response = new JSONObject();
-		// response.put("data", data);
-		// response.put("statusCode", statusCode);
-		// response.put("status", status);
-		// response.put("errorMessage", errorMessage);
-		// return response.toString();
+		
 	}
 
 	public String toStringWithSerializeNulls() {
-		// return new Gson().toJson(this);
-		// Gson gson = OutputMapper.gson();
 		GsonBuilder builder = new GsonBuilder();
+		builder.setDateFormat("MMM dd, yyyy h:mm:ss a");
 		builder.excludeFieldsWithoutExposeAnnotation();
 		builder.serializeNulls();
-		// builder.disableInnerClassSerialization();
 		return builder.create().toJson(this);
-		// JSONObject response = new JSONObject();
-		// response.put("data", data);
-		// response.put("statusCode", statusCode);
-		// response.put("status", status);
-		// response.put("errorMessage", errorMessage);
-		// return response.toString();
+		
 	}
 
 	public ResponseEntity<String> toStringWithHttpStatus() {
-		// return new Gson().toJson(this);
-		// Gson gson = OutputMapper.gson();
 		GsonBuilder builder = new GsonBuilder();
+		builder.setDateFormat("MMM dd, yyyy h:mm:ss a");
 		builder.excludeFieldsWithoutExposeAnnotation();
 		builder.setLongSerializationPolicy(LongSerializationPolicy.STRING);
-		// builder.disableInnerClassSerialization();
 		String output = builder.create().toJson(this);
 
 		switch (this.statusCode) {
@@ -241,30 +224,14 @@ public class OutputResponse {
 			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(output);
 		}
 
-//		if(!isSuccess())
-//			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-//		            .body(output);
-//		else
-//		 return ResponseEntity.status(HttpStatus.OK)
-//	            .body(output);
-		// JSONObject response = new JSONObject();
-		// response.put("data", data);
-		// response.put("statusCode", statusCode);
-		// response.put("status", status);
-		// response.put("errorMessage", errorMessage);
-		// return response.toString();
 	}
 
 	public String toStringWithSerialization() {
 		GsonBuilder builder = new GsonBuilder();
+		builder.setDateFormat("MMM dd, yyyy h:mm:ss a");
 		builder.excludeFieldsWithoutExposeAnnotation();
 		builder.serializeNulls();
 		return builder.create().toJson(this);
 	}
 
-	// public static void main(String[] args) {
-	// OutputResponse resp = new OutputResponse();
-	// resp.setResponse("{testing: [test]}");
-	// System.out.println(resp.toString());
-	// }
 }

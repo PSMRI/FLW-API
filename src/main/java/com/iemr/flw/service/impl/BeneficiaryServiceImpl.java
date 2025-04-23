@@ -382,7 +382,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         response.put("data", resultList);
         response.put("pageSize", Integer.parseInt(door_to_door_page_size));
         response.put("totalPage", totalPage);
-        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy HH:mm:ss a").create();
+        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         return gson.toJson(response);
     }
 
@@ -428,7 +428,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     if (value.getHealthIdNumber() != null)
                         resultMap.put("healthIdNumber", value.getHealthIdNumber());
                 }
-
             }
 
         } catch (Exception e) {
