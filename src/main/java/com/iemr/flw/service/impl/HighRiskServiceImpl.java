@@ -36,7 +36,7 @@ public class HighRiskServiceImpl implements HighRiskService {
         userDataDTO.setUserId(request.getAshaId());
         userDataDTO.setEntries(dtos);
         Gson gson = new GsonBuilder()
-                .setDateFormat("MMM d, yyyy h:mm:ss a")  // Set the desired date format
+                .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
                 .create();
         return gson.toJson(userDataDTO);
     }

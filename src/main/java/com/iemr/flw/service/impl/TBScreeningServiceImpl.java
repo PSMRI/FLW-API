@@ -62,7 +62,7 @@ public class TBScreeningServiceImpl implements TBScreeningService {
         tbScreeningRequestDTO.setTbScreeningList(dtos);
         tbScreeningRequestDTO.setUserId(request.getAshaId());
         Gson gson = new GsonBuilder()
-                .setDateFormat("MMM d, yyyy h:mm:ss a")  // Set the desired date format
+                .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
                 .create();
         return gson.toJson(tbScreeningRequestDTO);
     }
