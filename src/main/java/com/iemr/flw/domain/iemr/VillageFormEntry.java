@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "village_form_entry")
+@Table(name = "village_form_entry",schema = "db_iemr")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -47,4 +47,13 @@ public class VillageFormEntry {
 
     @Column(name = "created_by")
     private String createdBy;
+
+    @Column(name = "age_group")
+    private Integer age;
+
+    @Column(name = "location")
+    private String location;
+
+    @Column(name = "dewormingRound")
+    private Boolean dewormingRound;
 }
