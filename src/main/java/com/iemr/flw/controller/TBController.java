@@ -28,7 +28,7 @@ public class TBController {
     @Autowired
     private TBSuspectedService tbSuspectedService;
 
-    @CrossOrigin()
+    
     @Operation(summary = "get tb screening data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/screening/getAll"}, method = {RequestMethod.POST})
     public String getAllScreeningByUserId(@RequestBody GetBenRequestHandler requestDTO,
@@ -54,7 +54,7 @@ public class TBController {
     }
 
 
-    @CrossOrigin()
+    
     @Operation(summary = "save tb screening data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/screening/saveAll"}, method = {RequestMethod.POST})
     public String saveAllScreeningByUserId(@RequestBody TBScreeningRequestDTO requestDTO,
@@ -79,7 +79,7 @@ public class TBController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get tb suspected data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/suspected/getAll"}, method = {RequestMethod.POST})
     public String getAllSuspectedByUserId(@RequestBody GetBenRequestHandler requestDTO,
@@ -105,7 +105,7 @@ public class TBController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "save tb suspected data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/suspected/saveAll"}, method = {RequestMethod.POST})
     public String saveAllSuspectedByUserId(@RequestBody TBSuspectedRequestDTO requestDTO,

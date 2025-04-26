@@ -38,7 +38,7 @@ public class MaternalHealthController {
     @Autowired
     private ChildService childService;
 
-    @CrossOrigin()
+    
     @Operation(summary = "save pregnant woman registration details")
     @RequestMapping(value = {"/pregnantWoman/saveAll"}, method = {RequestMethod.POST})
     public String savePregnantWomanRegistrations(@RequestBody List<PregnantWomanDTO> pregnantWomanDTOs,
@@ -61,7 +61,7 @@ public class MaternalHealthController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get List of pregnant woman registration details")
     @RequestMapping(value = {"/pregnantWoman/getAll"}, method = {RequestMethod.POST})
     public String getPregnantWomanList(@RequestBody GetBenRequestHandler requestDTO,
@@ -87,7 +87,7 @@ public class MaternalHealthController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "save anc visit details")
     @RequestMapping(value = {"/ancVisit/saveAll"}, method = {RequestMethod.POST})
     public String saveANCVisit(@RequestBody List<ANCVisitDTO> ancVisitDTOs,
@@ -110,7 +110,7 @@ public class MaternalHealthController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get anc visit details")
     @RequestMapping(value = {"/ancVisit/getAll"}, method = {RequestMethod.POST})
     public String getANCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,
@@ -136,7 +136,7 @@ public class MaternalHealthController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "save Delivery Outcome details")
     @RequestMapping(value = {"/deliveryOutcome/saveAll"}, method = {RequestMethod.POST})
     public String saveDeliveryOutcome(@RequestBody List<DeliveryOutcomeDTO> deliveryOutcomeDTOS,
@@ -159,7 +159,7 @@ public class MaternalHealthController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get Delivery Outcome details")
     @RequestMapping(value = {"/deliveryOutcome/getAll"}, method = {RequestMethod.POST})
     public String getDeliveryOutcome(@RequestBody GetBenRequestHandler requestDTO,
@@ -185,7 +185,7 @@ public class MaternalHealthController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "save Infant registration details")
     @RequestMapping(value = {"/infant/saveAll"}, method = {RequestMethod.POST})
     public String saveInfantList(@RequestBody List<InfantRegisterDTO> infantRegisterDTOs,
@@ -208,7 +208,7 @@ public class MaternalHealthController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get infant registration details")
     @RequestMapping(value = {"/infant/getAll"}, method = {RequestMethod.POST})
     public String getInfantList(@RequestBody GetBenRequestHandler requestDTO,
@@ -234,7 +234,7 @@ public class MaternalHealthController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get child register data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/child/getAll"}, method = {RequestMethod.POST})
     public String getAllChildRegisterDetails(@RequestBody GetBenRequestHandler requestDTO,
@@ -259,7 +259,7 @@ public class MaternalHealthController {
     }
 
 
-    @CrossOrigin()
+    
     @Operation(summary = "save child register data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/child/saveAll"}, method = {RequestMethod.POST})
     public String saveAllChildDetails(@RequestBody List<ChildRegisterDTO> childRegisterDTOs,
@@ -283,7 +283,7 @@ public class MaternalHealthController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get PMSMA data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/pmsma/getAll"}, method = {RequestMethod.POST})
     public String getAllPmsmaDetails(@RequestBody GetBenRequestHandler requestDTO,
@@ -310,7 +310,7 @@ public class MaternalHealthController {
     }
 
 
-    @CrossOrigin()
+    
     @Operation(summary = "save PMSMA data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/pmsma/saveAll"}, method = {RequestMethod.POST})
     public String saveAllPmsmaRecords(@RequestBody List<PmsmaDTO> pmsmaDTOs,
@@ -334,7 +334,7 @@ public class MaternalHealthController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "save pnc visit details")
     @RequestMapping(value = {"/pnc/saveAll"}, method = {RequestMethod.POST})
     public String savePNCVisit(@RequestBody List<PNCVisitDTO> pncVisitDTOs,
@@ -357,7 +357,7 @@ public class MaternalHealthController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get pnc visit details")
     @RequestMapping(value = {"/pnc/getAll"}, method = {RequestMethod.POST})
     public String getPNCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,

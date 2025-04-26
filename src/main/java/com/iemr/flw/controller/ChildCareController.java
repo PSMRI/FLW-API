@@ -26,7 +26,7 @@ public class ChildCareController {
     @Autowired
     private ChildCareService childCareService;
 
-    @CrossOrigin()
+    
     @Operation(summary = "save HBYC details")
     @RequestMapping(value = { "/hbyc/saveAll" }, method = { RequestMethod.POST })
     public String saveHbycRecords(@RequestBody List<HbycDTO> hbycDTOs,
@@ -49,7 +49,7 @@ public class ChildCareController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get List of HBYC details")
     @RequestMapping(value = { "/hbyc/getAll" }, method = { RequestMethod.POST })
     public String getHbycRecords(@RequestBody GetBenRequestHandler requestDTO,
@@ -75,7 +75,7 @@ public class ChildCareController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "save hbnc visit details")
     @RequestMapping(value = {"/hbncVisit/saveAll"}, method = {RequestMethod.POST})
     public String saveHBNCVisit(@RequestBody List<HbncRequestDTO> hbncRequestDTOs,
@@ -98,7 +98,7 @@ public class ChildCareController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get hbnc visit details")
     @RequestMapping(value = {"/hbncVisit/getAll"}, method = {RequestMethod.POST})
     public String getHBNCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,
@@ -124,7 +124,7 @@ public class ChildCareController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "save child vaccination details")
     @RequestMapping(value = {"/vaccination/saveAll"}, method = {RequestMethod.POST})
     public String saveChildVaccinationDetails(@RequestBody List<ChildVaccinationDTO> childVaccinationDTOS,
@@ -147,7 +147,7 @@ public class ChildCareController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get child vaccination details")
     @RequestMapping(value = {"/vaccination/getAll"}, method = {RequestMethod.POST})
     public String getChildVaccinationDetails(@RequestBody GetBenRequestHandler requestDTO,
@@ -173,7 +173,7 @@ public class ChildCareController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get child vaccination details")
     @RequestMapping(value = {"/vaccine/getAll"}, method = {RequestMethod.GET})
     public String getChildVaccinationDetails(@RequestParam(value = "category") String category,

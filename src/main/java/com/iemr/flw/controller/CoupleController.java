@@ -31,7 +31,7 @@ public class CoupleController {
     @Autowired
     private CoupleService coupleService;
 
-    @CrossOrigin()
+    
     @Operation(summary = "save eligible couple registration details")
     @RequestMapping(value = {"/register/saveAll"}, method = {RequestMethod.POST})
     public String saveEligibleCouple(@RequestBody List<EligibleCoupleDTO> eligibleCoupleDTOs,
@@ -54,7 +54,7 @@ public class CoupleController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "save eligible couple tracking details")
     @RequestMapping(value = {"/tracking/saveAll"}, method = {RequestMethod.POST})
     public String saveEligibleCoupleTracking(@RequestBody List<EligibleCoupleTrackingDTO> eligibleCoupleTrackingDTOs,
@@ -77,7 +77,7 @@ public class CoupleController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get List of eligible couple registration details")
     @RequestMapping(value = {"/register/getAll"}, method = {RequestMethod.POST})
     public String getEligibleCouple(@RequestBody GetBenRequestHandler requestDTO,
@@ -102,7 +102,7 @@ public class CoupleController {
        return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get List of eligible couple tracking details")
     @RequestMapping(value = { "/tracking/getAll" }, method = { RequestMethod.POST })
     public String getEligibleCoupleTracking(@RequestBody GetBenRequestHandler requestDTO,

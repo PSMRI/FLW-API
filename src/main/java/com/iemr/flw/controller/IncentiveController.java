@@ -26,7 +26,7 @@ public class IncentiveController {
     IncentiveService incentiveService;
 
 
-    @CrossOrigin()
+    
     @Operation(summary = "save incentive master")
     @RequestMapping(value = {"/masterData/saveAll"}, method = {RequestMethod.POST})
     public String saveIncentiveMasterData(@RequestBody List<IncentiveActivityDTO> activityDTOS,
@@ -50,7 +50,7 @@ public class IncentiveController {
     }
 
 
-    @CrossOrigin()
+    
     @Operation(summary = "get incentive master")
     @RequestMapping(value = {"/masterData/getAll"}, method = {RequestMethod.POST})
     public String saveIncentiveMasterData(@RequestBody IncentiveRequestDTO incentiveRequestDTO,
@@ -76,7 +76,7 @@ public class IncentiveController {
     }
 
 
-    @CrossOrigin()
+    
     @Operation(summary = "get high risk assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/fetchUserData"}, method = {RequestMethod.POST})
     public String getAllIncentivesByUserId(@RequestBody GetBenRequestHandler requestDTO,

@@ -22,7 +22,7 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @CrossOrigin()
+    
     @Operation(summary = "get user Detail of userId and roleId")
     @RequestMapping(value = {"/getUserDetail"}, method = {RequestMethod.GET})
     public ResponseEntity<?> getUserDetail(@RequestParam(value = "userId") Integer userId,

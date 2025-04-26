@@ -26,7 +26,7 @@ public class CbacController {
     @Autowired
     private CbacService cbacService;
 
-    @CrossOrigin()
+    
     @Operation(summary = "get cbac details of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/getAll"}, method = {RequestMethod.POST})
     public String getAllCbacDetailsByUserId(@RequestBody GetBenRequestHandler requestDTO,
@@ -51,7 +51,7 @@ public class CbacController {
     }
 
 
-    @CrossOrigin()
+    
     @Operation(summary = "save cbac details of all beneficiaries registered with given user name")
     @RequestMapping(value = {"/saveAll"}, method = {RequestMethod.POST})
     public String saveAllCbacDetailsByUserId(@RequestBody List<CbacDTO> cbacDTOS,

@@ -31,7 +31,7 @@ public class DeathReportsController {
     @Autowired
     private DeathReportsService deathReportsService;
 
-    @CrossOrigin()
+    
     @Operation(summary = "save CDR details")
     @RequestMapping(value = { "/cdr/saveAll" }, method = { RequestMethod.POST })
     public String saveCdrRecords(@RequestBody List<CdrDTO> cdrDTOS,
@@ -54,7 +54,7 @@ public class DeathReportsController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "save MDSR details")
     @RequestMapping(value = { "/mdsr/saveAll" }, method = { RequestMethod.POST })
     public String saveMdsrRecords(@RequestBody List<MdsrDTO> mdsrDTOS,
@@ -77,7 +77,7 @@ public class DeathReportsController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get List of CDR details")
     @RequestMapping(value = { "/cdr/getAll" }, method = { RequestMethod.POST })
     public String getCdrRecords(@RequestBody GetBenRequestHandler requestDTO,
@@ -105,7 +105,7 @@ public class DeathReportsController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get List of MDSR details")
     @RequestMapping(value = { "/mdsr/getAll" }, method = { RequestMethod.POST })
     public String getMdsrRecords(@RequestBody GetBenRequestHandler requestDTO,

@@ -31,7 +31,7 @@ public class HighRiskController {
     @Autowired
     private HighRiskService highRiskService;
 
-    @CrossOrigin()
+    
     @Operation(summary = "get high risk pregnant assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/pregnant/assess/getAll"}, method = {RequestMethod.POST})
     public String getAllPregnantAssessByUserId(@RequestBody GetBenRequestHandler requestDTO,
@@ -57,7 +57,7 @@ public class HighRiskController {
     }
 
 
-    @CrossOrigin()
+    
     @Operation(summary = "save high risk pregnant assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/pregnant/assess/saveAll"}, method = {RequestMethod.POST})
     public String saveAllPregnantAssessByUserId(@RequestBody UserDataDTO<HRPregnantAssessDTO> requestDTO,
@@ -82,7 +82,7 @@ public class HighRiskController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get high risk assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/assess/getAll"}, method = {RequestMethod.POST})
     public String getAllAssessByUserId(@RequestBody GetBenRequestHandler requestDTO,
@@ -108,7 +108,7 @@ public class HighRiskController {
     }
 
 
-    @CrossOrigin()
+    
     @Operation(summary = "save high risk pregnant assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/assess/saveAll"}, method = {RequestMethod.POST})
     public String saveAllAssessByUserId(@RequestBody UserDataDTO<HighRiskAssessDTO> requestDTO,
@@ -133,7 +133,7 @@ public class HighRiskController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get high risk pregnant tracking data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/pregnant/track/getAll"}, method = {RequestMethod.POST})
     public String getAllPregnantTrackByUserId(@RequestBody GetBenRequestHandler requestDTO,
@@ -159,7 +159,7 @@ public class HighRiskController {
     }
 
 
-    @CrossOrigin()
+    
     @Operation(summary = "save high risk pregnant tracking data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/pregnant/track/saveAll"}, method = {RequestMethod.POST})
     public String saveAllPregnantTrackByUserId(@RequestBody UserDataDTO<HRPregnantTrackDTO> requestDTO,
@@ -184,7 +184,7 @@ public class HighRiskController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "get high risk non pregnant assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/nonPregnant/assess/getAll"}, method = {RequestMethod.POST})
     public String getAllNonPregnantAssessByUserId(@RequestBody GetBenRequestHandler requestDTO,
@@ -210,7 +210,7 @@ public class HighRiskController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "save high risk non pregnant assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/nonPregnant/assess/saveAll"}, method = {RequestMethod.POST})
     public String saveAllNonPregnantAssessByUserId(@RequestBody UserDataDTO<HRNonPregnantAssessDTO> requestDTO,
@@ -236,7 +236,7 @@ public class HighRiskController {
     }
 
 
-    @CrossOrigin()
+    
     @Operation(summary = "get high risk non pregnant track data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/nonPregnant/track/getAll"}, method = {RequestMethod.POST})
     public String getAllNonPregnantTrackByUserId(@RequestBody GetBenRequestHandler requestDTO,
@@ -262,7 +262,7 @@ public class HighRiskController {
         return response.toString();
     }
 
-    @CrossOrigin()
+    
     @Operation(summary = "save high risk non pregnant track data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/nonPregnant/track/saveAll"}, method = {RequestMethod.POST})
     public String saveAllNonPregnantTrackByUserId(@RequestBody UserDataDTO<HRNonPregnantTrackDTO> requestDTO,
