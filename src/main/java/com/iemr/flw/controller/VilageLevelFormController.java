@@ -1,6 +1,7 @@
 package com.iemr.flw.controller;
 
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
+import com.iemr.flw.dto.iemr.VhndDto;
 import com.iemr.flw.dto.iemr.VilageLevelFormDto;
 import com.iemr.flw.service.VhndFormService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,8 @@ public class VilageLevelFormController {
     @Autowired
     private VhndFormService vhndFormService;
 
-    @RequestMapping(value = "saveAll",method = RequestMethod.POST)
-    public ResponseEntity<Map<String, Object>> submitLevelForm(@RequestBody VilageLevelFormDto dto) {
+    @RequestMapping(value = "vhnd/saveAll",method = RequestMethod.POST)
+    public ResponseEntity<Map<String, Object>> submitLevelForm(@RequestBody VhndDto dto) {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "Success");
         response.put("statusCode", 200);
