@@ -9,7 +9,9 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.iemr.flw.repo.iemr.GeneralOpdRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +60,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     @Autowired
     private HouseHoldRepo houseHoldRepo;
+    @Autowired
+    private GeneralOpdRepo generalOpdRepo;
 
 
     @Override
@@ -356,6 +360,9 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     resultMap.put("visitDate", healthDetails);
                     resultMap.put("houseoldId", benDetailsRMNCH_OBJ.getHouseoldId());
                     resultMap.put("benficieryid", benDetailsRMNCH_OBJ.getBenficieryid());
+                    RMNCHBeneficiaryDetailsRmnch finalBenDetailsRMNCH_OBJ = benDetailsRMNCH_OBJ;
+                    resultMap.put("generalOpdData", generalOpdRepo.findAll().stream().filter(generalOpdData -> generalOpdData.getBeneficiaryRegID().equals(finalBenDetailsRMNCH_OBJ.getBenficieryid())).collect(Collectors.toList()));
+
                     resultMap.put("BenRegId", m.getBenRegId());
 
                     // adding asha id / created by - user id
@@ -456,4 +463,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 //		return result;
 
     }
+
+
 }
