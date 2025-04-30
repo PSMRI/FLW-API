@@ -1,8 +1,7 @@
 package com.iemr.flw.service;
 
 import com.iemr.flw.domain.iemr.VillageFormEntry;
-import com.iemr.flw.dto.iemr.VhndDto;
-import com.iemr.flw.dto.iemr.VilageLevelFormDto;
+import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.repo.iemr.VillageFormRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +15,10 @@ import java.util.List;
 public interface  VhndFormService  {
 
 
-    public String submitForm(VhndDto dto) ;
-    public List<VillageFormEntry> getAll(Integer userId);
+    public String submitForm(VhndDto dto);
+    public String  submitVhncForm(VhncDto dto);
+    public String  submitPhcForm(PhcReviewMeetingDTO dto);
+    public String  submitAdhForm(AhdMeetingDto dto);
+    public String  submitDewormingForm(DewormingDto dto);
+    public Object getAll(GetVillageLevelRequestHandler getVillageLevelRequestHandler);
 }

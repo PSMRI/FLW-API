@@ -4,7 +4,7 @@ import lombok.Data;
 
 import java.util.List;
 @Data
-public class VhndDto {
+public class PhcReviewMeetingDTO {
     private Integer userId;
-    private List<VHNDFormDTO> entries;
+    private List<PhcReviewMeetingFormDTO> entries;
 }

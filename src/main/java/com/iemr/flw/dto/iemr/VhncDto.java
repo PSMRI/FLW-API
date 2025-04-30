@@ -3,8 +3,9 @@ package com.iemr.flw.dto.iemr;
 import lombok.Data;
 
 import java.util.List;
+
 @Data
-public class VhndDto {
+public class VhncDto {
     private Integer userId;
-    private List<VHNDFormDTO> entries;
+    private List<VhncFormDTO> entries;
 }
