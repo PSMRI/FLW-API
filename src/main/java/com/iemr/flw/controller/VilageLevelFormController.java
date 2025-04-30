@@ -72,7 +72,6 @@ public class VilageLevelFormController {
             Map<String, Object> data = new HashMap<>();
             data.put("userId", getVillageLevelRequestHandler.getUserId());
             data.put("entries", vhndFormService.getAll(getVillageLevelRequestHandler));
-
             response.put("data", data);
             response.put("statusCode", 200);
             response.put("message", "Success");
