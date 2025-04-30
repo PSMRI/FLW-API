@@ -25,8 +25,6 @@ public class VhndFormServiceImpl implements VhndFormService {
 
 
     @Autowired
-    private VillageFormRepository repository;
-    @Autowired
     private IncentiveRecordRepo recordRepo;
     @Autowired
     private UserServiceRoleRepo userRepo;
