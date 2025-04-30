@@ -75,8 +75,7 @@ public class VilageLevelFormController {
 
             response.put("data", data);
             response.put("statusCode", 200);
-            response.put("errorMessage", "Success");
-            response.put("status", "Success");
+            response.put("message", "Success");
         }catch (Exception e){
             response.put("statusCode", 500);
             response.put("errorMessage", e.getMessage());
