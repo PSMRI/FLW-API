@@ -65,7 +65,7 @@ public class VilageLevelFormController {
 
 
     @RequestMapping(value = "getAll",method = RequestMethod.POST, headers = "Authorization")
-    public ResponseEntity<Map<String, Object>> getVilageLevelFormData(@RequestBody GetVillageLevelRequestHandler getVillageLevelRequestHandler) {
+    public ResponseEntity<Map<String, Object>> getVillageLevelFormData(@RequestBody GetVillageLevelRequestHandler getVillageLevelRequestHandler) {
         Map<String, Object> response = new LinkedHashMap<>();
 
         try {
