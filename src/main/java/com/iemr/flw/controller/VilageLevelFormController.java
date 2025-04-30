@@ -13,13 +13,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping(value = "/forms/villageLevel")
+@RequestMapping(value = "/forms/villageLevel", headers = "Authorization")
 public class VilageLevelFormController {
 
     @Autowired
     private VhndFormService vhndFormService;
 
-    @RequestMapping(value = "vhnd/saveAll",method = RequestMethod.POST)
+    @RequestMapping(value = "vhnd/saveAll",method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> submitVhndForm(@RequestBody VhndDto dto) {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "Success");
@@ -27,7 +27,7 @@ public class VilageLevelFormController {
         response.put("msg", vhndFormService.submitForm(dto));
         return ResponseEntity.ok(response);
     }
-    @RequestMapping(value = "vhnc/saveAll",method = RequestMethod.POST)
+    @RequestMapping(value = "vhnc/saveAll",method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> submitVhncForm(@RequestBody VhncDto dto) {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "Success");
@@ -36,7 +36,7 @@ public class VilageLevelFormController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(value = "phc/saveAll",method = RequestMethod.POST)
+    @RequestMapping(value = "phc/saveAll",method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> submitPhcForm(@RequestBody PhcReviewMeetingDTO dto) {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "Success");
@@ -45,7 +45,7 @@ public class VilageLevelFormController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(value = "ahd/saveAll",method = RequestMethod.POST)
+    @RequestMapping(value = "ahd/saveAll",method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> submitAhdForm(@RequestBody AhdMeetingDto dto) {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "Success");
@@ -54,7 +54,7 @@ public class VilageLevelFormController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(value = "deworming/saveAll",method = RequestMethod.POST)
+    @RequestMapping(value = "deworming/saveAll",method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> submitDewormingForm(@RequestBody DewormingDto dto) {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "Success");
@@ -64,17 +64,25 @@ public class VilageLevelFormController {
     }
 
 
-    @RequestMapping(value = "getAll",method = RequestMethod.POST)
+    @RequestMapping(value = "getAll",method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> getVilageLevelFormData(@RequestBody GetVillageLevelRequestHandler getVillageLevelRequestHandler) {
-        Map<String, Object> data = new HashMap<>();
-        data.put("userId", getVillageLevelRequestHandler.getUserId());
-        data.put("entries", vhndFormService.getAll(getVillageLevelRequestHandler));
-
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("data", data);
-        response.put("statusCode", 200);
-        response.put("errorMessage", "Success");
-        response.put("status", "Success");
+
+        try {
+            Map<String, Object> data = new HashMap<>();
+            data.put("userId", getVillageLevelRequestHandler.getUserId());
+            data.put("entries", vhndFormService.getAll(getVillageLevelRequestHandler));
+
+            response.put("data", data);
+            response.put("statusCode", 200);
+            response.put("errorMessage", "Success");
+            response.put("status", "Success");
+        }catch (Exception e){
+            response.put("statusCode", 500);
+            response.put("errorMessage", e.getMessage());
+
+        }
+
         return ResponseEntity.ok(response);
     }
 
