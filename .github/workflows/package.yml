@@ -7,8 +7,8 @@ on:
      - target/**
      
   pull_request:
-     branches: [ "develop" ]
-     paths-ignore:
+    branches: [ "develop" ]
+    paths-ignore:
      - target/**
      
 env:
@@ -17,8 +17,8 @@ env:
 jobs:
   Package-test:
     runs-on: ubuntu-latest
-    steps:  
-      - name: Checkout code  
+    steps:
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Setup JDK 17
@@ -34,7 +34,7 @@ jobs:
         run: mvn -B package --file pom.xml
 
       - name: Upload WAR file as artifact
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v4
         with:
           name: FLW-API
           path: target/flwapi.war
