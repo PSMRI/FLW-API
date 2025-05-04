@@ -16,8 +16,8 @@ env:
 
 jobs:
   Package-test:
-      runs-on: ubuntu-latest
-      steps:
+    runs-on: ubuntu-latest
+    steps:
         - name: Checkout code
           uses: actions/checkout@v3
 
