@@ -15,7 +15,9 @@
     "lint-staged": "^15.5.1"
   },
   "lint-staged": {
-    "src/**/*.{ts,css,html}": ["eslint --fix"]
+    "src/**/*.{ts,css,html,js}": ["eslint --fix"],
+    "**/*.java": ["java -jar checkstyle.jar -c checkstyle.xml "],
+    "**/*.xml": ["xmllint --noout"]
   },
   "config": {
     "commitizen": {
