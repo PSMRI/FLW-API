@@ -6,7 +6,7 @@
 
     <groupId>com.iemr.common.flw</groupId>
     <artifactId>flw</artifactId>
-    <version>0.0.1</version>
+    <version>3.1.0</version>
     <packaging>war</packaging>
 
     <name>flw</name>
@@ -259,7 +259,7 @@
 
 
     <build>
-        <finalName>flw-0.0.1</finalName>
+        <finalName>${artifactId}-${version}</finalName>
         <plugins>
 			
             <plugin>
