@@ -21,12 +21,12 @@ public class AdolescentHealth {
     private BigInteger benId;
 
     @Column(name = "userID")
-    private Integer userID;
+    private Integer userId;
 
     @Column(name = "visit_date")
     private Timestamp visitDate;
 
-    @Column(name = "health_status")
+    @Column(name = "health_status",length = 50)
     private String healthStatus;
 
     @Column(name = "ifa_tablet_distribution")
@@ -44,22 +44,22 @@ public class AdolescentHealth {
     @Column(name = "no_of_packets_distributed")
     private Integer noOfPacketsDistributed;
 
-    @Column(name = "place")
+    @Column(name = "place",length = 100)
     private String place;
 
-    @Column(name = "referred_to_health_facility")
+    @Column(name = "referred_to_health_facility",length = 100)
     private String referredToHealthFacility;
 
     @Column(name = "counseling_provided")
     private Boolean counselingProvided;
 
-    @Column(name = "counseling_type")
+    @Column(name = "counseling_type",length = 50)
     private String counselingType;
 
     @Column(name = "follow_up_date")
     private Date followUpDate;
 
-    @Column(name = "referral_status")
+    @Column(name = "referral_status",length = 50)
     private String referralStatus;
 
     @Column(name = "created_date")

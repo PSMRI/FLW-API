@@ -1,5 +1,6 @@
 package com.iemr.flw.controller;
 
+import com.iemr.flw.domain.iemr.AdolescentHealth;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.AdolescentHealthDTO;
 import com.iemr.flw.service.AdolescentHealthService;
@@ -25,7 +26,7 @@ public class AdolescentHealthController {
     @Autowired
     private AdolescentHealthService adolescentHealthService;
 
-    @RequestMapping(value = "/savAll", method = RequestMethod.POST, headers = "Authorization")
+    @RequestMapping(value = "/saveAll", method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String,Object>>  saveAdolescentHealth(@RequestBody AdolescentHealthDTO adolescentHealthDTO) {
         Map<String,Object> response = new HashMap<>();
 
@@ -38,13 +39,14 @@ public class AdolescentHealthController {
 
                 }
 
-            } else
-                response.put("statusCode",500);
-            response.put("error","Invalid/NULL request obj");
+            } else {
+                response.put("statusCode", 500);
+                response.put("error", "Invalid/NULL request obj");
+            }
         } catch (Exception e) {
-            logger.error("Error in get data : " + e);
+            logger.error("Error in saving adolescent health data : " + e);
             response.put("statusCode",500);
-            response.put("error","Error in get data : " + e);
+            response.put("error","Error in saving adolescent health data : " + e);
         }
         return ResponseEntity.ok(response);
 
@@ -54,12 +56,15 @@ public class AdolescentHealthController {
     public ResponseEntity<Map<String,Object>> getAllAdolescentHealth(@RequestBody GetBenRequestHandler getBenRequestHandler) {
         Map<String,Object> response = new HashMap<>();
         try {
-            if (adolescentHealthService.getAllAdolescentHealth(getBenRequestHandler).size() != 0) {
+            List<AdolescentHealth> resultList = adolescentHealthService.getAllAdolescentHealth(getBenRequestHandler);
+
+            if (resultList != null && !resultList.isEmpty()) {
                 response.put("statusCode",200);
-                response.put("data",adolescentHealthService.getAllAdolescentHealth(getBenRequestHandler));
-            } else
-                response.put("statusCode",500);
-                response.put("error","Invalid/NULL request obj");
+                response.put("data", resultList);
+            } else {
+                response.put("statusCode", 500);
+                response.put("error", "Invalid/NULL request obj");
+            }
         } catch (Exception e) {
             logger.error("Error in get data : " + e);
             response.put("statusCode",500);
