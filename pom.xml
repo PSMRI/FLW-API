@@ -29,7 +29,7 @@
         <org.projectlombok.version>1.16.18</org.projectlombok.version>
         <environment>${ENV_VAR}</environment>
         <target-properties>target/classes/application.properties</target-properties>
-        <source-properties>src/main/environment/common_${environment}.properties</source-properties>
+        <source-properties>target/classes/common_${environment}.properties</source-properties>
         <maven.test.skip>true</maven.test.skip>
         <sonar.java.binaries>target</sonar.java.binaries>
     </properties>
@@ -343,6 +343,20 @@
                             </target>
                         </configuration>
                     </execution>
+					<execution>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<id>clean-property-files</id>
+						<configuration>
+							<tasks>
+								<delete>
+									<file file="${source-properties}" />
+								</delete>
+							</tasks>
+						</configuration>
+					</execution>
                 </executions>
             </plugin>
             <plugin>
