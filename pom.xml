@@ -9,7 +9,7 @@
     <version>3.1.0</version>
     <packaging>war</packaging>
 
-    <name>flw-api</name>
+    <name>FLW-API</name>
     <description>Iemr Flw Service</description>
 
     <parent>
