@@ -4,25 +4,23 @@ import com.iemr.flw.controller.CoupleController;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.repo.iemr.*;
-import com.iemr.flw.service.VhndFormService;
+import com.iemr.flw.service.VillageLevelFormService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
-public class VhndFormServiceImpl implements VhndFormService {
+public class VillageLevelFormServiceImpl implements VillageLevelFormService {
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
-
 
     @Autowired
     private IncentiveRecordRepo recordRepo;
@@ -39,9 +37,6 @@ public class VhndFormServiceImpl implements VhndFormService {
     private DewormingFormRepo dewormingFormRepo;
 
     @Autowired
-    private VhncFormRepo vhndFormRepo;
-
-    @Autowired
     private VhndRepo vhndRepo;
 
     @Autowired
@@ -51,14 +46,13 @@ public class VhndFormServiceImpl implements VhndFormService {
     private AHDFormRepo ahdFormRepo;
 
 
-
     @Override
     public String submitForm(VhndDto dto) {
         for (VHNDFormDTO vhndFormDTO : dto.getEntries()) {
             saveVhndFormData(vhndFormDTO, dto.getUserId());
 
         }
-        return "Fail";
+        return "Success";
     }
 
     @Override
@@ -66,10 +60,8 @@ public class VhndFormServiceImpl implements VhndFormService {
         for (VhncFormDTO vhncFormDTO : dto.getEntries()) {
             saveVhncFormData(vhncFormDTO, dto.getUserId());
         }
-        return "Fail";
+        return "Success";
     }
-
-
 
 
     @Override
@@ -77,15 +69,15 @@ public class VhndFormServiceImpl implements VhndFormService {
         for (PhcReviewMeetingFormDTO phcReviewMeetingDTO : dto.getEntries()) {
             submitPhcForm(phcReviewMeetingDTO, dto.getUserId());
         }
-        return "Fail";
+        return "Success";
     }
 
     @Override
-    public String submitAdhForm(AhdMeetingDto dto) {
+    public String submitAhdForm(AhdMeetingDto dto) {
         for (AhDMeetingFormDTO ahDMeetingFormDTO : dto.getEntries()) {
             submitAhdForm(ahDMeetingFormDTO, dto.getUserId());
         }
-        return "Fail";
+        return "Success";
     }
 
     @Override
@@ -93,7 +85,7 @@ public class VhndFormServiceImpl implements VhndFormService {
         for (DewormingFormDTO dewormingFormDTO : dto.getEntries()) {
             submitDewormingForm(dewormingFormDTO, dto.getUserId());
         }
-        return "Fail";
+        return "Success";
     }
 
     private String saveVhncFormData(VhncFormDTO vhncFormDTO, Integer userID) {
@@ -107,9 +99,9 @@ public class VhndFormServiceImpl implements VhndFormService {
 
         vhncForm.setFormType("VHNC");
         vhncFormRepo.save(vhncForm);
-        checkAndAddIncentives(vhncForm.getVhncDate(), Math.toIntExact(vhncForm.getUserId()), vhncForm.getFormType(),vhncForm.getCreatedBy());
+        checkAndAddIncentives(vhncForm.getVhncDate(), Math.toIntExact(vhncForm.getUserId()), vhncForm.getFormType(), vhncForm.getCreatedBy());
 
-        return "Save Vhnd Form successfully";
+        return "Save VHNC Form successfully";
     }
 
 
@@ -123,7 +115,7 @@ public class VhndFormServiceImpl implements VhndFormService {
         phcReviewForm.setImage2(dto.getImage2());
         phcReviewForm.setFormType("PHC");
         phcReviewFormRepo.save(phcReviewForm);
-        checkAndAddIncentives(phcReviewForm.getPhcReviewDate(), Math.toIntExact(phcReviewForm.getUserId()), phcReviewForm.getFormType(),phcReviewForm.getCreatedBy());
+        checkAndAddIncentives(phcReviewForm.getPhcReviewDate(), Math.toIntExact(phcReviewForm.getUserId()), phcReviewForm.getFormType(), phcReviewForm.getCreatedBy());
 
         return "Save PHC Review Form successfully";
     }
@@ -138,8 +130,8 @@ public class VhndFormServiceImpl implements VhndFormService {
         ahdForm.setImage2(dto.getImage2());
         ahdForm.setFormType("AHD");
         ahdFormRepo.save(ahdForm);
-        if(Objects.equals(dto.getMobilizedForAHD(),"Yes")){
-            checkAndAddIncentives(ahdForm.getAhdDate(), Math.toIntExact(ahdForm.getUserId()), ahdForm.getFormType(),ahdForm.getCreatedBy());
+        if (Objects.equals(dto.getMobilizedForAHD(), "Yes")) {
+            checkAndAddIncentives(ahdForm.getAhdDate(), Math.toIntExact(ahdForm.getUserId()), ahdForm.getFormType(), ahdForm.getCreatedBy());
 
         }
 
@@ -157,8 +149,8 @@ public class VhndFormServiceImpl implements VhndFormService {
         dewormingForm.setImage2(dto.getImage2());
         dewormingForm.setFormType("Deworming");
         dewormingFormRepo.save(dewormingForm);
-        if(Objects.equals(dewormingForm.getDewormingDone(), "Yes")){
-            checkAndAddIncentives(dewormingForm.getDewormingDate(), Math.toIntExact(dewormingForm.getUserId()), dewormingForm.getFormType(),dewormingForm.getCreatedBy());
+        if (Objects.equals(dewormingForm.getDewormingDone(), "Yes")) {
+            checkAndAddIncentives(dewormingForm.getDewormingDate(), Math.toIntExact(dewormingForm.getUserId()), dewormingForm.getFormType(), dewormingForm.getCreatedBy());
 
         }
         return "Save Deworming Form successfully";
@@ -175,14 +167,14 @@ public class VhndFormServiceImpl implements VhndFormService {
         vhndForm.setNoOfBeneficiariesAttended(vhndFormDTO.getNoOfBeneficiariesAttended());
         vhndForm.setFormType("VHND");
         vhndRepo.save(vhndForm);
-        checkAndAddIncentives(vhndForm.getVhndDate(), vhndForm.getUserId(), vhndForm.getFormType(),vhndForm.getCreatedBy());
+        checkAndAddIncentives(vhndForm.getVhndDate(), vhndForm.getUserId(), vhndForm.getFormType(), vhndForm.getCreatedBy());
         return "Save Vhnd Form successfully";
 
 
     }
 
     @Override
-    public Object getAll(GetVillageLevelRequestHandler getVillageLevelRequestHandler) {
+    public List<? extends Object> getAll(GetVillageLevelRequestHandler getVillageLevelRequestHandler) {
         if (Objects.equals(getVillageLevelRequestHandler.getFormType(), "VHND")) {
             return vhndRepo.findAll().stream()
                     .filter(vhndForm -> Objects.equals(vhndForm.getUserId().toString(), getVillageLevelRequestHandler.getUserId().toString()))
@@ -214,7 +206,7 @@ public class VhndFormServiceImpl implements VhndFormService {
     }
 
 
-    private void checkAndAddIncentives(String date,Integer userID,String formType,String createdBY) {
+    private void checkAndAddIncentives(String date, Integer userID, String formType, String createdBY) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
         // Parse to LocalDate
@@ -222,7 +214,7 @@ public class VhndFormServiceImpl implements VhndFormService {
 
         // Convert to Timestamp at start of day (00:00:00)
         Timestamp timestamp = Timestamp.valueOf(localDate.atStartOfDay());
-        logger.info("timestamp"+timestamp);
+        logger.info("timestamp" + timestamp);
 
         IncentiveActivity villageFormEntryActivity;
         villageFormEntryActivity = incentivesRepo.findIncentiveMasterByNameAndGroup(formType, "VILLAGELEVEL");
@@ -247,7 +239,6 @@ public class VhndFormServiceImpl implements VhndFormService {
             }
         }
     }
-
 
 
 }
