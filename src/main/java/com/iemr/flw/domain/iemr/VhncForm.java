@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 import static jakarta.persistence.GenerationType.*;
 
 @Entity
-@Table(name = "vhnc_form",schema = "iemr")
+@Table(name = "vhnc_form",schema = "db_iemr")
 @Data
 public class VhncForm {
     @Id
