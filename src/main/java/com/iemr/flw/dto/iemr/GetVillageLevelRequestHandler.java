@@ -12,7 +12,6 @@ public class GetVillageLevelRequestHandler {
 	private Integer pageNo;
 	private Integer userId;
 	private String userName;
-
 	private Integer ashaId;
 
 
