@@ -3,6 +3,7 @@ package com.iemr.flw.controller;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.VillageLevelFormService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,46 +21,108 @@ public class VillageLevelFormController {
     @RequestMapping(value = "vhnd/saveAll", method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> submitVhndForm(@RequestBody VhndDto dto) {
         Map<String, Object> response = new HashMap<>();
-        response.put("status", "Success");
-        response.put("statusCode", 200);
-        response.put("message", villageLevelFormService.submitForm(dto));
-        return ResponseEntity.ok(response);
+        if (!dto.getEntries().isEmpty()) {
+            String msg = villageLevelFormService.submitForm(dto);
+            boolean ok = "Success".equalsIgnoreCase(msg);
+            response.put("status", ok ? "Success" : "Fail");
+            response.put("statusCode", ok ? 200 : 500);
+            response.put("message", msg);
+            return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+
+        } else {
+            response.put("status", "Fail");
+            response.put("statusCode", 400);
+            response.put("message", "Invalid Request Object");
+            return ResponseEntity.ok(response);
+
+        }
+
+
     }
 
     @RequestMapping(value = "vhnc/saveAll", method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> submitVhncForm(@RequestBody VhncDto dto) {
         Map<String, Object> response = new HashMap<>();
-        response.put("status", "Success");
-        response.put("statusCode", 200);
-        response.put("message", villageLevelFormService.submitVhncForm(dto));
-        return ResponseEntity.ok(response);
+
+        if (!dto.getEntries().isEmpty()) {
+            String msg = villageLevelFormService.submitVhncForm(dto);
+            boolean ok = "Success".equalsIgnoreCase(msg);
+            response.put("status", ok ? "Success" : "Fail");
+            response.put("statusCode", ok ? 200 : 500);
+            response.put("message", msg);
+            return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+        } else {
+            response.put("status", "Fail");
+            response.put("statusCode", 400);
+            response.put("message", "Invalid Request Object");
+            return ResponseEntity.ok(response);
+
+
+        }
+
+
     }
 
     @RequestMapping(value = "phc/saveAll", method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> submitPhcForm(@RequestBody PhcReviewMeetingDTO dto) {
         Map<String, Object> response = new HashMap<>();
-        response.put("status", "Success");
-        response.put("statusCode", 200);
-        response.put("message", villageLevelFormService.submitPhcForm(dto));
-        return ResponseEntity.ok(response);
+
+        if (!dto.getEntries().isEmpty()) {
+            String msg = villageLevelFormService.submitPhcForm(dto);
+            boolean ok = "Success".equalsIgnoreCase(msg);
+            response.put("status", ok ? "Success" : "Fail");
+            response.put("statusCode", ok ? 200 : 500);
+            response.put("message", msg);
+            return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+        } else {
+            response.put("status", "Fail");
+            response.put("statusCode", 400);
+            response.put("message", "Invalid Request Object");
+            return ResponseEntity.ok(response);
+
+        }
+
+
     }
 
     @RequestMapping(value = "ahd/saveAll", method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> submitAhdForm(@RequestBody AhdMeetingDto dto) {
         Map<String, Object> response = new HashMap<>();
-        response.put("status", "Success");
-        response.put("statusCode", 200);
-        response.put("message", villageLevelFormService.submitAhdForm(dto));
-        return ResponseEntity.ok(response);
+
+        if(!dto.getEntries().isEmpty()){
+            String msg = villageLevelFormService.submitAhdForm(dto);
+            boolean ok = "Success".equalsIgnoreCase(msg);
+            response.put("status", ok ? "Success" : "Fail");
+            response.put("statusCode", ok ? 200 : 500);
+            response.put("message", msg);
+            return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+        }else {
+            response.put("status", "Fail");
+            response.put("statusCode", 400);
+            response.put("message", "Invalid Request Object");
+            return ResponseEntity.ok(response);
+        }
+
     }
 
     @RequestMapping(value = "deworming/saveAll", method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> submitDewormingForm(@RequestBody DewormingDto dto) {
         Map<String, Object> response = new HashMap<>();
-        response.put("status", "Success");
-        response.put("statusCode", 200);
-        response.put("message", villageLevelFormService.submitDewormingForm(dto));
-        return ResponseEntity.ok(response);
+
+        if(!dto.getEntries().isEmpty()){
+            String msg = villageLevelFormService.submitDewormingForm(dto);
+            boolean ok = "Success".equalsIgnoreCase(msg);
+            response.put("status", ok ? "Success" : "Fail");
+            response.put("statusCode", ok ? 200 : 500);
+            response.put("message", msg);
+            return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+        }else {
+            response.put("status", "Fail");
+            response.put("statusCode", 400);
+            response.put("message", "Invalid Request Object");
+            return ResponseEntity.ok(response);
+        }
+
     }
 
 

@@ -58,7 +58,7 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
     @Override
     public String submitVhncForm(VhncDto dto) {
         for (VhncFormDTO vhncFormDTO : dto.getEntries()) {
-            saveVhncFormData(vhncFormDTO, dto.getUserId());
+          saveVhncFormData(vhncFormDTO, dto.getUserId());
         }
         return "Success";
     }
@@ -67,7 +67,7 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
     @Override
     public String submitPhcForm(PhcReviewMeetingDTO dto) {
         for (PhcReviewMeetingFormDTO phcReviewMeetingDTO : dto.getEntries()) {
-            submitPhcForm(phcReviewMeetingDTO, dto.getUserId());
+             submitPhcForm(phcReviewMeetingDTO, dto.getUserId());
         }
         return "Success";
     }
@@ -83,7 +83,7 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
     @Override
     public String submitDewormingForm(DewormingDto dto) {
         for (DewormingFormDTO dewormingFormDTO : dto.getEntries()) {
-            submitDewormingForm(dewormingFormDTO, dto.getUserId());
+             submitDewormingForm(dewormingFormDTO, dto.getUserId());
         }
         return "Success";
     }
