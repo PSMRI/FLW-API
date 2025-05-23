@@ -30,3 +30,4 @@ mvnw
 mvnw.cmd
 .mvn
 /logs/
+/target/
