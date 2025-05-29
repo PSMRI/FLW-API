@@ -392,10 +392,10 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 			Object[] benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
 			if (benHealthIdNumber != null && benHealthIdNumber.length > 0) {
 				Object[] healthData = (Object[]) benHealthIdNumber[0];
-				String healthIdNumber = healthData[0].toString();
-				String healthId = healthData[1].toString();
+				String healthIdNumber = healthData[0] != null ? healthData[0].toString() : null;
+				String healthId = healthData[1] != null ? healthData[1].toString() : null;
 
-				if (null != benHealthIdNumber[0]) {
+				if (null != healthIdNumber) {
 					List<Object[]> health = beneficiaryRepo.getBenHealthDetails(healthIdNumber);
 					if (health != null && !health.isEmpty()) {
 						for (Object[] objects : health) {
