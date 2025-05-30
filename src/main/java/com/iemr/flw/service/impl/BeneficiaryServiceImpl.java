@@ -389,13 +389,25 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 	private Map<String, Object> getBenHealthDetails(BigInteger benRegId) {
 		Map<String, Object> healthDetails = new HashMap<>();
 		if (null != benRegId) {
-			String benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
-			if (null != benHealthIdNumber) {
-				ArrayList<Object[]> health = beneficiaryRepo.getBenHealthDetails(benHealthIdNumber);
-				for (Object[] objects : health) {
-					healthDetails.put("HealthID", objects[0]);
-					healthDetails.put("HealthIdNumber", objects[1]);
-					healthDetails.put("isNewAbha", objects[2]);
+			Object[] benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
+			if (benHealthIdNumber != null && benHealthIdNumber.length > 0) {
+				Object[] healthData = (Object[]) benHealthIdNumber[0];
+				String healthIdNumber = healthData[0] != null ? healthData[0].toString() : null;
+				String healthId = healthData[1] != null ? healthData[1].toString() : null;
+
+				if (null != healthIdNumber) {
+					List<Object[]> health = beneficiaryRepo.getBenHealthDetails(healthIdNumber);
+					if (health != null && !health.isEmpty()) {
+						for (Object[] objects : health) {
+							healthDetails.put("HealthID", objects[0]);
+							healthDetails.put("HealthIdNumber", objects[1]);
+							healthDetails.put("isNewAbha", objects[2]);
+						}
+					} else {
+						healthDetails.put("HealthIdNumber", healthIdNumber);
+						healthDetails.put("HealthID", healthId);
+						healthDetails.put("isNewAbha", null);
+					}
 				}
 			}
 		}
