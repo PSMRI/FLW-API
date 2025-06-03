@@ -18,15 +18,17 @@ public class ScreeningKalaAzar {
     @Column(name = "ben_id")
     private Long benId;
 
-    @Column(name = "houseHoldDetailsId")
+    @Column(name = "house_hold_details_Id",nullable = false)
     private Long houseHoldDetailsId;
 
     @Column(name = "userID")
     private Integer userId;
 
+    @Temporal(TemporalType.DATE)
     @Column(name = "visit_date")
     private Date visitDate;
 
+    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_death")
     private Date dateOfDeath;
 
@@ -51,6 +53,7 @@ public class ScreeningKalaAzar {
     @Column(name = "rapid_diagnostic_test")
     private String rapidDiagnosticTest;
 
+    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_rdt")
     private Date dateOfRdt;
 
@@ -63,6 +66,7 @@ public class ScreeningKalaAzar {
     @Column(name = "other_referred_facility")
     private String otherReferredFacility;
 
+    @Temporal(TemporalType.DATE)
     @Column(name = "created_date")
     private Date createdDate;
 

@@ -17,13 +17,13 @@ public class MalariaFollowUp {
     @Column(name = "ben_id", nullable = false)
     private Long benId;
 
-    @Column(name = "houseHoldDetailsId", nullable = false)
+    @Column(name = "house_hold_details_id", nullable = false)
     private Long houseHoldDetailsId;
 
-    @Column(name = "userId")
+    @Column(name = "user_Id")
     private Integer userId;
 
-    @Column(name = "diseaseId", nullable = false)
+    @Column(name = "disease_Id", nullable = false)
     private Long diseaseId;
 
     @Column(name = "date_of_diagnosis", nullable = false)

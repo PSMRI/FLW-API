@@ -18,7 +18,7 @@ public class ScreeningFilariasis {
     @Column(name = "ben_id")
     private Long benId;
 
-    @Column(name = "houseHoldDetailsId")
+    @Column(name = "house_hold_details_Id",nullable = false)
     private Long houseHoldDetailsId;
 
     @Column(name = "suffering_from_filariasis")
@@ -53,10 +53,10 @@ public class ScreeningFilariasis {
     @Column(name = "created_by", length = 100)
     private String createdBy;
 
-    @Column(name = "diseaseTypeID")
+    @Column(name = "disease_type_id")
     private Integer diseaseTypeId;
 
-    @Column(name = "userID")
+    @Column(name = "user_id")
     private Integer userId;
 
 }

@@ -18,7 +18,7 @@ public class ScreeningAesje {
     @Column(name = "ben_id")
     private Long benId;
 
-    @Column(name = "houseHoldDetailsId")
+    @Column(name = "house_hold_details_Id",nullable = false)
     private Long houseHoldDetailsId;
 
     @Temporal(TemporalType.DATE)
@@ -65,16 +65,16 @@ public class ScreeningAesje {
     @Column(name = "created_by")
     private String createdBy;
 
-    @Column(name = "userID")
+    @Column(name = "user_id")
     private Integer userId;
 
-    @Column(name = "diseaseTypeID")
+    @Column(name = "disease_type_id")
     private Integer diseaseTypeId;
 
     @Column(name = "refer_to_name")
     private String referToName;
 
-    @Column(name = "beneficiary_statusId")
+    @Column(name = "beneficiary_status_id")
     private Integer beneficiaryStatusId;
 
     // Getters and Setters

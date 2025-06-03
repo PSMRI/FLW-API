@@ -23,7 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping(value = "/disease",headers = "Authorization")
 public class DiseaseControlController {
-    private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
+    private final Logger logger = LoggerFactory.getLogger(DiseaseControlController.class);
 
     @Autowired
     private DiseaseControlService diseaseControlService;
@@ -37,7 +37,7 @@ public class DiseaseControlController {
 
             logger.info("Malaria DTO: {}", new ObjectMapper().writeValueAsString(malariaDTO));
              if(malariaDTO!=null){
-                 response.put("message", "Success");
+                 response.put("status", "Success");
                  response.put("statusCode", 200);
                  response.put("data", diseaseControlService.saveMalaria(malariaDTO));
              }else {
@@ -60,7 +60,7 @@ public class DiseaseControlController {
         try {
             logger.info("KalaAzar DTO: {}", new ObjectMapper().writeValueAsString(kalaAzarDTO));
              if(kalaAzarDTO!=null){
-                 response.put("message", "Success");
+                 response.put("status", "Success");
                  response.put("statusCode", 200);
                  response.put("data", diseaseControlService.saveKalaAzar(kalaAzarDTO));
              }else {
@@ -82,7 +82,7 @@ public class DiseaseControlController {
 
         try {
             if(aesJeDTO!=null){
-                response.put("message", "Success");
+                response.put("status", "Success");
                 response.put("statusCode", 200);
                 response.put("data", diseaseControlService.saveAES(aesJeDTO));
             }else {
@@ -104,7 +104,7 @@ public class DiseaseControlController {
 
         try {
             if(filariaDTO!=null){
-                response.put("message", "Success");
+                response.put("status", "Success");
                 response.put("statusCode", 200);
                 response.put("data", diseaseControlService.saveFilaria(filariaDTO));
             }else {
@@ -125,7 +125,7 @@ public class DiseaseControlController {
         Map<String, Object> response = new HashMap<>();
         try {
             if(leprosyDTO!=null){
-                response.put("message", "Success");
+                response.put("status", "Success");
                 response.put("statusCode", 200);
                 response.put("data", diseaseControlService.saveLeprosy(leprosyDTO));
             }else {

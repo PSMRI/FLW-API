@@ -33,7 +33,6 @@ public class DiseaseMalariaDTO {
     private Integer userId;
     private Date createdDate;
     private String createdBy;
-    private Date dateOfVisitSupervisor;
     private boolean feverMoreThanTwoWeeks;
     private boolean fluLikeIllness;
     private boolean shakingChills;

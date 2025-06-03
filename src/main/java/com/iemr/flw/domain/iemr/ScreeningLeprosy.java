@@ -17,7 +17,7 @@ public class ScreeningLeprosy {
     @Column(name = "ben_id")
     private Long benId;
 
-    @Column(name = "houseHoldDetailsId")
+    @Column(name = "house_hold_details_Id",nullable = false)
     private Long houseHoldDetailsId;
 
     @Temporal(TemporalType.DATE)
@@ -47,10 +47,10 @@ public class ScreeningLeprosy {
     @Column(name = "remark", length = 225)
     private String remark;
 
-    @Column(name = "diseaseTypeID")
+    @Column(name = "disease_type_id")
     private Integer diseaseTypeId;
 
-    @Column(name = "userID")
+    @Column(name = "user_id")
     private Integer userId;
 
     @Column(name = "refer_to_name")

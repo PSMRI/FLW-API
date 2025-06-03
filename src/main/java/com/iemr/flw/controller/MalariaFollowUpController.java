@@ -13,33 +13,52 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping(value = "/api/follow-up",headers = "Authorization")
+@RequestMapping(value = "/follow-up", headers = "Authorization")
 public class MalariaFollowUpController {
 
     @Autowired
     private MalariaFollowUpService followUpService;
 
-    @RequestMapping(value = "save",method = RequestMethod.POST,headers = "Authorization")
+    @RequestMapping(value = "save", method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> save(@RequestBody MalariaFollowUpDTO dto) {
         Map<String, Object> response = new HashMap<>();
-        response.put("status", "Success");
-        response.put("statusCode", 200);
-        response.put("msg", followUpService.saveFollowUp(dto));
 
+        try {
+            String result = followUpService.saveFollowUp(dto);
+            if (result.equals("Follow-up saved successfully")) {
+                response.put("status", "Success");
+                response.put("statusCode", 200);
+                response.put("message", result);
+            } else {
+                response.put("status", "Failed");
+                response.put("statusCode", 400);
+                response.put("message", result);
+            }
+        } catch (Exception e) {
+            response.put("status", "Error: " + e.getMessage());
+            response.put("statusCode", 500);
+        }
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(value = "get",method = RequestMethod.POST,headers = "Authorization")
+    @RequestMapping(value = "get", method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> getFollowUpsByUserId(@RequestBody GetDiseaseRequestHandler getDiseaseRequestHandler) {
         Map<String, Object> response = new HashMap<>();
-
-        List<MalariaFollowListUpDTO> data = followUpService.getByUserId(getDiseaseRequestHandler.getUserId());
-        if(!data.isEmpty()){
+        
+        try {
+            List<MalariaFollowListUpDTO> data = followUpService.getByUserId(getDiseaseRequestHandler.getUserId());
             response.put("status", "Success");
             response.put("statusCode", 200);
-            response.put("data",data);
+            response.put("data", data);
+            if (data.isEmpty()) {
+                response.put("message", "No records found");
+            }
+        } catch (Exception e) {
+            response.put("status", "Error: " + e.getMessage());
+            response.put("statusCode", 500);
         }
-
         return ResponseEntity.ok(response);
+
+
     }
 }

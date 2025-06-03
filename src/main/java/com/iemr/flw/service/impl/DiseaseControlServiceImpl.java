@@ -33,7 +33,6 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     @Autowired
     private DiseaseLeprosyRepository diseaseLeprosyRepository;
 
-
     @Autowired
     private IncentiveRecordRepo recordRepo;
     @Autowired

@@ -18,7 +18,7 @@ public class ScreeningMalaria {
     @Column(name = "ben_id")
     private Long benId;
 
-    @Column(name = "houseHoldDetailsId")
+    @Column(name = "house_hold_details_Id",nullable = false)
     private Long houseHoldDetailsId;
 
     @Temporal(TemporalType.DATE)
@@ -79,28 +79,28 @@ public class ScreeningMalaria {
     @Column(name = "remarks")
     private String remarks;
 
+    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_visit_by_supervisor")
     private Date dateOfVisitBySupervisor;
 
-    @Column(name = "diseaseTypeID")
+    @Column(name = "disease_type_id")
     private Integer diseaseTypeId;
 
-    @Column(name = "userID")
+    @Column(name = "user_id")
     private Integer userId;
 
+    @Temporal(TemporalType.DATE)
     @Column(name = "created_date")
     private Date createdDate;
 
     @Column(name = "created_by")
     private String createdBy;
 
-    @Column(name = "date_of_visit_supervisor")
-    private Date dateOfVisitSupervisor;
 
     @Column(name = "refer_to_name")
     private String referToName;
 
-    @Column(name = "caseStatusId")
+    @Column(name = "case_status_id")
     private Integer caseStatusId;
 
 
