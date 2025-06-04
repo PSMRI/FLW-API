@@ -16,6 +16,7 @@ public class TokenDenylist {
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+    
 
     private String getKey(String jti) {
         return PREFIX + jti;
