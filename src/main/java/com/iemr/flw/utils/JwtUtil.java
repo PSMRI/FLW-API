@@ -1,9 +1,9 @@
 package com.iemr.flw.utils;
 
-import java.security.Key;
-import java.util.Date;
 import java.util.function.Function;
+import javax.crypto.SecretKey;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +11,6 @@ import com.iemr.flw.utils.exception.IEMRException;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
 @Component
@@ -23,8 +22,6 @@ public class JwtUtil {
 	@Autowired
 	private TokenDenylist tokenDenylist;
 
-	private static final long EXPIRATION_TIME = 24L * 60 * 60 * 1000; // 1 day in milliseconds
-
 	// Generate a key using the secret
 	private SecretKey getSigningKey() {
 		if (SECRET_KEY == null || SECRET_KEY.isEmpty()) {
@@ -32,8 +29,6 @@ public class JwtUtil {
 		}
 		return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
 	}
-
-
 
 	// Validate and parse JWT Token
 	public Claims validateToken(String token) {
