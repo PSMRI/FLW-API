@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigInteger;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 
 @Repository
 public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRmnch, Long> {
@@ -58,4 +59,10 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
 
     @Query(" SELECT t.benRegId FROM RMNCHMBeneficiaryregidmapping t  WHERE t.beneficiaryID = :benID ")
     Long getRegIDFromBenId(@Param("benID") Long benID);
+
+    @Query(nativeQuery = true, value = " SELECT HealthIdNumber FROM db_iemr.m_benhealthidmapping WHERE BeneficiaryRegID = :benRegId ")
+	String getBenHealthIdNumber(@Param("benRegId") BigInteger benRegId);
+    
+    @Query(nativeQuery = true, value = " SELECT HealthID,HealthIdNumber,isNewAbha FROM db_iemr.t_healthid WHERE HealthIdNumber = :healthIdNumber ")
+    ArrayList<Object[]> getBenHealthDetails(@Param("healthIdNumber") String healthIdNumber);
 }
