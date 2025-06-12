@@ -13,6 +13,6 @@ public class EmployeeMasterImpl  implements EmployeeMasterInter {
 
     @Override
     public M_User getUserDetails(Integer userID) {
-        return employeeMasterRepo.findByUserID(userID);
+        return employeeMasterRepo.getUserByUserID(userID);
     }
 }
