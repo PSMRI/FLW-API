@@ -1,6 +1,7 @@
 package com.iemr.flw.controller;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.*;
@@ -75,7 +76,8 @@ public class MaternalHealthController {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
                 List<PregnantWomanDTO> result = maternalHealthService.getPregnantWoman(requestDTO);
-                String s = new Gson().toJson(result);
+                Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+                String s = gson.toJson(result);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -166,7 +168,8 @@ public class MaternalHealthController {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
                 List<ANCVisitDTO> result = maternalHealthService.getANCVisits(requestDTO);
-                String s = new Gson().toJson(result);
+                Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+                String s = gson.toJson(result);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -214,7 +217,8 @@ public class MaternalHealthController {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
                 List<DeliveryOutcomeDTO> result = deliveryOutcomeService.getDeliveryOutcome(requestDTO);
-                String s = new Gson().toJson(result);
+                Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+                String s = gson.toJson(result);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -262,7 +266,8 @@ public class MaternalHealthController {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
                 List<InfantRegisterDTO> result = infantService.getInfantDetails(requestDTO);
-                String s = new Gson().toJson(result);
+                Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+                String s = gson.toJson(result);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -336,7 +341,8 @@ public class MaternalHealthController {
                 logger.info("fetch pmsma request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
                 List<PmsmaDTO> result = maternalHealthService.getPmsmaRecords(requestDTO);
-                String s = (new Gson()).toJson(result);
+                Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+                String s = gson.toJson(result);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -409,7 +415,8 @@ public class MaternalHealthController {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
                 List<PNCVisitDTO> result = maternalHealthService.getPNCVisits(requestDTO);
-                String s = new Gson().toJson(result);
+                Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+                String s = gson.toJson(result);
                 if (s != null)
                     response.setResponse(s);
                 else

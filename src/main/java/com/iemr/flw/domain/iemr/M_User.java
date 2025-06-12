@@ -1,12 +1,17 @@
 package com.iemr.flw.domain.iemr;
 
-import com.google.gson.annotations.Expose;
-import jakarta.persistence.*;
-import lombok.Data;
-
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+
+import com.google.gson.annotations.Expose;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Data;
 
 @Entity
 @Table(name = "m_User",schema = "db_iemr")

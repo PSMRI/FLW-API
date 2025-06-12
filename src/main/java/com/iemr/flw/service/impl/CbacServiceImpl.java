@@ -92,7 +92,8 @@ public class CbacServiceImpl implements CbacService {
             response.put("data", result);
             response.put("pageSize", Integer.parseInt(cbac_page_size));
             response.put("totalPage", totalPage);
-            return new Gson().toJson(response);
+            Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+            return gson.toJson(response);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -126,7 +127,7 @@ public class CbacServiceImpl implements CbacService {
             cbacAddRepo.saveAll(cbacAdditionalDetailsList);
         }
         Gson gson = new GsonBuilder()
-                .setDateFormat("MMM d, yyyy h:mm:ss a")  // Set the desired date format
+                .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
                 .create();
         return gson.toJson(result);
     }

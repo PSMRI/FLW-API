@@ -25,6 +25,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import com.iemr.flw.utils.RestTemplateUtil;
+
 import javax.ws.rs.core.MediaType;
 import java.util.HashMap;
 
@@ -44,6 +46,9 @@ public class HttpUtils {
 
 	public String get(String uri) {
 		String body;
+		HttpHeaders localheaders = new HttpHeaders();
+		localheaders.add("Content-Type", "application/json");
+		RestTemplateUtil.getJwttokenFromHeaders(localheaders);
 		HttpEntity<String> requestEntity = new HttpEntity<String>(headers);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.GET, requestEntity, String.class);
 		setStatus((HttpStatus) responseEntity.getStatusCode());
@@ -62,6 +67,7 @@ public class HttpUtils {
 		} else {
 			headers.add("Content-Type", MediaType.APPLICATION_JSON);
 		}
+		RestTemplateUtil.getJwttokenFromHeaders(headers);
 		HttpEntity<String> requestEntity = new HttpEntity<String>("", headers);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.GET, requestEntity, String.class);
 		setStatus((HttpStatus) responseEntity.getStatusCode());
@@ -71,6 +77,7 @@ public class HttpUtils {
 
 	public String post(String uri, String json) {
 		String body;
+		RestTemplateUtil.getJwttokenFromHeaders(headers);
 		HttpEntity<String> requestEntity = new HttpEntity<String>(json, headers);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.POST, requestEntity, String.class);
 		setStatus((HttpStatus) responseEntity.getStatusCode());
@@ -83,6 +90,7 @@ public class HttpUtils {
 		if (header.containsKey(HttpHeaders.AUTHORIZATION)) {
 			headers.add(HttpHeaders.AUTHORIZATION, header.get(HttpHeaders.AUTHORIZATION).toString());
 		}
+		RestTemplateUtil.getJwttokenFromHeaders(headers);
 		HttpEntity<String> requestEntity = new HttpEntity<String>(data, headers);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.POST, requestEntity, String.class);
 		setStatus((HttpStatus) responseEntity.getStatusCode());
@@ -99,6 +107,7 @@ public class HttpUtils {
 			headers.add("apiKey", header.get("apiKey").toString());
 		}
 		headers.add("Content-Type", MediaType.APPLICATION_JSON);
+		RestTemplateUtil.getJwttokenFromHeaders(headers);
 		HttpEntity<String> requestEntity = new HttpEntity<String>(data, headers);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.POST, requestEntity, String.class);
 		return responseEntity;

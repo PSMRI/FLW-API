@@ -1,6 +1,7 @@
 package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.PregnantWomanHighRiskAssess;
 import com.iemr.flw.domain.iemr.PregnantWomanHighRiskTrack;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
@@ -38,7 +39,10 @@ public class HRPregnantServiceImpl implements HighRiskPregnantService {
         UserDataDTO<HRPregnantAssessDTO> userDataDTO = new UserDataDTO<>();
         userDataDTO.setUserId(request.getAshaId());
         userDataDTO.setEntries(dtos);
-        return (new Gson().toJson(userDataDTO));
+        Gson gson = new GsonBuilder()
+                .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
+                .create();
+        return gson.toJson(userDataDTO);
     }
 
     @Override
@@ -97,6 +101,9 @@ public class HRPregnantServiceImpl implements HighRiskPregnantService {
         UserDataDTO<HRPregnantTrackDTO> userDataDTO = new UserDataDTO<>();
         userDataDTO.setUserId(request.getAshaId());
         userDataDTO.setEntries(dtos);
-        return (new Gson().toJson(userDataDTO));
+        Gson gson = new GsonBuilder()
+                .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
+                .create();
+        return gson.toJson(userDataDTO);
     }
 }
