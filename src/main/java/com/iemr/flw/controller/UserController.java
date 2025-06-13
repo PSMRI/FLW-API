@@ -22,11 +22,10 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @CrossOrigin()
     @Operation(summary = "get user Detail of userId and roleId")
-    @RequestMapping(value = {"/getUserDetail"}, method = {RequestMethod.GET})
+    @RequestMapping(value = { "/getUserDetail" }, method = { RequestMethod.GET })
     public ResponseEntity<?> getUserDetail(@RequestParam(value = "userId") Integer userId,
-                                           @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         try {
             UserServiceRoleDTO result = userService.getUserDetail(userId);
             return new ResponseEntity<>(
@@ -34,7 +33,8 @@ public class UserController {
         } catch (Exception e) {
             logger.error("Error in fetching user role, " + e);
             return new ResponseEntity<>(
-                    new ApiResponse(false, "Error in fetching user role, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+                    new ApiResponse(false, "Error in fetching user role, " + e.getMessage(), null),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

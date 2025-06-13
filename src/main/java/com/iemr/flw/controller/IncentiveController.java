@@ -25,12 +25,10 @@ public class IncentiveController {
     @Autowired
     IncentiveService incentiveService;
 
-
-    @CrossOrigin()
     @Operation(summary = "save incentive master")
-    @RequestMapping(value = {"/masterData/saveAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/masterData/saveAll" }, method = { RequestMethod.POST })
     public String saveIncentiveMasterData(@RequestBody List<IncentiveActivityDTO> activityDTOS,
-                                     @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("Saving All incentives");
@@ -49,12 +47,10 @@ public class IncentiveController {
         return response.toString();
     }
 
-
-    @CrossOrigin()
     @Operation(summary = "get incentive master")
-    @RequestMapping(value = {"/masterData/getAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/masterData/getAll" }, method = { RequestMethod.POST })
     public String saveIncentiveMasterData(@RequestBody IncentiveRequestDTO incentiveRequestDTO,
-                                          @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("get All incentives");
@@ -75,12 +71,10 @@ public class IncentiveController {
         return response.toString();
     }
 
-
-    @CrossOrigin()
     @Operation(summary = "get high risk assessment data of all beneficiaries registered with given user id")
-    @RequestMapping(value = {"/fetchUserData"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/fetchUserData" }, method = { RequestMethod.POST })
     public String getAllIncentivesByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                       @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -100,6 +94,5 @@ public class IncentiveController {
         }
         return response.toString();
     }
-
 
 }

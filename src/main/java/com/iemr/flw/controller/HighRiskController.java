@@ -31,11 +31,10 @@ public class HighRiskController {
     @Autowired
     private HighRiskService highRiskService;
 
-    @CrossOrigin()
     @Operation(summary = "get high risk pregnant assessment data of all beneficiaries registered with given user id")
-    @RequestMapping(value = {"/pregnant/assess/getAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/pregnant/assess/getAll" }, method = { RequestMethod.POST })
     public String getAllPregnantAssessByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                               @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -56,12 +55,10 @@ public class HighRiskController {
         return response.toString();
     }
 
-
-    @CrossOrigin()
     @Operation(summary = "save high risk pregnant assessment data of all beneficiaries registered with given user id")
-    @RequestMapping(value = {"/pregnant/assess/saveAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/pregnant/assess/saveAll" }, method = { RequestMethod.POST })
     public String saveAllPregnantAssessByUserId(@RequestBody UserDataDTO<HRPregnantAssessDTO> requestDTO,
-                                                @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -82,11 +79,10 @@ public class HighRiskController {
         return response.toString();
     }
 
-    @CrossOrigin()
     @Operation(summary = "get high risk assessment data of all beneficiaries registered with given user id")
-    @RequestMapping(value = {"/assess/getAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/assess/getAll" }, method = { RequestMethod.POST })
     public String getAllAssessByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                               @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -107,12 +103,10 @@ public class HighRiskController {
         return response.toString();
     }
 
-
-    @CrossOrigin()
     @Operation(summary = "save high risk pregnant assessment data of all beneficiaries registered with given user id")
-    @RequestMapping(value = {"/assess/saveAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/assess/saveAll" }, method = { RequestMethod.POST })
     public String saveAllAssessByUserId(@RequestBody UserDataDTO<HighRiskAssessDTO> requestDTO,
-                                                @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -133,11 +127,10 @@ public class HighRiskController {
         return response.toString();
     }
 
-    @CrossOrigin()
     @Operation(summary = "get high risk pregnant tracking data of all beneficiaries registered with given user id")
-    @RequestMapping(value = {"/pregnant/track/getAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/pregnant/track/getAll" }, method = { RequestMethod.POST })
     public String getAllPregnantTrackByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                              @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -158,12 +151,10 @@ public class HighRiskController {
         return response.toString();
     }
 
-
-    @CrossOrigin()
     @Operation(summary = "save high risk pregnant tracking data of all beneficiaries registered with given user id")
-    @RequestMapping(value = {"/pregnant/track/saveAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/pregnant/track/saveAll" }, method = { RequestMethod.POST })
     public String saveAllPregnantTrackByUserId(@RequestBody UserDataDTO<HRPregnantTrackDTO> requestDTO,
-                                               @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -184,11 +175,10 @@ public class HighRiskController {
         return response.toString();
     }
 
-    @CrossOrigin()
     @Operation(summary = "get high risk non pregnant assessment data of all beneficiaries registered with given user id")
-    @RequestMapping(value = {"/nonPregnant/assess/getAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/nonPregnant/assess/getAll" }, method = { RequestMethod.POST })
     public String getAllNonPregnantAssessByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                                  @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
 
         OutputResponse response = new OutputResponse();
         try {
@@ -210,11 +200,10 @@ public class HighRiskController {
         return response.toString();
     }
 
-    @CrossOrigin()
     @Operation(summary = "save high risk non pregnant assessment data of all beneficiaries registered with given user id")
-    @RequestMapping(value = {"/nonPregnant/assess/saveAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/nonPregnant/assess/saveAll" }, method = { RequestMethod.POST })
     public String saveAllNonPregnantAssessByUserId(@RequestBody UserDataDTO<HRNonPregnantAssessDTO> requestDTO,
-                                                   @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -235,12 +224,10 @@ public class HighRiskController {
         return response.toString();
     }
 
-
-    @CrossOrigin()
     @Operation(summary = "get high risk non pregnant track data of all beneficiaries registered with given user id")
-    @RequestMapping(value = {"/nonPregnant/track/getAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/nonPregnant/track/getAll" }, method = { RequestMethod.POST })
     public String getAllNonPregnantTrackByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                                 @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
 
         OutputResponse response = new OutputResponse();
         try {
@@ -262,11 +249,10 @@ public class HighRiskController {
         return response.toString();
     }
 
-    @CrossOrigin()
     @Operation(summary = "save high risk non pregnant track data of all beneficiaries registered with given user id")
-    @RequestMapping(value = {"/nonPregnant/track/saveAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/nonPregnant/track/saveAll" }, method = { RequestMethod.POST })
     public String saveAllNonPregnantTrackByUserId(@RequestBody UserDataDTO<HRNonPregnantTrackDTO> requestDTO,
-                                                  @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             if (requestDTO != null) {

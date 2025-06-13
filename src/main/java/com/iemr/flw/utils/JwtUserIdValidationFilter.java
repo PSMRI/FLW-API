@@ -34,6 +34,11 @@ public class JwtUserIdValidationFilter implements Filter {
 
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
 
+		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+			filterChain.doFilter(servletRequest, servletResponse); // allow it through
+			return;
+		}
+
 		String path = request.getRequestURI();
 		String contextPath = request.getContextPath();
 		logger.info("JwtUserIdValidationFilter invoked for path: " + path);
