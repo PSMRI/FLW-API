@@ -36,12 +36,12 @@ public class GeneralOPDController {
                 if (s != null)
                     response.setResponse(s);
                 else
-                    response.setError(5000, "No record found");
+                    response.setError(500, "No record found");
             } else
-                response.setError(5000, "Invalid/NULL request obj");
+                response.setError(500, "Invalid/NULL request obj");
         } catch (Exception e) {
             logger.error("Error in get data : " + e);
-            response.setError(5000, "Error in get data : " + e);
+            response.setError(500, "Error in get data : " + e);
         }
         return response.toString();
 
