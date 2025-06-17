@@ -6,5 +6,5 @@ import com.iemr.flw.dto.iemr.GeneralOpdDto;
 import java.util.List;
 
 public interface GeneralOpdService {
-    String getOpdListForAsha(GetBenRequestHandler getBenRequestHandler,String authorisation) throws Exception;
+    Object getOpdListForAsha(GetBenRequestHandler getBenRequestHandler,String authorisation) throws Exception;
 }

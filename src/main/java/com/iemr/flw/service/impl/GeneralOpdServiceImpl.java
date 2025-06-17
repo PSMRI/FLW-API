@@ -1,31 +1,18 @@
 package com.iemr.flw.service.impl;
 
-import com.google.gson.*;
 import com.iemr.flw.domain.identity.*;
-import com.iemr.flw.domain.iemr.BenVisitDetail;
-import com.iemr.flw.domain.iemr.GeneralOpdEntry;
+import com.iemr.flw.domain.iemr.GeneralOpdData;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
-import com.iemr.flw.dto.iemr.GeneralOpdDto;
-import com.iemr.flw.mapper.InputMapper;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
-import com.iemr.flw.repo.identity.HouseHoldRepo;
-import com.iemr.flw.repo.iemr.BenVisitDetailsRepo;
-import com.iemr.flw.repo.iemr.BeneficiaryRepository;
 import com.iemr.flw.repo.iemr.GeneralOpdRepo;
 import com.iemr.flw.service.GeneralOpdService;
-import com.iemr.flw.utils.config.ConfigProperties;
-import com.iemr.flw.utils.http.HttpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.math.BigInteger;
-import java.sql.Date;
-import java.time.Period;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,18 +26,22 @@ public class GeneralOpdServiceImpl implements GeneralOpdService {
     private BeneficiaryRepo beneficiaryRepo;
 
     @Autowired
-    private HouseHoldRepo houseHoldRepo;
-
-    @Autowired
-    private BenVisitDetailsRepo benVisitDetailsRepo;
-
-    @Autowired
     private GeneralOpdRepo generalOpdRepo;
 
-
     @Override
-    public String  getOpdListForAsha(GetBenRequestHandler request, String authorisation) throws Exception {
+    public Object getOpdListForAsha(GetBenRequestHandler request, String authorisation) throws Exception {
+        List<GeneralOpdData> filteredList;
 
-      return   generalOpdRepo.findAll().toString();
+        do {
+            filteredList = generalOpdRepo.findAll().stream()
+                    .filter(generalOpdData ->
+                            generalOpdData.getVisitCategory() != null &&
+                                    generalOpdData.getVisitCategory().equals("General OPD") && generalOpdData.getVisitCode()!=0)
+                    .collect(Collectors.toList());
+
+
+        } while (filteredList.isEmpty());
+
+        return filteredList.stream().filter(data-> data.getAgentId().equals(request.getUserName())).collect(Collectors.toList());
     }
 }
