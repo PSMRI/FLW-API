@@ -9,19 +9,26 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class IRSRoundServiceImpl implements IRSRoundService {
     @Autowired
     private IRSRoundRepo irsRoundRepository;
+
     @Override
     public List<IRSRound> addRounds(List<IRSRoundDTO> dtos) {
-        List<IRSRound> rounds = new ArrayList<>();
+        // Validate input DTOs
         for (IRSRoundDTO dto : dtos) {
-
-            IRSRound round = new IRSRound(null, dto.getDate(), dto.getRounds(), dto.getHouseholdId());
-            rounds.add(round);
+            if (dto.getDate() == null || dto.getHouseholdId() == null) {
+                throw new IllegalArgumentException("Date and household ID are required");
+            }
         }
-        return irsRoundRepository.saveAll(rounds);
+        return irsRoundRepository.saveAll(
+                dtos.stream()
+                        .map(dto -> new IRSRound(null, dto.getDate(), dto.getRounds(), dto.getHouseholdId()))
+                        .collect(Collectors.toList())
+        );
     }
 
     @Override
