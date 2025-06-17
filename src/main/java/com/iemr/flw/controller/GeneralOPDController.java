@@ -23,8 +23,6 @@ public class GeneralOPDController {
     private GeneralOpdService generalOpdService;
 
 
-
-
     @RequestMapping(value = "/getData", method = RequestMethod.POST)
     @Operation(summary = "get beneficiary data for given user ")
     public String getBeneficiaryDataByAsha(@RequestBody GetBenRequestHandler requestDTO,
