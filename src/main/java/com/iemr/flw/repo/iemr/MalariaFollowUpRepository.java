@@ -7,7 +7,5 @@ import java.util.Collection;
 import java.util.List;
 
 public interface MalariaFollowUpRepository extends JpaRepository<MalariaFollowUp, Long> {
-    List<MalariaFollowUp> findByBenId(Long benId);
-
-    Collection<Object> findByUserId(Integer userId);
+    List<MalariaFollowUp> findByUserId(Integer userId);
 }
