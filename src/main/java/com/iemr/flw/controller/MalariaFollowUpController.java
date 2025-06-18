@@ -24,15 +24,14 @@ public class MalariaFollowUpController {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            String result = followUpService.saveFollowUp(dto);
-            if (result.equals("Follow-up saved successfully")) {
+            Boolean result = followUpService.saveFollowUp(dto);
+            if (result) {
                 response.put("status", "Success");
                 response.put("statusCode", 200);
-                response.put("message", result);
+                response.put("message", "Follow-up saved successfully");
             } else {
                 response.put("status", "Failed");
                 response.put("statusCode", 400);
-                response.put("message", result);
             }
         } catch (Exception e) {
             response.put("status", "Error: " + e.getMessage());

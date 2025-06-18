@@ -29,7 +29,7 @@ public class DiseaseControlController {
     private DiseaseControlService diseaseControlService;
 
 
-    @RequestMapping(value = "Malaria/saveAll", method = RequestMethod.POST, consumes = "application/json", produces = "application/json",headers = "Authorization")
+    @RequestMapping(value = "malaria/saveAll", method = RequestMethod.POST, consumes = "application/json", produces = "application/json",headers = "Authorization")
     public ResponseEntity<Map<String, Object>> saveMalaria(@RequestBody MalariaDTO malariaDTO) {
         Map<String, Object> response = new HashMap<>();
 
@@ -53,7 +53,7 @@ public class DiseaseControlController {
 
     }
 
-    @RequestMapping(value = "KalaAzar/saveAll", method = RequestMethod.POST,consumes = "application/json", produces = "application/json",headers = "Authorization")
+    @RequestMapping(value = "kalaAzar/saveAll", method = RequestMethod.POST,consumes = "application/json", produces = "application/json",headers = "Authorization")
     public ResponseEntity<Map<String, Object>> saveKalaAzar(@RequestBody KalaAzarDTO kalaAzarDTO) {
         Map<String, Object> response = new HashMap<>();
 
@@ -76,7 +76,7 @@ public class DiseaseControlController {
 
     }
 
-    @RequestMapping(value = "AesJe/saveAll", method = RequestMethod.POST, consumes = "application/json", produces = "application/json",headers = "Authorization")
+    @RequestMapping(value = "aesJe/saveAll", method = RequestMethod.POST, consumes = "application/json", produces = "application/json",headers = "Authorization")
     public ResponseEntity<Map<String, Object>> saveAESJE(@RequestBody AesJeDTO aesJeDTO) {
         Map<String, Object> response = new HashMap<>();
 
@@ -98,7 +98,7 @@ public class DiseaseControlController {
 
     }
 
-    @RequestMapping(value = "Filaria/saveAll", method = RequestMethod.POST, consumes = "application/json", produces = "application/json",headers = "Authorization")
+    @RequestMapping(value = "filaria/saveAll", method = RequestMethod.POST, consumes = "application/json", produces = "application/json",headers = "Authorization")
     public ResponseEntity<Map<String, Object>> saveFilaria(@RequestBody FilariaDTO filariaDTO) {
         Map<String, Object> response = new HashMap<>();
 
@@ -120,7 +120,7 @@ public class DiseaseControlController {
 
     }
 
-    @RequestMapping(value = "Leprosy/saveAll", method = RequestMethod.POST, consumes = "application/json", produces = "application/json",headers = "Authorization")
+    @RequestMapping(value = "leprosy/saveAll", method = RequestMethod.POST, consumes = "application/json", produces = "application/json",headers = "Authorization")
     public ResponseEntity<Map<String, Object>> saveLeprosy(@RequestBody LeprosyDTO leprosyDTO) {
         Map<String, Object> response = new HashMap<>();
         try {
@@ -143,7 +143,7 @@ public class DiseaseControlController {
 
     }
 
-    @RequestMapping(value = "getAll", method = RequestMethod.POST, produces = "application/json",headers = "Authorization")
+    @RequestMapping(value = "getAllDisease", method = RequestMethod.GET, produces = "application/json",headers = "Authorization")
     public ResponseEntity<Map<String, Object>> getAllData(@RequestBody GetDiseaseRequestHandler getDiseaseRequestHandler) {
         Map<String, Object> response = new HashMap<>();
         try {

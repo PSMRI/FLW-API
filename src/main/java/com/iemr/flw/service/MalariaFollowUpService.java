@@ -9,7 +9,7 @@ import java.util.List;
 public interface MalariaFollowUpService {
 
 
-    public String saveFollowUp(MalariaFollowUpDTO dto) ;
+    public Boolean saveFollowUp(MalariaFollowUpDTO dto) ;
 
 
     List<MalariaFollowListUpDTO> getByUserId(Integer userId);

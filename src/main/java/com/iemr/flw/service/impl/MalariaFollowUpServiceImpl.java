@@ -19,38 +19,39 @@ public class MalariaFollowUpServiceImpl implements MalariaFollowUpService {
     @Autowired
     private MalariaFollowUpRepository repository;
 
-    public String saveFollowUp(MalariaFollowUpDTO malariaFollowUpDTO) {
+    public Boolean saveFollowUp(MalariaFollowUpDTO malariaFollowUpDTO) {
+
        for(MalariaFollowListUpDTO dto : malariaFollowUpDTO.getMalariaFollowListUp()){
            if (dto.getTreatmentStartDate().after(new Date())) {
-               return "Treatment start date cannot be in the future.";
+               return false;
            }
 
            if (dto.getTreatmentCompletionDate() != null &&
                    dto.getTreatmentCompletionDate().before(dto.getTreatmentStartDate())) {
-               return "Completion date cannot be before treatment start date.";
+               return false;
            }
 
            if (dto.getReferralDate() != null &&
                    dto.getReferralDate().before(dto.getTreatmentStartDate())) {
-               return "Referral date must be after treatment start date.";
+               return false;
            }
 
            if ("Pf".equalsIgnoreCase(dto.getTreatmentGiven()) &&
                    !(dto.getPfDay1() || dto.getPvDay2() || dto.getPfDay3())) {
-               return "At least one Pf day must be selected.";
+               return false;
            }
 
            if ("Pv".equalsIgnoreCase(dto.getTreatmentGiven()) &&
                    !(dto.getPfDay1() || dto.getPvDay2() || dto.getPfDay3()|| dto.getPvDay4())) {
-               return "At least one Pv day must be selected.";
+               return false;
            }
 
            MalariaFollowUp entity = new MalariaFollowUp();
            BeanUtils.copyProperties(dto, entity);
            repository.save(entity);
-           return "Follow-up saved successfully";
+           return true;
        }
-       return  "Fail";
+       return  false;
     }
 
     public List<MalariaFollowListUpDTO> getByUserId(Integer userId) {
