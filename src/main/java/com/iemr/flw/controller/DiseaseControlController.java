@@ -137,8 +137,6 @@ public class DiseaseControlController {
             response.put("status", "Error" + e.getMessage());
             response.put("statusCode", 500);
         }
-
-
         return ResponseEntity.ok(response);
 
     }
@@ -154,10 +152,7 @@ public class DiseaseControlController {
         } catch (Exception e) {
             response.put("status", "Error" + e.getMessage());
             response.put("statusCode", 500);
-
         }
-
-
         return ResponseEntity.ok(response);
     }
 
