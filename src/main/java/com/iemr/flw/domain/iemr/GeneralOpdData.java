@@ -18,7 +18,11 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see https://www.gnu.org/licenses/.
+* @@ -0,0 +1,212 @@
+/*
+* AMRIT – Accessible Medical Records via Integrated Technology
 */
+
 package com.iemr.flw.domain.iemr;
 
 import java.sql.Timestamp;
