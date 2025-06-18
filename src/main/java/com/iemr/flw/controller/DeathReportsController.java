@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.CdrDTO;
 import com.iemr.flw.dto.iemr.MdsrDTO;
@@ -86,7 +87,10 @@ public class DeathReportsController {
             logger.info("fetching All CDR Details for user: " + requestDTO.getAshaId());
             if (requestDTO != null) {
                 List<CdrDTO> result = deathReportsService.getCdrRecords(requestDTO);
-                String s = (new Gson()).toJson(result);
+                Gson gson = new GsonBuilder()
+                        .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
+                        .create();
+                String s = gson.toJson(result);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -111,7 +115,10 @@ public class DeathReportsController {
             logger.info("fetching All MDSR Details for user: " + requestDTO.getAshaId());
             if (requestDTO != null) {
                 List<MdsrDTO> result = deathReportsService.getMdsrRecords(requestDTO);
-                String s = (new Gson()).toJson(result);
+                Gson gson = new GsonBuilder()
+                        .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
+                        .create();
+                String s = gson.toJson(result);
                 if (s != null)
                     response.setResponse(s);
                 else

@@ -1,6 +1,7 @@
 package com.iemr.flw.controller;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.ChildCareService;
@@ -58,7 +59,8 @@ public class ChildCareController {
             logger.info("fetching All HBYC Details for user: " + requestDTO.getAshaId());
             if (requestDTO != null) {
                 List<HbycDTO> result = childCareService.getHbycRecords(requestDTO);
-                String s = (new Gson()).toJson(result);
+                Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+                String s = gson.toJson(result);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -107,7 +109,8 @@ public class ChildCareController {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
                 List<HbncRequestDTO> result = childCareService.getHBNCDetails(requestDTO);
-                String s = new Gson().toJson(result);
+                Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+                String s = gson.toJson(result);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -155,7 +158,8 @@ public class ChildCareController {
                 logger.info("request object for getting child vaccination with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
                 List<ChildVaccinationDTO> result = childCareService.getChildVaccinationDetails(requestDTO);
-                String s = new Gson().toJson(result);
+                Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+                String s = gson.toJson(result);
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -179,7 +183,8 @@ public class ChildCareController {
             logger.info("request object for getting all vaccines with timestamp : " + new Timestamp(System.currentTimeMillis()) +
                     " for category: " + category);
             List<VaccineDTO> result = childCareService.getAllChildVaccines(category);
-            String s = new Gson().toJson(result);
+            Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+            String s = gson.toJson(result);
             if (s != null)
                 response.setResponse(s);
             else

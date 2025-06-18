@@ -390,20 +390,32 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         response.put("data", resultList);
         response.put("pageSize", Integer.parseInt(door_to_door_page_size));
         response.put("totalPage", totalPage);
-        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy HH:mm:ss a").create();
+        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         return gson.toJson(response);
     }
 
 	private Map<String, Object> getBenHealthDetails(BigInteger benRegId) {
 		Map<String, Object> healthDetails = new HashMap<>();
 		if (null != benRegId) {
-			String benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
-			if (null != benHealthIdNumber) {
-				ArrayList<Object[]> health = beneficiaryRepo.getBenHealthDetails(benHealthIdNumber);
-				for (Object[] objects : health) {
-					healthDetails.put("HealthID", objects[0]);
-					healthDetails.put("HealthIdNumber", objects[1]);
-					healthDetails.put("isNewAbha", objects[2]);
+			Object[] benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
+			if (benHealthIdNumber != null && benHealthIdNumber.length > 0) {
+				Object[] healthData = (Object[]) benHealthIdNumber[0];
+				String healthIdNumber = healthData[0] != null ? healthData[0].toString() : null;
+				String healthId = healthData[1] != null ? healthData[1].toString() : null;
+
+				if (null != healthIdNumber) {
+					List<Object[]> health = beneficiaryRepo.getBenHealthDetails(healthIdNumber);
+					if (health != null && !health.isEmpty()) {
+						for (Object[] objects : health) {
+							healthDetails.put("HealthID", objects[0]);
+							healthDetails.put("HealthIdNumber", objects[1]);
+							healthDetails.put("isNewAbha", objects[2]);
+						}
+					} else {
+						healthDetails.put("HealthIdNumber", healthIdNumber);
+						healthDetails.put("HealthID", healthId);
+						healthDetails.put("isNewAbha", null);
+					}
 				}
 			}
 		}
@@ -452,7 +464,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     if (value.getHealthIdNumber() != null)
                         resultMap.put("healthIdNumber", value.getHealthIdNumber());
                 }
-
             }
 
         } catch (Exception e) {
