@@ -57,11 +57,11 @@ public class CoupleServiceImpl implements CoupleService {
                         eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
 
                 if (existingECR != null && null != existingECR.getNumLiveChildren()) {
-                    if(existingECR.getNumLiveChildren() == 0 && it.getNumLiveChildren() >= 1 && it.getMarriageFirstChildGap() >= 3) {
+                    if(existingECR.getNumLiveChildren() == 0 && it.getNumLiveChildren() >= 1 && null != it.getMarriageFirstChildGap() && it.getMarriageFirstChildGap() >= 3) {
                         IncentiveActivity activity1 =
                                 incentivesRepo.findIncentiveMasterByNameAndGroup("MARRIAGE_1st_CHILD_GAP", "FAMILY PLANNING");
                         createIncentiveRecord(recordList, it, activity1);
-                    } else if (existingECR.getNumLiveChildren() == 1 && it.getNumLiveChildren() >= 2 && it.getMarriageFirstChildGap() >= 2) {
+                    } else if (existingECR.getNumLiveChildren() == 1 && it.getNumLiveChildren() >= 2 && null != it.getMarriageFirstChildGap() && it.getMarriageFirstChildGap() >= 2) {
                         IncentiveActivity activity2 =
                                 incentivesRepo.findIncentiveMasterByNameAndGroup("1st_2nd_CHILD_GAP", "FAMILY PLANNING");
                         createIncentiveRecord(recordList, it, activity2);
@@ -202,7 +202,7 @@ public class CoupleServiceImpl implements CoupleService {
             List<EligibleCoupleDTO> list = eligibleCoupleRegisterList.stream()
                     .map(eligibleCoupleRegister -> mapper.convertValue(eligibleCoupleRegister, EligibleCoupleDTO.class))
                     .collect(Collectors.toList());
-            Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy HH:mm:ss a").create();
+            Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
             return gson.toJson(list);
         } catch (Exception e) {
             logger.error(e.getMessage());

@@ -1,5 +1,8 @@
 package com.iemr.flw.utils;
 
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
 import com.iemr.flw.domain.iemr.M_User;
 import com.iemr.flw.repo.iemr.EmployeeMasterRepo;
 import com.iemr.flw.utils.exception.IEMRException;
@@ -13,6 +16,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import com.iemr.flw.domain.iemr.M_User;
+import com.iemr.flw.repo.iemr.EmployeeMasterRepo;
+import com.iemr.flw.utils.exception.IEMRException;
+
+import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -110,6 +119,18 @@ public class JwtAuthenticationUtil {
 		M_User user = userLoginRepo.getUserByUserID(Integer.parseInt(userId));
 
 		if (user != null) {
+			M_User userHash = new M_User();
+			userHash.setUserID(user.getUserID());
+			userHash.setUserName(user.getUserName());
+
+			// Cache the minimal user in Redis for future requests (cache for 30 minutes)
+			redisTemplate.opsForValue().set(redisKey, userHash, 30, TimeUnit.MINUTES);
+
+			// Log that the user has been stored in Redis
+			logger.info("User stored in Redis with key: " + redisKey);
+
+			return user;
+
 			// Cache the user in Redis for future requests (cache for 30 minutes)
 			redisTemplate.opsForValue().set(redisKey, user, 30, TimeUnit.MINUTES);
 
@@ -118,6 +139,7 @@ public class JwtAuthenticationUtil {
 		} else {
 			logger.warn("User not found for userId: " + userId);
 		}
+
 
 		return user;
 	}

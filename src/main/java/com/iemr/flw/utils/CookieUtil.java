@@ -1,5 +1,14 @@
 package com.iemr.flw.utils;
 
+import java.util.Arrays;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,6 +43,8 @@ public class CookieUtil {
 		}
 		response.addCookie(cookie); // Add the cookie to the response
 	}
+
+	public static String getJwtTokenFromCookie(HttpServletRequest request) {
 
 	public String getJwtTokenFromCookie(HttpServletRequest request) {
 		return Arrays.stream(request.getCookies()).filter(cookie -> "Jwttoken".equals(cookie.getName()))

@@ -1,5 +1,18 @@
 package com.iemr.flw.utils;
 
+
+import java.util.function.Function;
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.iemr.flw.utils.exception.IEMRException;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import com.iemr.flw.utils.exception.IEMRException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -17,6 +30,13 @@ public class JwtUtil {
 
 	@Value("${jwt.secret}")
 	private String SECRET_KEY;
+	
+	@Autowired
+	private TokenDenylist tokenDenylist;
+
+	// Generate a key using the secret
+	private SecretKey getSigningKey() {
+
 
 	private static final long EXPIRATION_TIME = 24L * 60 * 60 * 1000; // 1 day in milliseconds
 
@@ -27,6 +47,24 @@ public class JwtUtil {
 		}
 		return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
 	}
+
+	// Validate and parse JWT Token
+	public Claims validateToken(String token) {
+		try {
+			Claims claims = Jwts.parser()
+				.verifyWith(getSigningKey())
+				.build()
+				.parseSignedClaims(token)
+				.getPayload();
+				
+			String jti = claims.getId();
+			
+			// Check if token is denylisted (only if jti exists)
+			if (jti != null && tokenDenylist.isTokenDenylisted(jti)) {
+				return null;
+			}
+			
+			return claims;
 
 	// Generate JWT Token
 	public String generateToken(String username, String userId) {
@@ -53,6 +91,8 @@ public class JwtUtil {
 		return extractClaim(token, Claims::getSubject);
 	}
 
+	public Integer extractUserId(String jwtToken) throws IEMRException {
+
 	public Integer extractUserId(String  jwtToken) throws IEMRException {
 		try {
 			// Validate JWT token and extract claims
@@ -64,11 +104,27 @@ public class JwtUtil {
 
 			String userId = claims.get("userId", String.class);
 
+			return Integer.parseInt(userId);
+
 			return  Integer.parseInt(userId);
 
 		} catch (Exception e) {
 			throw new IEMRException("Validation error: " + e.getMessage(), e);
 		}
+
+	}
+
+	public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+		final Claims claims = extractAllClaims(token);
+		return claims != null ? claimsResolver.apply(claims) : null;
+	}
+
+	private Claims extractAllClaims(String token) {
+		return Jwts.parser()
+				.verifyWith(getSigningKey())
+				.build()
+				.parseSignedClaims(token)
+				.getPayload();	}
 
 
 	}

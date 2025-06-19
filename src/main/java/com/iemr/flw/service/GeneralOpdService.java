@@ -1,8 +1,8 @@
 /*
-* AMRIT – Accessible Medical Records via Integrated Technology 
-* Integrated EHR (Electronic Health Records) Solution 
+* AMRIT – Accessible Medical Records via Integrated Technology
+* Integrated EHR (Electronic Health Records) Solution
 *
-* Copyright (C) "Piramal Swasthya Management and Research Institute" 
+* Copyright (C) "Piramal Swasthya Management and Research Institute"
 *
 * This file is part of AMRIT.
 *
@@ -18,25 +18,17 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see https://www.gnu.org/licenses/.
+* @@ -0,0 +1,212 @@
+/*
+* AMRIT – Accessible Medical Records via Integrated Technology
 */
-package com.iemr.flw.mapper;
+package com.iemr.flw.service;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
+import com.iemr.flw.dto.iemr.GeneralOpdDto;
 
-public class OutputMapper {
-	static GsonBuilder builder;
+import java.util.List;
 
-	public OutputMapper() {
-		if (builder == null) {
-			builder = new GsonBuilder();
-			builder.setDateFormat("MMM dd, yyyy h:mm:ss a");
-			builder.excludeFieldsWithoutExposeAnnotation();
-			builder.serializeNulls();
-		}
-	}
-
-	public static Gson gson() {
-		return builder.create();
-	}
+public interface GeneralOpdService {
+    Object getOpdListForAsha(GetBenRequestHandler getBenRequestHandler,String authorisation) throws Exception;
 }
