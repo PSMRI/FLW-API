@@ -57,4 +57,5 @@ public class IncentiveActivity {
     @Column(name = "is_deleted")
     private Boolean isDeleted;
 
+
 }
