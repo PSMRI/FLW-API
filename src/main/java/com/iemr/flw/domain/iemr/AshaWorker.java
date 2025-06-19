@@ -97,4 +97,15 @@ public class AshaWorker {
 
     @Column(name = "ProviderServiceMapID")
     private Integer ProviderServiceMapID;
+
+    @Column(name = "profileImage")
+    private String profileImage;
+
+    @Column(name = "isFatherOrSpouse")
+    private Boolean isFatherOrSpouse;
+    @Column(name = "supervisorName")
+    private String  supervisorName;
+    @Column(name = "supervisorMobile")
+    private String supervisorMobile;
+
 }

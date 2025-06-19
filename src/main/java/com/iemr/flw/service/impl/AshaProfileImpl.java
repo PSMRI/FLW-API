@@ -3,6 +3,9 @@ package com.iemr.flw.service.impl;
 import com.iemr.flw.domain.iemr.AshaWorker;
 import com.iemr.flw.domain.iemr.M_User;
 import com.iemr.flw.repo.iemr.AshaProfileRepo;
+import com.iemr.flw.service.AshaProfileService;
+import com.iemr.flw.service.EmployeeMasterInter;
+
 import com.iemr.flw.repo.iemr.EmployeeMasterRepo;
 import com.iemr.flw.service.AshaProfileService;
 import com.iemr.flw.service.EmployeeMasterInter;
@@ -14,6 +17,10 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.Objects;
+
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +33,7 @@ public class AshaProfileImpl implements AshaProfileService {
     AshaProfileRepo ashaProfileRepo;
     @Autowired
     EmployeeMasterInter employeeMasterInter;
+
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
     @Autowired
@@ -128,6 +136,11 @@ public class AshaProfileImpl implements AshaProfileService {
             editdata.setAnm2Mobile(editAshaWorkerRequest.getAnm2Mobile());  // Corrected line
             editdata.setAwwMobile(editAshaWorkerRequest.getAwwMobile());
             editdata.setProviderServiceMapID(editAshaWorkerRequest.getProviderServiceMapID());
+            editdata.setProfileImage(editAshaWorkerRequest.getProfileImage());
+            editdata.setIsFatherOrSpouse(editAshaWorkerRequest.getIsFatherOrSpouse());
+            editdata.setSupervisorName(editAshaWorkerRequest.getSupervisorName());
+            editdata.setSupervisorMobile(editAshaWorkerRequest.getSupervisorMobile());
+
             return editdata;
 
         } catch (Exception e) {
@@ -138,7 +151,6 @@ public class AshaProfileImpl implements AshaProfileService {
 
 
     }
-
 
 
 }

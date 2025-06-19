@@ -120,4 +120,11 @@ public class HttpUtils {
 	public void setStatus(HttpStatus status) {
 		this.status = status;
 	}
+
+	public ResponseEntity<String> getV1(String uri) {
+		System.out.println(uri.toString());
+		HttpEntity<String> requestEntity = new HttpEntity<String>("", headers);
+		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.GET, requestEntity, String.class);
+		return responseEntity;
+	}
 }
