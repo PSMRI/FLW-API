@@ -5,7 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
+
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,11 +31,10 @@ public class DeathReportsController {
     @Autowired
     private DeathReportsService deathReportsService;
 
-    @CrossOrigin()
     @Operation(summary = "save CDR details")
     @RequestMapping(value = { "/cdr/saveAll" }, method = { RequestMethod.POST })
     public String saveCdrRecords(@RequestBody List<CdrDTO> cdrDTOS,
-                                     @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("Saving All CDR Details");
@@ -54,11 +53,10 @@ public class DeathReportsController {
         return response.toString();
     }
 
-    @CrossOrigin()
     @Operation(summary = "save MDSR details")
     @RequestMapping(value = { "/mdsr/saveAll" }, method = { RequestMethod.POST })
     public String saveMdsrRecords(@RequestBody List<MdsrDTO> mdsrDTOS,
-                                             @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("Saving All MDSR Details");
@@ -77,18 +75,17 @@ public class DeathReportsController {
         return response.toString();
     }
 
-    @CrossOrigin()
     @Operation(summary = "get List of CDR details")
     @RequestMapping(value = { "/cdr/getAll" }, method = { RequestMethod.POST })
     public String getCdrRecords(@RequestBody GetBenRequestHandler requestDTO,
-                                    @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("fetching All CDR Details for user: " + requestDTO.getAshaId());
             if (requestDTO != null) {
                 List<CdrDTO> result = deathReportsService.getCdrRecords(requestDTO);
                 Gson gson = new GsonBuilder()
-                        .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
+                        .setDateFormat("MMM dd, yyyy h:mm:ss a") // Set the desired date format
                         .create();
                 String s = gson.toJson(result);
                 if (s != null)
@@ -105,18 +102,17 @@ public class DeathReportsController {
         return response.toString();
     }
 
-    @CrossOrigin()
     @Operation(summary = "get List of MDSR details")
     @RequestMapping(value = { "/mdsr/getAll" }, method = { RequestMethod.POST })
     public String getMdsrRecords(@RequestBody GetBenRequestHandler requestDTO,
-                                                       @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("fetching All MDSR Details for user: " + requestDTO.getAshaId());
             if (requestDTO != null) {
                 List<MdsrDTO> result = deathReportsService.getMdsrRecords(requestDTO);
                 Gson gson = new GsonBuilder()
-                        .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
+                        .setDateFormat("MMM dd, yyyy h:mm:ss a") // Set the desired date format
                         .create();
                 String s = gson.toJson(result);
                 if (s != null)

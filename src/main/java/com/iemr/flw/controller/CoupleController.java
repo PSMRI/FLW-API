@@ -5,7 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
+
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,11 +31,10 @@ public class CoupleController {
     @Autowired
     private CoupleService coupleService;
 
-    @CrossOrigin()
     @Operation(summary = "save eligible couple registration details")
-    @RequestMapping(value = {"/register/saveAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/register/saveAll" }, method = { RequestMethod.POST })
     public String saveEligibleCouple(@RequestBody List<EligibleCoupleDTO> eligibleCoupleDTOs,
-                                     @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("Saving All Eligible Couple Details");
@@ -54,11 +53,10 @@ public class CoupleController {
         return response.toString();
     }
 
-    @CrossOrigin()
     @Operation(summary = "save eligible couple tracking details")
-    @RequestMapping(value = {"/tracking/saveAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/tracking/saveAll" }, method = { RequestMethod.POST })
     public String saveEligibleCoupleTracking(@RequestBody List<EligibleCoupleTrackingDTO> eligibleCoupleTrackingDTOs,
-                                             @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("Saving All Eligible Couple Tracking Details");
@@ -77,17 +75,16 @@ public class CoupleController {
         return response.toString();
     }
 
-    @CrossOrigin()
     @Operation(summary = "get List of eligible couple registration details")
-    @RequestMapping(value = {"/register/getAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/register/getAll" }, method = { RequestMethod.POST })
     public String getEligibleCouple(@RequestBody GetBenRequestHandler requestDTO,
-                                    @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             if (requestDTO != null) {
                 logger.info("fetching All Eligible Couple Details for user: " + requestDTO.getAshaId());
                 String s = coupleService.getEligibleCoupleRegRecords(requestDTO);
-                
+
                 if (s != null)
                     response.setResponse(s);
                 else
@@ -99,21 +96,20 @@ public class CoupleController {
             logger.error("Error in fetching eligible couple registration details, " + e);
             response.setError(5000, "Error in fetching eligible couple registration details : " + e);
         }
-       return response.toString();
+        return response.toString();
     }
 
-    @CrossOrigin()
     @Operation(summary = "get List of eligible couple tracking details")
     @RequestMapping(value = { "/tracking/getAll" }, method = { RequestMethod.POST })
     public String getEligibleCoupleTracking(@RequestBody GetBenRequestHandler requestDTO,
-                                               @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             if (requestDTO != null) {
                 logger.info("fetching All Eligible Couple Tracking Details for user: " + requestDTO.getAshaId());
                 List<EligibleCoupleTrackingDTO> result = coupleService.getEligibleCoupleTracking(requestDTO);
                 Gson gson = new GsonBuilder()
-                        .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
+                        .setDateFormat("MMM dd, yyyy h:mm:ss a") // Set the desired date format
                         .create();
                 String s = gson.toJson(result);
                 if (s != null)

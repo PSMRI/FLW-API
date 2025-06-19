@@ -21,16 +21,15 @@ import java.util.List;
 @RequestMapping(value = "/cbac", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class CbacController {
 
-	private final Logger logger = LoggerFactory.getLogger(CbacController.class);
+    private final Logger logger = LoggerFactory.getLogger(CbacController.class);
 
     @Autowired
     private CbacService cbacService;
 
-    @CrossOrigin()
     @Operation(summary = "get cbac details of all beneficiaries registered with given user id")
-    @RequestMapping(value = {"/getAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/getAll" }, method = { RequestMethod.POST })
     public String getAllCbacDetailsByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                            @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("fetching All Cbac Details for user: " + requestDTO.getAshaId());
@@ -50,12 +49,10 @@ public class CbacController {
         return response.toString();
     }
 
-
-    @CrossOrigin()
     @Operation(summary = "save cbac details of all beneficiaries registered with given user name")
-    @RequestMapping(value = {"/saveAll"}, method = {RequestMethod.POST})
+    @RequestMapping(value = { "/saveAll" }, method = { RequestMethod.POST })
     public String saveAllCbacDetailsByUserId(@RequestBody List<CbacDTO> cbacDTOS,
-                                             @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("Saving Cbac Details with timestamp : " + new Timestamp(System.currentTimeMillis()));
