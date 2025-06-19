@@ -1,3 +1,27 @@
+/*
+* AMRIT – Accessible Medical Records via Integrated Technology
+* Integrated EHR (Electronic Health Records) Solution
+*
+* Copyright (C) "Piramal Swasthya Management and Research Institute"
+*
+* This file is part of AMRIT.
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see https://www.gnu.org/licenses/.
+*
+/*
+* AMRIT – Accessible Medical Records via Integrated Technology
+*/
 package com.iemr.flw.service.impl;
 
 import com.iemr.flw.controller.CoupleController;
@@ -20,7 +44,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class VillageLevelFormServiceImpl implements VillageLevelFormService {
-    private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
+    private final Logger logger = LoggerFactory.getLogger(VillageLevelFormServiceImpl.class);
 
     @Autowired
     private IncentiveRecordRepo recordRepo;
@@ -47,48 +71,48 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
 
     @Override
-    public String submitForm(VhndDto dto) {
+    public Boolean submitForm(VhndDto dto) {
         for (VHNDFormDTO vhndFormDTO : dto.getEntries()) {
             saveVhndFormData(vhndFormDTO, dto.getUserId());
 
         }
-        return "Success";
+        return true;
     }
 
     @Override
-    public String submitVhncForm(VhncDto dto) {
+    public Boolean submitVhncForm(VhncDto dto) {
         for (VhncFormDTO vhncFormDTO : dto.getEntries()) {
           saveVhncFormData(vhncFormDTO, dto.getUserId());
         }
-        return "Success";
+        return true;
     }
 
 
     @Override
-    public String submitPhcForm(PhcReviewMeetingDTO dto) {
+    public Boolean submitPhcForm(PhcReviewMeetingDTO dto) {
         for (PhcReviewMeetingFormDTO phcReviewMeetingDTO : dto.getEntries()) {
              submitPhcForm(phcReviewMeetingDTO, dto.getUserId());
         }
-        return "Success";
+        return true;
     }
 
     @Override
-    public String submitAhdForm(AhdMeetingDto dto) {
+    public Boolean submitAhdForm(AhdMeetingDto dto) {
         for (AhDMeetingFormDTO ahDMeetingFormDTO : dto.getEntries()) {
             submitAhdForm(ahDMeetingFormDTO, dto.getUserId());
         }
-        return "Success";
+        return true;
     }
 
     @Override
-    public String submitDewormingForm(DewormingDto dto) {
+    public Boolean submitDewormingForm(DewormingDto dto) {
         for (DewormingFormDTO dewormingFormDTO : dto.getEntries()) {
              submitDewormingForm(dewormingFormDTO, dto.getUserId());
         }
-        return "Success";
+        return true;
     }
 
-    private String saveVhncFormData(VhncFormDTO vhncFormDTO, Integer userID) {
+    private Boolean saveVhncFormData(VhncFormDTO vhncFormDTO, Integer userID) {
         VhncForm vhncForm = new VhncForm();
         vhncForm.setUserId(Long.valueOf(userID));
         vhncForm.setVhncDate(vhncFormDTO.getVhncDate());
@@ -101,11 +125,11 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         vhncFormRepo.save(vhncForm);
         checkAndAddIncentives(vhncForm.getVhncDate(), Math.toIntExact(vhncForm.getUserId()), vhncForm.getFormType(), vhncForm.getCreatedBy());
 
-        return "Save VHNC Form successfully";
+        return true;
     }
 
 
-    private String submitPhcForm(PhcReviewMeetingFormDTO dto, Integer userID) {
+    private Boolean submitPhcForm(PhcReviewMeetingFormDTO dto, Integer userID) {
         PHCReviewForm phcReviewForm = new PHCReviewForm();
         phcReviewForm.setUserId(Long.valueOf(userID));
         phcReviewForm.setPhcReviewDate(dto.getPhcReviewDate());
@@ -117,10 +141,10 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         phcReviewFormRepo.save(phcReviewForm);
         checkAndAddIncentives(phcReviewForm.getPhcReviewDate(), Math.toIntExact(phcReviewForm.getUserId()), phcReviewForm.getFormType(), phcReviewForm.getCreatedBy());
 
-        return "Save PHC Review Form successfully";
+        return true;
     }
 
-    private String submitAhdForm(AhDMeetingFormDTO dto, Integer userID) {
+    private Boolean submitAhdForm(AhDMeetingFormDTO dto, Integer userID) {
         AHDForm ahdForm = new AHDForm();
         ahdForm.setUserId(Long.valueOf(userID));
         ahdForm.setMobilizedForAHD(dto.getMobilizedForAHD());
@@ -135,10 +159,10 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
         }
 
-        return "Save AHD Form successfully";
+        return true;
     }
 
-    private String submitDewormingForm(DewormingFormDTO dto, Integer userID) {
+    private Boolean submitDewormingForm(DewormingFormDTO dto, Integer userID) {
         DewormingForm dewormingForm = new DewormingForm();
         dewormingForm.setUserId(Long.valueOf(userID));
         dewormingForm.setDewormingDone(dto.getDewormingDone());
@@ -153,11 +177,11 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
             checkAndAddIncentives(dewormingForm.getDewormingDate(), Math.toIntExact(dewormingForm.getUserId()), dewormingForm.getFormType(), dewormingForm.getCreatedBy());
 
         }
-        return "Save Deworming Form successfully";
+        return true;
     }
 
 
-    private String saveVhndFormData(VHNDFormDTO vhndFormDTO, Integer userID) {
+    private Boolean saveVhndFormData(VHNDFormDTO vhndFormDTO, Integer userID) {
         VHNDForm vhndForm = new VHNDForm();
         vhndForm.setUserId(userID);
         vhndForm.setVhndDate(vhndFormDTO.getVhndDate());
@@ -168,7 +192,7 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         vhndForm.setFormType("VHND");
         vhndRepo.save(vhndForm);
         checkAndAddIncentives(vhndForm.getVhndDate(), vhndForm.getUserId(), vhndForm.getFormType(), vhndForm.getCreatedBy());
-        return "Save Vhnd Form successfully";
+        return true;
 
 
     }
