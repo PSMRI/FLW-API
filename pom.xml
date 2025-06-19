@@ -27,7 +27,7 @@
         <m2e.apt.activation>jdt_apt</m2e.apt.activation>
         <org.mapstruct.version>1.2.0.Final</org.mapstruct.version>
         <org.projectlombok.version>1.16.18</org.projectlombok.version>
-        <environment>${ENV_VAR}</environment>
+        <environment>local</environment>
         <target-properties>target/classes/application.properties</target-properties>
         <source-properties>target/classes/common_${environment}.properties</source-properties>
         <maven.test.skip>true</maven.test.skip>
@@ -133,6 +133,22 @@
 			<artifactId>jackson-datatype-joda</artifactId>
 			<version>2.17.0</version>
 		</dependency>
+
+	<dependencies>
+		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api -->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.12.6</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl -->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.12.6</version>
+			<scope>runtime</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-jackson -->
 		<!--
 		https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
 		<dependency>
@@ -273,7 +289,7 @@
     <build>
         <finalName>${artifactId}-${version}</finalName>
         <plugins>
-			
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>

@@ -2,6 +2,7 @@ package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
 
+import java.io.File;
 import java.sql.Timestamp;
 
 @Data
@@ -42,5 +43,8 @@ public class ANCVisitDTO {
     private Timestamp updatedDate;
     private String updatedBy;
     private Integer providerServiceMapID;
+    private String filePath;
+
+
 }
 

@@ -49,4 +49,8 @@ public class EligibleCoupleTracking {
 
     @Column(name = "updated_by")
     private String updatedBy;
+
+
+    @Column(name = "lmp_date")
+    private String lmpDate;
 }
