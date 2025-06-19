@@ -105,4 +105,7 @@ public class EligibleCoupleDTO implements Serializable {
     private Timestamp updatedDate;
 
     private String updatedBy;
+  
+    private String lmpDate;
+
 }
