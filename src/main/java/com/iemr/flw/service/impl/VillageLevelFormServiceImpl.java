@@ -71,7 +71,10 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
 
     @Override
-    public Boolean submitForm(VhndDto dto) {
+    public Boolean saveForm(VhndDto dto) {
+        if (dto == null || dto.getEntries() == null) {
+            return false;
+        }
         for (VHNDFormDTO vhndFormDTO : dto.getEntries()) {
             saveVhndFormData(vhndFormDTO, dto.getUserId());
 
@@ -80,34 +83,43 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
     }
 
     @Override
-    public Boolean submitVhncForm(VhncDto dto) {
+    public Boolean saveVhncForm(VhncDto dto) {
+        if (dto == null || dto.getEntries() == null) {
+            return false;
+        }
         for (VhncFormDTO vhncFormDTO : dto.getEntries()) {
-          saveVhncFormData(vhncFormDTO, dto.getUserId());
+            saveVhncFormData(vhncFormDTO, dto.getUserId());
         }
         return true;
     }
 
 
     @Override
-    public Boolean submitPhcForm(PhcReviewMeetingDTO dto) {
+    public Boolean savePhcForm(PhcReviewMeetingDTO dto) {
+        if (dto == null || dto.getEntries() == null) {
+            return false;
+        }
         for (PhcReviewMeetingFormDTO phcReviewMeetingDTO : dto.getEntries()) {
-             submitPhcForm(phcReviewMeetingDTO, dto.getUserId());
+            savePhcForm(phcReviewMeetingDTO, dto.getUserId());
         }
         return true;
     }
 
     @Override
-    public Boolean submitAhdForm(AhdMeetingDto dto) {
+    public Boolean saveAhdForm(AhdMeetingDto dto) {
+        if (dto == null || dto.getEntries() == null) {
+            return false;
+        }
         for (AhDMeetingFormDTO ahDMeetingFormDTO : dto.getEntries()) {
-            submitAhdForm(ahDMeetingFormDTO, dto.getUserId());
+            saveAhdForm(ahDMeetingFormDTO, dto.getUserId());
         }
         return true;
     }
 
     @Override
-    public Boolean submitDewormingForm(DewormingDto dto) {
+    public Boolean saveDewormingForm(DewormingDto dto) {
         for (DewormingFormDTO dewormingFormDTO : dto.getEntries()) {
-             submitDewormingForm(dewormingFormDTO, dto.getUserId());
+            saveDewormingForm(dewormingFormDTO, dto.getUserId());
         }
         return true;
     }
@@ -129,7 +141,7 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
     }
 
 
-    private Boolean submitPhcForm(PhcReviewMeetingFormDTO dto, Integer userID) {
+    private Boolean savePhcForm(PhcReviewMeetingFormDTO dto, Integer userID) {
         PHCReviewForm phcReviewForm = new PHCReviewForm();
         phcReviewForm.setUserId(Long.valueOf(userID));
         phcReviewForm.setPhcReviewDate(dto.getPhcReviewDate());
@@ -144,7 +156,7 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         return true;
     }
 
-    private Boolean submitAhdForm(AhDMeetingFormDTO dto, Integer userID) {
+    private Boolean saveAhdForm(AhDMeetingFormDTO dto, Integer userID) {
         AHDForm ahdForm = new AHDForm();
         ahdForm.setUserId(Long.valueOf(userID));
         ahdForm.setMobilizedForAHD(dto.getMobilizedForAHD());
@@ -162,7 +174,7 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         return true;
     }
 
-    private Boolean submitDewormingForm(DewormingFormDTO dto, Integer userID) {
+    private Boolean saveDewormingForm(DewormingFormDTO dto, Integer userID) {
         DewormingForm dewormingForm = new DewormingForm();
         dewormingForm.setUserId(Long.valueOf(userID));
         dewormingForm.setDewormingDone(dto.getDewormingDone());

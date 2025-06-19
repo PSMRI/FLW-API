@@ -31,15 +31,15 @@ import java.util.List;
 @Service
 public interface VillageLevelFormService {
 
-    Boolean submitForm(VhndDto dto);
+    Boolean saveForm(VhndDto dto);
 
-    Boolean submitVhncForm(VhncDto dto);
+    Boolean saveVhncForm(VhncDto dto);
 
-    Boolean submitPhcForm(PhcReviewMeetingDTO dto);
+    Boolean savePhcForm(PhcReviewMeetingDTO dto);
 
-    Boolean submitAhdForm(AhdMeetingDto dto);
+    Boolean saveAhdForm(AhdMeetingDto dto);
 
-    Boolean submitDewormingForm(DewormingDto dto);
+    Boolean saveDewormingForm(DewormingDto dto);
 
     List<?> getAll(GetVillageLevelRequestHandler getVillageLevelRequestHandler);
 }

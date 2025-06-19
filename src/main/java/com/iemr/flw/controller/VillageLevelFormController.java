@@ -43,10 +43,10 @@ public class VillageLevelFormController {
     private VillageLevelFormService villageLevelFormService;
 
     @RequestMapping(value = "vhnd/saveAll", method = RequestMethod.POST, headers = "Authorization")
-    public ResponseEntity<Map<String, Object>> submitVhndForm(@RequestBody VhndDto dto) {
+    public ResponseEntity<Map<String, Object>> saveVhndForm(@RequestBody VhndDto dto) {
         Map<String, Object> response = new HashMap<>();
         if (!dto.getEntries().isEmpty()) {
-            Boolean isSaved = villageLevelFormService.submitForm(dto);
+            Boolean isSaved = villageLevelFormService.saveForm(dto);
             boolean ok = isSaved;
             response.put("status", ok ? "Success" : "Fail");
             response.put("statusCode", ok ? 200 : 500);
@@ -65,11 +65,11 @@ public class VillageLevelFormController {
     }
 
     @RequestMapping(value = "vhnc/saveAll", method = RequestMethod.POST, headers = "Authorization")
-    public ResponseEntity<Map<String, Object>> submitVhncForm(@RequestBody VhncDto dto) {
+    public ResponseEntity<Map<String, Object>> saveVhncForm(@RequestBody VhncDto dto) {
         Map<String, Object> response = new HashMap<>();
 
         if (!dto.getEntries().isEmpty()) {
-            Boolean isSaved = villageLevelFormService.submitVhncForm(dto);
+            Boolean isSaved = villageLevelFormService.saveVhncForm(dto);
             boolean ok = isSaved;
             response.put("status", ok ? "Success" : "Fail");
             response.put("statusCode", ok ? 200 : 500);
@@ -88,11 +88,11 @@ public class VillageLevelFormController {
     }
 
     @RequestMapping(value = "phc/saveAll", method = RequestMethod.POST, headers = "Authorization")
-    public ResponseEntity<Map<String, Object>> submitPhcForm(@RequestBody PhcReviewMeetingDTO dto) {
+    public ResponseEntity<Map<String, Object>> savePhcForm(@RequestBody PhcReviewMeetingDTO dto) {
         Map<String, Object> response = new HashMap<>();
 
         if (!dto.getEntries().isEmpty()) {
-            Boolean isSaved = villageLevelFormService.submitPhcForm(dto);
+            Boolean isSaved = villageLevelFormService.savePhcForm(dto);
             boolean ok = isSaved;
             response.put("status", ok ? "Success" : "Fail");
             response.put("statusCode", ok ? 200 : 500);
@@ -110,11 +110,11 @@ public class VillageLevelFormController {
     }
 
     @RequestMapping(value = "ahd/saveAll", method = RequestMethod.POST, headers = "Authorization")
-    public ResponseEntity<Map<String, Object>> submitAhdForm(@RequestBody AhdMeetingDto dto) {
+    public ResponseEntity<Map<String, Object>> saveAhdForm(@RequestBody AhdMeetingDto dto) {
         Map<String, Object> response = new HashMap<>();
 
         if(!dto.getEntries().isEmpty()){
-            Boolean isSaved = villageLevelFormService.submitAhdForm(dto);
+            Boolean isSaved = villageLevelFormService.saveAhdForm(dto);
             boolean ok = isSaved;
             response.put("status", ok ? "Success" : "Fail");
             response.put("statusCode", ok ? 200 : 500);
@@ -130,11 +130,11 @@ public class VillageLevelFormController {
     }
 
     @RequestMapping(value = "deworming/saveAll", method = RequestMethod.POST, headers = "Authorization")
-    public ResponseEntity<Map<String, Object>> submitDewormingForm(@RequestBody DewormingDto dto) {
+    public ResponseEntity<Map<String, Object>> saveDewormingForm(@RequestBody DewormingDto dto) {
         Map<String, Object> response = new HashMap<>();
 
         if(!dto.getEntries().isEmpty()){
-            Boolean isSaved = villageLevelFormService.submitDewormingForm(dto);
+            Boolean isSaved = villageLevelFormService.saveDewormingForm(dto);
             boolean ok = isSaved;
             response.put("status", ok ? "Success" : "Fail");
             response.put("statusCode", ok ? 200 : 500);
