@@ -46,11 +46,11 @@ public class VillageLevelFormController {
     public ResponseEntity<Map<String, Object>> submitVhndForm(@RequestBody VhndDto dto) {
         Map<String, Object> response = new HashMap<>();
         if (!dto.getEntries().isEmpty()) {
-            String msg = villageLevelFormService.submitForm(dto);
-            boolean ok = "Success".equalsIgnoreCase(msg);
+            Boolean isSaved = villageLevelFormService.submitForm(dto);
+            boolean ok = isSaved;
             response.put("status", ok ? "Success" : "Fail");
             response.put("statusCode", ok ? 200 : 500);
-            response.put("message", msg);
+            response.put("message", "Save Successfully");
             return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
 
         } else {
@@ -69,11 +69,11 @@ public class VillageLevelFormController {
         Map<String, Object> response = new HashMap<>();
 
         if (!dto.getEntries().isEmpty()) {
-            String msg = villageLevelFormService.submitVhncForm(dto);
-            boolean ok = "Success".equalsIgnoreCase(msg);
+            Boolean isSaved = villageLevelFormService.submitVhncForm(dto);
+            boolean ok = isSaved;
             response.put("status", ok ? "Success" : "Fail");
             response.put("statusCode", ok ? 200 : 500);
-            response.put("message", msg);
+            response.put("message", "Save Successfully");
             return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
         } else {
             response.put("status", "Fail");
@@ -92,11 +92,11 @@ public class VillageLevelFormController {
         Map<String, Object> response = new HashMap<>();
 
         if (!dto.getEntries().isEmpty()) {
-            String msg = villageLevelFormService.submitPhcForm(dto);
-            boolean ok = "Success".equalsIgnoreCase(msg);
+            Boolean isSaved = villageLevelFormService.submitPhcForm(dto);
+            boolean ok = isSaved;
             response.put("status", ok ? "Success" : "Fail");
             response.put("statusCode", ok ? 200 : 500);
-            response.put("message", msg);
+            response.put("message", "Save Successfully");
             return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
         } else {
             response.put("status", "Fail");
@@ -114,11 +114,11 @@ public class VillageLevelFormController {
         Map<String, Object> response = new HashMap<>();
 
         if(!dto.getEntries().isEmpty()){
-            String msg = villageLevelFormService.submitAhdForm(dto);
-            boolean ok = "Success".equalsIgnoreCase(msg);
+            Boolean isSaved = villageLevelFormService.submitAhdForm(dto);
+            boolean ok = isSaved;
             response.put("status", ok ? "Success" : "Fail");
             response.put("statusCode", ok ? 200 : 500);
-            response.put("message", msg);
+            response.put("message", "Save Successfully");
             return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
         }else {
             response.put("status", "Fail");
@@ -134,11 +134,11 @@ public class VillageLevelFormController {
         Map<String, Object> response = new HashMap<>();
 
         if(!dto.getEntries().isEmpty()){
-            String msg = villageLevelFormService.submitDewormingForm(dto);
-            boolean ok = "Success".equalsIgnoreCase(msg);
+            Boolean isSaved = villageLevelFormService.submitDewormingForm(dto);
+            boolean ok = isSaved;
             response.put("status", ok ? "Success" : "Fail");
             response.put("statusCode", ok ? 200 : 500);
-            response.put("message", msg);
+            response.put("message", "Save Successfully");
             return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
         }else {
             response.put("status", "Fail");
