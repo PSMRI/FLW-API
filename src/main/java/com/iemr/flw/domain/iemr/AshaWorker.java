@@ -107,4 +107,5 @@ public class AshaWorker {
     private String  supervisorName;
     @Column(name = "supervisorMobile")
     private String supervisorMobile;
+
 }

@@ -9,7 +9,9 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.iemr.flw.repo.iemr.GeneralOpdRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +60,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     @Autowired
     private HouseHoldRepo houseHoldRepo;
+    @Autowired
+    private GeneralOpdRepo generalOpdRepo;
 
 
     @Override
@@ -353,8 +357,12 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
                     resultMap.put("beneficiaryDetails", benDetailsRMNCH_OBJ);
                     resultMap.put("abhaHealthDetails", healthDetails);
+                    resultMap.put("visitDate", healthDetails);
                     resultMap.put("houseoldId", benDetailsRMNCH_OBJ.getHouseoldId());
                     resultMap.put("benficieryid", benDetailsRMNCH_OBJ.getBenficieryid());
+                    RMNCHBeneficiaryDetailsRmnch finalBenDetailsRMNCH_OBJ = benDetailsRMNCH_OBJ;
+                    resultMap.put("generalOpdData", generalOpdRepo.findAll().stream().filter(generalOpdData -> generalOpdData.getBeneficiaryRegID().equals(finalBenDetailsRMNCH_OBJ.getBenficieryid())).collect(Collectors.toList()));
+
                     resultMap.put("BenRegId", m.getBenRegId());
 
                     // adding asha id / created by - user id
@@ -414,6 +422,22 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 		return healthDetails;
 	}
 
+    private Map<String, Object> getBenBenVisitDetails(BigInteger benRegId) {
+        Map<String, Object> healthDetails = new HashMap<>();
+        if (null != benRegId) {
+            String benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
+            if (null != benHealthIdNumber) {
+                ArrayList<Object[]> health = beneficiaryRepo.getBenHealthDetails(benHealthIdNumber);
+                for (Object[] objects : health) {
+                    healthDetails.put("HealthID", objects[0]);
+                    healthDetails.put("HealthIdNumber", objects[1]);
+                    healthDetails.put("isNewAbha", objects[2]);
+                }
+            }
+        }
+        return healthDetails;
+    }
+
 	public void fetchHealthIdByBenRegID(Long benRegID, String authorization, Map<String, Object> resultMap) {
         Map<String, Long> requestMap = new HashMap<String, Long>();
         requestMap.put("beneficiaryRegID", benRegID);
@@ -450,4 +474,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 //		return result;
 
     }
+
+
 }

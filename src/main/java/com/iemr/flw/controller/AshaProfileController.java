@@ -14,6 +14,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+
+import com.iemr.flw.utils.JwtAuthenticationUtil;
+import com.iemr.flw.utils.JwtUtil;
+import com.iemr.flw.utils.exception.IEMRException;
+import io.jsonwebtoken.Claims;
+import io.swagger.v3.oas.annotations.Operation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,11 +42,13 @@ public class AshaProfileController {
     private JwtUtil jwtUtil;
 
     @Autowired
+
     private EmployeeMasterInter employeeMasterInter;
 
     @RequestMapping(value = "editProfile", method = {RequestMethod.POST}, produces = {
             "application/json"}, consumes = "application/json")
-    public ResponseEntity<Map<String, Object>> editEmployee(@RequestBody AshaWorker editEmployee) {
+
+    public ResponseEntity<Map<String, Object>> editEmployee(@RequestBody AshaWorker editEmployee,@RequestHeader(value = "Authorization") String authorization) {
 
         try {
             System.out.println(editEmployee.toString());
@@ -105,4 +116,29 @@ public class AshaProfileController {
     }
 
 
+
+    public ResponseEntity<Map<String, Object>> getProfile(@RequestHeader("Authorization") String  authorization) throws IEMRException {
+        try {
+            AshaWorker ashaWorker = ashaProfileService.getProfileData(authorization);
+            if (ashaWorker != null) {
+                response.put("data", ashaWorker);
+                response.put("statusCode", 200);
+                response.put("status", "Success");
+            } else {
+                response.put("data", ashaWorker);
+                response.put("statusCode", 200);
+                response.put("status", "Success");
+                response.put("errorMessage", "Asha profile not found");
+            }
+
+        } catch (Exception e) {
+            logger.error("Unexpected error:", e);
+            ResponseEntity.status(500).body(e.getMessage());
+
+        }
+
+        return ResponseEntity.ok().body(response);
+
+
+    }
 }
