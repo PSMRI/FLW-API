@@ -114,31 +114,4 @@ public class AshaProfileController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-
-
-
-    public ResponseEntity<Map<String, Object>> getProfile(@RequestHeader("Authorization") String  authorization) throws IEMRException {
-        try {
-            AshaWorker ashaWorker = ashaProfileService.getProfileData(authorization);
-            if (ashaWorker != null) {
-                response.put("data", ashaWorker);
-                response.put("statusCode", 200);
-                response.put("status", "Success");
-            } else {
-                response.put("data", ashaWorker);
-                response.put("statusCode", 200);
-                response.put("status", "Success");
-                response.put("errorMessage", "Asha profile not found");
-            }
-
-        } catch (Exception e) {
-            logger.error("Unexpected error:", e);
-            ResponseEntity.status(500).body(e.getMessage());
-
-        }
-
-        return ResponseEntity.ok().body(response);
-
-
-    }
 }

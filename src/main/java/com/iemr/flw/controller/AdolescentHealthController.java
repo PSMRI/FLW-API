@@ -73,5 +73,4 @@ public class AdolescentHealthController {
         }
         return ResponseEntity.ok(response);
     }
-
 }

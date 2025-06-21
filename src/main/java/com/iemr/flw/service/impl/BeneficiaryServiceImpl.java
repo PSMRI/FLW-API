@@ -425,7 +425,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     private Map<String, Object> getBenBenVisitDetails(BigInteger benRegId) {
         Map<String, Object> healthDetails = new HashMap<>();
         if (null != benRegId) {
-            String benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
+            String benHealthIdNumber = String.valueOf(beneficiaryRepo.getBenHealthIdNumber(benRegId));
             if (null != benHealthIdNumber) {
                 ArrayList<Object[]> health = beneficiaryRepo.getBenHealthDetails(benHealthIdNumber);
                 for (Object[] objects : health) {

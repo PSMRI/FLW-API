@@ -9,14 +9,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.stereotype.Service;
-
-import java.util.Arrays;
-import java.util.Optional;
-
 @Service
 public class CookieUtil {
 
@@ -45,8 +37,6 @@ public class CookieUtil {
 	}
 
 	public static String getJwtTokenFromCookie(HttpServletRequest request) {
-
-	public String getJwtTokenFromCookie(HttpServletRequest request) {
 		return Arrays.stream(request.getCookies()).filter(cookie -> "Jwttoken".equals(cookie.getName()))
 				.map(Cookie::getValue).findFirst().orElse(null);
 	}

@@ -3,11 +3,6 @@ package com.iemr.flw.utils;
 import java.io.IOException;
 import java.util.Arrays;
 
-
-import jakarta.servlet.*;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -24,8 +19,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.io.IOException;
-
 @Component
 public class JwtUserIdValidationFilter implements Filter {
 
@@ -34,7 +27,7 @@ public class JwtUserIdValidationFilter implements Filter {
 	private final String allowedOrigins;
 
 	public JwtUserIdValidationFilter(JwtAuthenticationUtil jwtAuthenticationUtil,
-			@Value("${cors.allowed-origins}") String allowedOrigins) {
+									 @Value("${cors.allowed-origins}") String allowedOrigins) {
 		this.jwtAuthenticationUtil = jwtAuthenticationUtil;
 		this.allowedOrigins = allowedOrigins;
 	}
@@ -84,16 +77,6 @@ public class JwtUserIdValidationFilter implements Filter {
 
 		// Skip login and public endpoints
 		if (shouldSkipPath(path, contextPath)) {
-=======
-		// Log headers for debugging
-		String jwtTokenFromHeader = request.getHeader("Jwttoken");
-		logger.info("JWT token from header: ");
-
-		// Skip login and public endpoints
-		if (path.equals(contextPath + "/user/userAuthenticate")
-				|| path.equalsIgnoreCase(contextPath + "/user/logOutUserFromConcurrentSession")
-				|| path.startsWith(contextPath + "/public")) {
-			logger.info("Skipping filter for path: " + path);
 			filterChain.doFilter(servletRequest, servletResponse);
 			return;
 		}
@@ -170,33 +153,6 @@ public class JwtUserIdValidationFilter implements Filter {
 				|| path.equalsIgnoreCase(contextPath + "/user/logOutUserFromConcurrentSession")
 				|| path.startsWith(contextPath + "/swagger-ui") || path.startsWith(contextPath + "/v3/api-docs")
 				|| path.startsWith(contextPath + "/public");
-	}
-
-
-			// Retrieve JWT token from cookies
-			String jwtTokenFromCookie = getJwtTokenFromCookies(request);
-			logger.info("JWT token from cookie: ");
-
-			// Determine which token (cookie or header) to validate
-			String jwtToken = jwtTokenFromCookie != null ? jwtTokenFromCookie : jwtTokenFromHeader;
-			if (jwtToken == null) {
-				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT token not found in cookies or headers");
-				return;
-			}
-
-			// Validate JWT token and userId
-			boolean isValid = jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtToken);
-
-			if (isValid) {
-				// If token is valid, allow the request to proceed
-				filterChain.doFilter(servletRequest, servletResponse);
-			} else {
-				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
-			}
-		} catch (Exception e) {
-			logger.error("Authorization error: ", e);
-			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: ");
-		}
 	}
 
 	private String getJwtTokenFromCookies(HttpServletRequest request) {

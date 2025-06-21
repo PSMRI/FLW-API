@@ -10,14 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class EmployeeMasterImpl  implements EmployeeMasterInter {
-    @Autowired
-    EmployeeMasterRepo  employeeMasterRepo;
-
-    @Override
-    public M_User getUserDetails(Integer userID) {
-        return employeeMasterRepo.getUserByUserID(userID);
-
 public class EmployeeMasterImpl implements EmployeeMasterInter {
     @Autowired
     EmployeeMasterRepo employeeMasterRepo;

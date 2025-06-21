@@ -3,11 +3,6 @@ package com.iemr.flw.utils;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import com.iemr.flw.domain.iemr.M_User;
-import com.iemr.flw.repo.iemr.EmployeeMasterRepo;
-import com.iemr.flw.utils.exception.IEMRException;
-import io.jsonwebtoken.Claims;
-import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +17,6 @@ import com.iemr.flw.utils.exception.IEMRException;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Component
 public class JwtAuthenticationUtil {
@@ -130,17 +123,10 @@ public class JwtAuthenticationUtil {
 			logger.info("User stored in Redis with key: " + redisKey);
 
 			return user;
-
-			// Cache the user in Redis for future requests (cache for 30 minutes)
-			redisTemplate.opsForValue().set(redisKey, user, 30, TimeUnit.MINUTES);
-
-			// Log that the user has been stored in Redis
-			logger.info("User stored in Redis with key: " + redisKey);
 		} else {
 			logger.warn("User not found for userId: " + userId);
 		}
 
-
-		return user;
+		return null;
 	}
 }
