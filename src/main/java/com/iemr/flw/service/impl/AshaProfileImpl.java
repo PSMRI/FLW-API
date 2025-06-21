@@ -66,10 +66,9 @@ public class AshaProfileImpl implements AshaProfileService {
 
 
     @Override
-    public AshaWorker getProfileData(String authorization) {
+    public AshaWorker getProfileData(Integer userId) {
 
         try {
-            Integer userId = jwtUtil.extractUserId(authorization);
 
             Objects.requireNonNull(userId, "employeeId must not be null");
             return ashaProfileRepo.findByEmployeeId(userId)
