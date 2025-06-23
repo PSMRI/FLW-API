@@ -27,4 +27,5 @@ public class IRSRound {
 
     @Column(name = "householdId")
     private Long householdId;
+
 }
