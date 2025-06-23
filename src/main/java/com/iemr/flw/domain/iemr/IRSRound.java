@@ -26,5 +26,5 @@ public class IRSRound {
     private int rounds;
 
     @Column(name = "householdId")
-    private Long household;
+    private Long householdId;
 }
