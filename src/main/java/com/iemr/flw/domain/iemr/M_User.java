@@ -1,5 +1,6 @@
 package com.iemr.flw.domain.iemr;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 
@@ -14,135 +15,134 @@ import jakarta.persistence.Table;
 import lombok.Data;
 
 @Entity
-@Table(name = "m_User",schema = "db_iemr")
+@Table(name = "m_User", schema = "db_iemr")
 @Data
-public class M_User {
+public class M_User implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Expose
-    @Column(name="UserID")
+    @Column(name = "UserID")
     private Integer userID;
     @Expose
-    @Column(name="TitleID")
+    @Column(name = "TitleID")
     private Integer titleID;
     @Expose
-    @Column(name="FirstName")
+    @Column(name = "FirstName")
     private String firstName;
     @Expose
-    @Column(name="MiddleName")
+    @Column(name = "MiddleName")
     private String middleName;
     @Expose
-    @Column(name="LastName")
+    @Column(name = "LastName")
     private String lastName;
     @Expose
-    @Column(name="GenderID")
+    @Column(name = "GenderID")
     private Short genderID;
 
     @Expose
-    @Column(name="MaritalStatusID")
+    @Column(name = "MaritalStatusID")
     private Integer maritalStatusID;
     @Expose
-    @Column(name="DesignationID")
+    @Column(name = "DesignationID")
     private Integer designationID;
 
     @Expose
-    @Column(name="AadhaarNo")
+    @Column(name = "AadhaarNo")
     private String aadhaarNo;
     @Expose
-    @Column(name="PAN")
+    @Column(name = "PAN")
     private String pAN;
     @Expose
-    @Column(name="DOB")
+    @Column(name = "DOB")
     private LocalDate dOB;
     @Expose
-    @Column(name="DOJ")
+    @Column(name = "DOJ")
     private LocalDate dOJ;
     @Expose
-    @Column(name="QualificationID")
+    @Column(name = "QualificationID")
     private Integer qualificationID;
     @Expose
-    @Column(name="HealthProfessionalID")
+    @Column(name = "HealthProfessionalID")
     private String healthProfessionalID;
     @Expose
-    @Column(name="UserName")
+    @Column(name = "UserName")
     private String userName;
     @Expose
-    @Column(name="Password")
+    @Column(name = "Password")
     private String password;
     @Expose
-    @Column(name="IsExternal")
+    @Column(name = "IsExternal")
     private Boolean isExternal;
     @Expose
-    @Column(name="AgentID")
+    @Column(name = "AgentID")
     private String agentID;
     @Expose
-    @Column(name="AgentPassword")
+    @Column(name = "AgentPassword")
     private String agentPassword;
     @Expose
-    @Column(name="EmailID")
+    @Column(name = "EmailID")
     private String emailID;
     @Expose
-    @Column(name="StatusID")
+    @Column(name = "StatusID")
     private Integer statusID;
     @Expose
-    @Column(name="EmergencyContactPerson")
+    @Column(name = "EmergencyContactPerson")
     private String emergencyContactPerson;
     @Expose
-    @Column(name="EmergencyContactNo")
+    @Column(name = "EmergencyContactNo")
     private String emergencyContactNo;
     @Expose
-    @Column(name="IsSupervisor")
+    @Column(name = "IsSupervisor")
     private Boolean isSupervisor;
     @Expose
-    @Column(name="Deleted",insertable = false, updatable = true)
+    @Column(name = "Deleted", insertable = false, updatable = true)
     private Boolean deleted;
     @Expose
-    @Column(name="CreatedBy")
+    @Column(name = "CreatedBy")
     private String createdBy;
     @Expose
-    @Column(name="EmployeeID")
+    @Column(name = "EmployeeID")
     private String employeeID;
     @Expose
-    @Column(name="CreatedDate",insertable = false, updatable = false)
+    @Column(name = "CreatedDate", insertable = false, updatable = false)
     private Timestamp createdDate;
     @Expose
-    @Column(name="ModifiedBy")
+    @Column(name = "ModifiedBy")
     private String modifiedBy;
     @Expose
-    @Column(name="LastModDate",insertable = false, updatable = false)
+    @Column(name = "LastModDate", insertable = false, updatable = false)
     private Timestamp lastModDate;
 
     @Expose
-    @Column(name="Remarks")
+    @Column(name = "Remarks")
     private String remarks;
 
     @Expose
-    @Column(name="ContactNo")
+    @Column(name = "ContactNo")
     private String contactNo;
 
-
     @Expose
-    @Column(name="IsProviderAdmin")
+    @Column(name = "IsProviderAdmin")
     private Boolean isProviderAdmin;
 
     @Expose
-    @Column(name="ServiceProviderID")
+    @Column(name = "ServiceProviderID")
     private Integer serviceProviderID;
-
-
 
     @Expose
     @Column(name = "failed_attempt", insertable = false)
     private Integer failedAttempt;
+
     public M_User() {
         // TODO Auto-generated constructor stub
     }
 
     public M_User(Integer userID, String userName) {
         // TODO Auto-generated constructor stub
-        this.userID=userID;
-        this.userName=userName;
+        this.userID = userID;
+        this.userName = userName;
     }
 
 }
