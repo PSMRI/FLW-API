@@ -151,6 +151,7 @@ public class JwtUserIdValidationFilter implements Filter {
 	private boolean shouldSkipPath(String path, String contextPath) {
 		return path.equals(contextPath + "/user/userAuthenticate")
 				|| path.equalsIgnoreCase(contextPath + "/user/logOutUserFromConcurrentSession")
+				|| path.equalsIgnoreCase(contextPath + "/user/getUserDetail")
 				|| path.startsWith(contextPath + "/swagger-ui") || path.startsWith(contextPath + "/v3/api-docs")
 				|| path.startsWith(contextPath + "/public");
 	}
