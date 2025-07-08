@@ -4,6 +4,8 @@ import lombok.Data;
 
 import jakarta.persistence.*;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "t_hbnc_visit", schema = "db_iemr")
@@ -12,134 +14,91 @@ public class HbncVisit {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @Column(name = "ben_id")
-    private Long benId;
+    @Column(name = "beneficiary_id")
+    private Long beneficiaryId;
 
-    @Column(name = "visit_no")
-    private Integer visitNo;
+    @Column(name = "hbnc_visit_day")
+    private String hbncVisitDay;
+
+    @Column(name = "hbnc_due_date")
+    private LocalDate hbncDueDate;
 
     @Column(name = "visit_date")
-    private Timestamp dateOfVisit;
+    private LocalDate visitDate;
 
     @Column(name = "baby_alive")
-    private Boolean babyAlive;
+    private Boolean babyAlive = true;
 
-    @Column(name = "num_times_full_meal")
-    private Integer numTimesFullMeal24hr;
+    @Column(name = "date_of_death")
+    private LocalDate dateOfDeath;
 
-    @Column(name = "num_pad_changed")
-    private Integer numPadChanged24hr;
+    @Column(name = "reason_for_death")
+    private String reasonForDeath;
 
-    @Column(name = "baby_kept_warm")
-    private Boolean babyKeptWarmWinter;
+    @Column(name = "place_of_death")
+    private String placeOfDeath;
 
-    @Column(name = "baby_fed_properly")
-    private Boolean babyFedProperly;
-
-    @Column(name = "baby_cry_continuously")
-    private Boolean babyCryContinuously;
-
-    @Column(name = "mother_temp")
-    private Integer motherTemperature;
-
-    @Column(name = "foul_discharge")
-    private Boolean foulDischargeFever;
-
-    @Column(name = "mother_speaks_abnormally")
-    private Boolean motherSpeakAbnormallyFits;
-
-    @Column(name = "mother_less_no_milk")
-    private Boolean motherLessNoMilk;
-
-    @Column(name = "mother_breast_problem")
-    private Boolean motherBreastProblem;
-
-    @Column(name = "baby_eyes_swollen")
-    private Boolean babyEyesSwollen;
+    @Column(name = "other_place_of_death")
+    private String otherPlaceOfDeath;
 
     @Column(name = "baby_weight")
-    private Float babyWeight;
+    private Double babyWeight;
 
-    @Column(name = "baby_temp")
-    private Integer babyTemperature;
+    @Column(name = "urine_passed")
+    private Boolean urinePassed;
 
-    @Column(name = "baby_yellow")
-    private Boolean babyYellow;
+    @Column(name = "stool_passed")
+    private Boolean stoolPassed;
 
-    @Column(name = "baby_immunization_status")
-    private String babyImmunizationStatus;
+    @Column(name = "diarrhoea")
+    private Boolean diarrhoea;
 
-    @Column(name = "baby_referred")
-    private Boolean babyReferred;
+    @Column(name = "vomiting")
+    private Boolean vomiting;
 
-    @Column(name = "baby_referral_date")
-    private Timestamp dateOfBabyReferral;
+    @Column(name = "convulsions")
+    private Boolean convulsions;
 
-    @Column(name = "baby_referral_place")
-    private String placeOfBabyReferral;
+    @Column(name = "activity")
+    private String activity;
 
-    @Column(name = "baby_referral_place_other")
-    private String otherPlaceOfBabyReferral;
+    @Column(name = "sucking")
+    private String sucking;
 
-    @Column(name = "mother_referred")
-    private Boolean motherReferred;
+    @Column(name = "breathing")
+    private String breathing;
 
-    @Column(name = "mother_referral_date")
-    private Timestamp dateOfMotherReferral;
+    @Column(name = "chest_indrawing")
+    private String chestIndrawing;
 
-    @Column(name = "mother_referral_place")
-    private String placeOfMotherReferral;
+    @Column(name = "temperature")
+    private String temperature;
 
-    @Column(name = "mother_referral_place_other")
-    private String otherPlaceOfMotherReferral;
+    @Column(name = "jaundice")
+    private Boolean jaundice;
 
-    @Column(name = "all_limbs_limp")
-    private Boolean allLimbsLimp;
+    @Column(name = "umbilical_stump_condition")
+    private String umbilicalStumpCondition;
 
-    @Column(name = "feeding_less_stopped")
-    private Boolean feedingLessStopped;
+    @Column(name = "baby_discharged_from_sncu")
+    private Boolean babyDischargedFromSNCU = false;
 
-    @Column(name = "crt_weak_stopped")
-    private Boolean cryWeakStopped;
-
-    @Column(name = "bloated_stomach")
-    private Boolean bloatedStomach;
-
-    @Column(name = "cold_on_touch")
-    private Boolean coldOnTouch;
-
-    @Column(name = "chest_drawing")
-    private Boolean chestDrawing;
-
-    @Column(name = "breath_fast")
-    private Boolean breathFast;
-
-    @Column(name = "pus_navel")
-    private String pusNavel;
-
-    @Column(name = "supervisor")
-    private String supervisor;
-
-    @Column(name = "supervisor_name")
-    private String supervisorName;
-
-    @Column(name = "supervisor_comment")
-    private String supervisorComment;
-
-    @Column(name = "supervisor_sign_date")
-    private Timestamp supervisorSignDate;
+    @Column(name = "discharge_summary_image")
+    private String dischargeSummaryImage;
 
     @Column(name = "created_by")
     private String createdBy;
 
     @Column(name = "created_date")
-    private Timestamp createdDate;
+    private Timestamp createdDate ;
 
     @Column(name = "updated_date")
-    private Timestamp updatedDate;
+    private Timestamp updatedDate ;
 
     @Column(name = "updated_by")
     private String updatedBy;
+
 }

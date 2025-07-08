@@ -2,15 +2,13 @@ package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 
 @Data
-public class HbncVisitDTO {
-   private Long id;
+public class HbncDTO {
     private Long beneficiaryId;
-    private Integer hbncVisitDay;
+    private String hbncVisitDay;
     private LocalDate hbncDueDate;
     private LocalDate visitDate;
     private Boolean babyAlive;
@@ -33,7 +31,4 @@ public class HbncVisitDTO {
     private String umbilicalStumpCondition;
     private Boolean babyDischargedFromSNCU;
     private List<String> dischargeSummaryImages;
-
-
-
 }

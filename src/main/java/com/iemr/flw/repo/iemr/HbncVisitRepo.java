@@ -16,5 +16,5 @@ public interface HbncVisitRepo extends JpaRepository<HbncVisit, Long> {
     List<HbncVisit> getHbncVisitDetails(@Param("userId") String userId,
                                         @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
-    HbncVisit findHbncVisitByBenIdAndVisitNo(Long benId, Integer visitNo);
+    HbncVisit findHbncVisitByBenIdAndVisitNo(Long benId, Integer visitDay);
 }
