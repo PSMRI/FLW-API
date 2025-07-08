@@ -1,11 +1,8 @@
 package com.iemr.flw.domain.iemr;
 
 import lombok.Data;
-
 import jakarta.persistence.*;
 import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.util.List;
 
 @Entity
 @Table(name = "t_hbnc_visit", schema = "db_iemr")
@@ -24,16 +21,16 @@ public class HbncVisit {
     private String hbncVisitDay;
 
     @Column(name = "hbnc_due_date")
-    private LocalDate hbncDueDate;
+    private Timestamp hbncDueDate;
 
     @Column(name = "visit_date")
-    private LocalDate visitDate;
+    private Timestamp visitDate;
 
     @Column(name = "baby_alive")
     private Boolean babyAlive ;
 
     @Column(name = "date_of_death")
-    private LocalDate dateOfDeath;
+    private Timestamp dateOfDeath;
 
     @Column(name = "reason_for_death")
     private String reasonForDeath;
