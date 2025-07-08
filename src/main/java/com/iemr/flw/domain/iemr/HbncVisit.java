@@ -17,7 +17,7 @@ public class HbncVisit {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "beneficiary_id")
+    @Column(name = "ben_id")
     private Long beneficiaryId;
 
     @Column(name = "hbnc_visit_day")
