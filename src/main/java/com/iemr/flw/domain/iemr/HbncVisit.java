@@ -30,7 +30,7 @@ public class HbncVisit {
     private LocalDate visitDate;
 
     @Column(name = "baby_alive")
-    private Boolean babyAlive = true;
+    private Boolean babyAlive ;
 
     @Column(name = "date_of_death")
     private LocalDate dateOfDeath;
@@ -84,7 +84,7 @@ public class HbncVisit {
     private String umbilicalStumpCondition;
 
     @Column(name = "baby_discharged_from_sncu")
-    private Boolean babyDischargedFromSNCU = false;
+    private Boolean babyDischargedFromSNCU;
 
     @Column(name = "discharge_summary_image")
     private String dischargeSummaryImage;
