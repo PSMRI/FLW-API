@@ -1,6 +1,7 @@
 #Ignore target and logs
 target\*
 logs\*
+command_output.log
 
 ### STS ###
 .apt_generated
