@@ -1,6 +1,7 @@
 package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.ChildRegister;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.ChildRegisterDTO;
@@ -40,7 +41,8 @@ public class ChildServiceImpl implements ChildService {
             List<ChildRegisterDTO> result = childRegisterList.stream()
                     .map(childRegister -> modelMapper.map(childRegister, ChildRegisterDTO.class))
                     .collect(Collectors.toList());
-            return new Gson().toJson(result);
+            Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+            return gson.toJson(result);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -65,7 +67,7 @@ public class ChildServiceImpl implements ChildService {
             }
             listToBeSaved.add(childRegister);
         });
-        childRepo.save(listToBeSaved);
+        childRepo.saveAll(listToBeSaved);
         return "no of child details saved: " + childRegisterDTOs.size();
     }
 }

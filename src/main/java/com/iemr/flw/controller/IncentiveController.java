@@ -5,7 +5,9 @@ import com.iemr.flw.dto.iemr.IncentiveActivityDTO;
 import com.iemr.flw.dto.iemr.IncentiveRequestDTO;
 import com.iemr.flw.service.IncentiveService;
 import com.iemr.flw.utils.response.OutputResponse;
-import io.swagger.annotations.ApiOperation;
+
+import io.swagger.v3.oas.annotations.Operation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +17,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/incentive", headers = "Authorization")
+@RequestMapping(value = "/incentive", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class IncentiveController {
 
     private final Logger logger = LoggerFactory.getLogger(IncentiveController.class);
@@ -23,12 +25,10 @@ public class IncentiveController {
     @Autowired
     IncentiveService incentiveService;
 
-
-    @CrossOrigin()
-    @ApiOperation(value = "save incentive master", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = {"/masterData/saveAll"}, method = {RequestMethod.POST})
+    @Operation(summary = "save incentive master")
+    @RequestMapping(value = { "/masterData/saveAll" }, method = { RequestMethod.POST })
     public String saveIncentiveMasterData(@RequestBody List<IncentiveActivityDTO> activityDTOS,
-                                     @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("Saving All incentives");
@@ -47,12 +47,10 @@ public class IncentiveController {
         return response.toString();
     }
 
-
-    @CrossOrigin()
-    @ApiOperation(value = "get incentive master", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = {"/masterData/getAll"}, method = {RequestMethod.POST})
+    @Operation(summary = "get incentive master")
+    @RequestMapping(value = { "/masterData/getAll" }, method = { RequestMethod.POST })
     public String saveIncentiveMasterData(@RequestBody IncentiveRequestDTO incentiveRequestDTO,
-                                          @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("get All incentives");
@@ -73,12 +71,10 @@ public class IncentiveController {
         return response.toString();
     }
 
-
-    @CrossOrigin()
-    @ApiOperation(value = "get high risk assessment data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = {"/fetchUserData"}, method = {RequestMethod.POST})
+    @Operation(summary = "get high risk assessment data of all beneficiaries registered with given user id")
+    @RequestMapping(value = { "/fetchUserData" }, method = { RequestMethod.POST })
     public String getAllIncentivesByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                       @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -98,6 +94,5 @@ public class IncentiveController {
         }
         return response.toString();
     }
-
 
 }

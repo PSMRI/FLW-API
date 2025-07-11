@@ -2,7 +2,7 @@ package com.iemr.flw.domain.iemr;
 
 import lombok.Data;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
@@ -11,7 +11,7 @@ import java.sql.Timestamp;
 public class NonPregnantWomanHighRiskTrack {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "user_id")

@@ -1,6 +1,8 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.EligibleCoupleDTO;
@@ -54,12 +56,12 @@ public class CoupleServiceImpl implements CoupleService {
 //                        eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
                         eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
 
-                if (existingECR != null) {
-                    if(existingECR.getNumLiveChildren() == 0 && it.getNumLiveChildren() >= 1 && it.getMarriageFirstChildGap() >= 3) {
+                if (existingECR != null && null != existingECR.getNumLiveChildren()) {
+                    if(existingECR.getNumLiveChildren() == 0 && it.getNumLiveChildren() >= 1 && null != it.getMarriageFirstChildGap() && it.getMarriageFirstChildGap() >= 3) {
                         IncentiveActivity activity1 =
                                 incentivesRepo.findIncentiveMasterByNameAndGroup("MARRIAGE_1st_CHILD_GAP", "FAMILY PLANNING");
                         createIncentiveRecord(recordList, it, activity1);
-                    } else if (existingECR.getNumLiveChildren() == 1 && it.getNumLiveChildren() >= 2 && it.getMarriageFirstChildGap() >= 2) {
+                    } else if (existingECR.getNumLiveChildren() == 1 && it.getNumLiveChildren() >= 2 && null != it.getMarriageFirstChildGap() && it.getMarriageFirstChildGap() >= 2) {
                         IncentiveActivity activity2 =
                                 incentivesRepo.findIncentiveMasterByNameAndGroup("1st_2nd_CHILD_GAP", "FAMILY PLANNING");
                         createIncentiveRecord(recordList, it, activity2);
@@ -74,8 +76,8 @@ public class CoupleServiceImpl implements CoupleService {
                 }
                 ecrList.add(existingECR);
             });
-            eligibleCoupleRegisterRepo.save(ecrList);
-            recordRepo.save(recordList);
+            eligibleCoupleRegisterRepo.saveAll(ecrList);
+            recordRepo.saveAll(recordList);
             return "no of ecr details saved: " + ecrList.size();
         } catch (Exception e) {
             return "error while saving ecr details: " + e.getMessage();
@@ -126,8 +128,8 @@ public class CoupleServiceImpl implements CoupleService {
                 ectList.add(ect);
                 checkAndAddAntaraIncentive(recordList, ect);
             });
-            eligibleCoupleTrackingRepo.save(ectList);
-            recordRepo.save(recordList);
+            eligibleCoupleTrackingRepo.saveAll(ectList);
+            recordRepo.saveAll(recordList);
             return "no of ect details saved: " + ectList.size();
         } catch (Exception e) {
             return "error while saving ect details: " + e.getMessage();
@@ -192,14 +194,16 @@ public class CoupleServiceImpl implements CoupleService {
     }
 
     @Override
-    public List<EligibleCoupleDTO> getEligibleCoupleRegRecords(GetBenRequestHandler dto) {
+    public String getEligibleCoupleRegRecords(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<EligibleCoupleRegister> eligibleCoupleRegisterList =
                     eligibleCoupleRegisterRepo.getECRegRecords(user, dto.getFromDate(), dto.getToDate());
-            return eligibleCoupleRegisterList.stream()
+            List<EligibleCoupleDTO> list = eligibleCoupleRegisterList.stream()
                     .map(eligibleCoupleRegister -> mapper.convertValue(eligibleCoupleRegister, EligibleCoupleDTO.class))
                     .collect(Collectors.toList());
+            Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+            return gson.toJson(list);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }

@@ -2,7 +2,7 @@ package com.iemr.flw.domain.identity;
 
 import lombok.Data;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
@@ -10,7 +10,7 @@ import java.sql.Timestamp;
 @Data
 public class CbacAdditionalDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cbacAdditionalDetailId;
     private Long cbacDetailsId;
     private Timestamp filledDate;

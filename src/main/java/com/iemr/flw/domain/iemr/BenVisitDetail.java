@@ -1,6 +1,6 @@
 package com.iemr.flw.domain.iemr;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.sql.Timestamp;
 import java.util.Objects;
 
@@ -42,8 +42,19 @@ public class BenVisitDetail {
     private Timestamp syncedDate;
     private String reservedForChange;
     private String visitFlowStatusFlag;
+    private Integer providerServiceMapID;
+    
+    @Basic
+    @Column(name = "ProviderServiceMapID")
+    public Integer getProviderServiceMapID() {
+		return providerServiceMapID;
+	}
 
-    @Id
+	public void setProviderServiceMapID(Integer providerServiceMapID) {
+		this.providerServiceMapID = providerServiceMapID;
+	}
+
+	@Id
     @Column(name = "BenVisitID")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public long getBenVisitId() {

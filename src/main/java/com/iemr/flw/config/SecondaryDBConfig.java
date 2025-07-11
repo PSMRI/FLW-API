@@ -36,8 +36,11 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
+import com.iemr.flw.utils.config.ConfigProperties;
+
+import jakarta.persistence.EntityManagerFactory;
+
+import org.apache.tomcat.jdbc.pool.DataSource;
 
 @Configuration
 @EnableTransactionManagement
@@ -66,11 +69,9 @@ public class SecondaryDBConfig {
         org.apache.tomcat.jdbc.pool.DataSource datasource = new org.apache.tomcat.jdbc.pool.DataSource();
         datasource.setPoolProperties(p);
 
-//		datasource.setUsername(cryptoUtil.decrypt(ConfigProperties.getPropertyByName("encDbUserNameSec")));
-//		datasource.setPassword(cryptoUtil.decrypt(ConfigProperties.getPropertyByName("encDbPassSec")));
+        datasource.setUsername(ConfigProperties.getPropertyByName("secondary.datasource.username"));
+		datasource.setPassword(ConfigProperties.getPropertyByName("secondary.datasource.password"));
 
-//		datasource.setUsername("beehyv");
-//		datasource.setPassword("beehyv@2022$");
 
         return datasource;
     }

@@ -2,7 +2,7 @@ package com.iemr.flw.domain.iemr;
 
 import lombok.Data;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
@@ -12,7 +12,7 @@ import java.sql.Timestamp;
 public class HighRiskAssess {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "user_id")

@@ -2,6 +2,7 @@ package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.identity.CbacAdditionalDetails;
 import com.iemr.flw.domain.identity.CbacDetails;
 import com.iemr.flw.dto.identity.CbacDTO;
@@ -46,7 +47,7 @@ public class CbacServiceImpl implements CbacService {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             int pageSize = Integer.parseInt(cbac_page_size);
             int totalPage;
-            PageRequest pageRequest = new PageRequest(dto.getPageNo(), pageSize);
+            PageRequest pageRequest = PageRequest.of(dto.getPageNo(), pageSize);
             Page<CbacDetails> cbacList = cbacRepo.getAllByCreatedBy(user, dto.getFromDate(), dto.getToDate(), pageRequest);
             totalPage = cbacList.getTotalPages();
 
@@ -91,7 +92,8 @@ public class CbacServiceImpl implements CbacService {
             response.put("data", result);
             response.put("pageSize", Integer.parseInt(cbac_page_size));
             response.put("totalPage", totalPage);
-            return new Gson().toJson(response);
+            Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+            return gson.toJson(response);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -118,17 +120,15 @@ public class CbacServiceImpl implements CbacService {
                 cbacAdditionalDetailsList.add(cbacAdditionalDetails);
 
             } else {
-//                responseMessage.append("cbac with benRegId: " + cbacDTO.getBeneficiaryId() +
-//                        " and createdDate " + cbacDetails.getCreatedDate() + " already exists.");
-//                responseMessage.append(System.getProperty("line.separator"));
                 result.add(new CbacStatus(cbacDTO.getBeneficiaryId(), cbacDTO.getCreatedDate(), "Fail"));
             }
         });
         if (cbacAdditionalDetailsList.size() > 0) {
-            cbacAddRepo.save(cbacAdditionalDetailsList);
-//            responseMessage.append(cbacAdditionalDetailsList.size() + " CBAC Details Saved!");
+            cbacAddRepo.saveAll(cbacAdditionalDetailsList);
         }
-//        return responseMessage.toString();
-        return new Gson().toJson(result);
+        Gson gson = new GsonBuilder()
+                .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
+                .create();
+        return gson.toJson(result);
     }
 }

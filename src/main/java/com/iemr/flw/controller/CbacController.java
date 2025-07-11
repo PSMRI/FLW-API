@@ -1,10 +1,14 @@
 package com.iemr.flw.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.dto.identity.CbacDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.service.CbacService;
 import com.iemr.flw.utils.response.OutputResponse;
-import io.swagger.annotations.ApiOperation;
+
+import io.swagger.v3.oas.annotations.Operation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,19 +18,18 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/cbac", headers = "Authorization")
+@RequestMapping(value = "/cbac", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class CbacController {
 
-    private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
+    private final Logger logger = LoggerFactory.getLogger(CbacController.class);
 
     @Autowired
     private CbacService cbacService;
 
-    @CrossOrigin()
-    @ApiOperation(value = "get cbac details of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = {"/getAll"}, method = {RequestMethod.POST})
+    @Operation(summary = "get cbac details of all beneficiaries registered with given user id")
+    @RequestMapping(value = { "/getAll" }, method = { RequestMethod.POST })
     public String getAllCbacDetailsByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                            @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("fetching All Cbac Details for user: " + requestDTO.getAshaId());
@@ -46,12 +49,10 @@ public class CbacController {
         return response.toString();
     }
 
-
-    @CrossOrigin()
-    @ApiOperation(value = "save cbac details of all beneficiaries registered with given user name", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = {"/saveAll"}, method = {RequestMethod.POST})
+    @Operation(summary = "save cbac details of all beneficiaries registered with given user name")
+    @RequestMapping(value = { "/saveAll" }, method = { RequestMethod.POST })
     public String saveAllCbacDetailsByUserId(@RequestBody List<CbacDTO> cbacDTOS,
-                                             @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("Saving Cbac Details with timestamp : " + new Timestamp(System.currentTimeMillis()));

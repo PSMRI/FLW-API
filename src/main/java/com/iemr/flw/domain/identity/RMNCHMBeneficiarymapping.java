@@ -3,7 +3,7 @@ package com.iemr.flw.domain.identity;
 import com.google.gson.annotations.Expose;
 import lombok.Data;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.sql.Timestamp;
@@ -15,7 +15,7 @@ public class RMNCHMBeneficiarymapping implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(unique = true, nullable = false)
 	private BigInteger benMapId;
 

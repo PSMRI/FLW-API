@@ -1,8 +1,15 @@
 package com.iemr.flw.domain.iemr;
 
-import javax.persistence.*;
 import java.sql.Timestamp;
-import java.util.Objects;
+
+import jakarta.persistence.Basic;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "t_childvaccinedetail1", schema = "db_iemr", catalog = "")

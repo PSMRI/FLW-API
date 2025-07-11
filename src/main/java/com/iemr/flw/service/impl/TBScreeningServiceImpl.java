@@ -1,6 +1,7 @@
 package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.TBScreening;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.TBScreeningDTO;
@@ -60,7 +61,10 @@ public class TBScreeningServiceImpl implements TBScreeningService {
         TBScreeningRequestDTO tbScreeningRequestDTO = new TBScreeningRequestDTO();
         tbScreeningRequestDTO.setTbScreeningList(dtos);
         tbScreeningRequestDTO.setUserId(request.getAshaId());
-        return (new Gson()).toJson(tbScreeningRequestDTO);
+        Gson gson = new GsonBuilder()
+                .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
+                .create();
+        return gson.toJson(tbScreeningRequestDTO);
     }
 
 }

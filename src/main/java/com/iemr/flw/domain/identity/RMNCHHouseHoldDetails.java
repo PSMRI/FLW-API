@@ -3,7 +3,7 @@ package com.iemr.flw.domain.identity;
 import com.google.gson.annotations.Expose;
 import lombok.Data;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
@@ -12,7 +12,7 @@ import java.sql.Timestamp;
 public class RMNCHHouseHoldDetails {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Expose
 	@Column(name = "houseHoldDetailsId", insertable = false, updatable = false)
 	private Long houseHoldDetailsId;

@@ -21,6 +21,7 @@
  */
 package com.iemr.flw.config;
 
+import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.slf4j.Logger;
@@ -37,8 +38,11 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
+import com.iemr.flw.utils.config.ConfigProperties;
+
+import jakarta.persistence.EntityManagerFactory;
+
+import org.apache.tomcat.jdbc.pool.DataSource;
 
 @Configuration
 @EnableTransactionManagement
@@ -67,11 +71,8 @@ public class PrimaryDBConfig {
         org.apache.tomcat.jdbc.pool.DataSource datasource = new org.apache.tomcat.jdbc.pool.DataSource();
         datasource.setPoolProperties(p);
 
-//		datasource.setUsername(cryptoUtil.decrypt(ConfigProperties.getPropertyByName("encDbUserName")));
-//		datasource.setPassword(cryptoUtil.decrypt(ConfigProperties.getPropertyByName("encDbPass")));
-
-//		datasource.setUsername("beehyv");
-//		datasource.setPassword("beehyv@2022$");
+        datasource.setUsername(ConfigProperties.getPropertyByName("spring.datasource.username"));
+		datasource.setPassword(ConfigProperties.getPropertyByName("spring.datasource.password"));
 
         return datasource;
     }

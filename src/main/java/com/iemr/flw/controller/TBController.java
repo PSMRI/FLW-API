@@ -6,7 +6,9 @@ import com.iemr.flw.dto.iemr.TBSuspectedRequestDTO;
 import com.iemr.flw.service.TBScreeningService;
 import com.iemr.flw.service.TBSuspectedService;
 import com.iemr.flw.utils.response.OutputResponse;
-import io.swagger.annotations.ApiOperation;
+
+import io.swagger.v3.oas.annotations.Operation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.sql.Timestamp;
 
 @RestController
-@RequestMapping(value = "/tb", headers = "Authorization")
+@RequestMapping(value = "/tb", headers = "Authorization", consumes = "application/json", produces = "application/json")
 public class TBController {
 
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
@@ -26,11 +28,10 @@ public class TBController {
     @Autowired
     private TBSuspectedService tbSuspectedService;
 
-    @CrossOrigin()
-    @ApiOperation(value = "get tb screening data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = {"/screening/getAll"}, method = {RequestMethod.POST})
+    @Operation(summary = "get tb screening data of all beneficiaries registered with given user id")
+    @RequestMapping(value = { "/screening/getAll" }, method = { RequestMethod.POST })
     public String getAllScreeningByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                          @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -51,12 +52,10 @@ public class TBController {
         return response.toString();
     }
 
-
-    @CrossOrigin()
-    @ApiOperation(value = "save tb screening data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = {"/screening/saveAll"}, method = {RequestMethod.POST})
+    @Operation(summary = "save tb screening data of all beneficiaries registered with given user id")
+    @RequestMapping(value = { "/screening/saveAll" }, method = { RequestMethod.POST })
     public String saveAllScreeningByUserId(@RequestBody TBScreeningRequestDTO requestDTO,
-                                           @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -77,11 +76,10 @@ public class TBController {
         return response.toString();
     }
 
-    @CrossOrigin()
-    @ApiOperation(value = "get tb suspected data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = {"/suspected/getAll"}, method = {RequestMethod.POST})
+    @Operation(summary = "get tb suspected data of all beneficiaries registered with given user id")
+    @RequestMapping(value = { "/suspected/getAll" }, method = { RequestMethod.POST })
     public String getAllSuspectedByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                          @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
 
         OutputResponse response = new OutputResponse();
         try {
@@ -103,11 +101,10 @@ public class TBController {
         return response.toString();
     }
 
-    @CrossOrigin()
-    @ApiOperation(value = "save tb suspected data of all beneficiaries registered with given user id", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = {"/suspected/saveAll"}, method = {RequestMethod.POST})
+    @Operation(summary = "save tb suspected data of all beneficiaries registered with given user id")
+    @RequestMapping(value = { "/suspected/saveAll" }, method = { RequestMethod.POST })
     public String saveAllSuspectedByUserId(@RequestBody TBSuspectedRequestDTO requestDTO,
-                                           @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
 

@@ -1,17 +1,15 @@
 package com.iemr.flw.service.impl;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.iemr.flw.domain.identity.*;
-import com.iemr.flw.dto.identity.GetBenRequestHandler;
-import com.iemr.flw.mapper.InputMapper;
-import com.iemr.flw.repo.identity.BeneficiaryRepo;
-import com.iemr.flw.repo.identity.HouseHoldRepo;
-import com.iemr.flw.service.BeneficiaryService;
-import com.iemr.flw.utils.config.ConfigProperties;
-import com.iemr.flw.utils.http.HttpUtils;
+import java.math.BigInteger;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.time.Period;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,14 +20,34 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.math.BigInteger;
-import java.sql.Date;
-import java.time.Period;
-import java.util.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
+import com.iemr.flw.domain.identity.BenHealthIDDetails;
+import com.iemr.flw.domain.identity.RMNCHBeneficiaryDetailsRmnch;
+import com.iemr.flw.domain.identity.RMNCHBornBirthDetails;
+import com.iemr.flw.domain.identity.RMNCHHouseHoldDetails;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiaryAccount;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiaryImage;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiaryaddress;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiarycontact;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiarymapping;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
+import com.iemr.flw.mapper.InputMapper;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
+import com.iemr.flw.repo.identity.HouseHoldRepo;
+import com.iemr.flw.service.BeneficiaryService;
+import com.iemr.flw.utils.config.ConfigProperties;
+import com.iemr.flw.utils.http.HttpUtils;
 
 @Service
 @Qualifier("rmnchServiceImpl")
-@PropertySource("classpath:application.properties")
+
 public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     private final Logger logger = LoggerFactory.getLogger(BeneficiaryServiceImpl.class);
@@ -58,7 +76,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
                     request.setUserName(userName);
 
-                    PageRequest pr = new PageRequest(request.getPageNo(), pageSize);
+                    PageRequest pr = PageRequest.of(request.getPageNo(), pageSize);
                     if (request.getFromDate() != null && request.getToDate() != null) {
                         Page<RMNCHMBeneficiaryaddress> p = beneficiaryRepo.getBenDataWithinDates(
                                 request.getUserName(), request.getFromDate(), request.getToDate(), pr);
@@ -115,7 +133,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     benImageOBJ = new RMNCHMBeneficiaryImage();
                     benAddressOBJ = new RMNCHMBeneficiaryaddress();
                     benContactOBJ = new RMNCHMBeneficiarycontact();
-
+                    Map<String, Object> healthDetails = getBenHealthDetails(m.getBenRegId());
                     if (m.getBenDetailsId() != null) {
                         benDetailsOBJ = beneficiaryRepo.getDetailsById(m.getBenDetailsId());
                     }
@@ -334,7 +352,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         resultMap.put("bornbirthDeatils", new HashMap<String, Object>());
 
                     resultMap.put("beneficiaryDetails", benDetailsRMNCH_OBJ);
-
+                    resultMap.put("abhaHealthDetails", healthDetails);
                     resultMap.put("houseoldId", benDetailsRMNCH_OBJ.getHouseoldId());
                     resultMap.put("benficieryid", benDetailsRMNCH_OBJ.getBenficieryid());
                     resultMap.put("BenRegId", m.getBenRegId());
@@ -364,10 +382,39 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         response.put("data", resultList);
         response.put("pageSize", Integer.parseInt(door_to_door_page_size));
         response.put("totalPage", totalPage);
-        return new Gson().toJson(response);
+        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+        return gson.toJson(response);
     }
 
-    public void fetchHealthIdByBenRegID(Long benRegID, String authorization, Map<String, Object> resultMap) {
+	private Map<String, Object> getBenHealthDetails(BigInteger benRegId) {
+		Map<String, Object> healthDetails = new HashMap<>();
+		if (null != benRegId) {
+			Object[] benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
+			if (benHealthIdNumber != null && benHealthIdNumber.length > 0) {
+				Object[] healthData = (Object[]) benHealthIdNumber[0];
+				String healthIdNumber = healthData[0] != null ? healthData[0].toString() : null;
+				String healthId = healthData[1] != null ? healthData[1].toString() : null;
+
+				if (null != healthIdNumber) {
+					List<Object[]> health = beneficiaryRepo.getBenHealthDetails(healthIdNumber);
+					if (health != null && !health.isEmpty()) {
+						for (Object[] objects : health) {
+							healthDetails.put("HealthID", objects[0]);
+							healthDetails.put("HealthIdNumber", objects[1]);
+							healthDetails.put("isNewAbha", objects[2]);
+						}
+					} else {
+						healthDetails.put("HealthIdNumber", healthIdNumber);
+						healthDetails.put("HealthID", healthId);
+						healthDetails.put("isNewAbha", null);
+					}
+				}
+			}
+		}
+		return healthDetails;
+	}
+
+	public void fetchHealthIdByBenRegID(Long benRegID, String authorization, Map<String, Object> resultMap) {
         Map<String, Long> requestMap = new HashMap<String, Long>();
         requestMap.put("beneficiaryRegID", benRegID);
         requestMap.put("beneficiaryID", null);
@@ -393,7 +440,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     if (value.getHealthIdNumber() != null)
                         resultMap.put("healthIdNumber", value.getHealthIdNumber());
                 }
-
             }
 
         } catch (Exception e) {

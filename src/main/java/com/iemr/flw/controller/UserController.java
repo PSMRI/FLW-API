@@ -3,7 +3,9 @@ package com.iemr.flw.controller;
 import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.ApiResponse;
-import io.swagger.annotations.ApiOperation;
+
+import io.swagger.v3.oas.annotations.Operation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +22,10 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @CrossOrigin()
-    @ApiOperation(value = "get user Detail of userId and roleId", consumes = "application/json", produces = "application/json")
-    @RequestMapping(value = {"/getUserDetail"}, method = {RequestMethod.GET})
+    @Operation(summary = "get user Detail of userId and roleId")
+    @RequestMapping(value = { "/getUserDetail" }, method = { RequestMethod.GET })
     public ResponseEntity<?> getUserDetail(@RequestParam(value = "userId") Integer userId,
-                                           @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "Authorization") String Authorization) {
         try {
             UserServiceRoleDTO result = userService.getUserDetail(userId);
             return new ResponseEntity<>(
@@ -32,7 +33,8 @@ public class UserController {
         } catch (Exception e) {
             logger.error("Error in fetching user role, " + e);
             return new ResponseEntity<>(
-                    new ApiResponse(false, "Error in fetching user role, " + e.getMessage(), null), HttpStatus.INTERNAL_SERVER_ERROR);
+                    new ApiResponse(false, "Error in fetching user role, " + e.getMessage(), null),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

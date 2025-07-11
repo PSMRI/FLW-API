@@ -3,7 +3,7 @@ package com.iemr.flw.domain.identity;
 import com.google.gson.annotations.Expose;
 import lombok.Data;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
@@ -13,7 +13,7 @@ import java.sql.Timestamp;
 @Data
 public class RMNCHBornBirthDetails {
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Expose
 	@Column(name = "BornBirthDeatilsId", insertable = false, updatable = false)
 	private Long bornBirthDeatilsId;

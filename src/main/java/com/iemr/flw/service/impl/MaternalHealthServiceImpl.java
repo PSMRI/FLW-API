@@ -86,7 +86,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                 }
                 pwrList.add(pwr);
             });
-            pregnantWomanRegisterRepo.save(pwrList);
+            pregnantWomanRegisterRepo.saveAll(pwrList);
 
             logger.info(pwrList.size() + " Pregnant Woman details saved");
             return "no of pwr details saved: " + pwrList.size();
@@ -157,6 +157,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     benVisitDetail.setProcessed("N");
                     benVisitDetail.setModifiedBy(it.getUpdatedBy());
                     benVisitDetail.setLastModDate(it.getUpdatedDate());
+                    benVisitDetail.setProviderServiceMapID(it.getProviderServiceMapID());
                     benVisitDetail = benVisitDetailsRepo.save(benVisitDetail);
 
                     // Saving Data in AncCare table
@@ -179,8 +180,8 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                 }
                 ancList.add(ancVisit);
             });
-            ancVisitRepo.save(ancList);
-            ancCareRepo.save(ancCareList);
+            ancVisitRepo.saveAll(ancList);
+            ancCareRepo.saveAll(ancCareList);
             checkAndAddIncentives(ancList);
             logger.info("ANC visit details saved");
             return "no of anc details saved: " + ancList.size();
@@ -222,7 +223,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                 }
                 pmsmaList.add(pmsma);
             });
-            pmsmaRepo.save(pmsmaList);
+            pmsmaRepo.saveAll(pmsmaList);
             logger.info("PMSMA details saved");
             return "No. of PMSMA records saved: " + pmsmaList.size();
         } catch (Exception e) {
@@ -296,8 +297,8 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                 }
                 pncList.add(pncVisit);
             });
-            pncVisitRepo.save(pncList);
-            pncCareRepo.save(pncCareList);
+            pncVisitRepo.saveAll(pncList);
+            pncCareRepo.saveAll(pncCareList);
             logger.info("PNC visit details saved");
             return "no of pnc details saved: " + pncList.size();
         } catch (Exception e) {
