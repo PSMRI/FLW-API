@@ -1,7 +1,10 @@
 package com.iemr.flw.domain.iemr;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import jakarta.persistence.*;
+
 import java.sql.Timestamp;
 
 @Entity
@@ -18,37 +21,37 @@ public class HbncVisit {
     private Long beneficiaryId;
 
     @Column(name = "hbnc_visit_day")
-    private String hbncVisitDay;
+    private String visit_day;
 
     @Column(name = "hbnc_due_date")
-    private Timestamp hbncDueDate;
+    private String due_date;
 
     @Column(name = "visit_date")
-    private Timestamp visitDate;
+    private String visit_date;
 
     @Column(name = "baby_alive")
-    private Boolean babyAlive ;
+    private Boolean is_baby_alive ;
 
     @Column(name = "date_of_death")
-    private Timestamp dateOfDeath;
+    private String date_of_death;
 
     @Column(name = "reason_for_death")
     private String reasonForDeath;
 
     @Column(name = "place_of_death")
-    private String placeOfDeath;
+    private String place_of_death;
 
     @Column(name = "other_place_of_death")
-    private String otherPlaceOfDeath;
+    private String other_place_of_death;
 
     @Column(name = "baby_weight")
-    private Double babyWeight;
+    private Double baby_weight;
 
     @Column(name = "urine_passed")
-    private Boolean urinePassed;
+    private Boolean urine_passed;
 
     @Column(name = "stool_passed")
-    private Boolean stoolPassed;
+    private Boolean stool_passed;
 
     @Column(name = "diarrhoea")
     private Boolean diarrhoea;
@@ -69,7 +72,7 @@ public class HbncVisit {
     private String breathing;
 
     @Column(name = "chest_indrawing")
-    private String chestIndrawing;
+    private String chest_indrawing;
 
     @Column(name = "temperature")
     private String temperature;
@@ -78,24 +81,21 @@ public class HbncVisit {
     private Boolean jaundice;
 
     @Column(name = "umbilical_stump_condition")
-    private String umbilicalStumpCondition;
+    private String umbilical_stump;
 
     @Column(name = "baby_discharged_from_sncu")
-    private Boolean babyDischargedFromSNCU;
+    private Boolean discharged_from_sncu;
 
     @Column(name = "discharge_summary_image")
-    private String dischargeSummaryImage;
+    private String discharge_summary_upload;
 
     @Column(name = "created_by")
     private String createdBy;
 
-    @Column(name = "created_date")
-    private Timestamp createdDate ;
-
-    @Column(name = "updated_date")
-    private Timestamp updatedDate ;
-
     @Column(name = "updated_by")
     private String updatedBy;
 
-}
+    @Column(name = "created_date")
+    private Timestamp createdDate;
+
+};

@@ -12,13 +12,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/child-care", headers = "Authorization", consumes = "application/json", produces = "application/json")
+@RequestMapping(value = "/child-care", produces = "application/json")
 public class ChildCareController {
 
     private final Logger logger = LoggerFactory.getLogger(DeathReportsController.class);
@@ -73,32 +74,34 @@ public class ChildCareController {
         return response.toString();
     }
 
-    @Operation(summary = "save hbnc visit details")
-    @RequestMapping(value = {"/hbncVisit/saveAll"}, method = {RequestMethod.POST})
+    @PostMapping("/hbncVisit/saveAll")
     public String saveHBNCVisit(@RequestBody List<HbncRequestDTO> hbncRequestDTOs,
-                                @RequestHeader(value = "Authorization") String Authorization) {
+                                @RequestHeader(value = "Authorization", required = false) String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
-            if (hbncRequestDTOs.size() != 0) {
-                logger.info("Saving HBNC visits with timestamp : " + new Timestamp(System.currentTimeMillis()));
-                String s = childCareService.saveHBNCDetails(hbncRequestDTOs);
-                if (s != null)
-                    response.setResponse(s);
+            if (!hbncRequestDTOs.isEmpty()) {
+                logger.info("Saving HBNC details at: " + new Timestamp(System.currentTimeMillis()));
+
+                String result = childCareService.saveHBNCDetails(hbncRequestDTOs); // <-- actual save
+
+                if (result != null)
+                    response.setResponse(result);
                 else
-                    response.setError(500, "Saving hbnc data to db failed");
-            } else
-                response.setError(500, "Invalid/NULL request obj");
+                    response.setError(500, "Failed to save HBNC visit data.");
+            } else {
+                response.setError(400, "Empty request list.");
+            }
         } catch (Exception e) {
-            logger.error("Error in save HBNC visit details : " + e);
-            response.setError(500, "Error in save HBNC visit details : " + e);
+            logger.error("Error saving HBNC visit: ", e);
+            response.setError(500, "Server error: " + e.getMessage());
         }
         return response.toString();
     }
 
+
     @Operation(summary = "get hbnc visit details")
     @RequestMapping(value = {"/hbncVisit/getAll"}, method = {RequestMethod.POST})
-    public String getHBNCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,
-                                      @RequestHeader(value = "Authorization") String Authorization) {
+    public String getHBNCVisitDetails(@RequestBody GetBenRequestHandler requestDTO) {
         OutputResponse response = new OutputResponse();
         try {
             if (requestDTO != null) {
@@ -110,12 +113,12 @@ public class ChildCareController {
                 if (s != null)
                     response.setResponse(s);
                 else
-                    response.setError(5000, "No record found");
+                    response.setError(500, "No record found");
             } else
-                response.setError(5000, "Invalid/NULL request obj");
+                response.setError(500, "Invalid/NULL request obj");
         } catch (Exception e) {
             logger.error("Error in Hbnc visit get data : " + e);
-            response.setError(5000, "Error in Hbnc visit get data : " + e);
+            response.setError(500, "Error in Hbnc visit get data : " + e);
         }
         return response.toString();
     }

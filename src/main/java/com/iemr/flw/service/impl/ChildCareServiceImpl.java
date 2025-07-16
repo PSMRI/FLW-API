@@ -1,5 +1,6 @@
 package com.iemr.flw.service.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
@@ -14,10 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -100,18 +102,23 @@ public class ChildCareServiceImpl implements ChildCareService {
     public List<HbncRequestDTO> getHBNCDetails(GetBenRequestHandler dto) {
         try {
             List<HbncRequestDTO> result = new ArrayList<>();
-            String user = beneficiaryRepo.getUserName(dto.getAshaId());
-            List<HbncVisit> hbncVisits = hbncVisitRepo.getHbncVisitDetails(user, dto.getFromDate(), dto.getToDate());
+//            String user = beneficiaryRepo.getUserName(dto.getAshaId());
+//            List<HbncVisit> hbncVisits = hbncVisitRepo.getHbncVisitDetails(user, dto.getFromDate(), dto.getToDate());
+            List<HbncVisit> hbncVisits = hbncVisitRepo.findAll();
+            logger.info("HBNC:"+hbncVisitRepo.findAll());
             hbncVisits.forEach(hbnc -> {
                 HbncVisitDTO hbncVisitDTO = mapper.convertValue(hbnc, HbncVisitDTO.class);
+
+                // Convert true/false to Yes/No
+                hbncVisitDTO =  convertBooleanFieldsToYesNo(hbncVisitDTO);
+
                 HbncRequestDTO hbncRequestDTO = new HbncRequestDTO();
-                hbncRequestDTO.setId(hbncVisitDTO.getId());
-                hbncRequestDTO.setBenId(hbncVisitDTO.getBeneficiaryId());
-                hbncRequestDTO.setHomeVisitDate(hbncVisitDTO.getVisitDate());
-                hbncRequestDTO.setHbncVisitDTO(hbncVisitDTO);
+                hbncRequestDTO.setBeneficiaryId(1L);
+                hbncRequestDTO.setVisitDate("2025-07-1");
+                hbncRequestDTO.setId(hbnc.getId());
+                hbncRequestDTO.setFields(hbncVisitDTO);
                 result.add(hbncRequestDTO);
             });
-
 
             return result;
         } catch (Exception e) {
@@ -119,6 +126,32 @@ public class ChildCareServiceImpl implements ChildCareService {
         }
         return null;
     }
+    private HbncVisitDTO convertBooleanFieldsToYesNo(HbncVisitDTO dto) {
+        if (dto.getIs_baby_alive() != null)
+            dto.setIs_baby_alive(convert(dto.getIs_baby_alive().toString()));
+        if (dto.getUrine_passed() != null)
+            dto.setUrine_passed(convert(dto.getUrine_passed().toString()));
+        if (dto.getStool_passed() != null)
+            dto.setStool_passed(convert(dto.getStool_passed().toString()));
+        if (dto.getDiarrhoea() != null)
+            dto.setDiarrhoea(convert(dto.getDiarrhoea().toString()));
+        if (dto.getVomiting() != null)
+            dto.setVomiting(convert(dto.getVomiting().toString()));
+        if (dto.getConvulsions() != null)
+            dto.setConvulsions(convert(dto.getConvulsions().toString()));
+        if (dto.getJaundice() != null)
+            dto.setJaundice(convert(dto.getJaundice().toString()));
+        if (dto.getDischarged_from_sncu() != null)
+            dto.setDischarged_from_sncu(convert(dto.getDischarged_from_sncu().toString()));
+
+        return dto;
+        // Add others as needed...
+    }
+
+    private String convert(String value) {
+        return "true".equalsIgnoreCase(value) ? "Yes" : "No";
+    }
+
 
     @Override
     public String saveHBNCDetails(List<HbncRequestDTO> hbncRequestDTOs) {
@@ -126,13 +159,11 @@ public class ChildCareServiceImpl implements ChildCareService {
             List<HbncVisit> hbncList = new ArrayList<>();
 
             hbncRequestDTOs.forEach(it -> {
-                if (it.getHbncVisitDTO() != null) {
-                    HbncVisitDTO hbncVisitDTO = it.getHbncVisitDTO();
-                    hbncVisitDTO.setId(it.getId());
-                    hbncVisitDTO.setBeneficiaryId(it.getBenId());
-                    hbncVisitDTO.setVisitDate(it.getHomeVisitDate());
-                    HbncVisit hbncVisit =
-                            hbncVisitRepo.findHbncVisitByBenIdAndVisitNo(hbncVisitDTO.getBeneficiaryId(), hbncVisitDTO.getHbncVisitDay());
+                if (it.getVisitDate() != null) {
+
+                    HbncVisitDTO hbncVisitDTO = it.getFields();
+                    hbncVisitDTO.setVisit_date(it.getVisitDate());
+                    HbncVisit hbncVisit = hbncVisitRepo.findByBeneficiaryIdAndVisit_day(it.getBeneficiaryId(), hbncVisitDTO.getVisit_day());
 
                     if (hbncVisit != null) {
                         Long id = hbncVisit.getId();
@@ -269,7 +300,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                     .allMatch(hbncVisits::contains);
 
             boolean isBabyDisChargeSNCUA = hbncVisits.stream()
-                    .anyMatch(v -> Boolean.TRUE.equals(v.getBabyDischargedFromSNCU()));
+                    .anyMatch(v -> Boolean.TRUE.equals(v.getDischarged_from_sncu()));
             Long benId = beneficiaryRepo.getBenIdFromRegID(hbncVisit.getBeneficiaryId()).longValue();
             Integer userId = userRepo.getUserIdByName(hbncVisit.getCreatedBy());
             if (isVisitDone) {
