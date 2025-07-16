@@ -72,6 +72,18 @@ public class CDR {
     @Column(name = "created_by")
     private String createdBy;
 
+    @Column(name = "cdr_image_1")
+    private String cdrImage;
+
+    @Column(name = "cdr_image_2")
+    private String cdrImage2;
+
+    @Column(name = "death_cert_image_1")
+    private String deathCertImage1;
+
+    @Column(name = "death_cert_image_2")
+    private String deathCertImage2;
+
     @Column(name = "created_date")
     private Timestamp createdDate;
 
@@ -80,4 +92,5 @@ public class CDR {
 
     @Column(name = "updated_by")
     private String updatedBy;
+
 }

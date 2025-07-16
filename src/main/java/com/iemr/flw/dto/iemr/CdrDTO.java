@@ -1,9 +1,11 @@
 package com.iemr.flw.dto.iemr;
 
+import jakarta.persistence.Column;
 import lombok.Data;
 
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Data
 public class CdrDTO {
@@ -46,6 +48,12 @@ public class CdrDTO {
     private String createdBy;
 
     private Timestamp createdDate;
+
+    private String cdrImage2;
+
+    private String deathCertImage1;
+
+    private String deathCertImage2;
 
     private Timestamp updatedDate;
 
