@@ -7,9 +7,9 @@ import lombok.Data;
 public class HbncRequestDTO {
 
     private Long id;
-    @SerializedName("beneficiaryId")
+    @SerializedName("benId")
     private Long beneficiaryId;
-    @SerializedName("houseHoldId")
+    @SerializedName("hhId")
     private Long houseHoldId;
     @SerializedName("visitDate")
     private String visitDate;

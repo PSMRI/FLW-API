@@ -20,6 +20,9 @@ public class HbncVisit {
     @Column(name = "ben_id")
     private Long beneficiaryId;
 
+    @Column(name = "household_id")
+    private Long houseHoldId;
+
     @Column(name = "hbnc_visit_day")
     private String visit_day;
 
