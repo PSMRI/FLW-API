@@ -1,20 +1,18 @@
 package com.iemr.flw.dto.iemr;
 
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 @Data
 public class HbncRequestDTO {
 
     private Long id;
-    private Long benId;
-    private Long hhId;
-    private Integer homeVisitDate;
-
-    private HbncVisitCardDTO hbncVisitCardDTO;
-
-    private HbncPart1DTO hbncPart1DTO;
-
-    private HbncPart2DTO hbncPart2DTO;
-
-    private HbncVisitDTO hbncVisitDTO;
+    @SerializedName("benId")
+    private Long beneficiaryId;
+    @SerializedName("hhId")
+    private Long houseHoldId;
+    @SerializedName("visitDate")
+    private String visitDate;
+    @SerializedName("fields")
+    private HbncVisitDTO fields;
 }

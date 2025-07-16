@@ -12,13 +12,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/child-care", headers = "Authorization", consumes = "application/json", produces = "application/json")
+@RequestMapping(value = "/child-care", produces = "application/json",headers = "Authorization")
 public class ChildCareController {
 
     private final Logger logger = LoggerFactory.getLogger(DeathReportsController.class);
@@ -27,9 +28,9 @@ public class ChildCareController {
     private ChildCareService childCareService;
 
     @Operation(summary = "save HBYC details")
-    @RequestMapping(value = { "/hbyc/saveAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/hbyc/saveAll"}, method = {RequestMethod.POST})
     public String saveHbycRecords(@RequestBody List<HbycDTO> hbycDTOs,
-            @RequestHeader(value = "Authorization") String Authorization) {
+                                  @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("Saving All HBYC Details");
@@ -49,9 +50,9 @@ public class ChildCareController {
     }
 
     @Operation(summary = "get List of HBYC details")
-    @RequestMapping(value = { "/hbyc/getAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/hbyc/getAll"}, method = {RequestMethod.POST})
     public String getHbycRecords(@RequestBody GetBenRequestHandler requestDTO,
-            @RequestHeader(value = "Authorization") String Authorization) {
+                                 @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("fetching All HBYC Details for user: " + requestDTO.getAshaId());
@@ -73,32 +74,34 @@ public class ChildCareController {
         return response.toString();
     }
 
-    @Operation(summary = "save hbnc visit details")
-    @RequestMapping(value = { "/hbncVisit/saveAll" }, method = { RequestMethod.POST })
+    @PostMapping("/hbncVisit/saveAll")
     public String saveHBNCVisit(@RequestBody List<HbncRequestDTO> hbncRequestDTOs,
-            @RequestHeader(value = "Authorization") String Authorization) {
+                                @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
-            if (hbncRequestDTOs.size() != 0) {
-                logger.info("Saving HBNC visits with timestamp : " + new Timestamp(System.currentTimeMillis()));
-                String s = childCareService.saveHBNCDetails(hbncRequestDTOs);
-                if (s != null)
-                    response.setResponse(s);
+            if (!hbncRequestDTOs.isEmpty()) {
+                logger.info("Saving HBNC details at: " + new Timestamp(System.currentTimeMillis()));
+
+                String result = childCareService.saveHBNCDetails(hbncRequestDTOs); // <-- actual save
+
+                if (result != null)
+                    response.setResponse(result);
                 else
-                    response.setError(5000, "Saving hbnc data to db failed");
-            } else
-                response.setError(5000, "Invalid/NULL request obj");
+                    response.setError(500, "Failed to save HBNC visit data.");
+            } else {
+                response.setError(400, "Empty request list.");
+            }
         } catch (Exception e) {
-            logger.error("Error in save HBNC visit details : " + e);
-            response.setError(5000, "Error in save HBNC visit details : " + e);
+            logger.error("Error saving HBNC visit: ", e);
+            response.setError(500, "Server error: " + e.getMessage());
         }
         return response.toString();
     }
 
+
     @Operation(summary = "get hbnc visit details")
-    @RequestMapping(value = { "/hbncVisit/getAll" }, method = { RequestMethod.POST })
-    public String getHBNCVisitDetails(@RequestBody GetBenRequestHandler requestDTO,
-            @RequestHeader(value = "Authorization") String Authorization) {
+    @RequestMapping(value = {"/hbncVisit/getAll"}, method = {RequestMethod.POST})
+    public String getHBNCVisitDetails(@RequestBody GetBenRequestHandler requestDTO) {
         OutputResponse response = new OutputResponse();
         try {
             if (requestDTO != null) {
@@ -110,20 +113,20 @@ public class ChildCareController {
                 if (s != null)
                     response.setResponse(s);
                 else
-                    response.setError(5000, "No record found");
+                    response.setError(500, "No record found");
             } else
-                response.setError(5000, "Invalid/NULL request obj");
+                response.setError(500, "Invalid/NULL request obj");
         } catch (Exception e) {
             logger.error("Error in Hbnc visit get data : " + e);
-            response.setError(5000, "Error in Hbnc visit get data : " + e);
+            response.setError(500, "Error in Hbnc visit get data : " + e);
         }
         return response.toString();
     }
 
     @Operation(summary = "save child vaccination details")
-    @RequestMapping(value = { "/vaccination/saveAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/vaccination/saveAll"}, method = {RequestMethod.POST})
     public String saveChildVaccinationDetails(@RequestBody List<ChildVaccinationDTO> childVaccinationDTOS,
-            @RequestHeader(value = "Authorization") String Authorization) {
+                                              @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             if (childVaccinationDTOS.size() != 0) {
@@ -144,9 +147,9 @@ public class ChildCareController {
     }
 
     @Operation(summary = "get child vaccination details")
-    @RequestMapping(value = { "/vaccination/getAll" }, method = { RequestMethod.POST })
+    @RequestMapping(value = {"/vaccination/getAll"}, method = {RequestMethod.POST})
     public String getChildVaccinationDetails(@RequestBody GetBenRequestHandler requestDTO,
-            @RequestHeader(value = "Authorization") String Authorization) {
+                                             @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             if (requestDTO != null) {
@@ -170,9 +173,9 @@ public class ChildCareController {
     }
 
     @Operation(summary = "get child vaccination details")
-    @RequestMapping(value = { "/vaccine/getAll" }, method = { RequestMethod.GET })
+    @RequestMapping(value = {"/vaccine/getAll"}, method = {RequestMethod.GET})
     public String getChildVaccinationDetails(@RequestParam(value = "category") String category,
-            @RequestHeader(value = "Authorization") String Authorization) {
+                                             @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             logger.info("request object for getting all vaccines with timestamp : "
