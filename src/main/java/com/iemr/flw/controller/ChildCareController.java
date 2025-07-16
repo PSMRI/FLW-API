@@ -19,7 +19,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/child-care", produces = "application/json")
+@RequestMapping(value = "/child-care", produces = "application/json",headers = "Authorization")
 public class ChildCareController {
 
     private final Logger logger = LoggerFactory.getLogger(DeathReportsController.class);
@@ -76,7 +76,7 @@ public class ChildCareController {
 
     @PostMapping("/hbncVisit/saveAll")
     public String saveHBNCVisit(@RequestBody List<HbncRequestDTO> hbncRequestDTOs,
-                                @RequestHeader(value = "Authorization", required = false) String Authorization) {
+                                @RequestHeader(value = "Authorization") String Authorization) {
         OutputResponse response = new OutputResponse();
         try {
             if (!hbncRequestDTOs.isEmpty()) {
