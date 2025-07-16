@@ -1,14 +1,12 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.flw.domain.iemr.CDR;
-import com.iemr.flw.domain.iemr.MDSR;
+import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.CdrDTO;
 import com.iemr.flw.dto.iemr.MdsrDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
-import com.iemr.flw.repo.iemr.CdrRepo;
-import com.iemr.flw.repo.iemr.MdsrRepo;
+import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.DeathReportsService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +32,16 @@ public class DeathReportsServiceImpl implements DeathReportsService {
 
     ModelMapper modelMapper = new ModelMapper();
 
+    @Autowired
+    private IncentivesRepo incentivesRepo;
+
+    @Autowired
+    private UserServiceRoleRepo userRepo;
+
+    @Autowired
+    private IncentiveRecordRepo recordRepo;
+
+
     @Override
     public String registerCDR(List<CdrDTO> cdrDTOs) {
         try {
@@ -47,6 +55,7 @@ public class DeathReportsServiceImpl implements DeathReportsService {
                     modelMapper.map(it, existingCDR);
                     existingCDR.setId(id);
                 } else {
+
                     existingCDR = new CDR();
                     modelMapper.map(it, existingCDR);
                     existingCDR.setId(null);
@@ -54,6 +63,8 @@ public class DeathReportsServiceImpl implements DeathReportsService {
                 cdrList.add(existingCDR);
             });
             cdrRepo.saveAll(cdrList);
+            checkAndAddIncentives(cdrList);
+
             return "no of cdr details saved: " + cdrDTOs.size();
         } catch (Exception e) {
             return "error while saving cdr details: " + e.getMessage();
@@ -117,4 +128,36 @@ public class DeathReportsServiceImpl implements DeathReportsService {
         }
         return null;
     }
+
+    private void checkAndAddIncentives(List<CDR> cdrList) {
+
+        cdrList.forEach( cdr -> {
+            Long benId = beneficiaryRepo.getBenIdFromRegID(cdr.getBenId()).longValue();
+            Integer userId = userRepo.getUserIdByName(cdr.getCreatedBy());
+            IncentiveActivity immunizationActivity =
+                    incentivesRepo.findIncentiveMasterByNameAndGroup("DEATH_REPORTING", "CDR");
+            createIncentiveRecord(cdr,benId,userId,immunizationActivity);
+        });
+    }
+
+    private void createIncentiveRecord(CDR cdr, Long benId, Integer userId, IncentiveActivity immunizationActivity) {
+        IncentiveActivityRecord record = recordRepo
+                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), cdr.getCreatedDate(), benId);
+        if (record == null) {
+            record = new IncentiveActivityRecord();
+            record.setActivityId(immunizationActivity.getId());
+            record.setCreatedDate(cdr.getCreatedDate());
+            record.setCreatedBy(cdr.getCreatedBy());
+            record.setName(immunizationActivity.getName());
+            record.setStartDate(cdr.getCreatedDate());
+            record.setEndDate(cdr.getCreatedDate());
+            record.setUpdatedDate(cdr.getCreatedDate());
+            record.setUpdatedBy(cdr.getCreatedBy());
+            record.setBenId(benId);
+            record.setAshaId(userId);
+            record.setAmount(Long.valueOf(immunizationActivity.getRate()));
+            recordRepo.save(record);
+        }
+    }
+
 }
