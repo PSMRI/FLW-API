@@ -155,7 +155,8 @@ public class JwtUserIdValidationFilter implements Filter {
 				|| path.equalsIgnoreCase(contextPath + "/beneficiary/getBeneficiaryData")
 				|| path.equalsIgnoreCase(contextPath + "/incentive/fetchUserData")
 				|| path.equalsIgnoreCase(contextPath + "/incentive/masterData/getAll")
-				|| path.equalsIgnoreCase(contextPath + "/maternalCare/pregnantWoman/saveAll")
+				|| path.equalsIgnoreCase(contextPath + "/maternalCare/ancVisit/saveAll")
+			        || path.equalsIgnoreCase(contextPath + "/maternalCare/pregnantWoman/saveAll")
 			        || path.equalsIgnoreCase(contextPath + "/highRisk/assess/saveAll")
 				|| path.startsWith(contextPath + "/swagger-ui") || path.startsWith(contextPath + "/v3/api-docs")
 				|| path.startsWith(contextPath + "/public");
