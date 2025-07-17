@@ -88,8 +88,8 @@ public class JwtUserIdValidationFilter implements Filter {
 			String jwtToken = jwtFromCookie != null ? jwtFromCookie : jwtFromHeader;
 
 			if (jwtToken != null) {
-				logger.info("Validating JWT token from cookie");
-				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtFromCookie)) {
+				logger.info("Validating JWT token from cookie"+jwtToken);
+				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtToken)) {
 
 					AuthorizationHeaderRequestWrapper authorizationHeaderRequestWrapper = new AuthorizationHeaderRequestWrapper(
 							request, "");
