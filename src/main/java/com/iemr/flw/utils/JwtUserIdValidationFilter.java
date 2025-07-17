@@ -76,7 +76,7 @@ public class JwtUserIdValidationFilter implements Filter {
 		}
 
 		// Skip login and public endpoints
-		if (true) {
+		if (shouldSkipPath(path, contextPath)) {
 			filterChain.doFilter(servletRequest, servletResponse);
 			return;
 		}
@@ -155,6 +155,7 @@ public class JwtUserIdValidationFilter implements Filter {
 				|| path.equalsIgnoreCase(contextPath + "/beneficiary/getBeneficiaryData")
 				|| path.equalsIgnoreCase(contextPath + "/incentive/fetchUserData")
 				|| path.equalsIgnoreCase(contextPath + "/incentive/masterData/getAll")
+			        || path.equalsIgnoreCase(contextPath + "/highRisk/")
 				|| path.startsWith(contextPath + "/swagger-ui") || path.startsWith(contextPath + "/v3/api-docs")
 				|| path.startsWith(contextPath + "/public");
 	}
