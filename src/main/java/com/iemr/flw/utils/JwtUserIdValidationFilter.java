@@ -76,7 +76,7 @@ public class JwtUserIdValidationFilter implements Filter {
 		}
 
 		// Skip login and public endpoints
-		if (shouldSkipPath(path, contextPath)) {
+		if (true) {
 			filterChain.doFilter(servletRequest, servletResponse);
 			return;
 		}
