@@ -85,12 +85,18 @@ public class JwtUserIdValidationFilter implements Filter {
 			String jwtFromCookie = getJwtTokenFromCookies(request);
 			String jwtFromHeader = request.getHeader("JwtToken");
 			String authHeader = request.getHeader("Authorization");
-			String jwtToken = jwtFromCookie != null ? jwtFromCookie : jwtFromHeader;
 
-			if (jwtToken != null) {
-				logger.info("Validating JWT token from cookie"+jwtToken);
-				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtToken)) {
-
+			if (jwtFromCookie != null) {
+				logger.info("Validating JWT token from cookie");
+				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtFromCookie)) {
+					AuthorizationHeaderRequestWrapper authorizationHeaderRequestWrapper = new AuthorizationHeaderRequestWrapper(
+							request, "");
+					filterChain.doFilter(authorizationHeaderRequestWrapper, servletResponse);
+					return;
+				}
+			} else if (jwtFromHeader != null) {
+				logger.info("Validating JWT token from header");
+				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtFromHeader)) {
 					AuthorizationHeaderRequestWrapper authorizationHeaderRequestWrapper = new AuthorizationHeaderRequestWrapper(
 							request, "");
 					filterChain.doFilter(authorizationHeaderRequestWrapper, servletResponse);
@@ -99,9 +105,9 @@ public class JwtUserIdValidationFilter implements Filter {
 			} else {
 				String userAgent = request.getHeader("User-Agent");
 				logger.info("User-Agent: " + userAgent);
-
 				if (userAgent != null && isMobileClient(userAgent) && authHeader != null) {
 					try {
+						logger.info("Common-API incoming userAget : " + userAgent);
 						UserAgentContext.setUserAgent(userAgent);
 						filterChain.doFilter(servletRequest, servletResponse);
 					} finally {
@@ -113,7 +119,6 @@ public class JwtUserIdValidationFilter implements Filter {
 
 			logger.warn("No valid authentication token found");
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: Invalid or missing token");
-
 		} catch (Exception e) {
 			logger.error("Authorization error: ", e);
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: " + e.getMessage());
