@@ -154,17 +154,18 @@ public class JwtUserIdValidationFilter implements Filter {
 	}
 
 	private boolean shouldSkipPath(String path, String contextPath) {
-		return path.equals(contextPath + "/user/userAuthenticate")
-				|| path.equalsIgnoreCase(contextPath + "/user/logOutUserFromConcurrentSession")
-			        || path.equalsIgnoreCase(contextPath + "/user/getUserDetail")
-				|| path.equalsIgnoreCase(contextPath + "/beneficiary/getBeneficiaryData")
-				|| path.equalsIgnoreCase(contextPath + "/incentive/fetchUserData")
-				|| path.equalsIgnoreCase(contextPath + "/incentive/masterData/getAll")
-				|| path.equalsIgnoreCase(contextPath + "/maternalCare/ancVisit/saveAll")
-			        || path.equalsIgnoreCase(contextPath + "/maternalCare/pregnantWoman/saveAll")
-			        || path.equalsIgnoreCase(contextPath + "/highRisk/assess/saveAll")
-				|| path.startsWith(contextPath + "/swagger-ui") || path.startsWith(contextPath + "/v3/api-docs")
-				|| path.startsWith(contextPath + "/public");
+		return true;
+			// path.equals(contextPath + "/user/userAuthenticate")
+			// 	|| path.equalsIgnoreCase(contextPath + "/user/logOutUserFromConcurrentSession")
+			//         || path.equalsIgnoreCase(contextPath + "/user/getUserDetail")
+			// 	|| path.equalsIgnoreCase(contextPath + "/beneficiary/getBeneficiaryData")
+			// 	|| path.equalsIgnoreCase(contextPath + "/incentive/fetchUserData")
+			// 	|| path.equalsIgnoreCase(contextPath + "/incentive/masterData/getAll")
+			// 	|| path.equalsIgnoreCase(contextPath + "/maternalCare/ancVisit/saveAll")
+			//         || path.equalsIgnoreCase(contextPath + "/maternalCare/pregnantWoman/saveAll")
+			//         || path.equalsIgnoreCase(contextPath + "/highRisk/assess/saveAll")
+			// 	|| path.startsWith(contextPath + "/swagger-ui") || path.startsWith(contextPath + "/v3/api-docs")
+			// 	|| path.startsWith(contextPath + "/public");
 	}
 
 	private String getJwtTokenFromCookies(HttpServletRequest request) {
