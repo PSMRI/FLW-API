@@ -1,5 +1,6 @@
 package com.iemr.flw.service.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
@@ -14,8 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,14 +36,6 @@ public class ChildCareServiceImpl implements ChildCareService {
     @Autowired
     private HbncVisitRepo hbncVisitRepo;
 
-    @Autowired
-    private HbncVisitCardRepo hbncVisitCardRepo;
-
-    @Autowired
-    private HbncPart1Repo hbncPart1Repo;
-
-    @Autowired
-    private HbncPart2repo hbncPart2repo;
 
     @Autowired
     private IncentivesRepo incentivesRepo;
@@ -64,11 +60,11 @@ public class ChildCareServiceImpl implements ChildCareService {
     public String registerHBYC(List<HbycDTO> hbycDTOs) {
         try {
             List<HBYC> hbycList = new ArrayList<>();
-            hbycDTOs.forEach(it ->{
+            hbycDTOs.forEach(it -> {
                 HBYC hbyc =
                         hbycRepo.findHBYCByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
 
-                if(hbyc != null) {
+                if (hbyc != null) {
                     Long id = hbyc.getId();
                     modelMapper.map(it, hbyc);
                     hbyc.setId(id);
@@ -89,7 +85,7 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     @Override
     public List<HbycDTO> getHbycRecords(GetBenRequestHandler dto) {
-        try{
+        try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<HBYC> hbycList =
                     hbycRepo.getAllHbycByBenId(user, dto.getFromDate(), dto.getToDate());
@@ -103,76 +99,89 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     @Override
-    public List<HbncRequestDTO> getHBNCDetails(GetBenRequestHandler dto) {
+    public List<HbncVisitResponseDTO> getHBNCDetails(GetBenRequestHandler dto) {
+        List<HbncVisitResponseDTO> result = new ArrayList<>();
         try {
-            List<HbncRequestDTO> result = new ArrayList<>();
-            String user = beneficiaryRepo.getUserName(dto.getAshaId());
-            List<HbncVisit> hbncVisits = hbncVisitRepo.getHbncVisitDetails(user, dto.getFromDate(), dto.getToDate());
-            hbncVisits.forEach( hbnc -> {
-                HbncVisitDTO hbncVisitDTO = mapper.convertValue(hbnc, HbncVisitDTO.class);
-                HbncRequestDTO hbncRequestDTO = new HbncRequestDTO();
-                hbncRequestDTO.setId(hbncVisitDTO.getId());
-                hbncRequestDTO.setBenId(hbncVisitDTO.getBenId());
-                hbncRequestDTO.setHomeVisitDate(hbncVisitDTO.getVisitNo());
-                hbncRequestDTO.setHbncVisitDTO(hbncVisitDTO);
-                result.add(hbncRequestDTO);
-            });
+            List<HbncVisit> hbncVisits = hbncVisitRepo.findAll();
 
-            List<HbncVisitCard> hbncVisitCards = hbncVisitCardRepo.getHbncVisitCardDetails(user, dto.getFromDate(), dto.getToDate());
-            hbncVisitCards.forEach( hbnc -> {
-                HbncVisitCardDTO hbncVisitCardDTO = mapper.convertValue(hbnc, HbncVisitCardDTO.class);
-                HbncRequestDTO hbncRequestDTO = new HbncRequestDTO();
-                hbncRequestDTO.setId(hbncVisitCardDTO.getId());
-                hbncRequestDTO.setBenId(hbncVisitCardDTO.getBenId());
-                hbncRequestDTO.setHomeVisitDate(hbncVisitCardDTO.getVisitNo());
-                hbncRequestDTO.setHbncVisitCardDTO(hbncVisitCardDTO);
-                result.add(hbncRequestDTO);
-            });
+            for (HbncVisit visit : hbncVisits) {
+                HbncVisitResponseDTO responseDTO = new HbncVisitResponseDTO();
+                responseDTO.setId(visit.getId());
+                responseDTO.setBeneficiaryId(visit.getBeneficiaryId()); // Update with actual value
+                responseDTO.setHouseHoldId(visit.getHouseHoldId());   // Update with actual value
+                responseDTO.setVisitDate(visit.getVisit_date().split(" ")[0]); // Format visit.getVisitDate()
 
-            List<HbncPart1> hbncPart1List = hbncPart1Repo.getHbncPart1Details(user, dto.getFromDate(), dto.getToDate());
-            hbncPart1List.forEach( hbnc -> {
-                HbncPart1DTO hbncPart1DTO = mapper.convertValue(hbnc, HbncPart1DTO.class);
-                HbncRequestDTO hbncRequestDTO = new HbncRequestDTO();
-                hbncRequestDTO.setId(hbncPart1DTO.getId());
-                hbncRequestDTO.setBenId(hbncPart1DTO.getBenId());
-                hbncRequestDTO.setHomeVisitDate(hbncPart1DTO.getVisitNo());
-                hbncRequestDTO.setHbncPart1DTO(hbncPart1DTO);
-                result.add(hbncRequestDTO);
-            });
+                // Convert all fields to Map
+                Map<String, Object> fields = new HashMap<>();
+                addIfValid(fields, "visit_day", visit.getVisit_day());
+                addIfValid(fields, "due_date", visit.getDue_date());
+                addIfValid(fields, "is_baby_alive", convert(visit.getIs_baby_alive()));
+                addIfValid(fields, "date_of_death", visit.getDate_of_death());
+                addIfValid(fields, "reason_for_death", visit.getReasonForDeath());
+                addIfValid(fields, "place_of_death", visit.getPlace_of_death());
+                addIfValid(fields, "other_place_of_death", visit.getOther_place_of_death());
+                addIfValid(fields, "baby_weight", visit.getBaby_weight());
+                addIfValid(fields, "urine_passed", convert(visit.getUrine_passed()));
+                addIfValid(fields, "stool_passed", convert(visit.getStool_passed()));
+                addIfValid(fields, "diarrhoea", convert(visit.getDiarrhoea()));
+                addIfValid(fields, "vomiting", convert(visit.getVomiting()));
+                addIfValid(fields, "convulsions", convert(visit.getConvulsions()));
+                addIfValid(fields, "activity", visit.getActivity());
+                addIfValid(fields, "sucking", visit.getSucking());
+                addIfValid(fields, "breathing", visit.getBreathing());
+                addIfValid(fields, "chest_indrawing", visit.getChest_indrawing());
+                addIfValid(fields, "temperature", visit.getTemperature());
+                addIfValid(fields, "jaundice", convert(visit.getJaundice()));
+                addIfValid(fields, "umbilical_stump", visit.getUmbilical_stump());
+                addIfValid(fields, "discharged_from_sncu", convert(visit.getDischarged_from_sncu()));
+                addIfValid(fields, "discharge_summary_upload", visit.getDischarge_summary_upload());
 
-            List<HbncPart2> hbncPart2List = hbncPart2repo.getHbncPart2Details(user, dto.getFromDate(), dto.getToDate());
-            hbncPart2List.forEach( hbnc -> {
-                HbncPart2DTO hbncPart2DTO = mapper.convertValue(hbnc, HbncPart2DTO.class);
-                HbncRequestDTO hbncRequestDTO = new HbncRequestDTO();
-                hbncRequestDTO.setId(hbncPart2DTO.getId());
-                hbncRequestDTO.setBenId(hbncPart2DTO.getBenId());
-                hbncRequestDTO.setHomeVisitDate(hbncPart2DTO.getVisitNo());
-                hbncRequestDTO.setHbncPart2DTO(hbncPart2DTO);
-                result.add(hbncRequestDTO);
-            });
+                // Add more fields as required
 
-            return result;
+                responseDTO.setFields(fields);
+                result.add(responseDTO);
+            }
+
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error("Error in getHBNCDetails: ", e);
         }
-        return null;
+        return result;
     }
+    private void addIfValid(Map<String, Object> map, String key, Object value) {
+        if (value == null) return;
+
+        if (value instanceof String && ((String) value).trim().isEmpty()) return;
+
+        map.put(key, value);
+    }
+    private String convert(Boolean value) {
+        if (value == null) return null;
+        return value ? "Yes" : "No";
+    }
+    private String convert(Object value) {
+        if (value == null) return null;
+        if (value instanceof Boolean) return (Boolean) value ? "Yes" : "No";
+        return value.toString();
+    }
+
+
+
+    private String convert(String value) {
+        return "true".equalsIgnoreCase(value) ? "Yes" : "No";
+    }
+
 
     @Override
     public String saveHBNCDetails(List<HbncRequestDTO> hbncRequestDTOs) {
         try {
             List<HbncVisit> hbncList = new ArrayList<>();
-            List<HbncVisitCard> hbncCardList = new ArrayList<>();
-            List<HbncPart1> hbncPart1List = new ArrayList<>();
-            List<HbncPart2> hbncPart2List = new ArrayList<>();
+
             hbncRequestDTOs.forEach(it -> {
-                if(it.getHbncVisitDTO() != null) {
-                    HbncVisitDTO hbncVisitDTO = it.getHbncVisitDTO();
-                    hbncVisitDTO.setId(it.getId());
-                    hbncVisitDTO.setBenId(it.getBenId());
-                    hbncVisitDTO.setVisitNo(it.getHomeVisitDate());
-                    HbncVisit hbncVisit =
-                            hbncVisitRepo.findHbncVisitByBenIdAndVisitNo(hbncVisitDTO.getBenId(), hbncVisitDTO.getVisitNo());
+                if (it.getVisitDate() != null) {
+
+                    HbncVisitDTO hbncVisitDTO = it.getFields();
+                    hbncVisitDTO.setVisit_date(it.getVisitDate());
+                    HbncVisit hbncVisit = hbncVisitRepo.findByBeneficiaryIdAndVisit_day(it.getBeneficiaryId(), hbncVisitDTO.getVisit_day());
 
                     if (hbncVisit != null) {
                         Long id = hbncVisit.getId();
@@ -181,72 +190,21 @@ public class ChildCareServiceImpl implements ChildCareService {
                     } else {
                         hbncVisit = new HbncVisit();
                         modelMapper.map(hbncVisitDTO, hbncVisit);
+                        hbncVisit.setBeneficiaryId(it.getBeneficiaryId());
+                        hbncVisit.setHouseHoldId(it.getHouseHoldId());
                         hbncVisit.setId(null);
                     }
                     hbncList.add(hbncVisit);
-                } else if(it.getHbncVisitCardDTO() != null) {
-                    HbncVisitCardDTO hbncVisitCardDTO = it.getHbncVisitCardDTO();
-                    hbncVisitCardDTO.setId(it.getId());
-                    hbncVisitCardDTO.setBenId(it.getBenId());
-                    hbncVisitCardDTO.setVisitNo(it.getHomeVisitDate());
-                    HbncVisitCard hbncVisitCard =
-                            hbncVisitCardRepo.findHbncVisitCardByBenIdAndVisitNo(hbncVisitCardDTO.getBenId(), hbncVisitCardDTO.getVisitNo());
-
-                    if (hbncVisitCard != null) {
-                        Long id = hbncVisitCard.getId();
-                        modelMapper.map(hbncVisitCardDTO, hbncVisitCard);
-                        hbncVisitCard.setId(id);
-                    } else {
-                        hbncVisitCard = new HbncVisitCard();
-                        modelMapper.map(hbncVisitCardDTO, hbncVisitCard);
-                        hbncVisitCard.setId(null);
-                    }
-                    hbncCardList.add(hbncVisitCard);
-                } else if(it.getHbncPart1DTO() != null) {
-                    HbncPart1DTO hbncPart1DTO = it.getHbncPart1DTO();
-                    hbncPart1DTO.setId(it.getId());
-                    hbncPart1DTO.setBenId(it.getBenId());
-                    hbncPart1DTO.setVisitNo(it.getHomeVisitDate());
-                    HbncPart1 hbncPart1 =
-                            hbncPart1Repo.findHbncPart1ByBenIdAndVisitNo(hbncPart1DTO.getBenId(), hbncPart1DTO.getVisitNo());
-
-                    if (hbncPart1 != null) {
-                        Long id = hbncPart1.getId();
-                        modelMapper.map(hbncPart1DTO, hbncPart1);
-                        hbncPart1.setId(id);
-                    } else {
-                        hbncPart1 = new HbncPart1();
-                        modelMapper.map(hbncPart1DTO, hbncPart1);
-                        hbncPart1.setId(null);
-                    }
-                    hbncPart1List.add(hbncPart1);
-                } else if(it.getHbncPart2DTO() != null) {
-                    HbncPart2DTO hbncPart2DTO = it.getHbncPart2DTO();
-                    hbncPart2DTO.setId(it.getId());
-                    hbncPart2DTO.setBenId(it.getBenId());
-                    hbncPart2DTO.setVisitNo(it.getHomeVisitDate());
-                    HbncPart2 hbncPart2 =
-                            hbncPart2repo.findHbncPart2ByBenIdAndVisitNo(hbncPart2DTO.getBenId(), hbncPart2DTO.getVisitNo());
-
-                    if (hbncPart2 != null) {
-                        Long id = hbncPart2.getId();
-                        modelMapper.map(hbncPart2DTO, hbncPart2);
-                        hbncPart2.setId(id);
-                    } else {
-                        hbncPart2 = new HbncPart2();
-                        modelMapper.map(hbncPart2DTO, hbncPart2);
-                        hbncPart2.setId(null);
-                    }
-                    hbncPart2List.add(hbncPart2);
                 }
             });
+
+
             hbncVisitRepo.saveAll(hbncList);
-            hbncVisitCardRepo.saveAll(hbncCardList);
-            hbncPart1Repo.saveAll(hbncPart1List);
-            hbncPart2repo.saveAll(hbncPart2List);
+            //checkAndAddHbncIncentives(hbncList);
+
+
             logger.info("HBNC details saved");
-            return "no of hbnc details saved: " + (hbncList.size() + hbncCardList.size() +
-                    hbncPart1List.size() + hbncPart2List.size());
+            return "no of hbnc details saved: " + (hbncList.size());
         } catch (Exception e) {
             logger.info("Saving HBNC details failed with error : " + e.getMessage());
         }
@@ -354,27 +312,59 @@ public class ChildCareServiceImpl implements ChildCareService {
         }
         return null;
     }
+
+    private void checkAndAddHbncIncentives(List<HbncVisit> hbncVisits) {
+        hbncVisits.forEach(hbncVisit -> {
+            boolean isVisitDone = List.of("1st Day", "3rd Day", "7th Day", "42nd Day")
+                    .stream()
+                    .allMatch(hbncVisits::contains);
+
+            boolean isBabyDisChargeSNCUA = hbncVisits.stream()
+                    .anyMatch(v -> Boolean.TRUE.equals(v.getDischarged_from_sncu()));
+            Long benId = beneficiaryRepo.getBenIdFromRegID(hbncVisit.getBeneficiaryId()).longValue();
+            Integer userId = userRepo.getUserIdByName(hbncVisit.getCreatedBy());
+            if (isVisitDone) {
+                IncentiveActivity visitActivity =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_VISIT", "HBNC");
+
+                createIncentiveRecordforHbncVisit(hbncVisit, benId, userId, visitActivity);
+
+            }
+            if (isBabyDisChargeSNCUA) {
+                IncentiveActivity babyDisChargeSNCUAActivity =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("BABY_DISCHARGES_SNCU", "HBNC");
+
+                createIncentiveRecordforHbncVisit(hbncVisit, benId, userId, babyDisChargeSNCUAActivity);
+
+            }
+
+
+        });
+
+
+    }
+
     private void checkAndAddIncentives(List<ChildVaccination> vaccinationList) {
 
-        vaccinationList.forEach( vaccination -> {
+        vaccinationList.forEach(vaccination -> {
             Long benId = beneficiaryRepo.getBenIdFromRegID(vaccination.getBeneficiaryRegId()).longValue();
             Integer userId = userRepo.getUserIdByName(vaccination.getCreatedBy());
             Integer immunizationServiceId = getImmunizationServiceIdForVaccine(vaccination.getVaccineId().shortValue());
-            if(immunizationServiceId < 6) {
+            if (immunizationServiceId < 6) {
                 IncentiveActivity immunizationActivity =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("IMMUNIZATION_0_1", "IMMUNIZATION");
                 if (immunizationActivity != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
                         .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
                     createIncentiveRecord(vaccination, benId, userId, immunizationActivity);
                 }
-            } else if(immunizationServiceId == 7) {
+            } else if (immunizationServiceId == 7) {
                 IncentiveActivity immunizationActivity2 =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("IMMUNIZATION_1_2", "IMMUNIZATION");
                 if (immunizationActivity2 != null && childVaccinationRepo.getSecondYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
                         .equals(childVaccinationRepo.getSecondYearVaccineCount())) {
                     createIncentiveRecord(vaccination, benId, userId, immunizationActivity2);
                 }
-            } else if(immunizationServiceId == 8) {
+            } else if (immunizationServiceId == 8) {
                 IncentiveActivity immunizationActivity5 =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("IMMUNIZATION_5", "IMMUNIZATION");
                 if (immunizationActivity5 != null && childVaccinationRepo.checkDptVaccinatedUser(vaccination.getBeneficiaryRegId()) == 1) {
@@ -397,6 +387,26 @@ public class ChildCareServiceImpl implements ChildCareService {
             record.setEndDate(vaccination.getCreatedDate());
             record.setUpdatedDate(vaccination.getCreatedDate());
             record.setUpdatedBy(vaccination.getCreatedBy());
+            record.setBenId(benId);
+            record.setAshaId(userId);
+            record.setAmount(Long.valueOf(immunizationActivity.getRate()));
+            recordRepo.save(record);
+        }
+    }
+
+    private void createIncentiveRecordforHbncVisit(HbncVisit hbncVisit, Long benId, Integer userId, IncentiveActivity immunizationActivity) {
+        IncentiveActivityRecord record = recordRepo
+                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), hbncVisit.getCreatedDate(), benId);
+        if (record == null) {
+            record = new IncentiveActivityRecord();
+            record.setActivityId(immunizationActivity.getId());
+            record.setCreatedDate(hbncVisit.getCreatedDate());
+            record.setCreatedBy(hbncVisit.getCreatedBy());
+            record.setName(immunizationActivity.getName());
+            record.setStartDate(hbncVisit.getCreatedDate());
+            record.setEndDate(hbncVisit.getCreatedDate());
+            record.setUpdatedDate(hbncVisit.getCreatedDate());
+            record.setUpdatedBy(hbncVisit.getCreatedBy());
             record.setBenId(benId);
             record.setAshaId(userId);
             record.setAmount(Long.valueOf(immunizationActivity.getRate()));

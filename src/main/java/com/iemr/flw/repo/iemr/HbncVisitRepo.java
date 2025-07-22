@@ -12,9 +12,12 @@ import java.util.List;
 @Repository
 public interface HbncVisitRepo extends JpaRepository<HbncVisit, Long> {
 
-    @Query(value = "SELECT hbnc FROM  HbncVisit hbnc WHERE hbnc.createdBy = :userId and hbnc.createdDate >= :fromDate and hbnc.createdDate <= :toDate")
-    List<HbncVisit> getHbncVisitDetails(@Param("userId") String userId,
-                                        @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
+//    @Query(value = "SELECT hbnc FROM  HbncVisit hbnc WHERE hbnc.createdBy = :userId and hbnc.createdDate >= :fromDate and hbnc.createdDate <= :toDate")
+//    List<HbncVisit> getHbncVisitDetails(@Param("userId") String userId,
+//                                        @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
-    HbncVisit findHbncVisitByBenIdAndVisitNo(Long benId, Integer visitNo);
+    @Query("SELECT v FROM HbncVisit v WHERE v.beneficiaryId = :beneficiaryId AND v.visit_day = :visitDay")
+    HbncVisit findByBeneficiaryIdAndVisit_day(@Param("beneficiaryId") Long beneficiaryId,
+                                              @Param("visitDay") String visitDay);
+
 }
