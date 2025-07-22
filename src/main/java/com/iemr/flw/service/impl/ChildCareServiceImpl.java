@@ -99,54 +99,72 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     @Override
-    public List<HbncRequestDTO> getHBNCDetails(GetBenRequestHandler dto) {
+    public List<HbncVisitResponseDTO> getHBNCDetails(GetBenRequestHandler dto) {
+        List<HbncVisitResponseDTO> result = new ArrayList<>();
         try {
-            List<HbncRequestDTO> result = new ArrayList<>();
-//            String user = beneficiaryRepo.getUserName(dto.getAshaId());
-//            List<HbncVisit> hbncVisits = hbncVisitRepo.getHbncVisitDetails(user, dto.getFromDate(), dto.getToDate());
             List<HbncVisit> hbncVisits = hbncVisitRepo.findAll();
-            logger.info("HBNC:"+hbncVisitRepo.findAll());
-            hbncVisits.forEach(hbnc -> {
-                HbncVisitDTO hbncVisitDTO = mapper.convertValue(hbnc, HbncVisitDTO.class);
 
-                // Convert true/false to Yes/No
-                hbncVisitDTO =  convertBooleanFieldsToYesNo(hbncVisitDTO);
+            for (HbncVisit visit : hbncVisits) {
+                HbncVisitResponseDTO responseDTO = new HbncVisitResponseDTO();
+                responseDTO.setId(visit.getId());
+                responseDTO.setBeneficiaryId(visit.getBeneficiaryId()); // Update with actual value
+                responseDTO.setHouseHoldId(visit.getHouseHoldId());   // Update with actual value
+                responseDTO.setVisitDate(visit.getVisit_date().split(" ")[0]); // Format visit.getVisitDate()
 
-                HbncRequestDTO hbncRequestDTO = new HbncRequestDTO();
-                hbncRequestDTO.setBeneficiaryId(1L);
-                hbncRequestDTO.setVisitDate("2025-07-1");
-                hbncRequestDTO.setId(hbnc.getId());
-                hbncRequestDTO.setFields(hbncVisitDTO);
-                result.add(hbncRequestDTO);
-            });
+                // Convert all fields to Map
+                Map<String, Object> fields = new HashMap<>();
+                addIfValid(fields, "visit_day", visit.getVisit_day());
+                addIfValid(fields, "due_date", visit.getDue_date());
+                addIfValid(fields, "is_baby_alive", convert(visit.getIs_baby_alive()));
+                addIfValid(fields, "date_of_death", visit.getDate_of_death());
+                addIfValid(fields, "reason_for_death", visit.getReasonForDeath());
+                addIfValid(fields, "place_of_death", visit.getPlace_of_death());
+                addIfValid(fields, "other_place_of_death", visit.getOther_place_of_death());
+                addIfValid(fields, "baby_weight", visit.getBaby_weight());
+                addIfValid(fields, "urine_passed", convert(visit.getUrine_passed()));
+                addIfValid(fields, "stool_passed", convert(visit.getStool_passed()));
+                addIfValid(fields, "diarrhoea", convert(visit.getDiarrhoea()));
+                addIfValid(fields, "vomiting", convert(visit.getVomiting()));
+                addIfValid(fields, "convulsions", convert(visit.getConvulsions()));
+                addIfValid(fields, "activity", visit.getActivity());
+                addIfValid(fields, "sucking", visit.getSucking());
+                addIfValid(fields, "breathing", visit.getBreathing());
+                addIfValid(fields, "chest_indrawing", visit.getChest_indrawing());
+                addIfValid(fields, "temperature", visit.getTemperature());
+                addIfValid(fields, "jaundice", convert(visit.getJaundice()));
+                addIfValid(fields, "umbilical_stump", visit.getUmbilical_stump());
+                addIfValid(fields, "discharged_from_sncu", convert(visit.getDischarged_from_sncu()));
+                addIfValid(fields, "discharge_summary_upload", visit.getDischarge_summary_upload());
 
-            return result;
+                // Add more fields as required
+
+                responseDTO.setFields(fields);
+                result.add(responseDTO);
+            }
+
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error("Error in getHBNCDetails: ", e);
         }
-        return null;
+        return result;
     }
-    private HbncVisitDTO convertBooleanFieldsToYesNo(HbncVisitDTO dto) {
-        if (dto.getIs_baby_alive() != null)
-            dto.setIs_baby_alive(convert(dto.getIs_baby_alive().toString()));
-        if (dto.getUrine_passed() != null)
-            dto.setUrine_passed(convert(dto.getUrine_passed().toString()));
-        if (dto.getStool_passed() != null)
-            dto.setStool_passed(convert(dto.getStool_passed().toString()));
-        if (dto.getDiarrhoea() != null)
-            dto.setDiarrhoea(convert(dto.getDiarrhoea().toString()));
-        if (dto.getVomiting() != null)
-            dto.setVomiting(convert(dto.getVomiting().toString()));
-        if (dto.getConvulsions() != null)
-            dto.setConvulsions(convert(dto.getConvulsions().toString()));
-        if (dto.getJaundice() != null)
-            dto.setJaundice(convert(dto.getJaundice().toString()));
-        if (dto.getDischarged_from_sncu() != null)
-            dto.setDischarged_from_sncu(convert(dto.getDischarged_from_sncu().toString()));
+    private void addIfValid(Map<String, Object> map, String key, Object value) {
+        if (value == null) return;
 
-        return dto;
-        // Add others as needed...
+        if (value instanceof String && ((String) value).trim().isEmpty()) return;
+
+        map.put(key, value);
     }
+    private String convert(Boolean value) {
+        if (value == null) return null;
+        return value ? "Yes" : "No";
+    }
+    private String convert(Object value) {
+        if (value == null) return null;
+        if (value instanceof Boolean) return (Boolean) value ? "Yes" : "No";
+        return value.toString();
+    }
+
+
 
     private String convert(String value) {
         return "true".equalsIgnoreCase(value) ? "Yes" : "No";
@@ -172,6 +190,8 @@ public class ChildCareServiceImpl implements ChildCareService {
                     } else {
                         hbncVisit = new HbncVisit();
                         modelMapper.map(hbncVisitDTO, hbncVisit);
+                        hbncVisit.setBeneficiaryId(it.getBeneficiaryId());
+                        hbncVisit.setHouseHoldId(it.getHouseHoldId());
                         hbncVisit.setId(null);
                     }
                     hbncList.add(hbncVisit);
@@ -180,7 +200,7 @@ public class ChildCareServiceImpl implements ChildCareService {
 
 
             hbncVisitRepo.saveAll(hbncList);
-            checkAndAddHbncIncentives(hbncList);
+            //checkAndAddHbncIncentives(hbncList);
 
 
             logger.info("HBNC details saved");

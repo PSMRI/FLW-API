@@ -12,10 +12,6 @@ import java.util.List;
  @SerializedName("id")
  private Integer id;
 
-
-
- @SerializedName("beneficiaryId")
- private Long beneficiaryId;
   @SerializedName("visit_day")
   private String visit_day;
 

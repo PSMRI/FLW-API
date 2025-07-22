@@ -17,6 +17,9 @@ public class HbncVisit {
     @Column(name = "id")
     private Long id;
 
+    @Column(name = "user_id")
+    private Integer userId;
+
     @Column(name = "ben_id")
     private Long beneficiaryId;
 

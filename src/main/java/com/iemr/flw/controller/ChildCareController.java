@@ -2,6 +2,7 @@ package com.iemr.flw.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.iemr.flw.domain.iemr.HbncVisit;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.ChildCareService;
@@ -12,14 +13,17 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping(value = "/child-care", produces = "application/json",headers = "Authorization")
+@RequestMapping(value = "/child-care", produces = "application/json")
 public class ChildCareController {
 
     private final Logger logger = LoggerFactory.getLogger(DeathReportsController.class);
@@ -101,27 +105,43 @@ public class ChildCareController {
 
     @Operation(summary = "get hbnc visit details")
     @RequestMapping(value = {"/hbncVisit/getAll"}, method = {RequestMethod.POST})
-    public String getHBNCVisitDetails(@RequestBody GetBenRequestHandler requestDTO) {
-        OutputResponse response = new OutputResponse();
+    public ResponseEntity<StandardResponse<List<HbncVisitResponseDTO>>> getHBNCVisitDetails(
+            @RequestBody GetBenRequestHandler requestDTO) {
+
+        StandardResponse<List<HbncVisitResponseDTO>> response = new StandardResponse<>();
+
         try {
             if (requestDTO != null) {
-                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
-                        + requestDTO);
-                List<HbncRequestDTO> result = childCareService.getHBNCDetails(requestDTO);
-                Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
-                String s = gson.toJson(result);
-                if (s != null)
-                    response.setResponse(s);
-                else
-                    response.setError(500, "No record found");
-            } else
-                response.setError(500, "Invalid/NULL request obj");
+                logger.info("Request: " + requestDTO);
+
+                List<HbncVisitResponseDTO> data = childCareService.getHBNCDetails(requestDTO);
+
+                response.setStatusCode(200);
+                response.setStatus("Success");
+                response.setErrorMessage("Success");
+                response.setData(data);
+
+                return ResponseEntity.ok(response);
+
+            } else {
+                response.setStatusCode(400);
+                response.setStatus("Failed");
+                response.setErrorMessage("Invalid request object");
+                response.setData(null);
+                return ResponseEntity.badRequest().body(response);
+            }
         } catch (Exception e) {
-            logger.error("Error in Hbnc visit get data : " + e);
-            response.setError(500, "Error in Hbnc visit get data : " + e);
+            logger.error("Exception in fetching HBNC visits", e);
+
+            response.setStatusCode(500);
+            response.setStatus("Failed");
+            response.setErrorMessage("Internal Server Error: " + e.getMessage());
+            response.setData(null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response.toString();
     }
+
+
 
     @Operation(summary = "save child vaccination details")
     @RequestMapping(value = {"/vaccination/saveAll"}, method = {RequestMethod.POST})
