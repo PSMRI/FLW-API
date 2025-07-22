@@ -84,7 +84,7 @@ public class AshaProfileController {
 //            }
 
             // Extract and validate user ID from JWT
-            int userId = jwtUtil.extractUserId(jwtFromHeader); // Make sure this returns 0 or throws for invalid token
+           // int userId = jwtUtil.extractUserId(jwtFromHeader); // Make sure this returns 0 or throws for invalid token
 
             if (employeeId == 0) {
                 response.put("statusCode", 401);
