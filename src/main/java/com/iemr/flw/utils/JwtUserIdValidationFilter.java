@@ -36,8 +36,19 @@ public class JwtUserIdValidationFilter implements Filter {
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) servletRequest;
-
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
+
+		String path = request.getRequestURI();
+		String contextPath = request.getContextPath();
+		
+		// FIRST: Check for health and version endpoints - skip ALL processing
+		if (path.equals("/health") || path.equals("/version") || 
+		    path.equals(contextPath + "/health") || path.equals(contextPath + "/version")) {
+			logger.info("Skipping JWT validation for monitoring endpoint: {}", path);
+			filterChain.doFilter(servletRequest, servletResponse);
+			return;
+		}
+
 		String origin = request.getHeader("Origin");
 
 		logger.debug("Incoming Origin: {}", origin);
@@ -58,8 +69,6 @@ public class JwtUserIdValidationFilter implements Filter {
 			return;
 		}
 
-		String path = request.getRequestURI();
-		String contextPath = request.getContextPath();
 		logger.info("JwtUserIdValidationFilter invoked for path: " + path);
 
 		// Log cookies for debugging
