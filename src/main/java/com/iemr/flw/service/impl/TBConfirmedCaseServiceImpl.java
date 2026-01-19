@@ -1,5 +1,7 @@
 package com.iemr.flw.service.impl;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.TBConfirmedCaseDTO;
 import com.iemr.flw.domain.iemr.TBConfirmedCase;
 import com.iemr.flw.repo.iemr.TBConfirmedTreatmentRepository;
@@ -7,12 +9,14 @@ import com.iemr.flw.service.TBConfirmedCaseService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.iemr.flw.utils.JwtUtil;
+import com.iemr.flw.utils.LocalDateAdapter;
 import com.iemr.flw.utils.response.OutputResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -104,11 +108,14 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
     @Override
     public String getByUserId(String authorisation) throws Exception {
-        Integer userId = jwtUtil.extractUserId(authorisation);
 
+        Integer userId = jwtUtil.extractUserId(authorisation);
         List<TBConfirmedCase> list = repository.findByUserId(userId);
-        
-        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
+                .create();
+
         return gson.toJson(list);
     }
 
