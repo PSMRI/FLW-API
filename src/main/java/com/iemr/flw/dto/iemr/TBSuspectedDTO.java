@@ -13,6 +13,7 @@ public class TBSuspectedDTO {
     private String visitLabel;
     private Timestamp visitDate;
     private String typeOfTBCase;
+    private Timestamp visitDate;
     private String reasonForSuspicion;
     private Boolean isSputumCollected;
     private String sputumSubmittedAt;

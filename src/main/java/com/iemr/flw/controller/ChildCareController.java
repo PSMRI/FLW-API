@@ -52,7 +52,7 @@ public class ChildCareController {
 
             logger.info("Saving All HBYC Details");
             if (hbycDTOs != null) {
-                String s = childCareService.registerHBYC(hbycDTOs,token);
+                String s = childCareService.registerHBYC(hbycDTOs);
                 if (s != null)
                     response.setResponse(s);
                 else
