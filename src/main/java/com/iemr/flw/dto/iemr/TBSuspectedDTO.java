@@ -11,6 +11,7 @@ public class TBSuspectedDTO {
 
     private Long benId;
     private String visitLabel;
+    private Timestamp visitDate;
     private String typeOfTBCase;
     private String reasonForSuspicion;
     private Boolean isSputumCollected;
@@ -21,6 +22,7 @@ public class TBSuspectedDTO {
     private String chestXRayResult;
     private String referralFacility;
     private Boolean isTBConfirmed;
+    private Boolean isConfirmed;
     private Boolean isDRTBConfirmed;
     private Boolean referred;
     private String followUps;

@@ -72,6 +72,8 @@ public class TBSuspected {
     @Column(name = "provider_service_map_id")
     private Integer providerServiceMapId;
 
+    @Column(name = "is_confirmed")
+     private Boolean isConfirmed;
 
 
 }
