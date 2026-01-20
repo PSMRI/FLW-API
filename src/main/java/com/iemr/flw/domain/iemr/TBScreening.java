@@ -46,4 +46,28 @@ public class TBScreening {
 
     @Column(name = "family_check")
     private Boolean familySufferingFromTB;
+
+    @Column(name = "rise_of_fever")
+    private Boolean riseOfFever;
+
+    @Column(name = "loss_of_appetite")
+    private Boolean lossOfAppetite;
+
+    @Column(name = "age")
+    private Boolean age;
+
+    @Column(name = "diabetic")
+    private Boolean diabetic;
+
+    @Column(name = "tobacco_user")
+    private Boolean tobaccoUser;
+
+    @Column(name = "bmi")
+    private Boolean bmi;
+
+    @Column(name = "contact_with_tb_patient")
+    private Boolean contactWithTBPatient;
+
+    @Column(name = "history_of_tb_in_last_five_yrs")
+    private Boolean historyOfTBInLastFiveYrs;
 }
