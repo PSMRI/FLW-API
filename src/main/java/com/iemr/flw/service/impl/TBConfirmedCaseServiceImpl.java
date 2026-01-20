@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.TBConfirmedCaseDTO;
 import com.iemr.flw.domain.iemr.TBConfirmedCase;
+import com.iemr.flw.dto.iemr.TBConfirmedCasesResponseDTO;
 import com.iemr.flw.repo.iemr.TBConfirmedTreatmentRepository;
 import com.iemr.flw.service.TBConfirmedCaseService;
 import com.google.gson.Gson;
@@ -108,15 +109,16 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
     @Override
     public String getByUserId(String authorisation) throws Exception {
-
+        TBConfirmedCasesResponseDTO tbConfirmedCasesResponseDTO = new TBConfirmedCasesResponseDTO();
         Integer userId = jwtUtil.extractUserId(authorisation);
         List<TBConfirmedCase> list = repository.findByUserId(userId);
-
+        tbConfirmedCasesResponseDTO.setUserId(userId);
+        tbConfirmedCasesResponseDTO.setTbConfirmedCases(list);
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
                 .create();
 
-        return gson.toJson(list);
+        return gson.toJson(tbConfirmedCasesResponseDTO);
     }
 
     // Utility: convert entity -> DTO
