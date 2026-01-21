@@ -70,4 +70,13 @@ public class TBScreening {
 
     @Column(name = "history_of_tb_in_last_five_yrs")
     private Boolean historyOfTBInLastFiveYrs;
+
+   @Column(name = "sympotomatic")
+    private  String sympotomatic;
+
+   @Column(name = "asymptomatic")
+    private String asymptomatic;
+
+    @Column(name = "recommandate_test")
+    private String recommandateTest;
 }

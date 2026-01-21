@@ -37,6 +37,10 @@ public class TBScreeningDTO {
     private Boolean bmi;
     private Boolean contactWithTBPatient;
     private Boolean historyOfTBInLastFiveYrs;
+    private  String sympotomatic;
+    private String asymptomatic;
+    private String recommandateTest;
+
 
 
 
