@@ -37,7 +37,7 @@ class UserControllerTest {
         when(userService.getUserDetail(anyInt())).thenReturn(userServiceRoleDTO);
 
         // Act
-        ResponseEntity<?> responseEntity = userController.getUserDetail(userId, "AuthorizationToken");
+        ResponseEntity<?> responseEntity = userController.getUserDetail(userId);
 
         // Assert
         assertNotNull(responseEntity);
@@ -61,7 +61,7 @@ class UserControllerTest {
         when(userService.getUserDetail(anyInt())).thenThrow(new RuntimeException("Test exception"));
 
         // Act
-        ResponseEntity<?> responseEntity = userController.getUserDetail(userId, "AuthorizationToken");
+        ResponseEntity<?> responseEntity = userController.getUserDetail(userId);
 
         // Assert
         assertNotNull(responseEntity);

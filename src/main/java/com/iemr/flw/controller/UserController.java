@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(value = "/user", headers = "Authorization")
+@RequestMapping(value = "/user")
 public class UserController {
 
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
@@ -25,8 +25,7 @@ public class UserController {
 
     @Operation(summary = "get user Detail of userId and roleId")
     @RequestMapping(value = { "/getUserDetail" }, method = { RequestMethod.GET })
-    public ResponseEntity<?> getUserDetail(@RequestParam(value = "userId") Integer userId,
-            @RequestHeader(value = "Authorization") String Authorization) {
+    public ResponseEntity<?> getUserDetail(@RequestParam(value = "userId") Integer userId) {
         try {
             UserServiceRoleDTO result = userService.getUserDetail(userId);
             return new ResponseEntity<>(
