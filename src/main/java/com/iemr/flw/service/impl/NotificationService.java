@@ -27,6 +27,9 @@ public class NotificationService {
     @Value("${notificationurl}")
     private String NOTIFICATION_URL;
 
+    @Value("${project-url}")
+    private String projectUrl;
+
     public String sendNotification(String appType, String topic, String title, String body, String redirect) {
         String authHeader = null;
         String jwtToken = null;
@@ -75,8 +78,7 @@ public class NotificationService {
 
         HttpEntity<Object> request = new HttpEntity<>(jsonRequest, headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(NOTIFICATION_URL, HttpMethod.POST, request, String.class);
-
+        ResponseEntity<String> response = restTemplate.exchange(projectUrl+"/"+NOTIFICATION_URL, HttpMethod.POST, request, String.class);
         return response.getBody();
     }
 }
