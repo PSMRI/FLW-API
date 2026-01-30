@@ -346,7 +346,7 @@ public class ChildCareController {
 
 
     @RequestMapping(value = {"/ifa/saveAll"}, method = RequestMethod.POST)
-    public ResponseEntity<?> saveIfDistribution(@RequestBody List<IfaDistributionDTO> ifaDistributionDTOS,@RequestHeader("JwtToken") String token) {
+    public ResponseEntity<?> saveIfDistribution(@RequestBody List<IfaDistributionDTO> ifaDistributionDTOS,@RequestHeader(value = "jwtToken", required = false) String token) {
         Map<String, Object> response = new LinkedHashMap<>();
         logger.info("IFA Request: {}", ifaDistributionDTOS);
 
