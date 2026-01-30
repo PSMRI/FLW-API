@@ -531,7 +531,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
                 visit.setBeneficiaryId(dto.getBeneficiaryId());
                 visit.setHouseholdId(dto.getHouseHoldId());
-                visit.setUserId(userRepo.getUserIdByName(jwtUtil.getUserNameFromStorage())); // cache se lena hai
+                visit.setUserId(userRepo.getUserIdByName(dto.getUserName())); // cache se lena hai
                 visit.setCreatedBy(dto.getUserName());
                 StringBuilder sb = new StringBuilder();
 

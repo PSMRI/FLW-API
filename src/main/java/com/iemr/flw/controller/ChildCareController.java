@@ -346,7 +346,7 @@ public class ChildCareController {
 
 
     @RequestMapping(value = {"/ifa/saveAll"}, method = RequestMethod.POST)
-    public ResponseEntity<?> saveIfDistribution(@RequestBody List<IfaDistributionDTO> ifaDistributionDTOS) {
+    public ResponseEntity<?> saveIfDistribution(@RequestBody List<IfaDistributionDTO> ifaDistributionDTOS,@RequestHeader("JwtToken") String token) {
         Map<String, Object> response = new LinkedHashMap<>();
         logger.info("IFA Request: {}", ifaDistributionDTOS);
 
@@ -357,7 +357,7 @@ public class ChildCareController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
-            List<IfaDistribution> responseObject = childCareService.saveAllIfa(ifaDistributionDTOS);
+            List<IfaDistribution> responseObject = childCareService.saveAllIfa(ifaDistributionDTOS,token);
 
             if (responseObject != null && !responseObject.isEmpty()) {
                 response.put("statusCode", HttpStatus.OK.value());

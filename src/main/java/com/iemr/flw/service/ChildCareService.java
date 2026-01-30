@@ -1,7 +1,6 @@
 package com.iemr.flw.service;
 
 import com.iemr.flw.domain.iemr.IfaDistribution;
-import com.iemr.flw.domain.iemr.SamVisitResponseDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 
@@ -31,7 +30,7 @@ public interface ChildCareService {
 
     List<OrsDistributionResponseDTO> getOrdDistrubtion(GetBenRequestHandler request);
 
-    List<IfaDistribution> saveAllIfa(List<IfaDistributionDTO> dtoList);
+    List<IfaDistribution> saveAllIfa(List<IfaDistributionDTO> dtoList, String token);
 
     List<IfaDistributionDTO> getByBeneficiaryId(GetBenRequestHandler request);
 
