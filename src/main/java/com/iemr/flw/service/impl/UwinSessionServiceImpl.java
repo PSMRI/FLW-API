@@ -72,6 +72,7 @@ public class UwinSessionServiceImpl implements UwinSessionService {
         session.setAshaId(req.getAshaId());
         session.setDate(req.getDate());
         session.setPlace(req.getPlace());
+        session.setSessionDate(req.getDate());
         session.setParticipants(req.getParticipants());
         session.setCreatedBy(req.getCreatedBy());
         if (req.getAttachments() != null && req.getAttachments().length > 0) {
