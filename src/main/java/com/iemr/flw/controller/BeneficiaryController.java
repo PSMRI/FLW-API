@@ -97,6 +97,8 @@ public class BeneficiaryController {
         }
     }
 
+
+
     @RequestMapping(value = {"/eye_surgery/getAll"}, method = RequestMethod.POST)
     public ResponseEntity<?> getAllEyeSurgery(@RequestBody GetBenRequestHandler request) {
         Map<String, Object> response = new LinkedHashMap<>();
