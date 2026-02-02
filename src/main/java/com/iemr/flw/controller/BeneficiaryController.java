@@ -66,7 +66,7 @@ public class BeneficiaryController {
 
     }
     @RequestMapping(value = {"/eye_surgery/saveAll"}, method = RequestMethod.POST)
-    public ResponseEntity<?> saveEyeSurgery(@RequestBody List<EyeCheckupRequestDTO> eyeCheckupRequestDTOS,@RequestHeader(value = "jwtToken", required = false) String token) {
+    public ResponseEntity<?> saveEyeSurgery(@RequestBody List<EyeCheckupRequestDTO> eyeCheckupRequestDTOS) {
         Map<String, Object> response = new LinkedHashMap<>();
         logger.info("Eye Checkup Save Request: {}", eyeCheckupRequestDTOS);
 
@@ -77,7 +77,7 @@ public class BeneficiaryController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
-            String responseObject = beneficiaryService.saveEyeCheckupVsit(eyeCheckupRequestDTOS,token);
+            String responseObject = beneficiaryService.saveEyeCheckupVsit(eyeCheckupRequestDTOS);
 
             if (responseObject != null) {
                 response.put("statusCode", HttpStatus.OK.value());
@@ -96,8 +96,6 @@ public class BeneficiaryController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-
-
 
     @RequestMapping(value = {"/eye_surgery/getAll"}, method = RequestMethod.POST)
     public ResponseEntity<?> getAllEyeSurgery(@RequestBody GetBenRequestHandler request) {

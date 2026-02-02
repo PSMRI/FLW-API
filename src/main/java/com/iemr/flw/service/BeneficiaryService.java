@@ -10,7 +10,7 @@ public interface BeneficiaryService {
 
     String getBenData(GetBenRequestHandler requestDTO, String authorisation) throws Exception;
 
-    String saveEyeCheckupVsit(List<EyeCheckupRequestDTO> eyeCheckupRequestDTOS,String token);
+    String saveEyeCheckupVsit(List<EyeCheckupRequestDTO> eyeCheckupRequestDTOS);
 
     List<EyeCheckupRequestDTO> getEyeCheckUpVisit(GetBenRequestHandler request);
 }

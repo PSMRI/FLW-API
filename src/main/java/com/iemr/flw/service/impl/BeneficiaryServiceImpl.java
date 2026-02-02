@@ -523,7 +523,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
 
     @Override
-    public String saveEyeCheckupVsit(List<EyeCheckupRequestDTO> eyeCheckupRequestDTOS,String token) {
+    public String saveEyeCheckupVsit(List<EyeCheckupRequestDTO> eyeCheckupRequestDTOS) {
 
         try {
             for (EyeCheckupRequestDTO dto : eyeCheckupRequestDTOS) {
@@ -531,11 +531,9 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
                 visit.setBeneficiaryId(dto.getBeneficiaryId());
                 visit.setHouseholdId(dto.getHouseHoldId());
-                visit.setUserId(jwtUtil.extractUserId(token)); // cache se lena hai
+                visit.setUserId(userRepo.getUserIdByName(jwtUtil.getUserNameFromStorage()));
                 visit.setCreatedBy(dto.getUserName());
                 StringBuilder sb = new StringBuilder();
-
-
                 // fields mapping
                 EyeCheckupListDTO f = dto.getFields();
                 sb.append(f.getDischarge_summary_upload());
