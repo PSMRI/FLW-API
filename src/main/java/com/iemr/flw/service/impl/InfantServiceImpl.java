@@ -82,17 +82,23 @@ public class InfantServiceImpl implements InfantService {
 
         infantList.forEach(infantRegister -> {
             if(incentiveActivityAM!=null){
-                if(infantRegister.getIsSNCU().equals("Yes")){
-                    addIsSncuIncentive(incentiveActivityAM,infantRegister.getBenId(),infantRegister.getCreatedBy(),infantRegister.getCreatedDate());
+                if(infantRegister.getIsSNCU()!=null){
+                    if(infantRegister.getIsSNCU().equals("Yes")){
+                        addIsSncuIncentive(incentiveActivityAM,infantRegister.getBenId(),infantRegister.getCreatedBy(),infantRegister.getCreatedDate());
+                    }
                 }
+
 
             }
 
             if(incentiveActivityCH!=null){
-                if(infantRegister.getIsSNCU().equals("Yes")){
-                    addIsSncuIncentive(incentiveActivityCH,infantRegister.getBenId(),infantRegister.getCreatedBy(),infantRegister.getCreatedDate());
+                if(infantRegister.getIsSNCU()!=null){
+                    if(infantRegister.getIsSNCU().equals("Yes")){
+                        addIsSncuIncentive(incentiveActivityCH,infantRegister.getBenId(),infantRegister.getCreatedBy(),infantRegister.getCreatedDate());
 
+                    }
                 }
+
             }
         });
     }
