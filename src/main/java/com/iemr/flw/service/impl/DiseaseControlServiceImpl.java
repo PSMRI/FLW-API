@@ -32,6 +32,7 @@ import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.DiseaseType;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.DiseaseControlService;
+import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.exception.IEMRException;
 import org.slf4j.Logger;
@@ -45,6 +46,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
 import org.modelmapper.ModelMapper;
 
 @Service
@@ -86,8 +88,11 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
 
-    private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     @Override
     public String saveMalaria(MalariaDTO diseaseControlDTO) {
@@ -109,7 +114,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     @Override
     public String saveKalaAzar(KalaAzarDTO diseaseControlDTO) {
-        logger.info("Save request: "+diseaseControlDTO.toString());
+        logger.info("Save request: " + diseaseControlDTO.toString());
         for (DiseaseKalaAzarDTO diseaseControlData : diseaseControlDTO.getKalaAzarLists()) {
             if (diseaseKalaAzarRepository.findByBenId(diseaseControlData.getBenId()).isPresent()) {
                 return updateKalaAzarDisease(diseaseControlData);
@@ -275,7 +280,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
 
     @Override
-    public String saveLeprosy(LeprosyDTO diseaseControlDTO) {
+    public String saveLeprosy(LeprosyDTO diseaseControlDTO, String token) {
         for (DiseaseLeprosyDTO diseaseControlData : diseaseControlDTO.getLeprosyLists()) {
             if (diseaseLeprosyRepository.findByBenId(diseaseControlData.getBenId()).isPresent()) {
                 return updateLeprosyData(diseaseControlData);
@@ -283,7 +288,15 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 if (diseaseControlDTO.getUserId() != null) {
                     diseaseControlData.setUserId(diseaseControlDTO.getUserId());
                 }
-                diseaseLeprosyRepository.save(saveLeprosyData(diseaseControlData));
+                ScreeningLeprosy screeningLeprosy = diseaseLeprosyRepository.save(saveLeprosyData(diseaseControlData));
+                if (screeningLeprosy != null) {
+                    if (screeningLeprosy.getIsConfirmed()) {
+                        if (screeningLeprosy.getTypeOfLeprosy().toLowerCase().equals("PB (Paucibacillary)")) {
+                            incentiveLogicService.incentiveForLeprosyConfirmed(screeningLeprosy.getBenId(), screeningLeprosy.getTreatmentStartDate(), screeningLeprosy.getTreatmentEndDate(), token);
+                        }
+                    }
+                }
+
                 return "Data add successfully";
 
             }
@@ -356,10 +369,10 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     public String saveLeprosyFollowUp(LeprosyFollowUpDTO dto) {
         if (dto == null)
             return "Invalid data";
-            LeprosyFollowUp entity = saveLeprosyFollowUpData(dto);
-            leprosyFollowUpRepository.save(entity);
-            return "Follow-up data added successfully";
-        
+        LeprosyFollowUp entity = saveLeprosyFollowUpData(dto);
+        leprosyFollowUpRepository.save(entity);
+        return "Follow-up data added successfully";
+
     }
 
     @Override
@@ -609,7 +622,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
 
     private ScreeningKalaAzar saveKalaAzarDisease(DiseaseKalaAzarDTO dto) {
-        logger.info("KalaAzarRequest: "+dto);
+        logger.info("KalaAzarRequest: " + dto);
         ScreeningKalaAzar entity = new ScreeningKalaAzar();
 
         entity.setBenId(dto.getBenId());
@@ -948,10 +961,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         }).collect(Collectors.toList());
 
 
-
         // ✅ Save all
         List<MosquitoNetEntity> savedEntities = mosquitoNetRepository.saveAll(entityList);
-
 
 
         // ✅ Entity → DTO return
@@ -1001,13 +1012,11 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             mosquitoNetListDTO.setIs_net_distributed(entity.getIsNetDistributed());
             mosquitoNetListDTO.setVisit_date(entity.getVisitDate().format(formatter));
 
-             dto.setFields(mosquitoNetListDTO);
+            dto.setFields(mosquitoNetListDTO);
 
             return dto;
         }).collect(Collectors.toList());
     }
-
-
 
 
     private void checkAndAddIncentives(ScreeningMalaria diseaseScreening) {
@@ -1060,10 +1069,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     }
 
 
-
     @Override
     public List<ChronicDiseaseVisitDTO> saveChronicDiseaseVisit(
-            List<ChronicDiseaseVisitDTO> requestList,String token) throws IEMRException {
+            List<ChronicDiseaseVisitDTO> requestList, String token) throws IEMRException {
 
         List<ChronicDiseaseVisitDTO> responseList = new ArrayList<>();
 

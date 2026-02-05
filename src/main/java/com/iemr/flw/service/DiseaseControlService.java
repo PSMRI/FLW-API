@@ -35,7 +35,7 @@ public interface DiseaseControlService {
     public String saveKalaAzar(KalaAzarDTO kalaAzarDTO);
     public String saveAES(AesJeDTO aesJeDTO);
     public String saveFilaria(FilariaDTO filariaDTO);
-    public String saveLeprosy(LeprosyDTO leprosyDTO);
+    public String saveLeprosy(LeprosyDTO leprosyDTO, String token);
     public Object getAllScreeningData(GetDiseaseRequestHandler getDiseaseRequestHandler);
 
     public List<MosquitoNetDTO> saveMosquitoMobilizationNet(List<MosquitoNetDTO> mosquitoNetDTOList);
