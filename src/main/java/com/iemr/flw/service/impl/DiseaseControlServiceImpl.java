@@ -293,7 +293,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 ScreeningLeprosy screeningLeprosy = diseaseLeprosyRepository.save(saveLeprosyData(diseaseControlData));
                 if (screeningLeprosy != null) {
                     if (screeningLeprosy.getIsConfirmed()) {
-                        if (screeningLeprosy.getTypeOfLeprosy().toLowerCase().equals("PB (Paucibacillary)")) {
+                        if (screeningLeprosy.getTypeOfLeprosy().equals("PB (Paucibacillary)")) {
                             IncentiveActivityRecord incentiveActivityRecord =
                                     incentiveLogicService.incentiveForLeprosyConfirmed(
                                             screeningLeprosy.getBenId(),
