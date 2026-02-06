@@ -9,7 +9,6 @@ public interface IncentiveLogicService {
     public IncentiveActivityRecord incentiveForLeprosyPaucibacillaryConfirmed(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId);
     public IncentiveActivityRecord incentiveForIdentificationLeprosy(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId);
     public IncentiveActivityRecord incentiveForLeprosyMultibacillaryConfirmed(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId);
-    public IncentiveActivityRecord incentiveAssistingANCVisits(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId);
 
 
 }
