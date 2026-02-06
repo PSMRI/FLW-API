@@ -35,6 +35,7 @@ import com.iemr.flw.service.DiseaseControlService;
 import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.exception.IEMRException;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -280,6 +281,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
 
     @Override
+    @Transactional
     public String saveLeprosy(LeprosyDTO diseaseControlDTO, String token) {
         for (DiseaseLeprosyDTO diseaseControlData : diseaseControlDTO.getLeprosyLists()) {
             if (diseaseLeprosyRepository.findByBenId(diseaseControlData.getBenId()).isPresent()) {
@@ -292,7 +294,20 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 if (screeningLeprosy != null) {
                     if (screeningLeprosy.getIsConfirmed()) {
                         if (screeningLeprosy.getTypeOfLeprosy().toLowerCase().equals("PB (Paucibacillary)")) {
-                            incentiveLogicService.incentiveForLeprosyConfirmed(screeningLeprosy.getBenId(), screeningLeprosy.getTreatmentStartDate(), screeningLeprosy.getTreatmentEndDate(), token);
+                            IncentiveActivityRecord incentiveActivityRecord =
+                                    incentiveLogicService.incentiveForLeprosyConfirmed(
+                                            screeningLeprosy.getBenId(),
+                                            screeningLeprosy.getTreatmentStartDate(),
+                                            screeningLeprosy.getTreatmentEndDate(),
+                                            token);
+
+                            if (incentiveActivityRecord != null) {
+                                logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                        incentiveActivityRecord.getId());
+                            } else {
+                                logger.info("Incentive not created");
+                            }
+
                         }
                     }
                 }

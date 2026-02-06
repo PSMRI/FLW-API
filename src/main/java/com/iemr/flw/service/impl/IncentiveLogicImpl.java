@@ -35,64 +35,106 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
     private UserService userService;
 
     @Override
-    public void incentiveForLeprosyConfirmed(Long benId, Date treatmentStartDate, Date treatmentEndDate, String token) {
+    public IncentiveActivityRecord incentiveForLeprosyConfirmed(
+            Long benId,
+            Date treatmentStartDate,
+            Date treatmentEndDate,
+            String token) {
+
         try {
-            Integer stateCode = userService.getUserDetail(jwtUtil.extractUserId(token)).getStateId();
+            Integer userId = jwtUtil.extractUserId(token);
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
 
             if (stateCode == null) {
-                logger.warn("State code is null for user: {}", jwtUtil.extractUserId(token));
-                return;
+                logger.warn("State code is null for user: {}", userId);
+                return null;
             }
 
             String activityName = "NLEP_PB_TREATMENT";
 
             if (stateCode.equals(StateCode.AM.getStateCode())) {
-                processIncentive(activityName, GroupName.UMBRELLA_PROGRAMMES.getDisplayName(),
-                        benId, treatmentStartDate, treatmentEndDate, token);
-            }
-            if (stateCode.equals(StateCode.CG.getStateCode())) {
-                processIncentive(activityName, GroupName.ACTIVITY.getDisplayName(),
-                        benId, treatmentStartDate, treatmentEndDate, token);
+                return processIncentive(
+                        activityName,
+                        GroupName.UMBRELLA_PROGRAMMES.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        token);
             }
 
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        token);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
 
         } catch (Exception e) {
             logger.error("Check Leprosy Incentive Exception: ", e);
+            return null;
         }
     }
 
-    private void processIncentive(String activityName, String groupName, Long benId,
+
+    private IncentiveActivityRecord processIncentive(String activityName, String groupName, Long benId,
                                   Date startDate, Date endDate, String token) {
         try {
             IncentiveActivity activity = incentivesRepo.findIncentiveMasterByNameAndGroup(activityName, groupName);
 
             if (activity == null) {
                 logger.info("No IncentiveActivity found for name: {} and group: {}", activityName, groupName);
-                return;
+                return null ;
             }
 
-            saveIncentive(activity, benId, startDate, endDate, token);
+         return   saveIncentive(activity, benId, startDate, endDate, token);
 
         } catch (Exception e) {
             logger.error("Process Incentive Exception: ", e);
+            return null;
+
         }
     }
 
-    private void saveIncentive(IncentiveActivity activity, Long benId, Date startDate, Date endDate, String token) {
+    private IncentiveActivityRecord saveIncentive(
+            IncentiveActivity activity,
+            Long benId,
+            Date startDate,
+            Date endDate,
+            String token) {
+
         try {
-            Timestamp startTimestamp = new Timestamp(startDate.getTime());
-            Timestamp endTimestamp = new Timestamp(endDate.getTime());
-            String username = jwtUtil.extractUsername(token);
 
-            IncentiveActivityRecord record = incentiveRecordRepo
-                    .findRecordByActivityIdCreatedDateBenId(activity.getId(), startTimestamp, benId);
-
-            if (record != null) {
-                logger.info("Incentive already exists for benId: {}, activityId: {}", benId, activity.getId());
-                return;
+            if (activity == null || benId == null || startDate == null || endDate == null) {
+                logger.warn("Invalid input for saving incentive");
+                return null;
             }
 
-            record = new IncentiveActivityRecord();
+            Timestamp startTimestamp = new Timestamp(startDate.getTime());
+            Timestamp endTimestamp = new Timestamp(endDate.getTime());
+
+            Integer userId = jwtUtil.extractUserId(token);
+            String username = jwtUtil.extractUsername(token);
+
+            // 🔍 duplicate check
+            IncentiveActivityRecord existing = incentiveRecordRepo
+                    .findRecordByActivityIdCreatedDateBenId(
+                            activity.getId(), startTimestamp, benId);
+
+            if (existing != null) {
+                logger.info("Incentive already exists for benId: {}, activityId: {}",
+                        benId, activity.getId());
+                return existing;
+            }
+
+            // 🆕 create record
+            IncentiveActivityRecord record = new IncentiveActivityRecord();
             record.setActivityId(activity.getId());
             record.setCreatedDate(startTimestamp);
             record.setUpdatedDate(startTimestamp);
@@ -101,15 +143,20 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             record.setCreatedBy(username);
             record.setUpdatedBy(username);
             record.setBenId(benId);
-            record.setAshaId(jwtUtil.extractUserId(token));
+            record.setAshaId(userId);
             record.setName(activity.getName());
             record.setAmount(Long.valueOf(activity.getRate()));
 
-            incentiveRecordRepo.save(record);
+            record = incentiveRecordRepo.save(record);
+
             logger.info("Leprosy Incentive saved successfully for benId: {}", benId);
+
+            return record;
 
         } catch (Exception e) {
             logger.error("Save Leprosy Incentive Exception: ", e);
+            return null;
         }
     }
+
 }
