@@ -142,13 +142,13 @@ public class DiseaseControlController {
     }
 
     @RequestMapping(value = "leprosy/saveAll", method = RequestMethod.POST, consumes = "application/json", produces = "application/json",headers = "Authorization")
-    public ResponseEntity<Map<String, Object>> saveLeprosy(@RequestBody LeprosyDTO leprosyDTO,@RequestHeader(value = "JwtToken") String token) {
+    public ResponseEntity<Map<String, Object>> saveLeprosy(@RequestBody LeprosyDTO leprosyDTO) {
         Map<String, Object> response = new HashMap<>();
         try {
             if(leprosyDTO!=null){
                 response.put("status", "Success");
                 response.put("statusCode", 200);
-                response.put("data", diseaseControlService.saveLeprosy(leprosyDTO,token));
+                response.put("data", diseaseControlService.saveLeprosy(leprosyDTO));
             }else {
                 response.put("message", "Invalid request");
                 response.put("statusCode", 400);

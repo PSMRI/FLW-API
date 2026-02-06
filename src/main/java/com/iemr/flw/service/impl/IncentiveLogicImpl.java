@@ -6,6 +6,7 @@ import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
 import com.iemr.flw.repo.iemr.IncentivesRepo;
+import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
@@ -34,15 +35,17 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private UserServiceRoleRepo userServiceRoleRepo;
+
     @Override
-    public IncentiveActivityRecord incentiveForLeprosyConfirmed(
+    public IncentiveActivityRecord incentiveForLeprosyPaucibacillaryConfirmed(
             Long benId,
             Date treatmentStartDate,
             Date treatmentEndDate,
-            String token) {
+            Integer userId) {
 
         try {
-            Integer userId = jwtUtil.extractUserId(token);
             Integer stateCode = userService.getUserDetail(userId).getStateId();
 
             if (stateCode == null) {
@@ -59,7 +62,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
                         benId,
                         treatmentStartDate,
                         treatmentEndDate,
-                        token);
+                        userId);
             }
 
             if (stateCode.equals(StateCode.CG.getStateCode())) {
@@ -69,7 +72,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
                         benId,
                         treatmentStartDate,
                         treatmentEndDate,
-                        token);
+                        userId);
             }
 
             // state not supported
@@ -82,9 +85,97 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
         }
     }
 
+    @Override
+    public IncentiveActivityRecord incentiveForLeprosyMultibacillaryConfirmed(
+            Long benId,
+            Date treatmentStartDate,
+            Date treatmentEndDate,
+            Integer userId) {
+
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "NLEP_PB_TREATMENT";
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.UMBRELLA_PROGRAMMES.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check Leprosy Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForIdentificationLeprosy(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "NLEP_CASE_DETECTION";
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.UMBRELLA_PROGRAMMES.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check Leprosy Incentive Exception: ", e);
+            return null;
+        }
+    }
 
     private IncentiveActivityRecord processIncentive(String activityName, String groupName, Long benId,
-                                  Date startDate, Date endDate, String token) {
+                                                     Date startDate, Date endDate, Integer userId) {
         try {
             IncentiveActivity activity = incentivesRepo.findIncentiveMasterByNameAndGroup(activityName, groupName);
 
@@ -93,7 +184,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
                 return null ;
             }
 
-         return   saveIncentive(activity, benId, startDate, endDate, token);
+         return   saveIncentive(activity, benId, startDate, endDate, userId);
 
         } catch (Exception e) {
             logger.error("Process Incentive Exception: ", e);
@@ -107,7 +198,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             Long benId,
             Date startDate,
             Date endDate,
-            String token) {
+            Integer userId) {
 
         try {
 
@@ -119,8 +210,6 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             Timestamp startTimestamp = new Timestamp(startDate.getTime());
             Timestamp endTimestamp = new Timestamp(endDate.getTime());
 
-            Integer userId = jwtUtil.extractUserId(token);
-            String username = jwtUtil.extractUsername(token);
 
             // 🔍 duplicate check
             IncentiveActivityRecord existing = incentiveRecordRepo
@@ -140,8 +229,8 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             record.setUpdatedDate(startTimestamp);
             record.setStartDate(startTimestamp);
             record.setEndDate(endTimestamp);
-            record.setCreatedBy(username);
-            record.setUpdatedBy(username);
+            record.setCreatedBy(userServiceRoleRepo.getUserNamedByUserId(userId));
+            record.setUpdatedBy(userServiceRoleRepo.getUserNamedByUserId(userId));
             record.setBenId(benId);
             record.setAshaId(userId);
             record.setName(activity.getName());
