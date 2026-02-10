@@ -103,8 +103,8 @@ public class IncentiveController {
         return response.toString();
     }
 
-    @RequestMapping(value = {"/update"}, method = RequestMethod.POST)
-    public String updateIncentive(@RequestBody PendingActivityDTO requestDTO) {
+    @RequestMapping(value = {"/update"}, method = RequestMethod.POST, consumes = {"multipart/form-data"})
+    public String updateIncentive(@ModelAttribute  PendingActivityDTO requestDTO) {
         OutputResponse response = new OutputResponse();
         try {
 
