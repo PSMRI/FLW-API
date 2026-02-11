@@ -205,7 +205,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                     try {
                         MaaMeetingRequestDTO maaMeetingRequestDTO = new MaaMeetingRequestDTO();
                         maaMeetingRequestDTO.setMeetingImages(pendingActivityDTO.getImages().toArray(new MultipartFile[0]));
-                        maaMeetingRequestDTO.setId(existingIncentivePendingActivity.getRecordId());
+                        maaMeetingRequestDTO.setId(1L);
                         maaMeetingService.updateMeeting(maaMeetingRequestDTO);
 
                     }catch (Exception e){
