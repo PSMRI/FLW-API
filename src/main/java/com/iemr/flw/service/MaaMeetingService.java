@@ -217,7 +217,7 @@ public class MaaMeetingService {
                 record.setIsEligible(true);
             } else {
                 record.setIsEligible(false);
-              //  updatePendingActivity(meeting.getAshaId(), meeting.getId(), record.getId(), "MAA_MEETING");
+                updatePendingActivity(meeting.getAshaId(), meeting.getId(), record.getId(), "MAA_MEETING");
 
             }
             record.setAmount(Long.valueOf(incentiveActivity.getRate()));
