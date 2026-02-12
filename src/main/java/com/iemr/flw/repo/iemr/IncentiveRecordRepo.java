@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityRecord, Long> {
@@ -16,7 +17,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
     @Query("select record from IncentiveActivityRecord record where record.activityId = :id and record.createdDate = :createdDate and record.benId = :benId")
     IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(@Param("id") Long id, @Param("createdDate") Timestamp createdDate, @Param("benId") Long benId);
 
-    IncentiveActivityRecord findRecordById(@Param("id") Long id);
+    Optional<IncentiveActivityRecord> findById(Long id);
 
 
     @Query("select record from IncentiveActivityRecord record where record.activityId = :id and record.createdDate = :createdDate and record.benId = :benId and record.ashaId = :ashaId")
