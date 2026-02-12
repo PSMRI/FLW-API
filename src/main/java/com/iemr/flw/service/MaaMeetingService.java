@@ -251,17 +251,17 @@ public class MaaMeetingService {
 
     }
 
-    private void updateIncentive(Long id ) {
-        IncentiveActivityRecord record = recordRepo
-                .findRecordById(id);
+    private void updateIncentive(Long id) {
 
-        if (record != null) {
-            record = new IncentiveActivityRecord();
+        Optional<IncentiveActivityRecord> optionalRecord = recordRepo.findById(id);
+
+        if (optionalRecord.isPresent()) {
+            IncentiveActivityRecord record = optionalRecord.get();
             record.setIsEligible(true);
             recordRepo.save(record);
         }
-
     }
+
 
 
 }
