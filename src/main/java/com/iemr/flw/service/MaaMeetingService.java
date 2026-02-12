@@ -111,7 +111,7 @@ public class MaaMeetingService {
         return repository.save(existingMeeting);
     }
 
-    public MaaMeeting updateMeetingFromFileUpload(MaaMeetingRequestDTO req,Long incentiveRecordId) throws JsonProcessingException {
+    public String updateMeetingFromFileUpload(MaaMeetingRequestDTO req,Long incentiveRecordId) throws JsonProcessingException {
         MaaMeeting existingMeeting = repository.findById(req.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Meeting not found: " + req.getId()));
 
@@ -140,12 +140,14 @@ public class MaaMeetingService {
                     .collect(Collectors.toList());
             existingMeeting.setMeetingImagesJson(objectMapper.writeValueAsString(base64Images));
         }
+         repository.save(existingMeeting);
 
         if (existingMeeting.getMeetingImagesJson() != null) {
-            checkAndUpdateIncentive(incentiveRecordId);
+           return checkAndUpdateIncentive(incentiveRecordId);
 
         }
-        return repository.save(existingMeeting);
+
+        return "Fail to update meeting image";
     }
 
 
@@ -206,8 +208,8 @@ public class MaaMeetingService {
 
     }
 
-    private void checkAndUpdateIncentive(Long incentiveId) {
-            updateIncentive(incentiveId);
+    private String checkAndUpdateIncentive(Long incentiveId) {
+           return updateIncentive(incentiveId);
     }
 
     private void checkAndAddIncentive(MaaMeeting meeting) {
@@ -251,7 +253,7 @@ public class MaaMeetingService {
 
     }
 
-    private void updateIncentive(Long id) {
+    private String updateIncentive(Long id) {
 
         Optional<IncentiveActivityRecord> optionalRecord = recordRepo.findById(id);
 
@@ -259,7 +261,9 @@ public class MaaMeetingService {
             IncentiveActivityRecord record = optionalRecord.get();
             record.setIsEligible(true);
             recordRepo.save(record);
+            return  "Incentive update successfully";
         }
+        return "Fail to update Incentive";
     }
 
 
