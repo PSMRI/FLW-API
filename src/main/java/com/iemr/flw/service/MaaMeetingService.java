@@ -107,8 +107,42 @@ public class MaaMeetingService {
         }
 
         checkAndAddIncentive(existingMeeting);
+
+        return repository.save(existingMeeting);
+    }
+
+    public MaaMeeting updateMeetingFromFileUpload(MaaMeetingRequestDTO req,Long incentiveRecordId) throws JsonProcessingException {
+        MaaMeeting existingMeeting = repository.findById(req.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Meeting not found: " + req.getId()));
+
+        // ✅ NULL CHECK
+        if (req.getMeetingDate() != null) {
+            existingMeeting.setMeetingDate(req.getMeetingDate());
+        }
+        if (req.getPlace() != null) {
+            existingMeeting.setPlace(req.getPlace());
+        }
+        if (req.getParticipants() != null) {
+            existingMeeting.setParticipants(req.getParticipants());
+        }
+        if (req.getAshaId() != null) {
+            existingMeeting.setAshaId(req.getAshaId());
+        }
+        if (req.getCreatedBY() != null) {  // ✅ Typo fixed: CreatedBY → CreatedBy
+            existingMeeting.setCreatedBy(req.getCreatedBY());
+        }
+
+        // Images - only if provided
+        if (req.getMeetingImages() != null && req.getMeetingImages().length > 0) {
+            List<String> base64Images = Arrays.stream(req.getMeetingImages())
+                    .filter(file -> file != null && !file.isEmpty())
+                    .map(this::convertToBase64)
+                    .collect(Collectors.toList());
+            existingMeeting.setMeetingImagesJson(objectMapper.writeValueAsString(base64Images));
+        }
+
         if (existingMeeting.getMeetingImagesJson() != null) {
-            checkAndUpdateIncentive(existingMeeting);
+            checkAndUpdateIncentive(incentiveRecordId);
 
         }
         return repository.save(existingMeeting);
@@ -172,17 +206,8 @@ public class MaaMeetingService {
 
     }
 
-    private void checkAndUpdateIncentive(MaaMeeting meeting) {
-        IncentiveActivity incentiveActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("MAA_QUARTERLY_MEETING", GroupName.CHILD_HEALTH.getDisplayName());
-        IncentiveActivity incentiveActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("MAA_QUARTERLY_MEETING", GroupName.ACTIVITY.getDisplayName());
-        if (incentiveActivityAM != null) {
-            updateIncentive(incentiveActivityAM, meeting);
-        }
-        if (incentiveActivityCH != null) {
-            updateIncentive(incentiveActivityCH, meeting);
-
-        }
-
+    private void checkAndUpdateIncentive(Long incentiveId) {
+            updateIncentive(incentiveId);
     }
 
     private void checkAndAddIncentive(MaaMeeting meeting) {
@@ -226,9 +251,9 @@ public class MaaMeetingService {
 
     }
 
-    private void updateIncentive(IncentiveActivity incentiveActivity, MaaMeeting meeting) {
+    private void updateIncentive(Long id ) {
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), Timestamp.valueOf(meeting.getMeetingDate().atStartOfDay()), 0L, meeting.getAshaId());
+                .findRecordById(id);
 
         if (record != null) {
             record = new IncentiveActivityRecord();
