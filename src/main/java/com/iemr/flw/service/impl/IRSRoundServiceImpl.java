@@ -33,6 +33,6 @@ public class IRSRoundServiceImpl implements IRSRoundService {
 
     @Override
     public List<IRSRound> getRounds(Long householdId) {
-        return irsRoundRepository.findByHouseholdId(householdId);
+        return irsRoundRepository.findAll();
     }
 }
