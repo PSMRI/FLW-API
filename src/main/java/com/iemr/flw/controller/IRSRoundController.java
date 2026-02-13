@@ -25,11 +25,12 @@ public class IRSRoundController {
     private IRSRoundService irsRoundService;
 
     @PostMapping(value = "/add")
-    public ResponseEntity<Map<String, Object>> addRound(@RequestBody IRSRoundListDTO dto) {
+    public ResponseEntity<Map<String, Object>> addRound(@RequestBody IRSRoundListDTO dto,@RequestHeader(value = "jwttoken") String token) {
+
         Map<String, Object> response = new LinkedHashMap<>();
         try {
             if (dto.getRounds().size() != 0) {
-                List<IRSRound> s = irsRoundService.addRounds(dto.getRounds());
+                List<IRSRound> s = irsRoundService.addRounds(dto.getRounds(),token);
                 if (s.size() != 0) {
                     Map<String, Object> data = new HashMap<>();
                                   data.put("entries", s);
@@ -56,13 +57,13 @@ public class IRSRoundController {
     }
 
     @GetMapping(value = "/list/{householdId}")
-    public ResponseEntity<Map<String, Object>> getRounds(@PathVariable Long householdId) {
+    public ResponseEntity<Map<String, Object>> getRounds(@PathVariable Long householdId,@RequestHeader(value = "jwttoken") String token) {
 
         Map<String, Object> response = new LinkedHashMap<>();
 
         try {
             Map<String, Object> data = new HashMap<>();
-            data.put("entries", irsRoundService.getRounds(householdId));
+            data.put("entries", irsRoundService.getRounds(householdId,token));
             response.put("data", data);
             response.put("statusCode", 200);
             response.put("message", "Success");

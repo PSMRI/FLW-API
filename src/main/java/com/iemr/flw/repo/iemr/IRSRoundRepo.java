@@ -11,4 +11,5 @@ import java.util.List;
 public
 interface IRSRoundRepo extends JpaRepository<IRSRound, Long> {
     List<IRSRound> findByHouseholdId(Long householdId);
+    List<IRSRound> findByUserId(Integer userId);
 }
