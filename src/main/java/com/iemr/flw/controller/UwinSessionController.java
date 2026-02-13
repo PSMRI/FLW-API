@@ -25,11 +25,11 @@ import java.util.Map;
 public class UwinSessionController {
 
 
-     @Autowired
-    private  UwinSessionService service;
+    @Autowired
+    private UwinSessionService service;
 
-     @Autowired
-     private JwtUtil jwtUtil;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @RequestMapping(value = "saveAll", method = RequestMethod.POST, headers = "Authorization", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> saveSession(
@@ -44,7 +44,10 @@ public class UwinSessionController {
         UwinSessionRequestDTO dto = new UwinSessionRequestDTO();
         dto.setAshaId(Integer.valueOf(ashaId));
         dto.setDate(Timestamp.valueOf(meetingDate));
-        dto.setPlace(place);
+        if (!place.isEmpty()) {
+            dto.setPlace(place);
+
+        }
         dto.setParticipants(Integer.valueOf(participants));
         dto.setCreatedBy(createdBy);
         dto.setAttachments(images != null ? images.toArray(new MultipartFile[0]) : null);
@@ -66,7 +69,7 @@ public class UwinSessionController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(value = "getAll", method = RequestMethod.POST,headers = "Authorization")
+    @RequestMapping(value = "getAll", method = RequestMethod.POST, headers = "Authorization")
     public ResponseEntity<Map<String, Object>> getSessions(@RequestBody GetBenRequestHandler getBenRequestHandler, HttpServletRequest request) throws Exception {
         Map<String, Object> response = new LinkedHashMap<>();
 
@@ -74,7 +77,7 @@ public class UwinSessionController {
             Map<String, Object> data = new HashMap<>();
 
             List<UwinSessionResponseDTO> uwinSessionResponse = service.getSessionsByAsha(getBenRequestHandler.getAshaId());
-            if (uwinSessionResponse!= null) {
+            if (uwinSessionResponse != null) {
                 data.put("userId", getBenRequestHandler.getUserId());
                 data.put("entries", service.getSessionsByAsha(getBenRequestHandler.getAshaId()));
                 response.put("data", data);
