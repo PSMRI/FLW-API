@@ -387,6 +387,9 @@ public class RMNCHBeneficiaryDetailsRmnch {
 	private Integer noofAlivechildren;
 
 	@Expose
+	private Boolean isDeactivate;
+
+	@Expose
 	@Transient
 	private Integer servicePointID;
 	@Expose

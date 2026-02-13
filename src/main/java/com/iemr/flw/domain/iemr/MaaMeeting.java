@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Data
@@ -38,6 +39,18 @@ public class MaaMeeting {
     @Lob
     @Column(name = "meeting_images", columnDefinition = "LONGTEXT")
     private String meetingImagesJson;
+
+    @Column(name = "village_name")
+    private String villageName;
+
+    @Column(name = "no_of_pragnent_women")
+    private Integer noOfPragnentWomen;
+
+    @Column(name = "no_of_lacting_mother")
+    private Integer noOfLactingMother;
+
+    @Column(name = "mitanin_activity_checkList")
+    private String mitaninActivityCheckList;
 
     @Column(name = "created_by")
     private String createdBy;

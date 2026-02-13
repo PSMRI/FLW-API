@@ -37,6 +37,39 @@ public class VHNDForm {
     @Column(name = "form_type")
     private String formType;
 
+    @Column(name = "vhnd_place_id")
+    private Integer vhndPlaceId;
+
+    @Column(name = "pregnant_women_anc")
+    private String pregnantWomenAnc;
+
+    @Column(name = "lactating_mothers_pnc")
+    private String lactatingMothersPnc;
+
+    @Column(name = "children_immunization")
+    private String childrenImmunization;
+
+    @Column(name = "select_all_education")
+    private Boolean selectAllEducation;
+
+    @Column(name = "knowledge_balanced_diet")
+    private String knowledgeBalancedDiet;
+
+    @Column(name = "care_during_pregnancy")
+    private String careDuringPregnancy;
+
+    @Column(name = "importance_breastfeeding")
+    private String importanceBreastfeeding;
+
+    @Column(name = "complementary_feeding")
+    private String complementaryFeeding;
+
+    @Column(name = "hygiene_sanitation")
+    private String hygieneSanitation;
+
+    @Column(name = "family_planning_healthcare")
+    private String familyPlanningHealthcare;
+
     @Column(name = "created_by")
     private String createdBy;
 

@@ -27,10 +27,15 @@ package com.iemr.flw.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.controller.CoupleController;
 import com.iemr.flw.domain.iemr.*;
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.DiseaseType;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.DiseaseControlService;
+import com.iemr.flw.service.IncentiveLogicService;
+import com.iemr.flw.utils.JwtUtil;
+import com.iemr.flw.utils.exception.IEMRException;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +47,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
 import org.modelmapper.ModelMapper;
 
 @Service
@@ -77,10 +83,17 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     private MosquitoNetRepository mosquitoNetRepository;
 
 
+    @Autowired
+    private ChronicDiseaseVisitRepository chronicDiseaseVisitRepository;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
 
 
-
-    private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
+    private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     @Override
     public String saveMalaria(MalariaDTO diseaseControlDTO) {
@@ -102,7 +115,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     @Override
     public String saveKalaAzar(KalaAzarDTO diseaseControlDTO) {
-        logger.info("Save request: "+diseaseControlDTO.toString());
+        logger.info("Save request: " + diseaseControlDTO.toString());
         for (DiseaseKalaAzarDTO diseaseControlData : diseaseControlDTO.getKalaAzarLists()) {
             if (diseaseKalaAzarRepository.findByBenId(diseaseControlData.getBenId()).isPresent()) {
                 return updateKalaAzarDisease(diseaseControlData);
@@ -268,6 +281,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
 
     @Override
+    @Transactional
     public String saveLeprosy(LeprosyDTO diseaseControlDTO) {
         for (DiseaseLeprosyDTO diseaseControlData : diseaseControlDTO.getLeprosyLists()) {
             if (diseaseLeprosyRepository.findByBenId(diseaseControlData.getBenId()).isPresent()) {
@@ -276,7 +290,61 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 if (diseaseControlDTO.getUserId() != null) {
                     diseaseControlData.setUserId(diseaseControlDTO.getUserId());
                 }
-                diseaseLeprosyRepository.save(saveLeprosyData(diseaseControlData));
+                ScreeningLeprosy screeningLeprosy = diseaseLeprosyRepository.save(saveLeprosyData(diseaseControlData));
+                if (screeningLeprosy != null) {
+                    if (screeningLeprosy.getIsConfirmed()) {
+                        if (screeningLeprosy.getTypeOfLeprosy().equals("PB (Paucibacillary)")) {
+                            IncentiveActivityRecord incentiveActivityRecord =
+                                    incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
+                                            screeningLeprosy.getBenId(),
+                                            screeningLeprosy.getTreatmentStartDate(),
+                                            screeningLeprosy.getTreatmentEndDate(),
+                                            diseaseControlDTO.getUserId());
+
+                            if (incentiveActivityRecord != null) {
+                                logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                        incentiveActivityRecord.getId());
+                            } else {
+                                logger.info("Incentive not created");
+                            }
+
+                        }
+                        if (screeningLeprosy.getTypeOfLeprosy().equals("MB (Multibacillary)")) {
+                            IncentiveActivityRecord incentiveActivityRecord =
+                                    incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
+                                            screeningLeprosy.getBenId(),
+                                            screeningLeprosy.getTreatmentStartDate(),
+                                            screeningLeprosy.getTreatmentEndDate(),
+                                            diseaseControlDTO.getUserId());
+
+                            if (incentiveActivityRecord != null) {
+                                logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                        incentiveActivityRecord.getId());
+                            } else {
+                                logger.info("Incentive not created");
+                            }
+
+                        }
+
+                        if (screeningLeprosy.getIsConfirmed()) {
+                            IncentiveActivityRecord incentiveActivityRecord =
+                                    incentiveLogicService.incentiveForIdentificationLeprosy(
+                                            screeningLeprosy.getBenId(),
+                                            screeningLeprosy.getTreatmentStartDate(),
+                                            screeningLeprosy.getTreatmentEndDate(),
+                                            diseaseControlDTO.getUserId());
+
+                            if (incentiveActivityRecord != null) {
+                                logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                        incentiveActivityRecord.getId());
+                            } else {
+                                logger.info("Incentive not created");
+                            }
+
+                        }
+                    }
+                }
+
                 return "Data add successfully";
 
             }
@@ -349,10 +417,10 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     public String saveLeprosyFollowUp(LeprosyFollowUpDTO dto) {
         if (dto == null)
             return "Invalid data";
-            LeprosyFollowUp entity = saveLeprosyFollowUpData(dto);
-            leprosyFollowUpRepository.save(entity);
-            return "Follow-up data added successfully";
-        
+        LeprosyFollowUp entity = saveLeprosyFollowUpData(dto);
+        leprosyFollowUpRepository.save(entity);
+        return "Follow-up data added successfully";
+
     }
 
     @Override
@@ -602,7 +670,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
 
     private ScreeningKalaAzar saveKalaAzarDisease(DiseaseKalaAzarDTO dto) {
-        logger.info("KalaAzarRequest: "+dto);
+        logger.info("KalaAzarRequest: " + dto);
         ScreeningKalaAzar entity = new ScreeningKalaAzar();
 
         entity.setBenId(dto.getBenId());
@@ -717,6 +785,33 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         diseaseLeprosy.setModifiedBy(diseaseControlData.getModifiedBy());
         diseaseLeprosy.setLastModDate(diseaseControlData.getLastModDate());
 
+        diseaseLeprosy.setRecurrentUlcerationId(diseaseControlData.getRecurrentUlcerationId());
+        diseaseLeprosy.setRecurrentTinglingId(diseaseControlData.getRecurrentTinglingId());
+        diseaseLeprosy.setHypopigmentedPatchId(diseaseControlData.getHypopigmentedPatchId());
+        diseaseLeprosy.setThickenedSkinId(diseaseControlData.getThickenedSkinId());
+        diseaseLeprosy.setSkinNodulesId(diseaseControlData.getSkinNodulesId());
+        diseaseLeprosy.setSkinPatchDiscolorationId(diseaseControlData.getSkinPatchDiscolorationId());
+        diseaseLeprosy.setRecurrentNumbnessId(diseaseControlData.getRecurrentNumbnessId());
+        diseaseLeprosy.setClawingFingersId(diseaseControlData.getClawingFingersId());
+        diseaseLeprosy.setTinglingNumbnessExtremitiesId(diseaseControlData.getTinglingNumbnessExtremitiesId());
+        diseaseLeprosy.setInabilityCloseEyelidId(diseaseControlData.getInabilityCloseEyelidId());
+        diseaseLeprosy.setDifficultyHoldingObjectsId(diseaseControlData.getDifficultyHoldingObjectsId());
+        diseaseLeprosy.setWeaknessFeetId(diseaseControlData.getWeaknessFeetId());
+
+        diseaseLeprosy.setRecurrentUlceration(diseaseControlData.getRecurrentUlceration());
+        diseaseLeprosy.setRecurrentTingling(diseaseControlData.getRecurrentTingling());
+        diseaseLeprosy.setHypopigmentedPatch(diseaseControlData.getHypopigmentedPatch());
+        diseaseLeprosy.setThickenedSkin(diseaseControlData.getThickenedSkin());
+        diseaseLeprosy.setSkinNodules(diseaseControlData.getSkinNodules());
+        diseaseLeprosy.setSkinPatchDiscoloration(diseaseControlData.getSkinPatchDiscoloration());
+        diseaseLeprosy.setRecurrentNumbness(diseaseControlData.getRecurrentNumbness());
+        diseaseLeprosy.setClawingFingers(diseaseControlData.getClawingFingers());
+        diseaseLeprosy.setTinglingNumbnessExtremities(diseaseControlData.getTinglingNumbnessExtremities());
+        diseaseLeprosy.setInabilityCloseEyelid(diseaseControlData.getInabilityCloseEyelid());
+        diseaseLeprosy.setDifficultyHoldingObjects(diseaseControlData.getDifficultyHoldingObjects());
+        diseaseLeprosy.setWeaknessFeet(diseaseControlData.getWeaknessFeet());
+
+
         return diseaseLeprosy;
     }
 
@@ -760,6 +855,33 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         existingDiseaseLeprosy.setModifiedBy(diseaseControlData.getModifiedBy());
         existingDiseaseLeprosy.setLastModDate(diseaseControlData.getLastModDate());
+
+        existingDiseaseLeprosy.setRecurrentUlcerationId(diseaseControlData.getRecurrentUlcerationId());
+        existingDiseaseLeprosy.setRecurrentTinglingId(diseaseControlData.getRecurrentTinglingId());
+        existingDiseaseLeprosy.setHypopigmentedPatchId(diseaseControlData.getHypopigmentedPatchId());
+        existingDiseaseLeprosy.setThickenedSkinId(diseaseControlData.getThickenedSkinId());
+        existingDiseaseLeprosy.setSkinNodulesId(diseaseControlData.getSkinNodulesId());
+        existingDiseaseLeprosy.setSkinPatchDiscolorationId(diseaseControlData.getSkinPatchDiscolorationId());
+        existingDiseaseLeprosy.setRecurrentNumbnessId(diseaseControlData.getRecurrentNumbnessId());
+        existingDiseaseLeprosy.setClawingFingersId(diseaseControlData.getClawingFingersId());
+        existingDiseaseLeprosy.setTinglingNumbnessExtremitiesId(diseaseControlData.getTinglingNumbnessExtremitiesId());
+        existingDiseaseLeprosy.setInabilityCloseEyelidId(diseaseControlData.getInabilityCloseEyelidId());
+        existingDiseaseLeprosy.setDifficultyHoldingObjectsId(diseaseControlData.getDifficultyHoldingObjectsId());
+        existingDiseaseLeprosy.setWeaknessFeetId(diseaseControlData.getWeaknessFeetId());
+
+        existingDiseaseLeprosy.setRecurrentUlceration(diseaseControlData.getRecurrentUlceration());
+        existingDiseaseLeprosy.setRecurrentTingling(diseaseControlData.getRecurrentTingling());
+        existingDiseaseLeprosy.setHypopigmentedPatch(diseaseControlData.getHypopigmentedPatch());
+        existingDiseaseLeprosy.setThickenedSkin(diseaseControlData.getThickenedSkin());
+        existingDiseaseLeprosy.setSkinNodules(diseaseControlData.getSkinNodules());
+        existingDiseaseLeprosy.setSkinPatchDiscoloration(diseaseControlData.getSkinPatchDiscoloration());
+        existingDiseaseLeprosy.setRecurrentNumbness(diseaseControlData.getRecurrentNumbness());
+        existingDiseaseLeprosy.setClawingFingers(diseaseControlData.getClawingFingers());
+        existingDiseaseLeprosy.setTinglingNumbnessExtremities(diseaseControlData.getTinglingNumbnessExtremities());
+        existingDiseaseLeprosy.setInabilityCloseEyelid(diseaseControlData.getInabilityCloseEyelid());
+        existingDiseaseLeprosy.setDifficultyHoldingObjects(diseaseControlData.getDifficultyHoldingObjects());
+        existingDiseaseLeprosy.setWeaknessFeet(diseaseControlData.getWeaknessFeet());
+
 
         diseaseLeprosyRepository.save(existingDiseaseLeprosy);
         // Return the updated entity
@@ -887,10 +1009,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         }).collect(Collectors.toList());
 
 
-
         // ✅ Save all
         List<MosquitoNetEntity> savedEntities = mosquitoNetRepository.saveAll(entityList);
-
 
 
         // ✅ Entity → DTO return
@@ -940,13 +1060,11 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             mosquitoNetListDTO.setIs_net_distributed(entity.getIsNetDistributed());
             mosquitoNetListDTO.setVisit_date(entity.getVisitDate().format(formatter));
 
-             dto.setFields(mosquitoNetListDTO);
+            dto.setFields(mosquitoNetListDTO);
 
             return dto;
         }).collect(Collectors.toList());
     }
-
-
 
 
     private void checkAndAddIncentives(ScreeningMalaria diseaseScreening) {
@@ -996,6 +1114,81 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
             }
         }
+    }
+
+
+    @Override
+    public List<ChronicDiseaseVisitDTO> saveChronicDiseaseVisit(
+            List<ChronicDiseaseVisitDTO> requestList, String token) throws IEMRException {
+
+        List<ChronicDiseaseVisitDTO> responseList = new ArrayList<>();
+
+        for (ChronicDiseaseVisitDTO dto : requestList) {
+
+            ChronicDiseaseVisitEntity entity = new ChronicDiseaseVisitEntity();
+
+            entity.setBenId(dto.getBenId());
+            entity.setHhId(dto.getHhId());
+            entity.setFormId(dto.getFormId());
+            entity.setVersion(dto.getVersion());
+            entity.setVisitNo(dto.getVisitNo());
+            entity.setFollowUpNo(dto.getFollowUpNo());
+            entity.setFollowUpDate(dto.getFollowUpDate());
+            entity.setDiagnosisCodes(dto.getDiagnosisCodes());
+            entity.setFormDataJson(dto.getFormDataJson());
+            entity.setUserID(jwtUtil.extractUserId(token));
+            entity.setCreatedBy(jwtUtil.extractUsername(token));
+            entity.setUpdatedBy(jwtUtil.extractUserId(token));
+
+
+            if (dto.getTreatmentStartDate() != null) {
+                entity.setTreatmentStartDate(
+                        LocalDate.parse(dto.getTreatmentStartDate())
+                );
+            }
+
+            ChronicDiseaseVisitEntity savedEntity =
+                    chronicDiseaseVisitRepository.save(entity);
+
+            dto.setId(savedEntity.getId());
+            responseList.add(dto);
+        }
+
+        return responseList;
+    }
+
+    @Override
+    public List<ChronicDiseaseVisitDTO> getCdtfVisits(GetBenRequestHandler getBenRequestHandler) {
+
+        List<ChronicDiseaseVisitEntity> entityList = chronicDiseaseVisitRepository.findByUserID(getBenRequestHandler.getAshaId());
+
+        List<ChronicDiseaseVisitDTO> dtoList = new ArrayList<>();
+
+        for (ChronicDiseaseVisitEntity entity : entityList) {
+
+            ChronicDiseaseVisitDTO dto = new ChronicDiseaseVisitDTO();
+
+            dto.setId(entity.getId());
+            dto.setBenId(entity.getBenId());
+            dto.setHhId(entity.getHhId());
+            dto.setFormId(entity.getFormId());
+            dto.setVersion(entity.getVersion());
+            dto.setVisitNo(entity.getVisitNo());
+            dto.setFollowUpNo(entity.getFollowUpNo());
+            dto.setFollowUpDate(entity.getFollowUpDate());
+            dto.setDiagnosisCodes(entity.getDiagnosisCodes());
+            dto.setFormDataJson(entity.getFormDataJson());
+
+            if (entity.getTreatmentStartDate() != null) {
+                dto.setTreatmentStartDate(
+                        entity.getTreatmentStartDate().toString()
+                );
+            }
+
+            dtoList.add(dto);
+        }
+
+        return dtoList;
     }
 
 }

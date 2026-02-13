@@ -24,6 +24,7 @@
 */
 package com.iemr.flw.dto.iemr;
 
+import jakarta.persistence.Column;
 import lombok.Data;
 
 @Data
@@ -33,6 +34,17 @@ public class VHNDFormDTO {
     private Integer noOfBeneficiariesAttended;
     private String image1;
     private String image2;
+    private Integer vhndPlaceId;
+    private String pregnantWomenAnc;
+    private String lactatingMothersPnc;
+    private String childrenImmunization;
+    private Boolean selectAllEducation;
+    private String knowledgeBalancedDiet;
+    private String careDuringPregnancy;
+    private String importanceBreastfeeding;
+    private String complementaryFeeding;
+    private String hygieneSanitation;
+    private String familyPlanningHealthcare;
 }
 
 

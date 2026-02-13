@@ -26,7 +26,6 @@ package com.iemr.flw.domain.iemr;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.sql.Timestamp;
 import java.util.Date;
 
@@ -142,6 +141,78 @@ public class ScreeningLeprosy {
 
     @Column(name = "treatment_status", length = 100)
     private String treatmentStatus;
+
+    @Column(name = "recurrent_ulceration_id")
+    private Integer recurrentUlcerationId;
+
+    @Column(name = "recurrent_tingling_id")
+    private Integer recurrentTinglingId;
+
+    @Column(name = "hypopigmented_patch_id")
+    private Integer hypopigmentedPatchId;
+
+    @Column(name = "thickened_skin_id")
+    private Integer thickenedSkinId;
+
+    @Column(name = "skin_nodules_id")
+    private Integer skinNodulesId;
+
+    @Column(name = "skin_patch_discoloration_id")
+    private Integer skinPatchDiscolorationId;
+
+    @Column(name = "recurrent_numbness_id")
+    private Integer recurrentNumbnessId;
+
+    @Column(name = "clawing_fingers_id")
+    private Integer clawingFingersId;
+
+    @Column(name = "tingling_numbness_extremities_id")
+    private Integer tinglingNumbnessExtremitiesId;
+
+    @Column(name = "inability_close_eyelid_id")
+    private Integer inabilityCloseEyelidId;
+
+    @Column(name = "difficulty_holding_objects_id")
+    private Integer difficultyHoldingObjectsId;
+
+    @Column(name = "weakness_feet_id")
+    private Integer weaknessFeetId;
+
+    @Column(name = "recurrent_ulceration", length = 10)
+    private String recurrentUlceration;
+
+    @Column(name = "recurrent_tingling", length = 10)
+    private String recurrentTingling;
+
+    @Column(name = "hypopigmented_patch", length = 50)
+    private String hypopigmentedPatch;
+
+    @Column(name = "thickened_skin", length = 10)
+    private String thickenedSkin;
+
+    @Column(name = "skin_nodules", length = 10)
+    private String skinNodules;
+
+    @Column(name = "skin_patch_discoloration", length = 50)
+    private String skinPatchDiscoloration;
+
+    @Column(name = "recurrent_numbness", length = 10)
+    private String recurrentNumbness;
+
+    @Column(name = "clawing_fingers", length = 10)
+    private String clawingFingers;
+
+    @Column(name = "tingling_numbness_extremities", length = 50)
+    private String tinglingNumbnessExtremities;
+
+    @Column(name = "inability_close_eyelid", length = 10)
+    private String inabilityCloseEyelid;
+
+    @Column(name = "difficulty_holding_objects", length = 50)
+    private String difficultyHoldingObjects;
+
+    @Column(name = "weakness_feet", length = 10)
+    private String weaknessFeet;
 
     @Column(name = "CreatedBy", length = 100)
     private String createdBy;

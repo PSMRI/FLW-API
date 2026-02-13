@@ -1,5 +1,6 @@
 package com.iemr.flw.dto.iemr;
 
+import jakarta.persistence.Column;
 import lombok.Data;
 
 import java.sql.Timestamp;
@@ -30,5 +31,9 @@ public class IncentiveRecordDTO {
     private Timestamp updatedDate;
 
     private String updatedBy;
+
+    private Boolean isEligible;
+
+    private Boolean isDefaultActivity;
 }
 

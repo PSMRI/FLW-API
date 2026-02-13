@@ -7,16 +7,25 @@ import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
+import com.iemr.flw.service.IncentiveLogicService;
+import com.iemr.flw.service.IncentiveService;
 import com.iemr.flw.service.MaternalHealthService;
+import com.iemr.flw.utils.JwtUtil;
+import com.iemr.flw.utils.exception.IEMRException;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -58,6 +67,12 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     @Autowired
     private IncentiveRecordRepo recordRepo;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
+
 
     ObjectMapper mapper = new ObjectMapper();
 
@@ -66,6 +81,9 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
     @Autowired
     private SMSServiceImpl smsServiceImpl;
+
+    @Autowired
+    private AncCounsellingCareRepo ancCounsellingCareRepo;
 
 
     public static final List<String> PNC_PERIODS =
@@ -356,6 +374,151 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         }
         return null;
     }
+
+    @Override
+    @Transactional
+    public String saveANCVisitQuestions(List<AncCounsellingCareDTO> dtos, String authorization) throws IEMRException {
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        List<AncCounsellingCare> entities = new ArrayList<>();
+
+        for (AncCounsellingCareDTO dto : dtos) {
+
+            if (!StringUtils.hasText(dto.getVisitDate())) {
+                throw new IllegalArgumentException("visitDate is mandatory");
+            }
+
+            AncCounsellingCareListDTO fields = dto.getFields();
+            if (fields == null) {
+                throw new IllegalArgumentException("fields object is mandatory");
+            }
+
+            LocalDate visitDate;
+            try {
+                visitDate = LocalDate.parse(dto.getVisitDate(), formatter);
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("Invalid visitDate format, expected dd-MM-yyyy");
+            }
+
+            LocalDate homeVisitDate;
+            try {
+                homeVisitDate = StringUtils.hasText(fields.getHomeVisitDate())
+                        ? LocalDate.parse(fields.getHomeVisitDate(), formatter)
+                        : visitDate; // ✅ fallback
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("Invalid home_visit_date format, expected dd-MM-yyyy");
+            }
+
+            AncCounsellingCare entity = new AncCounsellingCare();
+            entity.setBeneficiaryId(dto.getBeneficiaryId());
+            entity.setAncVisitId(0L);
+            entity.setVisitDate(visitDate);
+            entity.setHomeVisitDate(homeVisitDate);
+
+            entity.setSelectAll(yesNoToBoolean(fields.getSelectAll()));
+            entity.setSwelling(yesNoToBoolean(fields.getSwelling()));
+            entity.setHighBp(yesNoToBoolean(fields.getHighBp()));
+            entity.setConvulsions(yesNoToBoolean(fields.getConvulsions()));
+            entity.setAnemia(yesNoToBoolean(fields.getAnemia()));
+            entity.setReducedFetalMovement(yesNoToBoolean(fields.getReducedFetalMovement()));
+            entity.setAgeRisk(yesNoToBoolean(fields.getAgeRisk()));
+            entity.setChildGap(yesNoToBoolean(fields.getChildGap()));
+            entity.setShortHeight(yesNoToBoolean(fields.getShortHeight()));
+            entity.setPrePregWeight(yesNoToBoolean(fields.getPrePregWeight()));
+            entity.setBleeding(yesNoToBoolean(fields.getBleeding()));
+            entity.setMiscarriageHistory(yesNoToBoolean(fields.getMiscarriageHistory()));
+            entity.setFourPlusDelivery(yesNoToBoolean(fields.getFourPlusDelivery()));
+            entity.setFirstDelivery(yesNoToBoolean(fields.getFirstDelivery()));
+            entity.setTwinPregnancy(yesNoToBoolean(fields.getTwinPregnancy()));
+            entity.setCSectionHistory(yesNoToBoolean(fields.getCSectionHistory()));
+            entity.setPreExistingDisease(yesNoToBoolean(fields.getPreExistingDisease()));
+            entity.setFeverMalaria(yesNoToBoolean(fields.getFeverMalaria()));
+            entity.setJaundice(yesNoToBoolean(fields.getJaundice()));
+            entity.setSickleCell(yesNoToBoolean(fields.getSickleCell()));
+            entity.setProlongedLabor(yesNoToBoolean(fields.getProlongedLabor()));
+            entity.setMalpresentation(yesNoToBoolean(fields.getMalpresentation()));
+
+            entity.setUserId(jwtUtil.extractUserId(authorization));
+            entity.setCreatedBy(jwtUtil.extractUsername(authorization));
+            entity.setUpdatedBy(jwtUtil.extractUsername(authorization));
+
+            entities.add(entity);
+        }
+
+        ancCounsellingCareRepo.saveAll(entities);
+
+        return "ANC Counselling & Care data saved successfully";
+    }
+
+
+    @Override
+    public List<AncCounsellingCareResponseDTO> getANCCounselling(GetBenRequestHandler requestDTO) {
+
+        List<AncCounsellingCare> entities =
+                ancCounsellingCareRepo.findAllByUserId(requestDTO.getAshaId());
+
+     List<AncCounsellingCareResponseDTO> responseDTOList = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        for (AncCounsellingCare entity : entities) {
+
+            AncCounsellingCareResponseDTO responseDTO = new AncCounsellingCareResponseDTO();
+            responseDTO.setFormId("anc_form_001");
+            responseDTO.setBeneficiaryId(entity.getBeneficiaryId()); // Update with actual value
+            responseDTO.setVisitDate(entity.getVisitDate().format(formatter)); // Format visit.getVisitDate()
+
+            // 🔹 fields map
+            Map<String, Object> fields = new HashMap<>();
+
+            fields.put("home_visit_date",
+                    entity.getHomeVisitDate() != null
+                            ? entity.getHomeVisitDate().format(formatter)
+                            : null);
+
+            fields.put("select_all", booleanToYesNo(entity.getSelectAll()));
+            fields.put("swelling", booleanToYesNo(entity.getSwelling()));
+            fields.put("high_bp", booleanToYesNo(entity.getHighBp()));
+            fields.put("convulsions", booleanToYesNo(entity.getConvulsions()));
+            fields.put("anemia", booleanToYesNo(entity.getAnemia()));
+            fields.put("reduced_fetal_movement", booleanToYesNo(entity.getReducedFetalMovement()));
+            fields.put("age_risk", booleanToYesNo(entity.getAgeRisk()));
+            fields.put("child_gap", booleanToYesNo(entity.getChildGap()));
+            fields.put("short_height", booleanToYesNo(entity.getShortHeight()));
+            fields.put("pre_preg_weight", booleanToYesNo(entity.getPrePregWeight()));
+            fields.put("bleeding", booleanToYesNo(entity.getBleeding()));
+            fields.put("miscarriage_history", booleanToYesNo(entity.getMiscarriageHistory()));
+            fields.put("four_plus_delivery", booleanToYesNo(entity.getFourPlusDelivery()));
+            fields.put("first_delivery", booleanToYesNo(entity.getFirstDelivery()));
+            fields.put("twin_pregnancy", booleanToYesNo(entity.getTwinPregnancy()));
+            fields.put("c_section_history", booleanToYesNo(entity.getCSectionHistory()));
+            fields.put("pre_existing_disease", booleanToYesNo(entity.getPreExistingDisease()));
+            fields.put("fever_malaria", booleanToYesNo(entity.getFeverMalaria()));
+            fields.put("jaundice", booleanToYesNo(entity.getJaundice()));
+            fields.put("sickle_cell", booleanToYesNo(entity.getSickleCell()));
+            fields.put("prolonged_labor", booleanToYesNo(entity.getProlongedLabor()));
+            fields.put("malpresentation", booleanToYesNo(entity.getMalpresentation()));
+
+            responseDTO.setFields(fields);
+            responseDTOList.add(responseDTO);
+
+
+
+
+        }
+        return responseDTOList;
+
+    }
+
+    private String booleanToYesNo(Boolean value) {
+        return Boolean.TRUE.equals(value) ? "Yes" : "No";
+    }
+
+
+
+    private Boolean yesNoToBoolean(String value) {
+        return "Yes".equalsIgnoreCase(value);
+    }
+
 
     private void checkAndAddAntaraIncentive(List<PNCVisit> recordList, PNCVisit ect) {
         Integer userId = userRepo.getUserIdByName(ect.getCreatedBy());

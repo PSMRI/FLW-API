@@ -46,4 +46,10 @@ public class IncentiveActivityRecord {
 
     @Column(name = "updated_by")
     private String updatedBy;
+
+    @Column(name = "is_eligible")
+    private Boolean isEligible;
+
+    @Column(name = "is_default_activity")
+    private Boolean isDefaultActivity;
 }

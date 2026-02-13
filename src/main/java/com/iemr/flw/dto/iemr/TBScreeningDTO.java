@@ -29,6 +29,21 @@ public class TBScreeningDTO {
 
     private Boolean familySufferingFromTB;
 
+    private Boolean riseOfFever;
+    private Boolean lossOfAppetite;
+    private Boolean age;
+    private Boolean diabetic;
+    private Boolean tobaccoUser;
+    private Boolean bmi;
+    private Boolean contactWithTBPatient;
+    private Boolean historyOfTBInLastFiveYrs;
+    private  String sympotomatic;
+    private String asymptomatic;
+    private String recommandateTest;
+
+
+
+
     public Long getId() {
         return id;
     }

@@ -1,6 +1,7 @@
 package com.iemr.flw.domain.iemr;
 
 import jakarta.persistence.*;
+import jakarta.xml.bind.annotation.XmlAccessorOrder;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -43,4 +44,26 @@ public class VhncForm {
     
     @Column(name = "form_type")
     private String formType;
+
+    @Column(name = "village_name")
+    private String villageName;
+
+    @Column(name = "anm")
+    private Integer anm;
+
+    @Column(name = "aww")
+    private Integer aww;
+
+    @Column(name = "no_of_pragnent_women")
+    private Integer noOfPragnentWoment;
+
+    @Column(name = "no_of_lacting_mother")
+    private Integer noOfLactingMother;
+
+    @Column(name = "no_of_committee")
+    private Integer noOfCommittee;
+
+    @Column(name = "followup_previous")
+    private Boolean followupPrevius;
+
 }

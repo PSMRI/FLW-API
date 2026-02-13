@@ -34,4 +34,12 @@ public class VhncFormDTO {
     private Integer noOfBeneficiariesAttended;
     private String image1;
     private String image2;
+    private String villageName;
+    private Integer anm;
+    private Integer aww;
+    private Integer noOfPragnentWoment;
+    private Integer noOfLactingMother;
+    private Integer noOfCommittee;
+    private Boolean followupPrevius;
+
 }

@@ -63,6 +63,8 @@ public class ANCVisitDTO {
     private Timestamp visitDate;
     private Timestamp dateSterilisation;
     private Boolean isYesOrNo;
+    private String placeOfAnc;
+    private Integer placeOfAncId;
 
 }
 

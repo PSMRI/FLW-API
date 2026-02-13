@@ -99,16 +99,15 @@ public class AshaProfileImpl implements AshaProfileService {
             M_User m_user = Objects.requireNonNull(employeeMasterInter.getUserDetails(userID), "User details not found for ID: " + userID);
             AshaWorker ashaWorker = new AshaWorker();
             ashaWorker.setEmployeeId(m_user.getUserID());
-            ashaWorker.setDob(m_user.getDOB());
-            LocalDate doj = m_user.getDOJ();
-
-            if (doj == null) {
-                doj = LocalDate.now();
-            }
-
+            // Convert DOB (Timestamp) to LocalDate
+            java.sql.Timestamp dobTimestamp = m_user.getDOB();
+            LocalDate dob = dobTimestamp != null ? dobTimestamp.toLocalDateTime().toLocalDate() : null;
+            ashaWorker.setDob(dob);
+            // Convert DOJ (Timestamp) to LocalDate
+            java.sql.Timestamp dojTimestamp = m_user.getDOJ();
+            LocalDate doj = dojTimestamp != null ? dojTimestamp.toLocalDateTime().toLocalDate() : LocalDate.now();
             ashaWorker.setDateOfJoining(doj);
             ashaWorker.setName(String.format("%s %s", Objects.toString(m_user.getFirstName(), ""), Objects.toString(m_user.getLastName(), "")).trim());
-
             ashaWorker.setMobileNumber(m_user.getContactNo());
             ashaWorker.setAlternateMobileNumber(m_user.getEmergencyContactNo());
             ashaWorker.setProviderServiceMapID(m_user.getServiceProviderID());

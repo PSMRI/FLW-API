@@ -6,22 +6,22 @@ import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
 import com.iemr.flw.domain.iemr.IncentiveActivity;
 import com.iemr.flw.domain.iemr.IncentiveActivityLangMapping;
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
+import com.iemr.flw.domain.iemr.IncentivePendingActivity;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
-import com.iemr.flw.repo.iemr.IncentiveActivityLangMappingRepo;
-import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
-import com.iemr.flw.repo.iemr.IncentivesRepo;
-import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
+import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.IncentiveService;
+import com.iemr.flw.service.MaaMeetingService;
 import com.iemr.flw.utils.JwtUtil;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigInteger;
 import java.sql.Timestamp;
@@ -51,7 +51,13 @@ public class IncentiveServiceImpl implements IncentiveService {
     private JwtUtil jwtUtil;
 
     @Autowired
+    private IncentivePendingActivityRepository incentivePendingActivityRepository;
+
+    @Autowired
     private UserServiceRoleRepo userRepo;
+
+    @Autowired
+    private MaaMeetingService maaMeetingService;
 
     @Override
     public String saveIncentivesMaster(List<IncentiveActivityDTO> activityDTOS) {
@@ -187,6 +193,32 @@ public class IncentiveServiceImpl implements IncentiveService {
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         return gson.toJson(dtos);
     }
+
+    @Override
+    public String updateIncentive(PendingActivityDTO pendingActivityDTO) {
+        Optional<IncentivePendingActivity> incentivePendingActivity = incentivePendingActivityRepository.findByUserIdAndModuleNameAndActivityId(pendingActivityDTO.getUserId(),pendingActivityDTO.getModuleName(),pendingActivityDTO.getId());
+
+        if(incentivePendingActivity.isPresent()){
+            IncentivePendingActivity existingIncentivePendingActivity = incentivePendingActivity.get();
+            if(existingIncentivePendingActivity.getModuleName().equals("MAA_MEETING")){
+                if(pendingActivityDTO.getImages()!=null){
+                    try {
+                        MaaMeetingRequestDTO maaMeetingRequestDTO = new MaaMeetingRequestDTO();
+                        maaMeetingRequestDTO.setMeetingImages(pendingActivityDTO.getImages().toArray(new MultipartFile[0]));
+                        maaMeetingRequestDTO.setId(existingIncentivePendingActivity.getRecordId());
+                       return maaMeetingService.updateMeetingFromFileUpload(maaMeetingRequestDTO,pendingActivityDTO.getId());
+
+                    }catch (Exception e){
+                        return e.getMessage();
+                    }
+
+                }
+            }
+        }
+        return  null;
+
+    }
+
     private void checkMonthlyAshaIncentive(Integer ashaId){
         IncentiveActivity MOBILEBILLREIMB_ACTIVITY = incentivesRepo.findIncentiveMasterByNameAndGroup("MOBILE_BILL_REIMB", GroupName.OTHER_INCENTIVES.getDisplayName());
         IncentiveActivity ADDITIONAL_ASHA_INCENTIVE = incentivesRepo.findIncentiveMasterByNameAndGroup("ADDITIONAL_ASHA_INCENTIVE", GroupName.ADDITIONAL_INCENTIVE.getDisplayName());
