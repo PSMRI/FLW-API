@@ -257,7 +257,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                     );
                 }
             }else {
-                if (incentiveName == IncentiveName.MAA_QUARTERLY_MEETING) {
+                if (incentiveName.name().equals(IncentiveName.MAA_QUARTERLY_MEETING.name())) {
 
                     maaMeetingService.updateMeetingFromFileUpload(
                             maaMeetingRequestDTO,
@@ -265,7 +265,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                     );
                 }
 
-                if (incentiveName == IncentiveName.HBNC_0_42_DAYS) {
+                if (incentiveName.name().equals(IncentiveName.HBNC_0_42_DAYS.name())) {
 
                     childCareService.updateHbncFromFileUpload(
                             pendingActivityDTO.getImages().toArray(new MultipartFile[0]),
