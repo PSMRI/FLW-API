@@ -205,14 +205,14 @@ public class IncentiveServiceImpl implements IncentiveService {
 
         IncentiveName incentiveName;
         try {
-            incentiveName = IncentiveName.valueOf(pendingActivityDTO.getName());
+            incentiveName = IncentiveName.valueOf(pendingActivityDTO.getActivityName());
         } catch (IllegalArgumentException e) {
             return "Invalid incentive name";
         }
 
         IncentiveActivity incentiveActivity =
                 incentivesRepo.findIncentiveMasterByNameAndGroup(
-                        pendingActivityDTO.getName(),
+                        pendingActivityDTO.getActivityName(),
                         pendingActivityDTO.getModuleName()
                 );
 
