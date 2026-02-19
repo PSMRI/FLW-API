@@ -15,4 +15,5 @@ public interface IncentivePendingActivityRepository extends JpaRepository<Incent
             String moduleName,
             Long activityId
     );
+    Optional<IncentivePendingActivity> findByMincentiveIdAndActivityId(Long mIncentiveId,Long activityId);
 }

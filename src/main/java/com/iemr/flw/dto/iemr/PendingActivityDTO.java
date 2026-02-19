@@ -11,4 +11,5 @@ public class PendingActivityDTO {
     private Integer userId;
     private List<MultipartFile> Images;
     private String moduleName;
+    private String name;
 }

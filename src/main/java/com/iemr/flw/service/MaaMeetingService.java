@@ -160,12 +160,12 @@ public class MaaMeetingService {
         }).collect(Collectors.toList());
     }
 
-    private void updatePendingActivity(Integer userId, Long recordId, Long activityId, String moduleName) {
+    private void updatePendingActivity(Integer userId, Long recordId, Long activityId, Long mIncentiveId) {
         IncentivePendingActivity incentivePendingActivity = new IncentivePendingActivity();
         incentivePendingActivity.setActivityId(activityId);
         incentivePendingActivity.setRecordId(recordId);
         incentivePendingActivity.setUserId(userId);
-        incentivePendingActivity.setModuleName(moduleName);
+        incentivePendingActivity.setMincentiveId(mIncentiveId);
         if (incentivePendingActivity != null) {
             incentivePendingActivityRepository.save(incentivePendingActivity);
         }
@@ -186,8 +186,9 @@ public class MaaMeetingService {
     }
 
     private void checkAndAddIncentive(MaaMeeting meeting) {
-        IncentiveActivity incentiveActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("MAA_QUARTERLY_MEETING", GroupName.CHILD_HEALTH.getDisplayName());
-        IncentiveActivity incentiveActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("MAA_QUARTERLY_MEETING", GroupName.ACTIVITY.getDisplayName());
+        String activityName = "MAA_QUARTERLY_MEETING";
+        IncentiveActivity incentiveActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(activityName, GroupName.CHILD_HEALTH.getDisplayName());
+        IncentiveActivity incentiveActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(activityName, GroupName.ACTIVITY.getDisplayName());
         if (incentiveActivityAM != null) {
             addIncentive(incentiveActivityAM, meeting);
         }
@@ -217,7 +218,7 @@ public class MaaMeetingService {
                 record.setIsEligible(true);
             } else {
                 record.setIsEligible(false);
-              //  updatePendingActivity(meeting.getAshaId(), meeting.getId(), record.getId(), "MAA_MEETING");
+                updatePendingActivity(meeting.getAshaId(), meeting.getId(), record.getId(), incentiveActivity.getId());
 
             }
             record.setAmount(Long.valueOf(incentiveActivity.getRate()));
