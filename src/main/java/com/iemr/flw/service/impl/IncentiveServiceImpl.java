@@ -78,7 +78,7 @@ public class IncentiveServiceImpl implements IncentiveService {
             });
             String saved = "";
             activityDTOS.forEach(dto -> saved.concat(dto.getGroup() + ": " + dto.getName()));
-            return "saved master data for " + saved;
+            return "saved master data for " + saved ;
         } catch (Exception e) {
 
         }
@@ -206,12 +206,13 @@ public class IncentiveServiceImpl implements IncentiveService {
                         try {
                             MaaMeetingRequestDTO maaMeetingRequestDTO = new MaaMeetingRequestDTO();
                             maaMeetingRequestDTO.setMeetingImages(pendingActivityDTO.getImages().toArray(new MultipartFile[0]));
-                            maaMeetingService.updateMeeting(maaMeetingRequestDTO);
+                            maaMeetingService.updateMeetingFromFileUpload(maaMeetingRequestDTO,pendingActivityDTO.getId());
 
-                    }catch (Exception e){
-                        return e.getMessage();
+                        } catch (Exception e) {
+                            return e.getMessage();
+                        }
+
                     }
-
                 }
             }
         }
@@ -219,25 +220,25 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     }
 
-    private void checkMonthlyAshaIncentive(Integer ashaId) {
+    private void checkMonthlyAshaIncentive(Integer ashaId){
         IncentiveActivity MOBILEBILLREIMB_ACTIVITY = incentivesRepo.findIncentiveMasterByNameAndGroup("MOBILE_BILL_REIMB", GroupName.OTHER_INCENTIVES.getDisplayName());
         IncentiveActivity ADDITIONAL_ASHA_INCENTIVE = incentivesRepo.findIncentiveMasterByNameAndGroup("ADDITIONAL_ASHA_INCENTIVE", GroupName.ADDITIONAL_INCENTIVE.getDisplayName());
         IncentiveActivity ASHA_MONTHLY_ROUTINE = incentivesRepo.findIncentiveMasterByNameAndGroup("ASHA_MONTHLY_ROUTINE", GroupName.ASHA_MONTHLY_ROUTINE.getDisplayName());
-        if (MOBILEBILLREIMB_ACTIVITY != null) {
-            addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY, ashaId);
+        if(MOBILEBILLREIMB_ACTIVITY!=null){
+            addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY,ashaId);
         }
-        if (ADDITIONAL_ASHA_INCENTIVE != null) {
-            addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE, ashaId);
+        if(ADDITIONAL_ASHA_INCENTIVE!=null){
+            addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE,ashaId);
 
         }
 
-        if (ASHA_MONTHLY_ROUTINE != null) {
-            addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId);
+        if(ASHA_MONTHLY_ROUTINE!=null){
+            addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE,ashaId);
 
         }
     }
 
-    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId) {
+    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId){
         Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
 
         Timestamp startOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(1).atStartOfDay());
