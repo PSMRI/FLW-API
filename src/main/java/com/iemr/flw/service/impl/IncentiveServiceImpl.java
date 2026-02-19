@@ -10,6 +10,7 @@ import com.iemr.flw.domain.iemr.IncentivePendingActivity;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.IncentiveName;
 import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
@@ -59,6 +60,9 @@ public class IncentiveServiceImpl implements IncentiveService {
     @Autowired
     private MaaMeetingService maaMeetingService;
 
+    @Autowired
+    private ChildCareServiceImpl childCareService;
+
     @Override
     public String saveIncentivesMaster(List<IncentiveActivityDTO> activityDTOS) {
         try {
@@ -78,7 +82,7 @@ public class IncentiveServiceImpl implements IncentiveService {
             });
             String saved = "";
             activityDTOS.forEach(dto -> saved.concat(dto.getGroup() + ": " + dto.getName()));
-            return "saved master data for " + saved ;
+            return "saved master data for " + saved;
         } catch (Exception e) {
 
         }
@@ -90,10 +94,10 @@ public class IncentiveServiceImpl implements IncentiveService {
         try {
 
             List<IncentiveActivity> incs = new ArrayList<>();
-            if(incentiveRequestDTO.getState()==StateCode.CG.getStateCode()){
+            if (incentiveRequestDTO.getState() == StateCode.CG.getStateCode()) {
                 incs = incentivesRepo.findAll().stream().filter(incentiveActivity -> incentiveActivity.getGroup().equals("ACTIVITY")).collect(Collectors.toList());
 
-            }else {
+            } else {
                 incs = incentivesRepo.findAll().stream().filter(incentiveActivity -> !incentiveActivity.getGroup().equals("ACTIVITY")).collect(Collectors.toList());
 
             }
@@ -102,40 +106,38 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                 // Fetch language mapping
                 IncentiveActivityLangMapping mapping = incentiveActivityLangMappingRepo
-                        .findByIdAndName(inc.getId(),inc.getName());
-
+                        .findByIdAndName(inc.getId(), inc.getName());
 
 
                 if (mapping != null) {
                     dto.setName(mapping.getName());
                     dto.setGroupName(mapping.getGroup());
-                    if(Objects.equals(incentiveRequestDTO.getLangCode(), "en")){
+                    if (Objects.equals(incentiveRequestDTO.getLangCode(), "en")) {
                         dto.setDescription(inc.getDescription());
 
 
+                    } else if (Objects.equals(incentiveRequestDTO.getLangCode(), "as")) {
 
-                    }else  if(Objects.equals(incentiveRequestDTO.getLangCode(), "as")){
-
-                        if(mapping.getAssameActivityDescription()!=null){
+                        if (mapping.getAssameActivityDescription() != null) {
                             dto.setDescription(mapping.getAssameActivityDescription());
 
-                        }else {
+                        } else {
                             dto.setDescription(mapping.getDescription());
 
                         }
 
-                    }else  if(Objects.equals(incentiveRequestDTO.getLangCode(), "hi")){
-                        if(mapping.getHindiActivityDescription()!=null){
+                    } else if (Objects.equals(incentiveRequestDTO.getLangCode(), "hi")) {
+                        if (mapping.getHindiActivityDescription() != null) {
                             dto.setDescription(mapping.getHindiActivityDescription());
 
-                        }else {
+                        } else {
                             dto.setDescription(mapping.getDescription());
 
                         }
 
                     }
 
-                }else {
+                } else {
                     dto.setGroupName(inc.getGroup());
 
                 }
@@ -156,30 +158,30 @@ public class IncentiveServiceImpl implements IncentiveService {
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
 
-        if(request.getVillageID()!= StateCode.CG.getStateCode()){
+        if (request.getVillageID() != StateCode.CG.getStateCode()) {
             checkMonthlyAshaIncentive(request.getAshaId());
         }
 
         List<IncentiveRecordDTO> dtos = new ArrayList<>();
         List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getAshaId());
-        if(request.getVillageID()==StateCode.CG.getStateCode()){
-            entities = entities.stream().filter(entitie-> incentivesRepo.findIncentiveMasterById(entitie.getActivityId(),true)!=null).collect(Collectors.toList());
+        if (request.getVillageID() == StateCode.CG.getStateCode()) {
+            entities = entities.stream().filter(entitie -> incentivesRepo.findIncentiveMasterById(entitie.getActivityId(), true) != null).collect(Collectors.toList());
 
-        }else {
-            entities = entities.stream().filter(entitie-> incentivesRepo.findIncentiveMasterById(entitie.getActivityId(),false)!=null).collect(Collectors.toList());
+        } else {
+            entities = entities.stream().filter(entitie -> incentivesRepo.findIncentiveMasterById(entitie.getActivityId(), false) != null).collect(Collectors.toList());
 
         }
         entities.forEach(entry -> {
-            if(entry.getName()==null){
-                if(entry.getBenId()!=0 && entry.getBenId()>0L){
+            if (entry.getName() == null) {
+                if (entry.getBenId() != 0 && entry.getBenId() > 0L) {
                     Long regId = beneficiaryRepo.getBenRegIdFromBenId(entry.getBenId());
-                    logger.info("rmnchBeneficiaryDetailsRmnch"+regId);
+                    logger.info("rmnchBeneficiaryDetailsRmnch" + regId);
                     BigInteger benDetailId = beneficiaryRepo.findByBenRegIdFromMapping(BigInteger.valueOf(regId)).getBenDetailsId();
                     RMNCHMBeneficiarydetail rmnchBeneficiaryDetails = beneficiaryRepo.findByBeneficiaryDetailsId(benDetailId);
-                    String beneName = rmnchBeneficiaryDetails.getFirstName()+" "+rmnchBeneficiaryDetails.getLastName();
+                    String beneName = rmnchBeneficiaryDetails.getFirstName() + " " + rmnchBeneficiaryDetails.getLastName();
                     entry.setName(beneName);
 
-                }else{
+                } else {
                     entry.setName("");
 
                 }
@@ -196,49 +198,115 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Override
     public String updateIncentive(PendingActivityDTO pendingActivityDTO) {
-        IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup(pendingActivityDTO.getName(), pendingActivityDTO.getModuleName());
-        if (incentiveActivity != null) {
-            Optional<IncentivePendingActivity> incentivePendingActivity = incentivePendingActivityRepository.findByMincentiveIdAndActivityId(pendingActivityDTO.getId(), incentiveActivity.getId());
-            if (incentivePendingActivity.isPresent()) {
-                IncentivePendingActivity existingIncentivePendingActivity = incentivePendingActivity.get();
-                if (existingIncentivePendingActivity.getActivityId().equals(pendingActivityDTO.getId())) {
-                    if (pendingActivityDTO.getImages() != null) {
-                        try {
-                            MaaMeetingRequestDTO maaMeetingRequestDTO = new MaaMeetingRequestDTO();
-                            maaMeetingRequestDTO.setMeetingImages(pendingActivityDTO.getImages().toArray(new MultipartFile[0]));
-                            maaMeetingService.updateMeetingFromFileUpload(maaMeetingRequestDTO,pendingActivityDTO.getId());
 
-                        } catch (Exception e) {
-                            return e.getMessage();
-                        }
-
-                    }
-                }
-            }
+        if (pendingActivityDTO == null) {
+            return "Invalid request";
         }
-        return  null;
 
+        IncentiveName incentiveName;
+        try {
+            incentiveName = IncentiveName.valueOf(pendingActivityDTO.getName());
+        } catch (IllegalArgumentException e) {
+            return "Invalid incentive name";
+        }
+
+        IncentiveActivity incentiveActivity =
+                incentivesRepo.findIncentiveMasterByNameAndGroup(
+                        pendingActivityDTO.getName(),
+                        pendingActivityDTO.getModuleName()
+                );
+
+        if (incentiveActivity == null) {
+            return null;
+        }
+
+        Optional<IncentivePendingActivity> optionalPendingActivity =
+                incentivePendingActivityRepository
+                        .findByMincentiveIdAndActivityId(
+                                pendingActivityDTO.getId(),
+                                incentiveActivity.getId()
+                        );
+
+        if (!optionalPendingActivity.isPresent()) {
+            return null;
+        }
+
+        IncentivePendingActivity existingActivity = optionalPendingActivity.get();
+
+        if (!existingActivity.getActivityId().equals(pendingActivityDTO.getId())) {
+            return null;
+        }
+
+        if (pendingActivityDTO.getImages() == null || pendingActivityDTO.getImages().isEmpty()) {
+            return null;
+        }
+
+        try {
+            MaaMeetingRequestDTO maaMeetingRequestDTO = new MaaMeetingRequestDTO();
+            maaMeetingRequestDTO.setMeetingImages(
+                    pendingActivityDTO.getImages().toArray(new MultipartFile[0])
+            );
+
+            // ✅ ENUM BASED CHECK
+            if(pendingActivityDTO.getModuleName().equals(GroupName.ACTIVITY)){
+                if (incentiveName == IncentiveName.MAA_QUARTERLY_MEETING) {
+
+                    maaMeetingService.updateMeetingFromFileUpload(
+                            maaMeetingRequestDTO,
+                            pendingActivityDTO.getId()
+                    );
+                }
+            }else {
+                if (incentiveName == IncentiveName.MAA_QUARTERLY_MEETING) {
+
+                    maaMeetingService.updateMeetingFromFileUpload(
+                            maaMeetingRequestDTO,
+                            pendingActivityDTO.getId()
+                    );
+                }
+
+                if (incentiveName == IncentiveName.HBNC_0_42_DAYS) {
+
+                    childCareService.updateHbncFromFileUpload(
+                            pendingActivityDTO.getImages().toArray(new MultipartFile[0]),
+                            pendingActivityDTO.getId(),
+                            existingActivity.getRecordId()
+
+                    );
+                }
+
+
+            }
+
+
+
+
+        } catch (Exception e) {
+            return e.getMessage();
+        }
+
+        return null;
     }
 
-    private void checkMonthlyAshaIncentive(Integer ashaId){
+    private void checkMonthlyAshaIncentive(Integer ashaId) {
         IncentiveActivity MOBILEBILLREIMB_ACTIVITY = incentivesRepo.findIncentiveMasterByNameAndGroup("MOBILE_BILL_REIMB", GroupName.OTHER_INCENTIVES.getDisplayName());
         IncentiveActivity ADDITIONAL_ASHA_INCENTIVE = incentivesRepo.findIncentiveMasterByNameAndGroup("ADDITIONAL_ASHA_INCENTIVE", GroupName.ADDITIONAL_INCENTIVE.getDisplayName());
         IncentiveActivity ASHA_MONTHLY_ROUTINE = incentivesRepo.findIncentiveMasterByNameAndGroup("ASHA_MONTHLY_ROUTINE", GroupName.ASHA_MONTHLY_ROUTINE.getDisplayName());
-        if(MOBILEBILLREIMB_ACTIVITY!=null){
-            addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY,ashaId);
+        if (MOBILEBILLREIMB_ACTIVITY != null) {
+            addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY, ashaId);
         }
-        if(ADDITIONAL_ASHA_INCENTIVE!=null){
-            addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE,ashaId);
+        if (ADDITIONAL_ASHA_INCENTIVE != null) {
+            addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE, ashaId);
 
         }
 
-        if(ASHA_MONTHLY_ROUTINE!=null){
-            addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE,ashaId);
+        if (ASHA_MONTHLY_ROUTINE != null) {
+            addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId);
 
         }
     }
 
-    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId){
+    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId) {
         Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
 
         Timestamp startOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(1).atStartOfDay());
