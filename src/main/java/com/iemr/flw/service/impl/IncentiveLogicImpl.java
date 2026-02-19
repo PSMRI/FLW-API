@@ -80,7 +80,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             return null;
 
         } catch (Exception e) {
-            logger.error("Check Leprosy Incentive Exception: ", e);
+            logger.error("Check NLEP_PB_TREATMENT Incentive Exception: ", e);
             return null;
         }
     }
@@ -127,7 +127,103 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             return null;
 
         } catch (Exception e) {
-            logger.error("Check Leprosy Incentive Exception: ", e);
+            logger.error("Check NLEP_PB_TREATMENT Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForVhndMeeting(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "VHND_PARTICIPATION";
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check VHND_PARTICIPATION Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForClusterMeeting(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "CLUSTER_MEETING";
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check CLUSTER_MEETING Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForAttendingVhsnc(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "VHSNC_MEETING";
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check VHSNC_MEETING Incentive Exception: ", e);
             return null;
         }
     }
@@ -238,12 +334,12 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
 
             record = incentiveRecordRepo.save(record);
 
-            logger.info("Leprosy Incentive saved successfully for benId: {}", benId);
+            logger.info("Incentive saved successfully for benId: {}", benId);
 
             return record;
 
         } catch (Exception e) {
-            logger.error("Save Leprosy Incentive Exception: ", e);
+            logger.error("Error Incentive Exception: ", e);
             return null;
         }
     }

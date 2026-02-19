@@ -9,7 +9,7 @@ import java.util.List;
 public class PendingActivityDTO {
     private Long id;
     private Integer userId;
-    private List<MultipartFile> Images;
+    private List<MultipartFile> images;
     private String moduleName;
     private String name;
 }

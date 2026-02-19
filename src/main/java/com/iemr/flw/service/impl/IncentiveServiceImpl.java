@@ -90,10 +90,10 @@ public class IncentiveServiceImpl implements IncentiveService {
         try {
 
             List<IncentiveActivity> incs = new ArrayList<>();
-            if (incentiveRequestDTO.getState() == StateCode.CG.getStateCode()) {
+            if(incentiveRequestDTO.getState()==StateCode.CG.getStateCode()){
                 incs = incentivesRepo.findAll().stream().filter(incentiveActivity -> incentiveActivity.getGroup().equals("ACTIVITY")).collect(Collectors.toList());
 
-            } else {
+            }else {
                 incs = incentivesRepo.findAll().stream().filter(incentiveActivity -> !incentiveActivity.getGroup().equals("ACTIVITY")).collect(Collectors.toList());
 
             }
@@ -102,38 +102,40 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                 // Fetch language mapping
                 IncentiveActivityLangMapping mapping = incentiveActivityLangMappingRepo
-                        .findByIdAndName(inc.getId(), inc.getName());
+                        .findByIdAndName(inc.getId(),inc.getName());
+
 
 
                 if (mapping != null) {
                     dto.setName(mapping.getName());
                     dto.setGroupName(mapping.getGroup());
-                    if (Objects.equals(incentiveRequestDTO.getLangCode(), "en")) {
+                    if(Objects.equals(incentiveRequestDTO.getLangCode(), "en")){
                         dto.setDescription(inc.getDescription());
 
 
-                    } else if (Objects.equals(incentiveRequestDTO.getLangCode(), "as")) {
 
-                        if (mapping.getAssameActivityDescription() != null) {
+                    }else  if(Objects.equals(incentiveRequestDTO.getLangCode(), "as")){
+
+                        if(mapping.getAssameActivityDescription()!=null){
                             dto.setDescription(mapping.getAssameActivityDescription());
 
-                        } else {
+                        }else {
                             dto.setDescription(mapping.getDescription());
 
                         }
 
-                    } else if (Objects.equals(incentiveRequestDTO.getLangCode(), "hi")) {
-                        if (mapping.getHindiActivityDescription() != null) {
+                    }else  if(Objects.equals(incentiveRequestDTO.getLangCode(), "hi")){
+                        if(mapping.getHindiActivityDescription()!=null){
                             dto.setDescription(mapping.getHindiActivityDescription());
 
-                        } else {
+                        }else {
                             dto.setDescription(mapping.getDescription());
 
                         }
 
                     }
 
-                } else {
+                }else {
                     dto.setGroupName(inc.getGroup());
 
                 }
@@ -154,30 +156,30 @@ public class IncentiveServiceImpl implements IncentiveService {
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
 
-        if (request.getVillageID() != StateCode.CG.getStateCode()) {
+        if(request.getVillageID()!= StateCode.CG.getStateCode()){
             checkMonthlyAshaIncentive(request.getAshaId());
         }
 
         List<IncentiveRecordDTO> dtos = new ArrayList<>();
         List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getAshaId());
-        if (request.getVillageID() == StateCode.CG.getStateCode()) {
-            entities = entities.stream().filter(entitie -> incentivesRepo.findIncentiveMasterById(entitie.getActivityId(), true) != null).collect(Collectors.toList());
+        if(request.getVillageID()==StateCode.CG.getStateCode()){
+            entities = entities.stream().filter(entitie-> incentivesRepo.findIncentiveMasterById(entitie.getActivityId(),true)!=null).collect(Collectors.toList());
 
-        } else {
-            entities = entities.stream().filter(entitie -> incentivesRepo.findIncentiveMasterById(entitie.getActivityId(), false) != null).collect(Collectors.toList());
+        }else {
+            entities = entities.stream().filter(entitie-> incentivesRepo.findIncentiveMasterById(entitie.getActivityId(),false)!=null).collect(Collectors.toList());
 
         }
         entities.forEach(entry -> {
-            if (entry.getName() == null) {
-                if (entry.getBenId() != 0 && entry.getBenId() > 0L) {
+            if(entry.getName()==null){
+                if(entry.getBenId()!=0 && entry.getBenId()>0L){
                     Long regId = beneficiaryRepo.getBenRegIdFromBenId(entry.getBenId());
-                    logger.info("rmnchBeneficiaryDetailsRmnch" + regId);
+                    logger.info("rmnchBeneficiaryDetailsRmnch"+regId);
                     BigInteger benDetailId = beneficiaryRepo.findByBenRegIdFromMapping(BigInteger.valueOf(regId)).getBenDetailsId();
                     RMNCHMBeneficiarydetail rmnchBeneficiaryDetails = beneficiaryRepo.findByBeneficiaryDetailsId(benDetailId);
-                    String beneName = rmnchBeneficiaryDetails.getFirstName() + " " + rmnchBeneficiaryDetails.getLastName();
+                    String beneName = rmnchBeneficiaryDetails.getFirstName()+" "+rmnchBeneficiaryDetails.getLastName();
                     entry.setName(beneName);
 
-                } else {
+                }else{
                     entry.setName("");
 
                 }
@@ -206,17 +208,14 @@ public class IncentiveServiceImpl implements IncentiveService {
                             maaMeetingRequestDTO.setMeetingImages(pendingActivityDTO.getImages().toArray(new MultipartFile[0]));
                             maaMeetingService.updateMeeting(maaMeetingRequestDTO);
 
-                        } catch (Exception e) {
-                            return e.getMessage();
-                        }
-
+                    }catch (Exception e){
+                        return e.getMessage();
                     }
+
                 }
             }
         }
-
-
-        return null;
+        return  null;
 
     }
 
