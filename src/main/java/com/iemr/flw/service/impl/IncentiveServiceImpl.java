@@ -246,6 +246,8 @@ public class IncentiveServiceImpl implements IncentiveService {
             maaMeetingRequestDTO.setMeetingImages(
                     pendingActivityDTO.getImages().toArray(new MultipartFile[0])
             );
+            logger.info("Activity Name from request:"+incentiveName.name());
+            logger.info("Activity Name from enum:"+IncentiveName.MAA_QUARTERLY_MEETING.name());
 
             // ✅ ENUM BASED CHECK
             if(pendingActivityDTO.getModuleName().equals(GroupName.ACTIVITY)){
