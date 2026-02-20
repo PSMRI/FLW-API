@@ -249,7 +249,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             // ✅ ENUM BASED CHECK
             if(pendingActivityDTO.getModuleName().equals(GroupName.ACTIVITY)){
-                if (incentiveName == IncentiveName.MAA_QUARTERLY_MEETING) {
+                if (incentiveName.name() == IncentiveName.MAA_QUARTERLY_MEETING.name()) {
 
                     maaMeetingService.updateMeetingFromFileUpload(
                             maaMeetingRequestDTO,
