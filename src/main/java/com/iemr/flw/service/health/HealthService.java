@@ -87,8 +87,6 @@ public class HealthService {
     private final ReentrantReadWriteLock advancedCheckLock = new ReentrantReadWriteLock();
     private final AtomicBoolean advancedCheckInProgress = new AtomicBoolean(false);
     
-    private volatile boolean deadlockCheckDisabled = false;
-    
     private static final boolean ADVANCED_HEALTH_CHECKS_ENABLED = true;
 
     public HealthService(DataSource dataSource,
