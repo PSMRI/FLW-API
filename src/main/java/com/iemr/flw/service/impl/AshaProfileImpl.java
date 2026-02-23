@@ -1,19 +1,15 @@
 package com.iemr.flw.service.impl;
 
 import com.iemr.flw.domain.iemr.AshaWorker;
-import com.iemr.flw.domain.iemr.M_User;
+import com.iemr.flw.domain.iemr.User;
 import com.iemr.flw.repo.iemr.AshaProfileRepo;
 import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.AshaProfileService;
 import com.iemr.flw.service.EmployeeMasterInter;
 
 import com.iemr.flw.repo.iemr.EmployeeMasterRepo;
-import com.iemr.flw.service.AshaProfileService;
-import com.iemr.flw.service.EmployeeMasterInter;
 import com.iemr.flw.utils.JwtAuthenticationUtil;
 import com.iemr.flw.utils.JwtUtil;
-import com.iemr.flw.utils.exception.IEMRException;
-import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +20,6 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
-
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class AshaProfileImpl implements AshaProfileService {
@@ -96,7 +88,7 @@ public class AshaProfileImpl implements AshaProfileService {
 
     private AshaWorker getDetails(Integer userID) {
         try {
-            M_User m_user = Objects.requireNonNull(employeeMasterInter.getUserDetails(userID), "User details not found for ID: " + userID);
+            User m_user = Objects.requireNonNull(employeeMasterInter.getUserDetails(userID), "User details not found for ID: " + userID);
             AshaWorker ashaWorker = new AshaWorker();
             ashaWorker.setEmployeeId(m_user.getUserID());
             // Convert DOB (Timestamp) to LocalDate

@@ -1,19 +1,13 @@
 package com.iemr.flw.service.impl;
 
-import com.iemr.flw.domain.iemr.M_User;
+import com.iemr.flw.domain.iemr.User;
 import com.iemr.flw.service.EmployeeMasterInter;
-import com.iemr.flw.service.impl.ChildCareServiceImpl;
-import com.iemr.flw.service.impl.MaternalHealthServiceImpl;
 import com.iemr.flw.utils.CookieUtil;
-import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Service
 public class NotificationSchedulerService {
@@ -61,7 +55,7 @@ public class NotificationSchedulerService {
 
     @Scheduled(cron = "0 0 9 * * *")
     public void trigerTomorrowImmunizationReminders() {
-        for(M_User m_user: employeeMasterInter.getAllUsers()){
+        for(User m_user: employeeMasterInter.getAllUsers()){
             childCareService.getTomorrowImmunizationReminders(m_user.getUserID());
 
         }

@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import com.iemr.flw.domain.iemr.M_User;
+import com.iemr.flw.domain.iemr.User;
 import com.iemr.flw.repo.iemr.EmployeeMasterRepo;
 import com.iemr.flw.utils.exception.IEMRException;
 
@@ -75,7 +75,7 @@ public class JwtAuthenticationUtil {
 			String userId = claims.get("userId", String.class);
 
 			// Check if user data is present in Redis
-			M_User user = getUserFromCache(userId);
+			User user = getUserFromCache(userId);
 			if (user == null) {
 				// If not in Redis, fetch from DB and cache the result
 				user = fetchUserFromDB(userId);
@@ -91,9 +91,9 @@ public class JwtAuthenticationUtil {
 		}
 	}
 
-	private M_User getUserFromCache(String userId) {
+	private User getUserFromCache(String userId) {
 		String redisKey = "user_" + userId; // The Redis key format
-		M_User user = (M_User) redisTemplate.opsForValue().get(redisKey);
+		User user = (User) redisTemplate.opsForValue().get(redisKey);
 
 		if (user == null) {
 			logger.warn("User not found in Redis. Will try to fetch from DB.");
@@ -104,15 +104,15 @@ public class JwtAuthenticationUtil {
 		return user; // Returns null if not found
 	}
 
-	private M_User fetchUserFromDB(String userId) {
+	private User fetchUserFromDB(String userId) {
 		// This method will only be called if the user is not found in Redis.
 		String redisKey = "user_" + userId; // Redis key format
 
 		// Fetch user from DB
-		M_User user = userLoginRepo.findUserByUserID(Integer.parseInt(userId));
+		User user = userLoginRepo.findUserByUserID(Integer.parseInt(userId));
 
 		if (user != null) {
-			M_User userHash = new M_User();
+			User userHash = new User();
 			userHash.setUserID(user.getUserID());
 			userHash.setUserName(user.getUserName());
 
