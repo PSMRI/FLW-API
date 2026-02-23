@@ -3,10 +3,7 @@ package com.iemr.flw.service.impl;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
-import com.iemr.flw.domain.iemr.IncentiveActivity;
-import com.iemr.flw.domain.iemr.IncentiveActivityLangMapping;
-import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
-import com.iemr.flw.domain.iemr.IncentivePendingActivity;
+import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
@@ -264,28 +261,38 @@ public class IncentiveServiceImpl implements IncentiveService {
             if(pendingActivityDTO.getModuleName().equals(GroupName.ACTIVITY)){
                 if (Objects.equals(incentiveName.name(), IncentiveName.MAA_QUARTERLY_MEETING.name())) {
 
-                    maaMeetingService.updateMeetingFromFileUpload(
+                    MaaMeeting meeting=   maaMeetingService.updateMeetingFromFileUpload(
                             maaMeetingRequestDTO,
                             pendingActivityDTO.getId()
                     );
+                    if(meeting!=null){
+                        return  "Incentive update successfully";
+                    }
                 }
             }else {
                 if (incentiveName.name().equals(IncentiveName.MAA_QUARTERLY_MEETING.name())) {
 
-                    maaMeetingService.updateMeetingFromFileUpload(
+                  MaaMeeting meeting =  maaMeetingService.updateMeetingFromFileUpload(
                             maaMeetingRequestDTO,
                             pendingActivityDTO.getId()
                     );
+                  if(meeting!=null){
+                      return  "Incentive update successfully";
+                  }
+
                 }
 
                 if (incentiveName.name().equals(IncentiveName.HBNC_0_42_DAYS.name())) {
 
-                    childCareService.updateHbncFromFileUpload(
+                    HbncVisit hbncVisit=   childCareService.updateHbncFromFileUpload(
                             pendingActivityDTO.getImages().toArray(new MultipartFile[0]),
                             pendingActivityDTO.getId(),
                             existingActivity.getRecordId()
 
                     );
+                    if(hbncVisit!=null){
+                        return  "Incentive update successfully";
+                    }
                 }
 
 
