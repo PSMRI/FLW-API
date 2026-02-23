@@ -81,7 +81,7 @@ public class JwtAuthenticationUtil {
 				user = fetchUserFromDB(userId);
 			}
 			if (user == null) {
-				throw new IEMRException("Invalid User ID.");
+				throw new IEMRException("Invalid User ID or user is deactivated please contact to admin.");
 			}
 
 			return true; // Valid userId and JWT token
