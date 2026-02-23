@@ -1,8 +1,6 @@
 package com.iemr.flw.service.impl;
 
 import java.math.BigInteger;
-import java.sql.Date;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
@@ -14,10 +12,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.iemr.flw.domain.iemr.EyeCheckupVisit;
-import com.iemr.flw.domain.iemr.IncentiveActivity;
 import com.iemr.flw.dto.iemr.EyeCheckupListDTO;
 import com.iemr.flw.dto.iemr.EyeCheckupRequestDTO;
-import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.utils.JwtUtil;
 import org.slf4j.Logger;
@@ -25,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -35,8 +30,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializer;
 import com.iemr.flw.domain.identity.BenHealthIDDetails;
 import com.iemr.flw.domain.identity.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.flw.domain.identity.RMNCHBornBirthDetails;
@@ -52,36 +45,45 @@ import com.iemr.flw.mapper.InputMapper;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.identity.HouseHoldRepo;
 import com.iemr.flw.service.BeneficiaryService;
-import com.iemr.flw.utils.config.ConfigProperties;
 import com.iemr.flw.utils.http.HttpUtils;
 
 @Service
 @Qualifier("rmnchServiceImpl")
-
 public class BeneficiaryServiceImpl implements BeneficiaryService {
 
-    private final Logger logger = LoggerFactory.getLogger(BeneficiaryServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(BeneficiaryServiceImpl.class);
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private static final Gson GSON = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+
+    // Map keys as constants to avoid typos and magic strings
+    private static final String KEY_HOUSEHOLD_DETAILS  = "householdDetails";
+    private static final String KEY_BORN_BIRTH_DETAILS = "bornBirthDetails";
+    private static final String KEY_BENEFICIARY_DETAILS = "beneficiaryDetails";
+    private static final String KEY_ABHA_HEALTH_DETAILS = "abhaHealthDetails";
+
     @Value("${door-to-door-page-size}")
-    private String door_to_door_page_size;
+    private String doorToDoorPageSize;
 
     @Value("${fhir-url}")
     private String fhirUrl;
 
     @Value("${getHealthID}")
     private String getHealthID;
+
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
 
     @Autowired
     private HouseHoldRepo houseHoldRepo;
+
     @Autowired
     private GeneralOpdRepo generalOpdRepo;
 
     @Autowired
-    IncentivesRepo incentivesRepo;
+    private IncentivesRepo incentivesRepo;
 
     @Autowired
-    IncentiveRecordRepo recordRepo;
+    private IncentiveRecordRepo recordRepo;
 
     @Autowired
     private EyeCheckUpVisitRepo eyeCheckUpVisitRepo;
@@ -92,497 +94,402 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     @Autowired
     private UserServiceRoleRepo userRepo;
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    // Single shared HttpUtils instance — avoid creating one per request
+    private final HttpUtils httpUtils = new HttpUtils();
 
-
+    // -------------------------------------------------------------------------
+    // Public API
+    // -------------------------------------------------------------------------
 
     @Override
     public String getBenData(GetBenRequestHandler request, String authorisation) throws Exception {
-        String outputResponse = null;
-        int totalPage = 0;
-
-        try {
-            if (request != null && request.getAshaId() != null) {
-                List<RMNCHMBeneficiaryaddress> resultSet;
-                Integer pageSize = Integer.valueOf(door_to_door_page_size);
-                if (request.getPageNo() != null) {
-                    String userName = beneficiaryRepo.getUserName(request.getAshaId());
-                    if (userName == null || userName.isEmpty())
-                        throw new Exception("Asha details not found, please contact administrator");
-
-                    request.setUserName(userName);
-
-                    PageRequest pr = PageRequest.of(request.getPageNo(), pageSize);
-                    if (request.getFromDate() != null && request.getToDate() != null) {
-                        Page<RMNCHMBeneficiaryaddress> p = beneficiaryRepo.getBenDataWithinDates(
-                                request.getUserName(), request.getFromDate(), request.getToDate(), pr);
-                        resultSet = p.getContent();
-                        totalPage = p.getTotalPages();
-                    } else {
-                        Page<RMNCHMBeneficiaryaddress> p = beneficiaryRepo.getBenDataByUser(request.getUserName(),
-                                pr);
-                        resultSet = p.getContent();
-                        totalPage = p.getTotalPages();
-                    }
-                    if (resultSet != null && resultSet.size() > 0) {
-                        outputResponse = getMappingsForAddressIDs(resultSet, totalPage, authorisation);
-                    }
-                } else {
-                    // page no not invalid
-                    throw new Exception("Invalid page no");
-                }
-            } else
-                throw new Exception("Invalid/missing village details");
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
+        if (request == null || request.getAshaId() == null) {
+            throw new Exception("Invalid/missing village details");
+        }
+        if (request.getPageNo() == null) {
+            throw new Exception("Invalid page no");
         }
 
-        return outputResponse;
-    }
+        String userName = beneficiaryRepo.getUserName(request.getAshaId());
+        if (userName == null || userName.isEmpty()) {
+            throw new Exception("Asha details not found, please contact administrator");
+        }
+        request.setUserName(userName);
 
-    private String getMappingsForAddressIDs(List<RMNCHMBeneficiaryaddress> addressList, int totalPage,
-                                            String authorisation) {
-        RMNCHHouseHoldDetails benHouseHoldRMNCH_ROBJ;
-        RMNCHBeneficiaryDetailsRmnch benDetailsRMNCH_OBJ;
-        RMNCHBornBirthDetails benBotnBirthRMNCH_ROBJ;
+        int pageSize = Integer.parseInt(doorToDoorPageSize);
+        PageRequest pr = PageRequest.of(request.getPageNo(), pageSize);
 
-        RMNCHMBeneficiarydetail benDetailsOBJ;
-        RMNCHMBeneficiaryAccount benAccountOBJ;
-        RMNCHMBeneficiaryImage benImageOBJ;
-        RMNCHMBeneficiaryaddress benAddressOBJ;
-        RMNCHMBeneficiarycontact benContactOBJ;
-
-        Map<String, Object> resultMap;
-        ArrayList<Map<String, Object>> resultList = new ArrayList<>();
-
-        for (RMNCHMBeneficiaryaddress a : addressList) {
-            // exception by-passing
-            try {
-                RMNCHMBeneficiarymapping m = beneficiaryRepo.getByAddressID(a.getId());
-                if (m != null) {
-                    benHouseHoldRMNCH_ROBJ = new RMNCHHouseHoldDetails();
-                    benDetailsRMNCH_OBJ = new RMNCHBeneficiaryDetailsRmnch();
-                    benBotnBirthRMNCH_ROBJ = new RMNCHBornBirthDetails();
-
-                    benDetailsOBJ = new RMNCHMBeneficiarydetail();
-                    benAccountOBJ = new RMNCHMBeneficiaryAccount();
-                    benImageOBJ = new RMNCHMBeneficiaryImage();
-                    benAddressOBJ = new RMNCHMBeneficiaryaddress();
-                    benContactOBJ = new RMNCHMBeneficiarycontact();
-                    Map<String, Object> healthDetails = getBenHealthDetails(m.getBenRegId());
-                    if (m.getBenDetailsId() != null) {
-                        benDetailsOBJ = beneficiaryRepo.getDetailsById(m.getBenDetailsId());
-                    }
-                    if (m.getBenAccountID() != null) {
-                        benAccountOBJ = beneficiaryRepo.getAccountById(m.getBenAccountID());
-                    }
-                    if (m.getBenImageId() != null) {
-                        benImageOBJ = beneficiaryRepo.getImageById(m.getBenImageId().longValue());
-                    }
-                    if (m.getBenAddressId() != null) {
-                        benAddressOBJ = beneficiaryRepo.getAddressById(m.getBenAddressId());
-                    }
-                    if (m.getBenContactsId() != null) {
-                        benContactOBJ = beneficiaryRepo.getContactById(m.getBenContactsId());
-                    }
-
-                    BigInteger benID = null;
-                    if (m.getBenRegId() != null)
-                        benID = beneficiaryRepo.getBenIdFromRegID(m.getBenRegId().longValue());
-
-                    if (m.getBenRegId() != null) {
-                        benDetailsRMNCH_OBJ = beneficiaryRepo
-                                .getDetailsByRegID((m.getBenRegId()).longValue());
-                        benBotnBirthRMNCH_ROBJ = beneficiaryRepo.getBornBirthByRegID((m.getBenRegId()).longValue());
-
-                        if (benDetailsRMNCH_OBJ != null && benDetailsRMNCH_OBJ.getHouseoldId() != null)
-                            benHouseHoldRMNCH_ROBJ = houseHoldRepo
-                                    .getByHouseHoldID(benDetailsRMNCH_OBJ.getHouseoldId());
-
-                    }
-                    if (benDetailsRMNCH_OBJ == null)
-                        benDetailsRMNCH_OBJ = new RMNCHBeneficiaryDetailsRmnch();
-
-                    // new mapping 30-06-2021
-                    if (benDetailsOBJ.getMotherName() != null)
-                        benDetailsRMNCH_OBJ.setMotherName(benDetailsOBJ.getMotherName());
-                    if (benDetailsOBJ.getLiteracyStatus() != null)
-                        benDetailsRMNCH_OBJ.setLiteracyStatus(benDetailsOBJ.getLiteracyStatus());
-
-                    // bank
-                    if (benAccountOBJ.getNameOfBank() != null)
-                        benDetailsRMNCH_OBJ.setNameOfBank(benAccountOBJ.getNameOfBank());
-                    if (benAccountOBJ.getBranchName() != null)
-                        benDetailsRMNCH_OBJ.setBranchName(benAccountOBJ.getBranchName());
-                    if (benAccountOBJ.getIfscCode() != null)
-                        benDetailsRMNCH_OBJ.setIfscCode(benAccountOBJ.getIfscCode());
-                    if (benAccountOBJ.getBankAccount() != null)
-                        benDetailsRMNCH_OBJ.setBankAccount(benAccountOBJ.getBankAccount());
-
-                    // location
-                    if (benAddressOBJ.getCountyid() != null)
-                        benDetailsRMNCH_OBJ.setCountryId(benAddressOBJ.getCountyid());
-                    if (benAddressOBJ.getPermCountry() != null)
-                        benDetailsRMNCH_OBJ.setCountryName(benAddressOBJ.getPermCountry());
-
-                    if (benAddressOBJ.getStatePerm() != null)
-                        benDetailsRMNCH_OBJ.setStateId(benAddressOBJ.getStatePerm());
-                    if (benAddressOBJ.getPermState() != null)
-                        benDetailsRMNCH_OBJ.setStateName(benAddressOBJ.getPermState());
-
-                    if (benAddressOBJ.getDistrictidPerm() != null) {
-                        benDetailsRMNCH_OBJ.setDistrictid(benAddressOBJ.getDistrictidPerm());
-
-                    }
-                    if (benAddressOBJ.getDistrictnamePerm() != null) {
-                        benDetailsRMNCH_OBJ.setDistrictname(benAddressOBJ.getDistrictnamePerm());
-
-                    }
-
-                    if (benAddressOBJ.getPermSubDistrictId() != null)
-                        benDetailsRMNCH_OBJ.setBlockId(benAddressOBJ.getPermSubDistrictId());
-                    if (benAddressOBJ.getPermSubDistrict() != null)
-                        benDetailsRMNCH_OBJ.setBlockName(benAddressOBJ.getPermSubDistrict());
-
-                    if (benAddressOBJ.getVillageidPerm() != null)
-                        benDetailsRMNCH_OBJ.setVillageId(benAddressOBJ.getVillageidPerm());
-                    if (benAddressOBJ.getVillagenamePerm() != null)
-                        benDetailsRMNCH_OBJ.setVillageName(benAddressOBJ.getVillagenamePerm());
-
-                    if (benAddressOBJ.getPermServicePointId() != null)
-                        benDetailsRMNCH_OBJ.setServicePointID(benAddressOBJ.getPermServicePointId());
-                    if (benAddressOBJ.getPermServicePoint() != null)
-                        benDetailsRMNCH_OBJ.setServicePointName(benAddressOBJ.getPermServicePoint());
-
-                    if (benAddressOBJ.getPermZoneID() != null)
-                        benDetailsRMNCH_OBJ.setZoneID(benAddressOBJ.getPermZoneID());
-                    if (benAddressOBJ.getPermZone() != null)
-                        benDetailsRMNCH_OBJ.setZoneName(benAddressOBJ.getPermZone());
-
-                    if (benAddressOBJ.getPermAddrLine1() != null)
-                        benDetailsRMNCH_OBJ.setAddressLine1(benAddressOBJ.getPermAddrLine1());
-                    if (benAddressOBJ.getPermAddrLine2() != null)
-                        benDetailsRMNCH_OBJ.setAddressLine2(benAddressOBJ.getPermAddrLine2());
-                    if (benAddressOBJ.getPermAddrLine3() != null)
-                        benDetailsRMNCH_OBJ.setAddressLine3(benAddressOBJ.getPermAddrLine3());
-
-                    // -----------------------------------------------------------------------------
-
-                    // related benids
-                    if (benDetailsRMNCH_OBJ.getRelatedBeneficiaryIdsDB() != null) {
-
-                        String[] relatedBenIDsString = benDetailsRMNCH_OBJ.getRelatedBeneficiaryIdsDB().split(",");
-                        Long[] relatedBenIDs = new Long[relatedBenIDsString.length];
-                        int pointer = 0;
-                        for (String s : relatedBenIDsString) {
-                            relatedBenIDs[pointer] = Long.valueOf(s);
-                            pointer++;
-                        }
-
-                        benDetailsRMNCH_OBJ.setRelatedBeneficiaryIds(relatedBenIDs);
-                    }
-                    // ------------------------------------------------------------------------------
-
-                    if (benDetailsOBJ.getCommunity() != null)
-                        benDetailsRMNCH_OBJ.setCommunity(benDetailsOBJ.getCommunity());
-                    if (benDetailsOBJ.getCommunityId() != null)
-                        benDetailsRMNCH_OBJ.setCommunityId(benDetailsOBJ.getCommunityId());
-                    if (benContactOBJ.getPreferredPhoneNum() != null)
-                        benDetailsRMNCH_OBJ.setContact_number(benContactOBJ.getPreferredPhoneNum());
-
-                    if (benDetailsOBJ.getDob() != null)
-                        benDetailsRMNCH_OBJ.setDob(benDetailsOBJ.getDob());
-                    if (benDetailsOBJ.getFatherName() != null)
-                        benDetailsRMNCH_OBJ.setFatherName(benDetailsOBJ.getFatherName());
-                    if (benDetailsOBJ.getFirstName() != null)
-                        benDetailsRMNCH_OBJ.setFirstName(benDetailsOBJ.getFirstName());
-                    if (benDetailsOBJ.getGender() != null)
-                        benDetailsRMNCH_OBJ.setGender(benDetailsOBJ.getGender());
-                    if (benDetailsOBJ.getGenderId() != null)
-                        benDetailsRMNCH_OBJ.setGenderId(benDetailsOBJ.getGenderId());
-
-                    if (benDetailsOBJ.getMaritalstatus() != null)
-                        benDetailsRMNCH_OBJ.setMaritalstatus(benDetailsOBJ.getMaritalstatus());
-                    if (benDetailsOBJ.getMaritalstatusId() != null)
-                        benDetailsRMNCH_OBJ.setMaritalstatusId(benDetailsOBJ.getMaritalstatusId());
-                    if (benDetailsOBJ.getMarriageDate() != null)
-                        benDetailsRMNCH_OBJ.setMarriageDate(benDetailsOBJ.getMarriageDate());
-
-                    if (benDetailsOBJ.getReligion() != null)
-                        benDetailsRMNCH_OBJ.setReligion(benDetailsOBJ.getReligion());
-                    if (benDetailsOBJ.getReligionID() != null)
-                        benDetailsRMNCH_OBJ.setReligionID(benDetailsOBJ.getReligionID());
-                    if (benDetailsOBJ.getSpousename() != null)
-                        benDetailsRMNCH_OBJ.setSpousename(benDetailsOBJ.getSpousename());
-
-                    if (benImageOBJ != null && benImageOBJ.getUser_image() != null)
-                        benDetailsRMNCH_OBJ.setUser_image(benImageOBJ.getUser_image());
-
-                    // new fields
-//                    benDetailsRMNCH_OBJ.setRegistrationDate(benDetailsOBJ.getCreatedDate());
-                    if (benID != null)
-                        benDetailsRMNCH_OBJ.setBenficieryid(benID.longValue());
-
-                    if (benDetailsOBJ.getLastName() != null)
-                        benDetailsRMNCH_OBJ.setLastName(benDetailsOBJ.getLastName());
-
-                    if (benDetailsRMNCH_OBJ.getCreatedBy() == null)
-                        if (benDetailsOBJ.getCreatedBy() != null)
-                            benDetailsRMNCH_OBJ.setCreatedBy(benDetailsOBJ.getCreatedBy());
-
-                    // age calculation
-                    String ageDetails = "";
-                    int age_val = 0;
-                    String ageUnit = null;
-                    if (benDetailsOBJ.getDob() != null) {
-
-                        Date date = new Date(benDetailsOBJ.getDob().getTime());
-                        Calendar cal = Calendar.getInstance();
-
-                        cal.setTime(date);
-
-                        int year = cal.get(Calendar.YEAR);
-                        int month = cal.get(Calendar.MONTH) + 1;
-                        int day = cal.get(Calendar.DAY_OF_MONTH);
-
-                        java.time.LocalDate todayDate = java.time.LocalDate.now();
-                        java.time.LocalDate birthdate = java.time.LocalDate.of(year, month, day);
-                        Period p = Period.between(birthdate, todayDate);
-
-                        int d = p.getDays();
-                        int mo = p.getMonths();
-                        int y = p.getYears();
-
-                        if (y > 0) {
-                            ageDetails = y + " years - " + mo + " months";
-                            age_val = y;
-                            ageUnit = (age_val > 1) ? "Years" : "Year";
-                        } else {
-                            if (mo > 0) {
-                                ageDetails = mo + " months - " + d + " days";
-                                age_val = mo;
-                                ageUnit = (age_val > 1) ? "Months" : "Month";
-                            } else {
-                                ageDetails = d + " days";
-                                age_val = d;
-                                ageUnit = (age_val > 1) ? "Days" : "Day";
-                            }
-                        }
-
-                    }
-
-                    benDetailsRMNCH_OBJ.setAgeFull(ageDetails);
-                    benDetailsRMNCH_OBJ.setAge(age_val);
-                    if (ageUnit != null)
-                        benDetailsRMNCH_OBJ.setAge_unit(ageUnit);
-
-                    resultMap = new HashMap<>();
-                    if (benHouseHoldRMNCH_ROBJ != null)
-                        resultMap.put("householdDetails", benHouseHoldRMNCH_ROBJ);
-                    else
-                        resultMap.put("householdDetails", new HashMap<String, Object>());
-
-                    if (benBotnBirthRMNCH_ROBJ != null)
-                        resultMap.put("bornbirthDeatils", benBotnBirthRMNCH_ROBJ);
-                    else
-                        resultMap.put("bornbirthDeatils", new HashMap<String, Object>());
-
-                    resultMap.put("beneficiaryDetails", benDetailsRMNCH_OBJ);
-                    resultMap.put("abhaHealthDetails", healthDetails);
-                    resultMap.put("houseoldId", benDetailsRMNCH_OBJ.getHouseoldId());
-                    resultMap.put("benficieryid", benDetailsRMNCH_OBJ.getBenficieryid());
-                    resultMap.put("isDeath", benDetailsRMNCH_OBJ.getIsDeath());
-                    resultMap.put("isDeathValue", benDetailsRMNCH_OBJ.getIsDeathValue());
-                    resultMap.put("dateOfDeath",benDetailsRMNCH_OBJ.getDateOfDeath());
-                    resultMap.put("timeOfDeath", benDetailsRMNCH_OBJ.getTimeOfDeath());
-                    resultMap.put("reasonOfDeath", benDetailsRMNCH_OBJ.getReasonOfDeath());
-                    resultMap.put("reasonOfDeathId", benDetailsRMNCH_OBJ.getReasonOfDeathId());
-                    resultMap.put("placeOfDeath", benDetailsRMNCH_OBJ.getPlaceOfDeath());
-                    resultMap.put("placeOfDeathId", benDetailsRMNCH_OBJ.getPlaceOfDeathId());
-                    resultMap.put("isSpouseAdded", benDetailsRMNCH_OBJ.getIsSpouseAdded());
-                    resultMap.put("isChildrenAdded", benDetailsRMNCH_OBJ.getIsChildrenAdded());
-                    resultMap.put("noOfchildren", benDetailsRMNCH_OBJ.getNoOfchildren());
-                    resultMap.put("isMarried", benDetailsRMNCH_OBJ.getIsMarried());
-                    resultMap.put("doYouHavechildren", benDetailsRMNCH_OBJ.getDoYouHavechildren());
-                    resultMap.put("noofAlivechildren",benDetailsRMNCH_OBJ.getNoofAlivechildren());
-                    resultMap.put("isDeactivate",benDetailsRMNCH_OBJ.getIsDeactivate());
-                    resultMap.put("BenRegId", m.getBenRegId());
-
-                    // adding asha id / created by - user id
-                    if (benAddressOBJ.getCreatedBy() != null) {
-                        Integer userID = beneficiaryRepo.getUserIDByUserName(benAddressOBJ.getCreatedBy());
-                        if (userID != null && userID > 0)
-                            resultMap.put("ashaId", userID);
-                    }
-                    // get HealthID of ben
-                    if (m.getBenRegId() != null) {
-                        fetchHealthIdByBenRegID(m.getBenRegId().longValue(), authorisation, resultMap);
-                    }
-
-                    resultList.add(resultMap);
-
-                } else {
-                    // mapping not available
-                }
-            } catch (Exception e) {
-                logger.error("error for addressID :"+e.getMessage() + a.getId() + " and vanID : " + a.getVanID());
-            }
+        Page<RMNCHMBeneficiaryaddress> page;
+        if (request.getFromDate() != null && request.getToDate() != null) {
+            page = beneficiaryRepo.getBenDataWithinDates(
+                    request.getUserName(), request.getFromDate(), request.getToDate(), pr);
+        } else {
+            page = beneficiaryRepo.getBenDataByUser(request.getUserName(), pr);
         }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("data", resultList);
-        response.put("pageSize", Integer.parseInt(door_to_door_page_size));
-        response.put("totalPage", totalPage);
-        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
-        return gson.toJson(response);
-    }
-
-
-	private Map<String, Object> getBenHealthDetails(BigInteger benRegId) {
-		Map<String, Object> healthDetails = new HashMap<>();
-		if (null != benRegId) {
-			Object[] benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
-			if (benHealthIdNumber != null && benHealthIdNumber.length > 0) {
-				Object[] healthData = (Object[]) benHealthIdNumber[0];
-				String healthIdNumber = healthData[0] != null ? healthData[0].toString() : null;
-				String healthId = healthData[1] != null ? healthData[1].toString() : null;
-
-				if (null != healthIdNumber) {
-					List<Object[]> health = beneficiaryRepo.getBenHealthDetails(healthIdNumber);
-					if (health != null && !health.isEmpty()) {
-						for (Object[] objects : health) {
-							healthDetails.put("HealthID", objects[0]);
-							healthDetails.put("HealthIdNumber", objects[1]);
-							healthDetails.put("isNewAbha", objects[2]);
-						}
-					} else {
-						healthDetails.put("HealthIdNumber", healthIdNumber);
-						healthDetails.put("HealthID", healthId);
-						healthDetails.put("isNewAbha", null);
-					}
-				}
-			}
-		}
-		return healthDetails;
-	}
-
-    private Map<String, Object> getBenBenVisitDetails(BigInteger benRegId) {
-        Map<String, Object> healthDetails = new HashMap<>();
-        if (null != benRegId) {
-            String benHealthIdNumber = String.valueOf(beneficiaryRepo.getBenHealthIdNumber(benRegId));
-            if (null != benHealthIdNumber) {
-                ArrayList<Object[]> health = beneficiaryRepo.getBenHealthDetails(benHealthIdNumber);
-                for (Object[] objects : health) {
-                    healthDetails.put("HealthID", objects[0]);
-                    healthDetails.put("HealthIdNumber", objects[1]);
-                    healthDetails.put("isNewAbha", objects[2]);
-                }
-            }
-        }
-        return healthDetails;
-    }
-
-	public void fetchHealthIdByBenRegID(Long benRegID, String authorization, Map<String, Object> resultMap) {
-        Map<String, Long> requestMap = new HashMap<String, Long>();
-        requestMap.put("beneficiaryRegID", benRegID);
-        requestMap.put("beneficiaryID", null);
-        JsonParser jsnParser = new JsonParser();
-        HttpUtils utils = new HttpUtils();
-        List<String> result = null;
-        try {
-            HashMap<String, Object> header = new HashMap<String, Object>();
-            header.put("Authorization", authorization);
-            String responseStr = utils.post(fhirUrl + "/"
-                    + getHealthID, new Gson().toJson(requestMap), header);
-            JsonElement jsnElmnt = jsnParser.parse(responseStr);
-            JsonObject jsnOBJ = new JsonObject();
-            jsnOBJ = jsnElmnt.getAsJsonObject();
-            if (jsnOBJ.get("data") != null && jsnOBJ.get("data").getAsJsonObject().get("BenHealthDetails") != null) {
-                result = new ArrayList<String>();
-                BenHealthIDDetails[] ben = InputMapper.gson().fromJson(
-                        new Gson().toJson(jsnOBJ.get("data").getAsJsonObject().get("BenHealthDetails")),
-                        BenHealthIDDetails[].class);
-                for (BenHealthIDDetails value : ben) {
-                    if (value.getHealthId() != null)
-                        resultMap.put("healthId", value.getHealthId());
-                    if (value.getHealthIdNumber() != null)
-                        resultMap.put("healthIdNumber", value.getHealthIdNumber());
-                }
-            }
-
-        } catch (Exception e) {
-            logger.info("Error while fetching ABHA" + e.getMessage());
-//			return null;
+        List<RMNCHMBeneficiaryaddress> resultSet = page.getContent();
+        if (resultSet.isEmpty()) {
+            Map<String, Object> emptyResponse = new HashMap<>();
+            emptyResponse.put("data", new ArrayList<>());
+            emptyResponse.put("pageSize", pageSize);
+            emptyResponse.put("totalPage", 0);
+            return GSON.toJson(emptyResponse);
         }
 
-//		return result;
-
+        return buildBeneficiaryResponse(resultSet, page.getTotalPages(), authorisation);
     }
-
 
     @Override
     public String saveEyeCheckupVsit(List<EyeCheckupRequestDTO> eyeCheckupRequestDTOS) {
-
-        try {
-            for (EyeCheckupRequestDTO dto : eyeCheckupRequestDTOS) {
-                EyeCheckupVisit visit = new EyeCheckupVisit();
-
-                visit.setBeneficiaryId(dto.getBeneficiaryId());
-                visit.setHouseholdId(dto.getHouseHoldId());
-                visit.setUserId(userRepo.getUserIdByName(jwtUtil.getUserNameFromStorage())); // cache se lena hai
-                visit.setCreatedBy(dto.getUserName());
-                StringBuilder sb = new StringBuilder();
-
-
-                // fields mapping
-                EyeCheckupListDTO f = dto.getFields();
-                sb.append(f.getDischarge_summary_upload());
-                String longText = sb.toString();
-                visit.setVisitDate(LocalDate.parse(f.getVisit_date(), FORMATTER));
-                visit.setSymptomsObserved(f.getSymptoms_observed());
-                visit.setEyeAffected(f.getEye_affected());
-                visit.setReferredTo(f.getReferred_to());
-                visit.setDischargeSummaryUpload(longText);
-                visit.setFollowUpStatus(f.getFollow_up_status());
-                visit.setDateOfSurgery(f.getDate_of_surgery());
-
-                // save/update
-                eyeCheckUpVisitRepo.save(visit);
-            }
-            return "Eye checkup data saved successfully.";
-        } catch (Exception e) {
-            e.printStackTrace();
-
+        if (eyeCheckupRequestDTOS == null || eyeCheckupRequestDTOS.isEmpty()) {
+            throw new IllegalArgumentException("Eye checkup list must not be empty");
         }
-        return null ;
+
+        // Resolve userId once — same ASHA for the whole batch
+        Integer userId = userRepo.getUserIdByName(jwtUtil.getUserNameFromStorage());
+
+        List<EyeCheckupVisit> visitsToSave = eyeCheckupRequestDTOS.stream().map(dto -> {
+            EyeCheckupListDTO f = dto.getFields();
+            EyeCheckupVisit visit = new EyeCheckupVisit();
+            visit.setBeneficiaryId(dto.getBeneficiaryId());
+            visit.setHouseholdId(dto.getHouseHoldId());
+            visit.setUserId(userId);
+            visit.setCreatedBy(dto.getUserName());
+            visit.setVisitDate(LocalDate.parse(f.getVisit_date(), FORMATTER));
+            visit.setSymptomsObserved(f.getSymptoms_observed());
+            visit.setEyeAffected(f.getEye_affected());
+            visit.setReferredTo(f.getReferred_to());
+            // No-op StringBuilder removed; just use the value directly
+            visit.setDischargeSummaryUpload(f.getDischarge_summary_upload());
+            visit.setFollowUpStatus(f.getFollow_up_status());
+            visit.setDateOfSurgery(f.getDate_of_surgery());
+            return visit;
+        }).collect(Collectors.toList());
+
+        // Batch save instead of one-by-one
+        eyeCheckUpVisitRepo.saveAll(visitsToSave);
+        return "Eye checkup data saved successfully.";
     }
 
     @Override
     public List<EyeCheckupRequestDTO> getEyeCheckUpVisit(GetBenRequestHandler request) {
         List<EyeCheckupVisit> visits = eyeCheckUpVisitRepo.findByUserId(request.getAshaId());
-
-        return visits.stream().map(v -> {
-            EyeCheckupRequestDTO dto = new EyeCheckupRequestDTO();
-            dto.setId(v.getId());
-            dto.setBeneficiaryId(v.getBeneficiaryId());
-            dto.setHouseHoldId(v.getHouseholdId());
-            dto.setUserName(v.getCreatedBy());
-            dto.setVisitDate(v.getVisitDate().format(FORMATTER));
-
-            EyeCheckupListDTO fields = new EyeCheckupListDTO();
-            fields.setVisit_date(v.getVisitDate().format(FORMATTER));
-            fields.setSymptoms_observed(v.getSymptomsObserved());
-            fields.setEye_affected(v.getEyeAffected());
-            fields.setReferred_to(v.getReferredTo());
-            fields.setFollow_up_status(v.getFollowUpStatus());
-            fields.setDate_of_surgery(v.getDateOfSurgery());
-            fields.setDischarge_summary_upload(v.getDischargeSummaryUpload());
-
-
-            dto.setFields(fields);
-            return dto;
-        }).collect(Collectors.toList());
+        return visits.stream().map(this::mapVisitToDto).collect(Collectors.toList());
     }
 
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
 
+    private String buildBeneficiaryResponse(List<RMNCHMBeneficiaryaddress> addressList,
+                                            int totalPage, String authorisation) {
+        List<Map<String, Object>> resultList = new ArrayList<>(addressList.size());
+
+        for (RMNCHMBeneficiaryaddress address : addressList) {
+            try {
+                RMNCHMBeneficiarymapping mapping = beneficiaryRepo.getByAddressID(address.getId());
+                if (mapping == null) continue;
+
+                Map<String, Object> resultMap = buildResultMap(mapping, authorisation);
+                resultList.add(resultMap);
+            } catch (Exception e) {
+                logger.error("Error processing addressID: {} vanID: {} — {}",
+                        address.getId(), address.getVanID(), e.getMessage(), e);
+            }
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", resultList);
+        response.put("pageSize", Integer.parseInt(doorToDoorPageSize));
+        response.put("totalPage", totalPage);
+        return GSON.toJson(response);
+    }
+
+    /**
+     * Builds the complete result map for one beneficiary mapping.
+     * All sub-fetches are grouped here so the flow is easy to follow.
+     */
+    private Map<String, Object> buildResultMap(RMNCHMBeneficiarymapping m, String authorisation) {
+        // ---- Fetch sub-objects (null-safe defaults) ----
+        RMNCHMBeneficiarydetail  benDetail  = fetchOrDefault(m.getBenDetailsId(),
+                beneficiaryRepo::getDetailsById, new RMNCHMBeneficiarydetail());
+        RMNCHMBeneficiaryAccount benAccount = fetchOrDefault(m.getBenAccountID(),
+                beneficiaryRepo::getAccountById, new RMNCHMBeneficiaryAccount());
+        RMNCHMBeneficiaryImage   benImage   = m.getBenImageId() != null
+                ? beneficiaryRepo.getImageById(m.getBenImageId().longValue()) : new RMNCHMBeneficiaryImage();
+        RMNCHMBeneficiaryaddress benAddress = fetchOrDefault(m.getBenAddressId(),
+                beneficiaryRepo::getAddressById, new RMNCHMBeneficiaryaddress());
+        RMNCHMBeneficiarycontact benContact = fetchOrDefault(m.getBenContactsId(),
+                beneficiaryRepo::getContactById, new RMNCHMBeneficiarycontact());
+
+        BigInteger benID = m.getBenRegId() != null
+                ? beneficiaryRepo.getBenIdFromRegID(m.getBenRegId().longValue()) : null;
+
+        RMNCHBeneficiaryDetailsRmnch benDetailsRMNCH = new RMNCHBeneficiaryDetailsRmnch();
+        RMNCHHouseHoldDetails        householdDetails = new RMNCHHouseHoldDetails();
+        RMNCHBornBirthDetails        bornBirthDetails = new RMNCHBornBirthDetails();
+
+        if (m.getBenRegId() != null) {
+            RMNCHBeneficiaryDetailsRmnch fetched =
+                    beneficiaryRepo.getDetailsByRegID(m.getBenRegId().longValue());
+            if (fetched != null) {
+                benDetailsRMNCH = fetched;
+                if (benDetailsRMNCH.getHouseoldId() != null) {
+                    householdDetails = houseHoldRepo.getByHouseHoldID(benDetailsRMNCH.getHouseoldId());
+                }
+            }
+            RMNCHBornBirthDetails birth = beneficiaryRepo.getBornBirthByRegID(m.getBenRegId().longValue());
+            if (birth != null) bornBirthDetails = birth;
+        }
+
+        // ---- Merge fields into benDetailsRMNCH ----
+        mergeDetailFields(benDetailsRMNCH, benDetail, benAccount, benAddress, benContact, benImage, benID);
+
+        // ---- Age calculation ----
+        applyAgeCalculation(benDetailsRMNCH, benDetail);
+
+        // ---- Health details ----
+        Map<String, Object> healthDetails = getBenHealthDetails(m.getBenRegId());
+
+        // ---- Assemble result map ----
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put(KEY_HOUSEHOLD_DETAILS,  householdDetails != null ? householdDetails : new HashMap<>());
+        resultMap.put(KEY_BORN_BIRTH_DETAILS, bornBirthDetails);
+        resultMap.put(KEY_BENEFICIARY_DETAILS, benDetailsRMNCH);
+        resultMap.put(KEY_ABHA_HEALTH_DETAILS, healthDetails);
+        resultMap.put("houseoldId",       benDetailsRMNCH.getHouseoldId());
+        resultMap.put("benficieryid",     benDetailsRMNCH.getBenficieryid());
+        resultMap.put("isDeath",          benDetailsRMNCH.getIsDeath());
+        resultMap.put("isDeathValue",     benDetailsRMNCH.getIsDeathValue());
+        resultMap.put("dateOfDeath",      benDetailsRMNCH.getDateOfDeath());
+        resultMap.put("timeOfDeath",      benDetailsRMNCH.getTimeOfDeath());
+        resultMap.put("reasonOfDeath",    benDetailsRMNCH.getReasonOfDeath());
+        resultMap.put("reasonOfDeathId",  benDetailsRMNCH.getReasonOfDeathId());
+        resultMap.put("placeOfDeath",     benDetailsRMNCH.getPlaceOfDeath());
+        resultMap.put("placeOfDeathId",   benDetailsRMNCH.getPlaceOfDeathId());
+        resultMap.put("isSpouseAdded",    benDetailsRMNCH.getIsSpouseAdded());
+        resultMap.put("isChildrenAdded",  benDetailsRMNCH.getIsChildrenAdded());
+        resultMap.put("noOfchildren",     benDetailsRMNCH.getNoOfchildren());
+        resultMap.put("isMarried",        benDetailsRMNCH.getIsMarried());
+        resultMap.put("doYouHavechildren", benDetailsRMNCH.getDoYouHavechildren());
+        resultMap.put("noofAlivechildren", benDetailsRMNCH.getNoofAlivechildren()); // typo fixed (no trailing spaces)
+        resultMap.put("BenRegId",          m.getBenRegId());
+
+        // ASHA id from address creator
+        if (benAddress.getCreatedBy() != null) {
+            Integer userID = beneficiaryRepo.getUserIDByUserName(benAddress.getCreatedBy());
+            if (userID != null && userID > 0) resultMap.put("ashaId", userID);
+        }
+
+        // External ABHA fetch
+        if (m.getBenRegId() != null) {
+            fetchHealthIdByBenRegID(m.getBenRegId().longValue(), authorisation, resultMap);
+        }
+
+        return resultMap;
+    }
+
+    /** Copies all mergeable fields from sub-objects into the RMNCH details object. */
+    private void mergeDetailFields(RMNCHBeneficiaryDetailsRmnch dest,
+                                   RMNCHMBeneficiarydetail  detail,
+                                   RMNCHMBeneficiaryAccount account,
+                                   RMNCHMBeneficiaryaddress address,
+                                   RMNCHMBeneficiarycontact contact,
+                                   RMNCHMBeneficiaryImage   image,
+                                   BigInteger               benID) {
+        // Personal
+        setIfNotNull(detail.getFirstName(),      dest::setFirstName);
+        setIfNotNull(detail.getLastName(),       dest::setLastName);
+        setIfNotNull(detail.getMotherName(),     dest::setMotherName);
+        setIfNotNull(detail.getFatherName(),     dest::setFatherName);
+        setIfNotNull(detail.getSpousename(),     dest::setSpousename);
+        setIfNotNull(detail.getDob(),            dest::setDob);
+        setIfNotNull(detail.getGender(),         dest::setGender);
+        setIfNotNull(detail.getGenderId(),       dest::setGenderId);
+        setIfNotNull(detail.getMaritalstatus(),  dest::setMaritalstatus);
+        setIfNotNull(detail.getMaritalstatusId(),dest::setMaritalstatusId);
+        setIfNotNull(detail.getMarriageDate(),   dest::setMarriageDate);
+        setIfNotNull(detail.getLiteracyStatus(), dest::setLiteracyStatus);
+        setIfNotNull(detail.getCommunity(),      dest::setCommunity);
+        setIfNotNull(detail.getCommunityId(),    dest::setCommunityId);
+        setIfNotNull(detail.getReligion(),       dest::setReligion);
+        setIfNotNull(detail.getReligionID(),     dest::setReligionID);
+        if (dest.getCreatedBy() == null) setIfNotNull(detail.getCreatedBy(), dest::setCreatedBy);
+
+        // Bank
+        setIfNotNull(account.getNameOfBank(),  dest::setNameOfBank);
+        setIfNotNull(account.getBranchName(),  dest::setBranchName);
+        setIfNotNull(account.getIfscCode(),    dest::setIfscCode);
+        setIfNotNull(account.getBankAccount(), dest::setBankAccount);
+
+        // Address
+        setIfNotNull(address.getCountyid(),           dest::setCountryId);
+        setIfNotNull(address.getPermCountry(),         dest::setCountryName);
+        setIfNotNull(address.getStatePerm(),           dest::setStateId);
+        setIfNotNull(address.getPermState(),           dest::setStateName);
+        setIfNotNull(address.getDistrictidPerm(),      dest::setDistrictid);
+        setIfNotNull(address.getDistrictnamePerm(),    dest::setDistrictname);
+        setIfNotNull(address.getPermSubDistrictId(),   dest::setBlockId);
+        setIfNotNull(address.getPermSubDistrict(),     dest::setBlockName);
+        setIfNotNull(address.getVillageidPerm(),       dest::setVillageId);
+        setIfNotNull(address.getVillagenamePerm(),     dest::setVillageName);
+        setIfNotNull(address.getPermServicePointId(),  dest::setServicePointID);
+        setIfNotNull(address.getPermServicePoint(),    dest::setServicePointName);
+        setIfNotNull(address.getPermZoneID(),          dest::setZoneID);
+        setIfNotNull(address.getPermZone(),            dest::setZoneName);
+        setIfNotNull(address.getPermAddrLine1(),       dest::setAddressLine1);
+        setIfNotNull(address.getPermAddrLine2(),       dest::setAddressLine2);
+        setIfNotNull(address.getPermAddrLine3(),       dest::setAddressLine3);
+
+        // Contact
+        setIfNotNull(contact.getPreferredPhoneNum(), dest::setContact_number);
+
+        // Image
+        if (image != null) setIfNotNull(image.getUser_image(), dest::setUser_image);
+
+        // Ben ID
+        if (benID != null) dest.setBenficieryid(benID.longValue());
+
+        // Related beneficiary IDs
+        if (dest.getRelatedBeneficiaryIdsDB() != null) {
+            String[] parts = dest.getRelatedBeneficiaryIdsDB().split(",");
+            Long[] ids = new Long[parts.length];
+            for (int i = 0; i < parts.length; i++) ids[i] = Long.valueOf(parts[i].trim());
+            dest.setRelatedBeneficiaryIds(ids);
+        }
+    }
+
+    /** Calculates age from DOB and sets ageFull, age, and age_unit on the destination object. */
+    private void applyAgeCalculation(RMNCHBeneficiaryDetailsRmnch dest, RMNCHMBeneficiarydetail detail) {
+        if (detail.getDob() == null) return;
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(detail.getDob());
+        LocalDate birthDate = LocalDate.of(
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH) + 1,
+                cal.get(Calendar.DAY_OF_MONTH));
+
+        Period p = Period.between(birthDate, LocalDate.now());
+        int years  = p.getYears();
+        int months = p.getMonths();
+        int days   = p.getDays();
+
+        String ageFull;
+        int ageVal;
+        String ageUnit;
+
+        if (years > 0) {
+            ageFull = years + " years - " + months + " months";
+            ageVal  = years;
+            ageUnit = years > 1 ? "Years" : "Year";
+        } else if (months > 0) {
+            ageFull = months + " months - " + days + " days";
+            ageVal  = months;
+            ageUnit = months > 1 ? "Months" : "Month";
+        } else {
+            ageFull = days + " days";
+            ageVal  = days;
+            ageUnit = days > 1 ? "Days" : "Day";
+        }
+
+        dest.setAgeFull(ageFull);
+        dest.setAge(ageVal);
+        dest.setAge_unit(ageUnit);
+    }
+
+    private Map<String, Object> getBenHealthDetails(BigInteger benRegId) {
+        Map<String, Object> healthDetails = new HashMap<>();
+        if (benRegId == null) return healthDetails;
+
+        Object[] benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
+        if (benHealthIdNumber == null || benHealthIdNumber.length == 0) return healthDetails;
+
+        Object[] healthData      = (Object[]) benHealthIdNumber[0];
+        String   healthIdNumber  = healthData[0] != null ? healthData[0].toString() : null;
+        String   healthId        = healthData[1] != null ? healthData[1].toString() : null;
+
+        if (healthIdNumber == null) return healthDetails;
+
+        List<Object[]> health = beneficiaryRepo.getBenHealthDetails(healthIdNumber);
+        if (health != null && !health.isEmpty()) {
+            Object[] row = health.get(0); // last writer wins anyway; just use first
+            healthDetails.put("HealthID",       row[0]);
+            healthDetails.put("HealthIdNumber", row[1]);
+            healthDetails.put("isNewAbha",      row[2]);
+        } else {
+            healthDetails.put("HealthIdNumber", healthIdNumber);
+            healthDetails.put("HealthID",       healthId);
+            healthDetails.put("isNewAbha",      null);
+        }
+        return healthDetails;
+    }
+
+    public void fetchHealthIdByBenRegID(Long benRegID, String authorization, Map<String, Object> resultMap) {
+        Map<String, Long> requestBody = new HashMap<>();
+        requestBody.put("beneficiaryRegID", benRegID);
+        requestBody.put("beneficiaryID", null);
+
+        try {
+            HashMap<String, Object> headers = new HashMap<>();
+            headers.put("Authorization", authorization);
+            String responseStr = httpUtils.post(fhirUrl + "/" + getHealthID, GSON.toJson(requestBody), headers);
+
+            JsonElement element = JsonParser.parseString(responseStr); // non-deprecated API
+            if (!element.isJsonObject()) return;
+
+            JsonObject root = element.getAsJsonObject();
+            if (root.get("data") == null) return;
+
+            JsonObject data = root.getAsJsonObject("data");
+            if (data.get("BenHealthDetails") == null) return;
+
+            BenHealthIDDetails[] details = InputMapper.gson().fromJson(
+                    GSON.toJson(data.get("BenHealthDetails")), BenHealthIDDetails[].class);
+
+            for (BenHealthIDDetails d : details) {
+                if (d.getHealthId() != null)       resultMap.put("healthId",       d.getHealthId());
+                if (d.getHealthIdNumber() != null) resultMap.put("healthIdNumber", d.getHealthIdNumber());
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to fetch ABHA for benRegID {}: {}", benRegID, e.getMessage());
+        }
+    }
+
+    private EyeCheckupRequestDTO mapVisitToDto(EyeCheckupVisit v) {
+        EyeCheckupRequestDTO dto = new EyeCheckupRequestDTO();
+        dto.setId(v.getId());
+        dto.setBeneficiaryId(v.getBeneficiaryId());
+        dto.setHouseHoldId(v.getHouseholdId());
+        dto.setUserName(v.getCreatedBy());
+        dto.setVisitDate(v.getVisitDate().format(FORMATTER));
+
+        EyeCheckupListDTO fields = new EyeCheckupListDTO();
+        fields.setVisit_date(v.getVisitDate().format(FORMATTER));
+        fields.setSymptoms_observed(v.getSymptomsObserved());
+        fields.setEye_affected(v.getEyeAffected());
+        fields.setReferred_to(v.getReferredTo());
+        fields.setFollow_up_status(v.getFollowUpStatus());
+        fields.setDate_of_surgery(v.getDateOfSurgery());
+        fields.setDischarge_summary_upload(v.getDischargeSummaryUpload());
+
+        dto.setFields(fields);
+        return dto;
+    }
+
+    // -------------------------------------------------------------------------
+    // Generic utilities
+    // -------------------------------------------------------------------------
+
+    /** Calls setter only when value is non-null — replaces the repetitive if-blocks. */
+    private <T> void setIfNotNull(T value, java.util.function.Consumer<T> setter) {
+        if (value != null) setter.accept(value);
+    }
+
+    /** Fetches an entity by ID; returns defaultValue when ID is null. */
+    private <ID, T> T fetchOrDefault(ID id, java.util.function.Function<ID, T> fetcher, T defaultValue) {
+        if (id == null) return defaultValue;
+        T result = fetcher.apply(id);
+        return result != null ? result : defaultValue;
+    }
 }
