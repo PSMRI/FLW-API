@@ -229,8 +229,8 @@ public class IncentiveServiceImpl implements IncentiveService {
         Optional<IncentivePendingActivity> optionalPendingActivity =
                 incentivePendingActivityRepository
                         .findByMincentiveIdAndActivityId(
-                                pendingActivityDTO.getId(),
-                                incentiveActivity.getId()
+                                incentiveActivity.getId(),
+                                pendingActivityDTO.getId()
                         );
         logger.info("run--4");
 
