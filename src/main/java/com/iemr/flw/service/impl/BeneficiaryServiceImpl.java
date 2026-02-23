@@ -400,27 +400,28 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     private Map<String, Object> getBenHealthDetails(BigInteger benRegId) {
         Map<String, Object> healthDetails = new HashMap<>();
-        if (benRegId == null) return healthDetails;
+        if (null != benRegId) {
+            Object[] benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
+            if (benHealthIdNumber != null && benHealthIdNumber.length > 0) {
+                Object[] healthData = (Object[]) benHealthIdNumber[0];
+                String healthIdNumber = healthData[0] != null ? healthData[0].toString() : null;
+                String healthId = healthData[1] != null ? healthData[1].toString() : null;
 
-        Object[] benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
-        if (benHealthIdNumber == null || benHealthIdNumber.length == 0) return healthDetails;
-
-        Object[] healthData      = (Object[]) benHealthIdNumber[0];
-        String   healthIdNumber  = healthData[0] != null ? healthData[0].toString() : null;
-        String   healthId        = healthData[1] != null ? healthData[1].toString() : null;
-
-        if (healthIdNumber == null) return healthDetails;
-
-        List<Object[]> health = beneficiaryRepo.getBenHealthDetails(healthIdNumber);
-        if (health != null && !health.isEmpty()) {
-            Object[] row = health.get(0); // last writer wins anyway; just use first
-            healthDetails.put("HealthID",       row[0]);
-            healthDetails.put("HealthIdNumber", row[1]);
-            healthDetails.put("isNewAbha",      row[2]);
-        } else {
-            healthDetails.put("HealthIdNumber", healthIdNumber);
-            healthDetails.put("HealthID",       healthId);
-            healthDetails.put("isNewAbha",      false);
+                if (null != healthIdNumber) {
+                    List<Object[]> health = beneficiaryRepo.getBenHealthDetails(healthIdNumber);
+                    if (health != null && !health.isEmpty()) {
+                        for (Object[] objects : health) {
+                            healthDetails.put("HealthID", objects[0]);
+                            healthDetails.put("HealthIdNumber", objects[1]);
+                            healthDetails.put("isNewAbha", objects[2]);
+                        }
+                    } else {
+                        healthDetails.put("HealthIdNumber", healthIdNumber);
+                        healthDetails.put("HealthID", healthId);
+                        healthDetails.put("isNewAbha", null);
+                    }
+                }
+            }
         }
         return healthDetails;
     }
