@@ -8,6 +8,6 @@ import org.springframework.stereotype.Repository;
 import com.iemr.flw.domain.iemr.M_User;
 @Repository
 public interface EmployeeMasterRepo extends JpaRepository<M_User,Integer> {
-    @Query("SELECT u FROM User u WHERE u.userID = :userID and u.deleted=false and u.statusID in (1, 2)")
+    @Query("SELECT u FROM M_User u WHERE u.userID = :userID and u.deleted=false and u.statusID in (1, 2)")
     M_User findUserByUserID(@Param("userID") Integer userID);
 }
