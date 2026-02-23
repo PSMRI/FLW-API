@@ -259,6 +259,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         resultMap.put(KEY_ABHA_HEALTH_DETAILS, healthDetails);
         resultMap.put("houseoldId",       benDetailsRMNCH.getHouseoldId());
         resultMap.put("benficieryid",     benDetailsRMNCH.getBenficieryid());
+        resultMap.put("BenRegId",          m.getBenRegId());
         resultMap.put("isDeath",          benDetailsRMNCH.getIsDeath());
         resultMap.put("isDeathValue",     benDetailsRMNCH.getIsDeathValue());
         resultMap.put("dateOfDeath",      benDetailsRMNCH.getDateOfDeath());
@@ -273,7 +274,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         resultMap.put("isMarried",        benDetailsRMNCH.getIsMarried());
         resultMap.put("doYouHavechildren", benDetailsRMNCH.getDoYouHavechildren());
         resultMap.put("noofAlivechildren", benDetailsRMNCH.getNoofAlivechildren()); // typo fixed (no trailing spaces)
-        resultMap.put("BenRegId",          m.getBenRegId());
 
         // ASHA id from address creator
         if (benAddress.getCreatedBy() != null) {
@@ -420,7 +420,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         } else {
             healthDetails.put("HealthIdNumber", healthIdNumber);
             healthDetails.put("HealthID",       healthId);
-            healthDetails.put("isNewAbha",      null);
+            healthDetails.put("isNewAbha",      false);
         }
         return healthDetails;
     }
