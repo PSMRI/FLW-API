@@ -198,10 +198,12 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Override
     public String updateIncentive(PendingActivityDTO pendingActivityDTO) {
+        logger.info("run--1");
 
         if (pendingActivityDTO == null) {
             return "Invalid request";
         }
+        logger.info("run--2");
 
         IncentiveName incentiveName;
         try {
@@ -209,12 +211,16 @@ public class IncentiveServiceImpl implements IncentiveService {
         } catch (IllegalArgumentException e) {
             return "Invalid incentive name";
         }
+        logger.info("run--3");
+
 
         IncentiveActivity incentiveActivity =
                 incentivesRepo.findIncentiveMasterByNameAndGroup(
                         pendingActivityDTO.getActivityName(),
                         pendingActivityDTO.getModuleName()
                 );
+        logger.info("run--3");
+
 
         if (incentiveActivity == null) {
             return null;
@@ -226,20 +232,24 @@ public class IncentiveServiceImpl implements IncentiveService {
                                 pendingActivityDTO.getId(),
                                 incentiveActivity.getId()
                         );
+        logger.info("run--4");
 
         if (!optionalPendingActivity.isPresent()) {
             return null;
         }
+        logger.info("run--5");
 
         IncentivePendingActivity existingActivity = optionalPendingActivity.get();
 
         if (!existingActivity.getActivityId().equals(pendingActivityDTO.getId())) {
             return null;
         }
+        logger.info("run--6");
 
         if (pendingActivityDTO.getImages() == null || pendingActivityDTO.getImages().isEmpty()) {
             return null;
         }
+        logger.info("run--7");
 
         try {
             MaaMeetingRequestDTO maaMeetingRequestDTO = new MaaMeetingRequestDTO();
@@ -251,7 +261,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             // ✅ ENUM BASED CHECK
             if(pendingActivityDTO.getModuleName().equals(GroupName.ACTIVITY)){
-                if (incentiveName.name() == IncentiveName.MAA_QUARTERLY_MEETING.name()) {
+                if (Objects.equals(incentiveName.name(), IncentiveName.MAA_QUARTERLY_MEETING.name())) {
 
                     maaMeetingService.updateMeetingFromFileUpload(
                             maaMeetingRequestDTO,
@@ -284,6 +294,8 @@ public class IncentiveServiceImpl implements IncentiveService {
 
 
         } catch (Exception e) {
+            logger.info("run--last"+e.getMessage());
+
             return e.getMessage();
         }
 
