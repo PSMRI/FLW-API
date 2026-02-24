@@ -109,7 +109,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
     public List<DeliveryOutcomeDTO> getDeliveryOutcome(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
-            List<DeliveryOutcome> deliveryOutcomeList = deliveryOutcomeRepo.getDeliveryOutcomeByAshaId(user, dto.getFromDate(), dto.getToDate());
+            List<DeliveryOutcome> deliveryOutcomeList = deliveryOutcomeRepo.findByCreatedBy(user);
             return deliveryOutcomeList.stream()
                     .map(deliveryOutcome -> mapper.convertValue(deliveryOutcome, DeliveryOutcomeDTO.class))
                     .collect(Collectors.toList());
