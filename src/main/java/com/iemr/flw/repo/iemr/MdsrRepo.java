@@ -16,7 +16,4 @@ public interface MdsrRepo extends JpaRepository<MDSR, Long> {
 
     List<MDSR> findByCreatedBy(String userName);
 
-    @Query(" SELECT m FROM MDSR m WHERE m.createdBy = :userId")
-    List<MDSR> getAllMdsrByAshaId(@Param("userId") String userId,
-                                  @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 }
