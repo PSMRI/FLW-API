@@ -14,6 +14,8 @@ public interface CdrRepo extends JpaRepository<CDR, Long> {
 
     CDR findCDRByBenId(Long benId);
 
+    List<CDR>findByCreatedBy(String userName);
+
     @Query(" SELECT c FROM CDR c WHERE c.createdBy = :userId")
     List<CDR> getAllCdrByBenId(@Param("userId") String userId,
                                                     @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);

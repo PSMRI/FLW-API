@@ -106,7 +106,7 @@ public class DeathReportsServiceImpl implements DeathReportsService {
         try{
             String user = userRepo.getUserNamedByUserId(dto.getAshaId());
             List<CDR> cdrlist =
-                    cdrRepo.getAllCdrByBenId(user, dto.getFromDate(), dto.getToDate());
+                    cdrRepo.findByCreatedBy(user);
             return cdrlist.stream()
                     .map(cdr -> mapper.convertValue(cdr, CdrDTO.class))
                     .collect(Collectors.toList());
@@ -123,7 +123,7 @@ public class DeathReportsServiceImpl implements DeathReportsService {
             String user = userRepo.getUserNamedByUserId(dto.getAshaId());
 
             List<MDSR> mdsrList =
-                    mdsrRepo.getAllMdsrByAshaId(user, dto.getFromDate(), dto.getToDate());
+                    mdsrRepo.findByCreatedBy(user);
             return mdsrList.stream()
                     .map(mdsr -> mapper.convertValue(mdsr, MdsrDTO.class))
                     .collect(Collectors.toList());
