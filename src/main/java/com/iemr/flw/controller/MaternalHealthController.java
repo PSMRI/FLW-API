@@ -239,11 +239,11 @@ public class MaternalHealthController {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
                 List<DeliveryOutcomeDTO> result = deliveryOutcomeService.getDeliveryOutcome(requestDTO);
-                Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+                Gson gson = new GsonBuilder().create();
                 String s = gson.toJson(result);
-                if (s != null)
-                    response.setResponse(s);
-                else
+                if (result != null && !result.isEmpty()) {
+                    response.setResponse(gson.toJson(result));
+                }else
                     response.setError(5000, "No record found");
             } else
                 response.setError(5000, "Invalid/NULL request obj");

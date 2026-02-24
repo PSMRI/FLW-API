@@ -14,7 +14,7 @@ public interface MdsrRepo extends JpaRepository<MDSR, Long> {
 
     MDSR findMDSRByBenId(Long benId);
 
-    @Query(" SELECT m FROM MDSR m WHERE m.createdBy = :userId and m.createdDate >= :fromDate and m.createdDate <= :toDate")
+    @Query(" SELECT m FROM MDSR m WHERE m.createdBy = :userId")
     List<MDSR> getAllMdsrByAshaId(@Param("userId") String userId,
                                   @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 }
