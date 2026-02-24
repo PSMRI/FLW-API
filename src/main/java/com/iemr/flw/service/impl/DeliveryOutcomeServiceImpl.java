@@ -110,7 +110,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
         try {
             String user = userRepo.getUserNamedByUserId(dto.getAshaId());
             List<DeliveryOutcome> deliveryOutcomeList = deliveryOutcomeRepo.getDeliveryOutcomeByAshaId(user);
-            logger.info("Delivery Outcome: {}", deliveryOutcomeList);
+            logger.info("Delivery Outcome: {}"+user.toString(), deliveryOutcomeList);
             return deliveryOutcomeList.stream()
                     .map(deliveryOutcome -> mapper.convertValue(deliveryOutcome, DeliveryOutcomeDTO.class))
                     .collect(Collectors.toList());
