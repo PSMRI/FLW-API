@@ -13,6 +13,7 @@ import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.IncentiveService;
 import com.iemr.flw.service.MaaMeetingService;
+import com.iemr.flw.service.UwinSessionService;
 import com.iemr.flw.utils.JwtUtil;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -59,6 +60,9 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Autowired
     private ChildCareServiceImpl childCareService;
+
+    @Autowired
+    private UwinSessionService uwinSessionService;
 
     @Override
     public String saveIncentivesMaster(List<IncentiveActivityDTO> activityDTOS) {
@@ -268,6 +272,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                         return  "Incentive update successfully";
                     }
                 }
+
             }else {
                 if (incentiveName.name().equals(IncentiveName.MAA_QUARTERLY_MEETING.name())) {
 
@@ -292,6 +297,17 @@ public class IncentiveServiceImpl implements IncentiveService {
                     if(hbncVisit!=null){
                         return  "Incentive update successfully";
                     }
+                }
+                if(incentiveName.name().equals(IncentiveName.CHILD_MOBILIZATION_SESSIONS.name())){
+                    UwinSessionRequestDTO uwinSessionRequestDTO = new UwinSessionRequestDTO();
+                    uwinSessionRequestDTO.setAttachments(pendingActivityDTO.getImages().toArray(new MultipartFile[0]));
+                    UwinSession uwinSession = uwinSessionService.updateSession(uwinSessionRequestDTO,existingActivity.getRecordId(),pendingActivityDTO.getId());
+                    if(uwinSession!=null){
+                        return  "Incentive update successfully";
+
+                    }
+
+
                 }
 
 
