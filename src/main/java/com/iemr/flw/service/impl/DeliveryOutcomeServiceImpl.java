@@ -110,11 +110,12 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
         try {
             String user = userRepo.getUserNamedByUserId(dto.getAshaId());
             List<DeliveryOutcome> deliveryOutcomeList = deliveryOutcomeRepo.findByCreatedBy(user);
+            logger.info("DeliveryOutcome Response{}",deliveryOutcomeList);
             return deliveryOutcomeList.stream()
                     .map(deliveryOutcome -> mapper.convertValue(deliveryOutcome, DeliveryOutcomeDTO.class))
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error("DeliveryOutcome Exception:",e.getMessage());
         }
         return null;
     }
