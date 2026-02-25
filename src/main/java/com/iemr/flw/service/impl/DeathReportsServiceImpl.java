@@ -11,6 +11,8 @@ import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.DeathReportsService;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +45,7 @@ public class DeathReportsServiceImpl implements DeathReportsService {
     @Autowired
     private IncentiveRecordRepo recordRepo;
 
+    private final Logger logger = LoggerFactory.getLogger(DeathReportsServiceImpl.class);
 
     @Override
     public String registerCDR(List<CdrDTO> cdrDTOs) {
@@ -111,6 +114,8 @@ public class DeathReportsServiceImpl implements DeathReportsService {
                     .map(cdr -> mapper.convertValue(cdr, CdrDTO.class))
                     .collect(Collectors.toList());
         } catch (Exception e) {
+            logger.error("MDSR Exception:"+e.getMessage());
+
             // log
         }
         return null;
@@ -128,6 +133,8 @@ public class DeathReportsServiceImpl implements DeathReportsService {
                     .map(mdsr -> mapper.convertValue(mdsr, MdsrDTO.class))
                     .collect(Collectors.toList());
         } catch (Exception e) {
+            logger.error("MDSR Exception:"+e.getMessage());
+
             // log
         }
         return null;
