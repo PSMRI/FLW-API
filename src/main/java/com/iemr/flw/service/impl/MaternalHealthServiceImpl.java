@@ -309,7 +309,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     public List<PNCVisitDTO> getPNCVisits(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
-            List<PNCVisit> pncVisits = pncVisitRepo.getPNCForPW(user, dto.getFromDate(), dto.getToDate());
+            List<PNCVisit> pncVisits = pncVisitRepo.getPNCForPW(user);
             return pncVisits.stream()
                     .map(pnc -> mapper.convertValue(pnc, PNCVisitDTO.class))
                     .collect(Collectors.toList());
