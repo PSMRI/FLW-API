@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/maternalCare", headers = "Authorization", consumes = "application/json", produces = "application/json")
+@RequestMapping(value = "/maternalCare", consumes = "application/json", produces = "application/json")
 public class MaternalHealthController {
 
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);

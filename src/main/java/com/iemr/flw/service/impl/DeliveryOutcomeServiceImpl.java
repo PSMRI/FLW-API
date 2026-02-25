@@ -115,7 +115,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                     .map(deliveryOutcome -> mapper.convertValue(deliveryOutcome, DeliveryOutcomeDTO.class))
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            logger.error("DeliveryOutcome Exception:",e.getMessage());
+            logger.error("DeliveryOutcome Exception:"+e.getMessage());
         }
         return null;
     }

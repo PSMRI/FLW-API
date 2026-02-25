@@ -23,6 +23,7 @@ public class DeliveryOutcomeDTO {
     private Integer deliveryOutcome;
     private Integer liveBirth;
     private Integer stillBirth;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "MMM dd, yyyy, h:mm:ss a")
     private Timestamp dateOfDischarge;
     private String timeOfDischarge;
     private Boolean isJSYBenificiary;
