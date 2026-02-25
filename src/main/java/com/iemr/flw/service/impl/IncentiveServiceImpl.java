@@ -252,17 +252,18 @@ public class IncentiveServiceImpl implements IncentiveService {
         logger.info("run--7");
 
         try {
-            MaaMeetingRequestDTO maaMeetingRequestDTO = new MaaMeetingRequestDTO();
-            maaMeetingRequestDTO.setId(existingActivity.getRecordId());
-            maaMeetingRequestDTO.setMeetingImages(
-                    pendingActivityDTO.getImages().toArray(new MultipartFile[0])
-            );
-            logger.info("Activity Name from request:"+incentiveName.name());
-            logger.info("Activity Name from enum:"+IncentiveName.MAA_QUARTERLY_MEETING.name());
 
             // ✅ ENUM BASED CHECK
             if(pendingActivityDTO.getModuleName().equals(GroupName.ACTIVITY)){
                 if (Objects.equals(incentiveName.name(), IncentiveName.MAA_QUARTERLY_MEETING.name())) {
+                    MaaMeetingRequestDTO maaMeetingRequestDTO = new MaaMeetingRequestDTO();
+                    maaMeetingRequestDTO.setId(existingActivity.getRecordId());
+                    maaMeetingRequestDTO.setMeetingImages(
+                            pendingActivityDTO.getImages().toArray(new MultipartFile[0])
+                    );
+                    logger.info("Activity Name from request:"+incentiveName.name());
+                    logger.info("Activity Name from enum:"+IncentiveName.MAA_QUARTERLY_MEETING.name());
+
 
                     MaaMeeting meeting=   maaMeetingService.updateMeetingFromFileUpload(
                             maaMeetingRequestDTO,
@@ -275,8 +276,16 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             }else {
                 if (incentiveName.name().equals(IncentiveName.MAA_QUARTERLY_MEETING.name())) {
+                    MaaMeetingRequestDTO maaMeetingRequestDTO = new MaaMeetingRequestDTO();
+                    maaMeetingRequestDTO.setId(existingActivity.getRecordId());
+                    maaMeetingRequestDTO.setMeetingImages(
+                            pendingActivityDTO.getImages().toArray(new MultipartFile[0])
+                    );
+                    logger.info("Activity Name from request:"+incentiveName.name());
+                    logger.info("Activity Name from enum:"+IncentiveName.MAA_QUARTERLY_MEETING.name());
 
-                  MaaMeeting meeting =  maaMeetingService.updateMeetingFromFileUpload(
+
+                    MaaMeeting meeting =  maaMeetingService.updateMeetingFromFileUpload(
                             maaMeetingRequestDTO,
                             pendingActivityDTO.getId()
                     );
