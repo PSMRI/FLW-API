@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.iemr.flw.domain.iemr.EyeCheckupVisit;
 import com.iemr.flw.domain.iemr.IncentiveActivity;
@@ -54,6 +55,7 @@ import com.iemr.flw.repo.identity.HouseHoldRepo;
 import com.iemr.flw.service.BeneficiaryService;
 import com.iemr.flw.utils.config.ConfigProperties;
 import com.iemr.flw.utils.http.HttpUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Qualifier("rmnchServiceImpl")
@@ -98,47 +100,58 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     @Override
     public String getBenData(GetBenRequestHandler request, String authorisation) throws Exception {
-        String outputResponse = null;
-        int totalPage = 0;
 
-        try {
-            if (request != null && request.getAshaId() != null) {
-                List<RMNCHMBeneficiaryaddress> resultSet;
-                Integer pageSize = Integer.valueOf(door_to_door_page_size);
-                if (request.getPageNo() != null) {
-                    String userName = beneficiaryRepo.getUserName(request.getAshaId());
-                    if (userName == null || userName.isEmpty())
-                        throw new Exception("Asha details not found, please contact administrator");
-
-                    request.setUserName(userName);
-
-                    PageRequest pr = PageRequest.of(request.getPageNo(), pageSize);
-                    if (request.getFromDate() != null && request.getToDate() != null) {
-                        Page<RMNCHMBeneficiaryaddress> p = beneficiaryRepo.getBenDataWithinDates(
-                                request.getUserName(), request.getFromDate(), request.getToDate(), pr);
-                        resultSet = p.getContent();
-                        totalPage = p.getTotalPages();
-                    } else {
-                        Page<RMNCHMBeneficiaryaddress> p = beneficiaryRepo.getBenDataByUser(request.getUserName(),
-                                pr);
-                        resultSet = p.getContent();
-                        totalPage = p.getTotalPages();
-                    }
-                    if (resultSet != null && resultSet.size() > 0) {
-                        outputResponse = getMappingsForAddressIDs(resultSet, totalPage, authorisation);
-                    }
-                } else {
-                    // page no not invalid
-                    throw new Exception("Invalid page no");
-                }
-            } else
-                throw new Exception("Invalid/missing village details");
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
+        if (request == null || request.getAshaId() == null) {
+            throw new Exception("Invalid/missing asha details");
         }
 
-        return outputResponse;
+        if (request.getPageNo() == null || request.getPageNo() < 0) {
+            throw new Exception("Invalid page number");
+        }
+
+        String userName = beneficiaryRepo.getUserName(request.getAshaId());
+
+        if (userName == null || userName.isEmpty()) {
+            throw new Exception("Asha details not found, please contact administrator");
+        }
+
+        request.setUserName(userName);
+
+        int pageSize = Integer.parseInt(door_to_door_page_size);
+        PageRequest pageRequest = PageRequest.of(request.getPageNo(), pageSize);
+
+        Page<RMNCHMBeneficiaryaddress> pageResult;
+
+        // ✅ Date Filter Handling
+        if (request.getFromDate() != null && request.getToDate() != null) {
+
+            if (request.getFromDate().after(request.getToDate())) {
+                throw new Exception("Invalid date range");
+            }
+
+            pageResult = beneficiaryRepo.getBenDataWithinDates(
+                    userName,
+                    request.getFromDate(),
+                    request.getToDate(),
+                    pageRequest
+            );
+
+        } else {
+
+            pageResult = beneficiaryRepo.getBenDataByUser(userName, pageRequest);
+        }
+
+        if (!pageResult.hasContent()) {
+            return null;
+        }
+
+        return getMappingsForAddressIDs(
+                pageResult.getContent(),
+                pageResult.getTotalPages(),
+                authorisation
+        );
     }
+
 
     private String getMappingsForAddressIDs(List<RMNCHMBeneficiaryaddress> addressList, int totalPage,
                                             String authorisation) {
