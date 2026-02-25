@@ -111,7 +111,7 @@ public class MaaMeetingService {
         return repository.save(existingMeeting);
     }
 
-    public MaaMeeting updateMeetingFromFileUpload(MaaMeetingRequestDTO req,Long incentiveRecordId) throws JsonProcessingException {
+    public MaaMeeting updateMeetingFromFileUpload(MaaMeetingRequestDTO req, Long incentiveRecordId) throws JsonProcessingException {
         MaaMeeting existingMeeting = repository.findById(req.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Meeting not found: " + req.getId()));
 
@@ -238,15 +238,21 @@ public class MaaMeetingService {
             record.setUpdatedBy(meeting.getCreatedBy());
             record.setBenId(0L);
             record.setAshaId(meeting.getAshaId());
+            record.setAmount(Long.valueOf(incentiveActivity.getRate()));
+
             if (meeting.getMeetingImagesJson() != null) {
                 record.setIsEligible(true);
+                recordRepo.save(record);
+
             } else {
                 record.setIsEligible(false);
-                updatePendingActivity(meeting.getAshaId(), meeting.getId(), record.getId(),incentiveActivity.getId());
+                IncentiveActivityRecord activityRecord = recordRepo.save(record);
+                if (activityRecord != null) {
+                    updatePendingActivity(meeting.getAshaId(), meeting.getId(), activityRecord.getId(), incentiveActivity.getId());
+
+                }
 
             }
-            record.setAmount(Long.valueOf(incentiveActivity.getRate()));
-            recordRepo.save(record);
         }
 
     }
@@ -261,7 +267,6 @@ public class MaaMeetingService {
             recordRepo.save(record);
         }
     }
-
 
 
 }

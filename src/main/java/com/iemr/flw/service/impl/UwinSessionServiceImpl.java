@@ -179,14 +179,20 @@ public class UwinSessionServiceImpl implements UwinSessionService {
                  record.setUpdatedBy(session.getCreatedBy());
                  record.setBenId(0L);
                  record.setAshaId(session.getAshaId());
+                 record.setAmount(Long.valueOf(incentiveActivityAM.getRate()));
                  if(session.getAttachmentsJson()!=null){
                      record.setIsEligible(true);
+                     recordRepo.save(record);
+
                  }else {
                      record.setIsEligible(false);
-                     updateIncentivePendindDocService.updatePendingActivity(session.getAshaId(),session.getId(),record.getId(),incentiveActivityAM.getId());
+                   IncentiveActivityRecord incentiveActivityRecord =   recordRepo.save(record);
+                     if(incentiveActivityRecord!=null){
+                         updateIncentivePendindDocService.updatePendingActivity(session.getAshaId(),session.getId(),incentiveActivityRecord.getId(),incentiveActivityAM.getId());
+
+                     }
                  }
-                 record.setAmount(Long.valueOf(incentiveActivityAM.getRate()));
-                 recordRepo.save(record);
+
              }
          }
 
