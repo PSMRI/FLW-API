@@ -57,7 +57,7 @@ public class TBScreeningServiceImpl implements TBScreeningService {
     public String getByUserId(GetBenRequestHandler request) {
         try {
             List<TBScreeningDTO> dtos = new ArrayList<>();
-            List<TBScreening> tbScreeningList = tbScreeningRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
+            List<TBScreening> tbScreeningList = tbScreeningRepo.getByUserId(request.getAshaId());
             tbScreeningList.forEach(tbScreening -> dtos.add(modelMapper.map(tbScreening, TBScreeningDTO.class)));
             TBScreeningRequestDTO tbScreeningRequestDTO = new TBScreeningRequestDTO();
             tbScreeningRequestDTO.setTbScreeningList(dtos);
