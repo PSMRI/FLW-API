@@ -463,7 +463,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Check if the list is empty
         if (filteredList.isEmpty()) {
-            return Collections.singletonMap("message", "No data found for Malaria.");
+            return filteredList;
         }
 
         // Map to DTOs
@@ -551,7 +551,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Check if the list is empty
         if (filteredList.isEmpty()) {
-            return Collections.singletonMap("message", "No data found for Kala Azar.");
+            return filteredList;
         }
 
         // Map to DTOs
@@ -590,7 +590,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     public Object getAllKalaAES(GetDiseaseRequestHandler getDiseaseRequestHandler) {
         if (diseaseAESJERepository.findAll().isEmpty()) {
-            return Collections.singletonMap("message", "No data found for AES.");
+            return diseaseAESJERepository.findAll();
         }
 
         return diseaseAESJERepository.findAll().stream().filter(diseaseAesje -> Objects.equals(diseaseAesje.getUserId(), getDiseaseRequestHandler.getUserId())).collect(Collectors.toList());
@@ -641,7 +641,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Check if the list is empty
         if (filteredList.isEmpty()) {
-            return Collections.singletonMap("message", "No data found for Leprosy.");
+            return filteredList;
         }
 
         // Map to DTOs

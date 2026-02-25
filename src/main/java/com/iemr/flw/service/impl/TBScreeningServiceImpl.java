@@ -55,16 +55,21 @@ public class TBScreeningServiceImpl implements TBScreeningService {
 
     @Override
     public String getByUserId(GetBenRequestHandler request) {
-        List<TBScreeningDTO> dtos = new ArrayList<>();
-        List<TBScreening> tbScreeningList = tbScreeningRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
-        tbScreeningList.forEach(tbScreening -> dtos.add(modelMapper.map(tbScreening, TBScreeningDTO.class)));
-        TBScreeningRequestDTO tbScreeningRequestDTO = new TBScreeningRequestDTO();
-        tbScreeningRequestDTO.setTbScreeningList(dtos);
-        tbScreeningRequestDTO.setUserId(request.getAshaId());
-        Gson gson = new GsonBuilder()
-                .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
-                .create();
-        return gson.toJson(tbScreeningRequestDTO);
+        try {
+            List<TBScreeningDTO> dtos = new ArrayList<>();
+            List<TBScreening> tbScreeningList = tbScreeningRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
+            tbScreeningList.forEach(tbScreening -> dtos.add(modelMapper.map(tbScreening, TBScreeningDTO.class)));
+            TBScreeningRequestDTO tbScreeningRequestDTO = new TBScreeningRequestDTO();
+            tbScreeningRequestDTO.setTbScreeningList(dtos);
+            tbScreeningRequestDTO.setUserId(request.getAshaId());
+            Gson gson = new GsonBuilder()
+                    .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
+                    .create();
+            return gson.toJson(tbScreeningRequestDTO);
+        }catch (Exception e){
+            logger.error("TBScreening Exception:"+e.getMessage());
+        }
+       return null;
     }
 
 }
