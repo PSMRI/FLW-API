@@ -328,6 +328,8 @@ public class IncentiveServiceImpl implements IncentiveService {
                         && IncentiveName.CHILD_DEATH_REPORTING.name().equals(incentiveName.name())) {
 
                     CdrDTO cdrDTO = new CdrDTO();
+                    cdrDTO.setId(existingActivity.getRecordId());
+
                     List<MultipartFile> images = pendingActivityDTO.getImages();
 
                     if (images != null && !images.isEmpty()) {
@@ -354,7 +356,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                     MdsrDTO mdsrDTO = new MdsrDTO();
                     List<MultipartFile> images = pendingActivityDTO.getImages();
-
+                  mdsrDTO.setId(existingActivity.getRecordId());
                     if (images != null && !images.isEmpty()) {
 
                         if (images.size() > 0 && images.get(0) != null && !images.get(0).isEmpty())
