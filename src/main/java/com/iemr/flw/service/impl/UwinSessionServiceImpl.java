@@ -107,11 +107,19 @@ public class UwinSessionServiceImpl implements UwinSessionService {
 
         return dto;
     }
-   @Override
-    public UwinSession updateSession(UwinSessionRequestDTO req,Long recordId,Long activityId) throws Exception {
+    @Override
+    public UwinSession updateSession(UwinSessionRequestDTO req, Long recordId, Long activityId) throws Exception {
         Optional<UwinSession> optionalUwinSession = repo.findById(recordId);
-        if(optionalUwinSession.isPresent()){
-            UwinSession session = new UwinSession();
+
+        if (optionalUwinSession.isPresent()) {
+            UwinSession session = optionalUwinSession.get(); // ✅ Use existing session
+
+            // Update fields if present in request
+            if (req.getPlace() != null) session.setPlace(req.getPlace());
+            if (req.getParticipants() != null) session.setParticipants(req.getParticipants());
+            if (req.getDate() != null) session.setDate(req.getDate());
+
+            // Update attachments if present
             if (req.getAttachments() != null && req.getAttachments().length > 0) {
                 List<String> base64Images = Arrays.stream(req.getAttachments())
                         .filter(file -> !file.isEmpty())
@@ -126,16 +134,16 @@ public class UwinSessionServiceImpl implements UwinSessionService {
 
                 String imagesJson = objectMapper.writeValueAsString(base64Images);
                 session.setAttachmentsJson(imagesJson);
-            }
 
-            repo.save(session);
-            if(session.getAttachmentsJson()!=null){
+                // Trigger incentive update if attachments exist
                 updateIncentivePendindDocService.updateIncentive(activityId);
             }
+
+            repo.save(session); // ✅ Save updated session
+            return session;
+        } else {
+            throw new RuntimeException("Session not found for id: " + recordId);
         }
-
-
-        return optionalUwinSession.get();
     }
 
     @Override
