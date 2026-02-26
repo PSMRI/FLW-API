@@ -1,5 +1,6 @@
 package com.iemr.flw.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -63,6 +65,9 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Autowired
     private UwinSessionService uwinSessionService;
+
+    @Autowired
+    private DeathReportsServiceImpl deathReportsService;
 
     @Override
     public String saveIncentivesMaster(List<IncentiveActivityDTO> activityDTOS) {
@@ -318,6 +323,52 @@ public class IncentiveServiceImpl implements IncentiveService {
 
 
                 }
+                if (pendingActivityDTO != null
+                        && incentiveName != null
+                        && IncentiveName.CHILD_DEATH_REPORTING.name().equals(incentiveName.name())) {
+
+                    CdrDTO cdrDTO = new CdrDTO();
+                    List<MultipartFile> images = pendingActivityDTO.getImages();
+
+                    if (images != null && !images.isEmpty()) {
+
+                        if (images.size() > 0 && images.get(0) != null && !images.get(0).isEmpty())
+                            cdrDTO.setCdrImage(convertAttachmentsToJson(images.get(0)));
+
+                        if (images.size() > 1 && images.get(1) != null && !images.get(1).isEmpty())
+                            cdrDTO.setCdrImage2(convertAttachmentsToJson(images.get(1)));
+
+                        if (images.size() > 2 && images.get(2) != null && !images.get(2).isEmpty())
+                            cdrDTO.setDeathCertImage1(convertAttachmentsToJson(images.get(2)));
+
+                        if (images.size() > 3 && images.get(3) != null && !images.get(3).isEmpty())
+                            cdrDTO.setDeathCertImage2(convertAttachmentsToJson(images.get(3)));
+                    }
+
+                    deathReportsService.updateCDRUploadFiles(cdrDTO, pendingActivityDTO.getId());
+                }
+
+                if (pendingActivityDTO != null
+                        && incentiveName != null
+                        && IncentiveName.MATERNAL_DEATH_REPORT.name().equals(incentiveName.name())) {
+
+                    MdsrDTO mdsrDTO = new MdsrDTO();
+                    List<MultipartFile> images = pendingActivityDTO.getImages();
+
+                    if (images != null && !images.isEmpty()) {
+
+                        if (images.size() > 0 && images.get(0) != null && !images.get(0).isEmpty())
+                            mdsrDTO.setMdsr1File(convertAttachmentsToJson(images.get(0)));
+
+                        if (images.size() > 1 && images.get(1) != null && !images.get(1).isEmpty())
+                            mdsrDTO.setMdsr2File(convertAttachmentsToJson(images.get(1)));
+
+                        if (images.size() > 2 && images.get(2) != null && !images.get(2).isEmpty())
+                            mdsrDTO.setMdsrDeathCertFile(convertAttachmentsToJson(images.get(2)));
+                    }
+                    deathReportsService.updateMDSR(mdsrDTO, pendingActivityDTO.getId());
+
+                }
 
 
             }
@@ -334,6 +385,14 @@ public class IncentiveServiceImpl implements IncentiveService {
         return null;
     }
 
+    public String convertAttachmentsToJson(MultipartFile file) {
+        try {
+            String base64 = Base64.getEncoder().encodeToString(file.getBytes());
+            return new ObjectMapper().writeValueAsString(base64);
+        } catch (Exception e) {
+            throw new RuntimeException("Error converting file", e);
+        }
+    }
     private void checkMonthlyAshaIncentive(Integer ashaId) {
         IncentiveActivity MOBILEBILLREIMB_ACTIVITY = incentivesRepo.findIncentiveMasterByNameAndGroup("MOBILE_BILL_REIMB", GroupName.OTHER_INCENTIVES.getDisplayName());
         IncentiveActivity ADDITIONAL_ASHA_INCENTIVE = incentivesRepo.findIncentiveMasterByNameAndGroup("ADDITIONAL_ASHA_INCENTIVE", GroupName.ADDITIONAL_INCENTIVE.getDisplayName());
