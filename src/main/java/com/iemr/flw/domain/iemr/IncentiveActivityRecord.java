@@ -52,4 +52,7 @@ public class IncentiveActivityRecord {
 
     @Column(name = "is_default_activity")
     private Boolean isDefaultActivity;
+
+    @Column(name = "approval_status")
+     Integer approvalStatus;
 }

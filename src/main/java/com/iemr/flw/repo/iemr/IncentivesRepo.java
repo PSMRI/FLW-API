@@ -28,4 +28,14 @@ public interface IncentivesRepo extends JpaRepository<IncentiveActivity, Long> {
 
     @Query("select record from IncentiveActivityRecord record where record.activityId = :id and record.createdDate = :createdDate and record.benId = :benId")
     IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(@Param("id") Long id, @Param("createdDate") Timestamp createdDate, @Param("benId") Long benId);
+
+    @Query(value = "SELECT " +
+            "SUM(CASE WHEN i.approval_status = 101 THEN 1 ELSE 0 END) as pendingCount, " +
+            "SUM(CASE WHEN i.approval_status = 102 THEN 1 ELSE 0 END) as approvalCount, " +
+            "SUM(CASE WHEN i.approval_status = 103 THEN 1 ELSE 0 END) as rejectCount " +
+            "FROM m_incentive_activity i " +
+            "WHERE i.asha_id = :ashaId " +
+            "AND i.is_deleted = false",
+            nativeQuery = true)
+    Object[] getStatusCountByAshaId(@Param("ashaId") Integer ashaId);
 }

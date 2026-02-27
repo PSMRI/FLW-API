@@ -44,4 +44,12 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
 
     @Query("select record from IncentiveActivityRecord record where record.ashaId = :ashaId")
     List<IncentiveActivityRecord> findRecordsByAsha(@Param("ashaId") Integer ashaId);
+
+    @Query("SELECT " +
+            "SUM(CASE WHEN record.approvalStatus = 101 THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN record.approvalStatus = 102 THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END) " +
+            "FROM IncentiveActivityRecord record " +
+            "WHERE record.ashaId = :ashaId")
+    List<Object[]> getStatusCountByAshaId(@Param("ashaId") Integer ashaId);
 }
