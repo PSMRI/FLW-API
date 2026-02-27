@@ -1,6 +1,7 @@
 package com.iemr.flw.controller;
 
 import com.iemr.flw.dto.iemr.AshaByFacilityRequestDTO;
+import com.iemr.flw.dto.iemr.UpdateApprovalRequestDTO;
 import com.iemr.flw.service.SupervisorDashboardService;
 import com.iemr.flw.service.impl.AshaSupervisorLoginService;
 import com.iemr.flw.utils.JwtUtil;
@@ -32,6 +33,7 @@ public class AshaSupervisorIncentiveApproval {
     @Autowired
     private JwtUtil jwtUtil;
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
 
     @PostMapping("/getAshaListByFacility")
@@ -66,7 +68,6 @@ public class AshaSupervisorIncentiveApproval {
         }
     }
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
 
 
@@ -87,5 +88,36 @@ public class AshaSupervisorIncentiveApproval {
         }
         return response.toString();
     }
+
+    @PostMapping("/updateApprovalStatus")
+    public ResponseEntity<?> updateApprovalStatus(
+            @RequestBody UpdateApprovalRequestDTO request,
+            @RequestHeader(value = "JwtToken") String token) {
+
+        try {
+            if (token == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("UNAUTHORIZED");
+            }
+
+            int updatedRows = ashaSupervisorLoginService.updateApprovalStatus(
+                    request.getAshaId(),
+                    request.getMonth(),
+                    request.getYear(),
+                    request.getApprovalStatus()
+            );
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("statusCode", 200);
+            response.put("updatedRecords", updatedRows);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Server error: " + e.getMessage());
+        }
+    }
+
 
 }

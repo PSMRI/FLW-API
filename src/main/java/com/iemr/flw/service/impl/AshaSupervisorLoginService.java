@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -261,7 +262,22 @@ public class AshaSupervisorLoginService {
 	 * API 2: Get ASHAs at a specific facility for this supervisor with detailed
 	 * info.
 	 */
+	@Transactional
+	public int updateApprovalStatus(Integer ashaId, Integer month, Integer year, Integer approvalStatus) {
 
+		LocalDate startLocalDate = LocalDate.of(year, month, 1);
+		LocalDate endLocalDate = startLocalDate.plusMonths(1);
+
+		Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
+		Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
+
+		return incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
+				ashaId,
+				approvalStatus,
+				startDate,
+				endDate
+		);
+	}
 
 	public List<Map<String, Object>> getAshasAtFacility(Integer supervisorId, Integer facilityId,Integer month,Integer year,Integer approvalStatusID) {
 

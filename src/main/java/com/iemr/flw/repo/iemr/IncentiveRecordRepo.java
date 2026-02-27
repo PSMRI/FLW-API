@@ -3,9 +3,11 @@ package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -68,4 +70,17 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             @Param("ashaId") Integer ashaId,
             @Param("fromDate") Timestamp fromDate,
             @Param("toDate") Timestamp toDate);
-}
+
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE incentive_activity_record iar "
+            + "SET iar.approval_status = :approvalStatus "
+            + "WHERE iar.asha_id = :ashaId "
+            + "AND iar.created_date >= :startDate "
+            + "AND iar.created_date < :endDate",
+            nativeQuery = true)
+    int updateApprovalStatusByAshaAndDateRange(
+            @Param("ashaId") Integer ashaId,
+            @Param("approvalStatus") Integer approvalStatus,
+            @Param("startDate") Timestamp startDate,
+            @Param("endDate") Timestamp endDate);}
