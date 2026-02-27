@@ -1,5 +1,7 @@
 package com.iemr.flw.service.impl;
 
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,7 +28,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 	private SupervisorDashboardRepo dashboardRepo;
 
 	@Override
-	public String getSupervisorDashboard(Integer supervisorUserID) {
+	public String getSupervisorDashboard(Integer supervisorUserID,Integer month,Integer year) {
 		JSONObject result = new JSONObject();
 
 		// 1. Supervisor user details
@@ -92,9 +94,21 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
 		// 5. Get incentive status per ASHA (verified, rejected, pending, totalAmount)
 		Map<Integer, JSONObject> incentiveStatusMap = new HashMap<>();
-		long overallVerified = 0, overallRejected = 0, overallPending = 0, overallTotalAmount = 0;
+		long overallVerified = 0, overallRejected = 0, overallPending = 0;
 		try {
-			List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIds(ashaIDs);
+			logger.info("Month: {}", month);
+			logger.info("Year: {}", year);
+
+			LocalDate startLocalDate = LocalDate.of(year, month, 1);
+			LocalDate endLocalDate = startLocalDate.plusMonths(1);
+
+			logger.info("startLocalDate {}", startLocalDate);
+			logger.info("endLocalDate {}", endLocalDate);
+
+			Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
+			Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
+
+			List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIds(ashaIDs,startDate,endDate);
 			if (statusRows != null) {
 				for (Object[] sRow : statusRows) {
 					Integer ashaId = (Integer) sRow[0];
@@ -102,20 +116,18 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 					long verified = ((Number) sRow[2]).longValue();
 					long rejected = ((Number) sRow[3]).longValue();
 					long pending = ((Number) sRow[4]).longValue();
-					long totalAmount = ((Number) sRow[5]).longValue();
 
 					JSONObject status = new JSONObject();
 					status.put("totalRecords", total);
 					status.put("verified", verified);
 					status.put("rejected", rejected);
 					status.put("pending", pending);
-					status.put("totalAmount", totalAmount);
+					status.put("overDue", 0);
 					incentiveStatusMap.put(ashaId, status);
 
 					overallVerified += verified;
 					overallRejected += rejected;
 					overallPending += pending;
-					overallTotalAmount += totalAmount;
 				}
 			}
 		} catch (Exception e) {
@@ -127,35 +139,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 		overallSummary.put("verified", overallVerified);
 		overallSummary.put("rejected", overallRejected);
 		overallSummary.put("pending", overallPending);
-		overallSummary.put("totalAmount", overallTotalAmount);
+		overallSummary.put("overDue", 0);
 		result.put("incentiveSummary", overallSummary);
-
-		// 6. Get incentive history per ASHA
-		Map<Integer, List<JSONObject>> historyMap = new HashMap<>();
-		try {
-			List<Object[]> historyRows = dashboardRepo.getIncentiveHistoryByAshaIds(ashaIDs);
-			if (historyRows != null) {
-				for (Object[] hRow : historyRows) {
-					Integer ashaId = (Integer) hRow[0];
-					JSONObject record = new JSONObject();
-					record.put("activityName", str(hRow[1]));
-					record.put("amount", hRow[2]);
-					String status;
-					if (hRow[3] == null) {
-						status = "pending";
-					} else if ((Boolean) hRow[3]) {
-						status = "verified";
-					} else {
-						status = "rejected";
-					}
-					record.put("status", status);
-					record.put("createdDate", hRow[4] != null ? hRow[4].toString() : JSONObject.NULL);
-					historyMap.computeIfAbsent(ashaId, k -> new ArrayList<>()).add(record);
-				}
-			}
-		} catch (Exception e) {
-			logger.error("Error fetching incentive history: " + e.getMessage(), e);
-		}
 
 		// 7. Build facilities array with nested ASHAs
 		Map<Integer, List<Object[]>> ashasByFacility = new HashMap<>();
@@ -182,14 +167,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 				facility.put("facilityType", str(fDetails[6]));
 			}
 
-			// Villages
-			JSONArray villages = new JSONArray();
-			List<JSONObject> vList = villageMap.get(facID);
-			if (vList != null) {
-				for (JSONObject v : vList)
-					villages.put(v);
-			}
-			facility.put("villages", villages);
 
 			// ASHAs at this facility
 			JSONArray ashasArray = new JSONArray();
@@ -204,37 +181,11 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 					asha.put("mobile", str(row[7]).isEmpty() ? JSONObject.NULL : str(row[7]));
 					asha.put("gender", str(row[8]).isEmpty() ? JSONObject.NULL : str(row[8]));
 
-					// Individual ASHA incentive status
-					JSONObject incentive = new JSONObject();
-					JSONObject ashaStatus = incentiveStatusMap.get(ashaId);
-					if (ashaStatus != null) {
-						incentive.put("verified", ashaStatus.get("verified"));
-						incentive.put("rejected", ashaStatus.get("rejected"));
-						incentive.put("pending", ashaStatus.get("pending"));
-						incentive.put("totalAmount", ashaStatus.get("totalAmount"));
-					} else {
-						incentive.put("verified", 0);
-						incentive.put("rejected", 0);
-						incentive.put("pending", 0);
-						incentive.put("totalAmount", 0);
-					}
-
-					// History with status per record
-					JSONArray history = new JSONArray();
-					List<JSONObject> hList = historyMap.get(ashaId);
-					if (hList != null) {
-						for (JSONObject h : hList)
-							history.put(h);
-					}
-					incentive.put("history", history);
-
-					asha.put("incentive", incentive);
 					ashasArray.put(asha);
 				}
 			}
 
 			facility.put("ashaCount", ashasArray.length());
-			facility.put("ashas", ashasArray);
 			facilitiesArray.put(facility);
 		}
 

@@ -1,5 +1,6 @@
 package com.iemr.flw.repo.iemr;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -62,12 +63,17 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			+ "COUNT(*) AS totalRecords, "
 			+ "SUM(CASE WHEN iar.approval_status = 101 THEN 1 ELSE 0 END) AS verified, "
 			+ "SUM(CASE WHEN iar.approval_status = 102 THEN 1 ELSE 0 END) AS rejected, "
-			+ "SUM(CASE WHEN iar.approval_status = 103 THEN 1 ELSE 0 END) AS pending, "
-			+ "COALESCE(SUM(CASE WHEN iar.approval_status = 101 THEN iar.amount ELSE 0 END), 0) AS totalAmount "
+			+ "SUM(CASE WHEN iar.approval_status = 103 THEN 1 ELSE 0 END) AS pending "
 			+ "FROM incentive_activity_record iar "
-			+ "WHERE iar.asha_id IN :ashaIds "
-			+ "GROUP BY iar.asha_id", nativeQuery = true)
-	List<Object[]> getIncentiveStatusByAshaIds(@Param("ashaIds") List<Integer> ashaIds);
+			+ "WHERE iar.asha_id IN (:ashaIds) "
+			+ "AND iar.created_date >= :startDate "
+			+ "AND iar.created_date < :endDate "
+			+ "GROUP BY iar.asha_id",
+			nativeQuery = true)
+	List<Object[]> getIncentiveStatusByAshaIds(
+			@Param("ashaIds") List<Integer> ashaIds,
+			@Param("startDate") Timestamp startDate,
+			@Param("endDate") Timestamp endDate);
 
 	// Incentive activity history per ASHA (recent records)
 	@Query(value = "SELECT iar.asha_id, iar.name AS activityName, "

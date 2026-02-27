@@ -50,6 +50,11 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             "SUM(CASE WHEN record.approvalStatus = 102 THEN 1 ELSE 0 END), " +
             "SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END) " +
             "FROM IncentiveActivityRecord record " +
-            "WHERE record.ashaId = :ashaId")
-    List<Object[]> getStatusCountByAshaId(@Param("ashaId") Integer ashaId);
+            "WHERE record.ashaId = :ashaId " +
+            "AND record.createdDate >= :startDate " +
+            "AND record.createdDate < :endDate")
+    List<Object[]> getStatusCountByAshaId(
+            @Param("ashaId") Integer ashaId,
+            @Param("startDate") Timestamp startDate,
+            @Param("endDate") Timestamp endDate);
 }

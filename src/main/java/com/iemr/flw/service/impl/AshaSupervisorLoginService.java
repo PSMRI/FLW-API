@@ -1,5 +1,7 @@
 package com.iemr.flw.service.impl;
 
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.*;
 
 import com.iemr.flw.domain.iemr.AshaSupervisorMapping;
@@ -261,16 +263,27 @@ public class AshaSupervisorLoginService {
 	 */
 
 
-	public List<Map<String, Object>> getAshasAtFacility(Integer supervisorId, Integer facilityId) {
+	public List<Map<String, Object>> getAshasAtFacility(Integer supervisorId, Integer facilityId,Integer month,Integer year) {
 
 		List<Object[]> rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, facilityId);
 		List<Map<String, Object>> ashaList = new ArrayList<>();
 		Map<String, Object> asha = new HashMap<>();
+		logger.info("Month: {}", month);
+		logger.info("Year: {}", year);
+
+		LocalDate startLocalDate = LocalDate.of(year, month, 1);
+		LocalDate endLocalDate = startLocalDate.plusMonths(1);
+
+		logger.info("startLocalDate {}", startLocalDate);
+		logger.info("endLocalDate {}", endLocalDate);
+
+		Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
+		Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
 
 		for (Object[] row : rows) {
 
 			Integer ashaId = ((Number) row[0]).intValue();
-			List<Object[]> countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId);
+			List<Object[]> countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId,startDate,endDate);
 
 			asha.put("userId",     row[0]);
 			asha.put("fullName",   fullName(row[1], row[2]));

@@ -35,11 +35,17 @@ public class AshaSupervisorIncentiveApproval {
 
 
     @PostMapping("/getAshaListByFacility")
-    public ResponseEntity<?> getAshaListByFacility(@RequestBody AshaByFacilityRequestDTO request) {
+    public ResponseEntity<?> getAshaListByFacility(@RequestBody AshaByFacilityRequestDTO request,@RequestHeader(value = "JwtToken") String token) {
         try {
+            if(token==null){
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("UNAUTHORIZED");
+
+            }
             List<Map<String, Object>> result = ashaSupervisorLoginService.getAshasAtFacility(
-                    request.getSuperVisorId(),
-                    request.getFacilityId()
+                    jwtUtil.extractUserId(token),
+                    request.getFacilityId(),
+                    request.getMonth(),
+                    request.getYear()
             );
 
             Map<String, Object> response = new HashMap<>();
@@ -61,12 +67,12 @@ public class AshaSupervisorIncentiveApproval {
 
     @Operation(summary = "Get comprehensive ASHA Supervisor dashboard with facilities, ASHAs, villages and incentive data")
     @PostMapping("/dashboard")
-    public String getSupervisorDashboard(@RequestHeader(value = "JwtToken") String token ) {
+    public String getSupervisorDashboard(@RequestBody AshaByFacilityRequestDTO request,@RequestHeader(value = "JwtToken") String token ) {
         OutputResponse response = new OutputResponse();
 
         try {
             if(token!=null){
-                String result = supervisorDashboardService.getSupervisorDashboard(jwtUtil.extractUserId(token));
+                String result = supervisorDashboardService.getSupervisorDashboard(jwtUtil.extractUserId(token),request.getMonth(),request.getYear());
                 response.setResponse(result);
             }
 
