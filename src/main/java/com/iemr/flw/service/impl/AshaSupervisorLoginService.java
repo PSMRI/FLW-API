@@ -263,9 +263,9 @@ public class AshaSupervisorLoginService {
 	 */
 
 
-	public List<Map<String, Object>> getAshasAtFacility(Integer supervisorId, Integer facilityId,Integer month,Integer year,Integer approvalStatus) {
+	public List<Map<String, Object>> getAshasAtFacility(Integer supervisorId, Integer facilityId,Integer month,Integer year,Integer approvalStatusID) {
 
-		List<Object[]> rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, facilityId,approvalStatus);
+		List<Object[]> rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, facilityId,approvalStatusID);
 		List<Object[]> superVisorRow = ashaSupervisorLoginRepo.getAllMappedAshas(supervisorId);
 
 		List<Map<String, Object>> ashaList = new ArrayList<>();
@@ -290,6 +290,7 @@ public class AshaSupervisorLoginService {
 		}
 
 
+
 		for (Object[] row : rows) {
 
 			Integer ashaId = ((Number) row[0]).intValue();
@@ -303,16 +304,35 @@ public class AshaSupervisorLoginService {
 			asha.put("gender",     str(row[5]).isEmpty() ? null : str(row[5]));
 			asha.put("totalAmount",totalAmount);
 
+			long pending = 0;
+			long verified = 0;
+			long rejected = 0;
+
 			if (countList != null && !countList.isEmpty()) {
 				Object[] counts = countList.get(0);
-				asha.put("pending",  counts[0] != null ? counts[0] : 0);
-				asha.put("verified", counts[1] != null ? counts[1] : 0);
-				asha.put("rejected",   counts[2] != null ? counts[2] : 0);
-			} else {
-				asha.put("pendingCount",  0);
-				asha.put("approvalCount", 0);
-				asha.put("rejectCount",   0);
+
+				pending  = counts[0] != null ? ((Number) counts[0]).longValue() : 0;
+				verified = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
+				rejected = counts[2] != null ? ((Number) counts[2]).longValue() : 0;
 			}
+
+			asha.put("pending", pending);
+			asha.put("verified", verified);
+			asha.put("rejected", rejected);
+			int approvalStatus = 0;
+
+
+			if (rejected > 0) {
+				approvalStatus = 102;
+			}
+			else if (pending > 0) {
+				approvalStatus = 103;
+			}
+			else if (verified > 0) {
+				approvalStatus = 101;
+			}
+
+			asha.put("approvalStatus", approvalStatus);
 
 			ashaList.add(asha);
 		}
