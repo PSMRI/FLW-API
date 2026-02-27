@@ -45,13 +45,18 @@ public class AshaSupervisorIncentiveApproval {
                     jwtUtil.extractUserId(token),
                     request.getFacilityId(),
                     request.getMonth(),
-                    request.getYear()
+                    request.getYear(),
+                    request.getApprovalStatus()
             );
+            Map<String, Object> approvalStatus = new HashMap<>();
 
+            approvalStatus.put("pending", 0);
+            approvalStatus.put("verified", 0);
+            approvalStatus.put("rejected", 0);
             Map<String, Object> response = new HashMap<>();
-            response.put("data", result);
             response.put("statusCode", 200);
-
+            response.put("approvalStatus", approvalStatus);
+            response.put("data", result);
             return ResponseEntity.status(HttpStatus.OK).body(response);
 
         } catch (Exception e) {

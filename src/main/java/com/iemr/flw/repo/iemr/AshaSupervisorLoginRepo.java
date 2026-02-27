@@ -34,9 +34,14 @@ public interface AshaSupervisorLoginRepo extends CrudRepository<AshaSupervisorMa
 			+ "FROM asha_supervisor_mapping asm "
 			+ "JOIN m_User u ON u.UserID = asm.ashaUserID AND u.Deleted = false "
 			+ "LEFT JOIN m_gender g ON g.GenderID = u.GenderID "
+			+ "LEFT JOIN incentive_activity_record iar ON iar.asha_id = asm.ashaUserID "
 			+ "WHERE asm.supervisorUserID = :supervisorUserID "
 			+ "AND asm.facilityID = :facilityID "
-			+ "AND asm.deleted = false", nativeQuery = true)
-	List<Object[]> getAshasAtFacility(@Param("supervisorUserID") Integer supervisorUserID,
-			@Param("facilityID") Integer facilityID);
+			+ "AND asm.deleted = false "
+			+ "AND (:approvalStatus = 0 OR iar.approval_status = :approvalStatus)",
+			nativeQuery = true)
+	List<Object[]> getAshasAtFacility(
+			@Param("supervisorUserID") Integer supervisorUserID,
+			@Param("facilityID") Integer facilityID,
+			@Param("approvalStatus") Integer approvalStatus);
 }

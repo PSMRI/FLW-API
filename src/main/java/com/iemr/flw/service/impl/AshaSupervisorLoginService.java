@@ -263,9 +263,11 @@ public class AshaSupervisorLoginService {
 	 */
 
 
-	public List<Map<String, Object>> getAshasAtFacility(Integer supervisorId, Integer facilityId,Integer month,Integer year) {
+	public List<Map<String, Object>> getAshasAtFacility(Integer supervisorId, Integer facilityId,Integer month,Integer year,Integer approvalStatus) {
 
-		List<Object[]> rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, facilityId);
+		List<Object[]> rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, facilityId,approvalStatus);
+		List<Object[]> superVisorRow = ashaSupervisorLoginRepo.getAllMappedAshas(supervisorId);
+
 		List<Map<String, Object>> ashaList = new ArrayList<>();
 		Map<String, Object> asha = new HashMap<>();
 		logger.info("Month: {}", month);
@@ -280,22 +282,32 @@ public class AshaSupervisorLoginService {
 		Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
 		Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
 
+		for (Object[] row : superVisorRow) {
+			Integer facilityID = (Integer) row[3];
+			asha.put("facilityId", facilityID);
+			asha.put("facilityName", str(row[4]));
+			asha.put("facilityType", str(row[5]));
+		}
+
+
 		for (Object[] row : rows) {
 
 			Integer ashaId = ((Number) row[0]).intValue();
 			List<Object[]> countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId,startDate,endDate);
+			Long totalAmount = incentiveRecordRepo.getTotalAmountByAsha(ashaId, startDate, endDate);
 
 			asha.put("userId",     row[0]);
 			asha.put("fullName",   fullName(row[1], row[2]));
 			asha.put("employeeId", str(row[3]).isEmpty() ? null : str(row[3]));
 			asha.put("mobile",     str(row[4]).isEmpty() ? null : str(row[4]));
 			asha.put("gender",     str(row[5]).isEmpty() ? null : str(row[5]));
+			asha.put("totalAmount",totalAmount);
 
 			if (countList != null && !countList.isEmpty()) {
 				Object[] counts = countList.get(0);
-				asha.put("pendingCount",  counts[0] != null ? counts[0] : 0);
-				asha.put("approvalCount", counts[1] != null ? counts[1] : 0);
-				asha.put("rejectCount",   counts[2] != null ? counts[2] : 0);
+				asha.put("pending",  counts[0] != null ? counts[0] : 0);
+				asha.put("verified", counts[1] != null ? counts[1] : 0);
+				asha.put("rejected",   counts[2] != null ? counts[2] : 0);
 			} else {
 				asha.put("pendingCount",  0);
 				asha.put("approvalCount", 0);
