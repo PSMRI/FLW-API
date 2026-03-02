@@ -15,8 +15,8 @@ import java.time.Duration;
 
 @Service
 public class UtpreronaPaymentIntegrationImpl {
-    @Value("${ssdPortalUrl}")
-    private  String API_URL ;
+//    @Value("${ssdPortalUrl}")
+    private  String API_URL = "";
     private static final int TIMEOUT_SECONDS = 30;
 
     private final HttpClient httpClient;
