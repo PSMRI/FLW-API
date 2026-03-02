@@ -10,6 +10,10 @@ import com.iemr.flw.repo.iemr.AshaSupervisorLoginRepo;
 import com.iemr.flw.repo.iemr.FacilityLoginRepo;
 import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
 import com.iemr.flw.repo.iemr.IncentivesRepo;
+import com.iemr.flw.utils.JwtUtil;
+import io.jsonwebtoken.Jwe;
+import jakarta.el.ELException;
+import org.checkerframework.checker.units.qual.A;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -33,6 +37,9 @@ public class AshaSupervisorLoginService {
 
 	@Autowired
 	private IncentiveRecordRepo incentiveRecordRepo;
+
+	@Autowired
+	private JwtUtil jwtUtil;
 
 	/**
 	 * Common facilityData block for ALL users.
@@ -264,36 +271,63 @@ public class AshaSupervisorLoginService {
 	 * info.
 	 */
 	@Transactional
-	public int updateApprovalStatus(Integer ashaId, Integer month, Integer year, Integer approvalStatus,String incentiveIds,String remarks) {
+	public int updateApprovalStatus(Integer ashaId,
+									Integer month,
+									Integer year,
+									Integer approvalStatus,
+									String incentiveIds,
+									String remarks,
+									String token) {
+		try {
 
-		LocalDate startLocalDate = LocalDate.of(year, month, 1);
-		LocalDate endLocalDate = startLocalDate.plusMonths(1);
+			LocalDate startLocalDate = LocalDate.of(year, month, 1);
+			LocalDate endLocalDate = startLocalDate.plusMonths(1);
 
-		Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
-		Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
-		if(approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())){
-			String[] ids = incentiveIds.split(",");
+			Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
+			Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
 
-			for (int i = 0; i < ids.length; i++) {
-				if(incentiveRecordRepo.findById(Long.parseLong(String.valueOf(i))).isPresent()){
-					return incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
-							ashaId,
-							approvalStatus,
-							startDate,
-							endDate
-					);
+			Integer ashaSupervisorUserId = jwtUtil.extractUserId(token);
+			String ashaSupervisorUsername = jwtUtil.extractUsername(token);
+
+			// 👉 If Rejected → Update only selected incentive IDs
+			if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())
+					&& incentiveIds != null
+					&& !incentiveIds.isEmpty()) {
+
+				String[] ids = incentiveIds.split(",");
+				int totalUpdated = 0;
+
+				for (String idStr : ids) {
+					Long id = Long.parseLong(idStr.trim());
+
+					if (incentiveRecordRepo.existsById(id)) {
+						totalUpdated += incentiveRecordRepo.updateApprovalStatusById(
+								id,
+								approvalStatus,
+								remarks,
+								ashaSupervisorUserId,
+								ashaSupervisorUsername
+						);
+					}
 				}
 
+				return totalUpdated;
 			}
+
+			// 👉 Otherwise update full month data
+			return incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
+					ashaId,
+					approvalStatus,
+					startDate,
+					endDate,
+					ashaSupervisorUserId,
+					ashaSupervisorUsername
+			);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return 0;   // never return null in int method
 		}
-
-
-		return incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
-				ashaId,
-				approvalStatus,
-				startDate,
-				endDate
-		);
 	}
 
 	public List<Map<String, Object>> getAshasAtFacility(Integer supervisorId, Integer facilityId,Integer month,Integer year,Integer approvalStatusID) {
