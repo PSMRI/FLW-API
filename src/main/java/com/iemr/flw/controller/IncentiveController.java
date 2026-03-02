@@ -103,8 +103,8 @@ public class IncentiveController {
         return response.toString();
     }
 
-    @RequestMapping(value = {"/update"}, method = RequestMethod.POST)
-    public String updateIncentive(@RequestBody PendingActivityDTO requestDTO) {
+    @RequestMapping(value = {"/update"}, method = RequestMethod.POST, consumes = {"multipart/form-data"})
+    public String updateIncentive(@ModelAttribute  PendingActivityDTO requestDTO) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -116,12 +116,12 @@ public class IncentiveController {
                 if (s != null)
                     response.setResponse(s);
                 else
-                    response.setError(5000, "No record found");
+                    response.setError(500, "No record found");
             } else
-                response.setError(5000, "Invalid/NULL request obj");
+                response.setError(500, "Invalid/NULL request obj");
         } catch (Exception e) {
             logger.error("Error in high risk assessment data : " + e);
-            response.setError(5000, "Error in high risk assessment data : " + e);
+            response.setError(500, "Error in high risk assessment data : " + e);
         }
         return response.toString();
 

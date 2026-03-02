@@ -389,6 +389,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
                     resultMap.put("beneficiaryDetails", benDetailsRMNCH_OBJ);
                     resultMap.put("abhaHealthDetails", healthDetails);
+                    resultMap.put("BenRegId", m.getBenRegId());
                     resultMap.put("houseoldId", benDetailsRMNCH_OBJ.getHouseoldId());
                     resultMap.put("benficieryid", benDetailsRMNCH_OBJ.getBenficieryid());
                     resultMap.put("isDeath", benDetailsRMNCH_OBJ.getIsDeath());
@@ -406,7 +407,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     resultMap.put("doYouHavechildren", benDetailsRMNCH_OBJ.getDoYouHavechildren());
                     resultMap.put("noofAlivechildren",benDetailsRMNCH_OBJ.getNoofAlivechildren());
                     resultMap.put("isDeactivate",benDetailsRMNCH_OBJ.getIsDeactivate());
-                    resultMap.put("BenRegId", m.getBenRegId());
 
                     // adding asha id / created by - user id
                     if (benAddressOBJ.getCreatedBy() != null) {
@@ -438,33 +438,33 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     }
 
 
-	private Map<String, Object> getBenHealthDetails(BigInteger benRegId) {
-		Map<String, Object> healthDetails = new HashMap<>();
-		if (null != benRegId) {
-			Object[] benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
-			if (benHealthIdNumber != null && benHealthIdNumber.length > 0) {
-				Object[] healthData = (Object[]) benHealthIdNumber[0];
-				String healthIdNumber = healthData[0] != null ? healthData[0].toString() : null;
-				String healthId = healthData[1] != null ? healthData[1].toString() : null;
+    private Map<String, Object> getBenHealthDetails(BigInteger benRegId) {
+        Map<String, Object> healthDetails = new HashMap<>();
+        if (null != benRegId) {
+            Object[] benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
+            if (benHealthIdNumber != null && benHealthIdNumber.length > 0) {
+                Object[] healthData = (Object[]) benHealthIdNumber[0];
+                String healthIdNumber = healthData[0] != null ? healthData[0].toString() : null;
+                String healthId = healthData[1] != null ? healthData[1].toString() : null;
 
-				if (null != healthIdNumber) {
-					List<Object[]> health = beneficiaryRepo.getBenHealthDetails(healthIdNumber);
-					if (health != null && !health.isEmpty()) {
-						for (Object[] objects : health) {
-							healthDetails.put("HealthID", objects[0]);
-							healthDetails.put("HealthIdNumber", objects[1]);
-							healthDetails.put("isNewAbha", objects[2]);
-						}
-					} else {
-						healthDetails.put("HealthIdNumber", healthIdNumber);
-						healthDetails.put("HealthID", healthId);
-						healthDetails.put("isNewAbha", null);
-					}
-				}
-			}
-		}
-		return healthDetails;
-	}
+                if (null != healthIdNumber) {
+                    List<Object[]> health = beneficiaryRepo.getBenHealthDetails(healthIdNumber);
+                    if (health != null && !health.isEmpty()) {
+                        for (Object[] objects : health) {
+                            healthDetails.put("HealthID", objects[0]);
+                            healthDetails.put("HealthIdNumber", objects[1]);
+                            healthDetails.put("isNewAbha", objects[2]);
+                        }
+                    } else {
+                        healthDetails.put("HealthIdNumber", healthIdNumber);
+                        healthDetails.put("HealthID", healthId);
+                        healthDetails.put("isNewAbha", null);
+                    }
+                }
+            }
+        }
+        return healthDetails;
+    }
 
     private Map<String, Object> getBenBenVisitDetails(BigInteger benRegId) {
         Map<String, Object> healthDetails = new HashMap<>();
@@ -482,7 +482,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         return healthDetails;
     }
 
-	public void fetchHealthIdByBenRegID(Long benRegID, String authorization, Map<String, Object> resultMap) {
+    public void fetchHealthIdByBenRegID(Long benRegID, String authorization, Map<String, Object> resultMap) {
         Map<String, Long> requestMap = new HashMap<String, Long>();
         requestMap.put("beneficiaryRegID", benRegID);
         requestMap.put("beneficiaryID", null);

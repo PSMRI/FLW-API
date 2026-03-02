@@ -13,6 +13,7 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Repository
 public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRmnch, Long> {
@@ -28,10 +29,15 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     @Query(nativeQuery = true, value = " SELECT userid FROM db_iemr.m_user WHERE UserName = :userName ")
     Integer getUserIDByUserName(@Param("userName") String userName);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE DATE(t.createdDate) BETWEEN DATE(:fromDate) "
-            + " AND DATE(:toDate) AND t.createdBy = :userName ")
-    Page<RMNCHMBeneficiaryaddress> getBenDataWithinDates(@Param("userName") String userName,
-                                                         @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate, Pageable pageable);
+
+    @Query("SELECT t FROM RMNCHMBeneficiaryaddress t " +
+            "WHERE t.createdDate BETWEEN :fromDate AND :toDate " +
+            "AND t.createdBy = :userName")
+    Page<RMNCHMBeneficiaryaddress> getBenDataWithinDates(
+            @Param("userName") String userName,
+            @Param("fromDate") Timestamp fromDate,
+            @Param("toDate") Timestamp toDate,
+            Pageable pageable);
 
     @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE t.createdBy = :userName ")
     Page<RMNCHMBeneficiaryaddress> getBenDataByUser(@Param("userName") String userName, Pageable pageable);

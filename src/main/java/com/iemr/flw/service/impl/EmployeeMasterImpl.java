@@ -1,6 +1,6 @@
 package com.iemr.flw.service.impl;
 
-import com.iemr.flw.domain.iemr.M_User;
+import com.iemr.flw.domain.iemr.User;
 import com.iemr.flw.repo.iemr.EmployeeMasterRepo;
 import com.iemr.flw.service.EmployeeMasterInter;
 
@@ -19,13 +19,13 @@ public class EmployeeMasterImpl implements EmployeeMasterInter {
 
 
     @Override
-    public M_User getUserDetails(Integer userID) {
+    public User getUserDetails(Integer userID) {
         logger.debug("Fetching user details for userID: {}", userID);
         try {
             if (userID == null) {
                 throw new IllegalArgumentException("UserID cannot be null");
             }
-            return employeeMasterRepo.findByUserID(userID);
+            return employeeMasterRepo.findUserByUserID(userID);
         } catch (Exception e) {
             logger.error("Error fetching user details for userID: {}", userID, e);
             throw e;
@@ -33,7 +33,7 @@ public class EmployeeMasterImpl implements EmployeeMasterInter {
     }
 
     @Override
-    public List<M_User> getAllUsers() {
+    public List<User> getAllUsers() {
         return employeeMasterRepo.findAll();
     }
 }
