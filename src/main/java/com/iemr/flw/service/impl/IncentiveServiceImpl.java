@@ -187,7 +187,8 @@ public class IncentiveServiceImpl implements IncentiveService {
                     entry.setName(beneName);
                     if(incentivesRepo.findById(entry.getActivityId()).isPresent()){
                         IncentiveActivity incentiveActivity = incentivesRepo.findById(entry.getActivityId()).get();
-                        entry.setActivityDec(incentiveActivity.getGroup()+"-"+incentiveActivity.getDescription());
+                        entry.setGroupName(incentiveActivity.getGroup());
+                        entry.setActivityDec(incentiveActivity.getDescription());
 
                     }
 

@@ -69,4 +69,7 @@ public class IncentiveActivityRecord {
 
     @Transient
     private String activityDec;
+
+    @Transient
+    private String groupName;
 }
