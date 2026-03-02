@@ -10,7 +10,6 @@ public class DeliveryOutcomeDTO {
     private Long id;
     private Long benId;
 
-    @JsonFormat(pattern = "MMM d yyyy h:mm:ss a")
     private Timestamp dateOfDelivery;
     private String timeOfDelivery;
     private String placeOfDelivery;
@@ -23,15 +22,12 @@ public class DeliveryOutcomeDTO {
     private Integer deliveryOutcome;
     private Integer liveBirth;
     private Integer stillBirth;
-    @JsonFormat(pattern = "MMM d yyyy h:mm:ss a")
     private Timestamp dateOfDischarge;
     private String timeOfDischarge;
     private Boolean isJSYBenificiary;
     private Boolean isActive;
-    @JsonFormat(pattern = "MMM d yyyy h:mm:ss a")
     private Timestamp createdDate;
     private String createdBy;
-    @JsonFormat(pattern = "MMM d yyyy h:mm:ss a")
     private Timestamp updatedDate;
     private String updatedBy;
 }
