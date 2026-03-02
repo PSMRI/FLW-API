@@ -3,6 +3,8 @@ package com.iemr.flw.domain.iemr;
 import lombok.Data;
 
 import jakarta.persistence.*;
+
+import javax.management.MXBean;
 import java.sql.Timestamp;
 
 @Entity
@@ -55,4 +57,16 @@ public class IncentiveActivityRecord {
 
     @Column(name = "approval_status")
      Integer approvalStatus;
+
+    @Column(name = "verifiedBy_userId")
+    private Integer verifiedByUserId;
+
+    @Column(name = "verifiedBy_userName")
+    private String  verifiedByUserName;
+
+    @Column(name = "remarks")
+    private String remarks;
+
+    @Transient
+    private String activityDec;
 }

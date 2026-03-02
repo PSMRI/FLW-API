@@ -185,6 +185,11 @@ public class IncentiveServiceImpl implements IncentiveService {
                     RMNCHMBeneficiarydetail rmnchBeneficiaryDetails = beneficiaryRepo.findByBeneficiaryDetailsId(benDetailId);
                     String beneName = rmnchBeneficiaryDetails.getFirstName() + " " + rmnchBeneficiaryDetails.getLastName();
                     entry.setName(beneName);
+                    if(incentivesRepo.findById(entry.getActivityId()).isPresent()){
+                        IncentiveActivity incentiveActivity = incentivesRepo.findById(entry.getActivityId()).get();
+                        entry.setActivityDec(incentiveActivity.getDescription());
+
+                    }
 
                 } else {
                     entry.setName("");
