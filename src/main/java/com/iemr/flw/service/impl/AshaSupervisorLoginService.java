@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 import com.iemr.flw.domain.iemr.AshaSupervisorMapping;
+import com.iemr.flw.masterEnum.IncentiveApprovalStatus;
 import com.iemr.flw.repo.iemr.AshaSupervisorLoginRepo;
 import com.iemr.flw.repo.iemr.FacilityLoginRepo;
 import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
@@ -263,13 +264,29 @@ public class AshaSupervisorLoginService {
 	 * info.
 	 */
 	@Transactional
-	public int updateApprovalStatus(Integer ashaId, Integer month, Integer year, Integer approvalStatus) {
+	public int updateApprovalStatus(Integer ashaId, Integer month, Integer year, Integer approvalStatus,String incentiveIds,String remarks) {
 
 		LocalDate startLocalDate = LocalDate.of(year, month, 1);
 		LocalDate endLocalDate = startLocalDate.plusMonths(1);
 
 		Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
 		Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
+		if(approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())){
+			String[] ids = incentiveIds.split(",");
+
+			for (int i = 0; i < ids.length; i++) {
+				if(incentiveRecordRepo.findById(Long.parseLong(String.valueOf(i))).isPresent()){
+					return incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
+							ashaId,
+							approvalStatus,
+							startDate,
+							endDate
+					);
+				}
+
+			}
+		}
+
 
 		return incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
 				ashaId,

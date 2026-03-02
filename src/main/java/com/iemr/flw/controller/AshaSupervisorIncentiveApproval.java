@@ -103,7 +103,9 @@ public class AshaSupervisorIncentiveApproval {
                     request.getAshaId(),
                     request.getMonth(),
                     request.getYear(),
-                    request.getApprovalStatus()
+                    request.getApprovalStatus(),
+                    request.getIncentiveIds(),
+                    request.getRemarks()
             );
 
             Map<String, Object> response = new HashMap<>();
