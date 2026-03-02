@@ -15,4 +15,6 @@ public interface IncentiveLogicService {
     public IncentiveActivityRecord incentiveForClusterMeeting(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId);
     public IncentiveActivityRecord incentiveForAttendingVhsnc(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId);
 
+    public IncentiveActivityRecord incentiveForIdentifiedPNC(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId);
+
 }
