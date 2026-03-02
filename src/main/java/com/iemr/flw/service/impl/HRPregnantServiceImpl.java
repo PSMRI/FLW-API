@@ -71,7 +71,7 @@ public class HRPregnantServiceImpl implements HighRiskPregnantService {
             assess.setUserId(requestDTO.getUserId());
             assessRepo.save(assess);
             if(assess!=null){
-                if(assess.getIsHighRisk()){
+                if(assess.getIsHighRisk()!=null && assess.getIsHighRisk()){
                     incentiveLogic.incentiveForIdentifiedPNC(assess.getBenId(),assess.getVisitDate(),assess.getVisitDate(),assess.getUserId());
 
                 }
