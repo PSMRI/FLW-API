@@ -7,6 +7,7 @@ import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.ChildCareService;
@@ -792,35 +793,38 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     private void checkAndAddHbncIncentives(List<HbncVisit> hbncVisits) {
         hbncVisits.forEach(hbncVisit -> {
-            boolean isVisitDone = List.of("1st Day", "3rd Day", "7th Day", "42nd Day")
-                    .stream()
-                    .allMatch(hbncVisits::contains);
+
 
             GroupName.setIsCh(false);
             Long benId = hbncVisit.getBeneficiaryId();
-            if (hbncVisit.getVisit_day().equals("42nd Day")) {
-                IncentiveActivity visitActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.CHILD_HEALTH.getDisplayName());
-                IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.ACTIVITY.getDisplayName());
+            Integer stateId = userRepo.getUserRole(hbncVisit.getAshaId()).get(0).getStateId();
 
-                createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityAM, "HBNC_0_42_DAYS");
-                createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HBNC_0_42_DAYS_CH");
+            if (hbncVisit.getVisit_day().equals("42nd Day")) {
+                if (stateId != null && stateId.equals(com.iemr.flw.masterEnum.StateCode.AM.getStateCode())) {
+                    IncentiveActivity visitActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.CHILD_HEALTH.getDisplayName());
+                    createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityAM, "HBNC_0_42_DAYS");
+                } else if (stateId != null && stateId.equals(com.iemr.flw.masterEnum.StateCode.CG.getStateCode())) {
+                    IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.ACTIVITY.getDisplayName());
+                    createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HBNC_0_42_DAYS_CH");
+                }
 
             }
             logger.info("getDischarged_from_sncu" + hbncVisit.getDischarged_from_sncu());
+            if (stateId != null && stateId.equals(com.iemr.flw.masterEnum.StateCode.AM.getStateCode())) {
+                if (hbncVisit.getVisit_day().equals("42nd Day") && hbncVisit.getDischarged_from_sncu() && hbncVisit.getBaby_weight() <= 2.5) {
+                    IncentiveActivity babyDisChargeSNCUAActivity =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("SNCU_LBW_FOLLOWUP", GroupName.CHILD_HEALTH.getDisplayName());
 
-            if (hbncVisit.getVisit_day().equals("42nd Day") && hbncVisit.getDischarged_from_sncu() && hbncVisit.getBaby_weight() <= 2.5) {
-                IncentiveActivity babyDisChargeSNCUAActivity =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("SNCU_LBW_FOLLOWUP", GroupName.CHILD_HEALTH.getDisplayName());
+                    createIncentiveRecordforHbncVisit(hbncVisit, benId, babyDisChargeSNCUAActivity, "SNCU_LBW_FOLLOWUP");
 
-                createIncentiveRecordforHbncVisit(hbncVisit, benId, babyDisChargeSNCUAActivity, "SNCU_LBW_FOLLOWUP");
+                }
+                logger.info("getIs_baby_alive" + hbncVisit.getIs_baby_alive());
+                if (!hbncVisit.getIs_baby_alive()) {
+                    IncentiveActivity isChildDeathActivity =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_DEATH_REPORTING", GroupName.CHILD_HEALTH.getDisplayName());
 
-            }
-            logger.info("getIs_baby_alive" + hbncVisit.getIs_baby_alive());
-            if (!hbncVisit.getIs_baby_alive()) {
-                IncentiveActivity isChildDeathActivity =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_DEATH_REPORTING", GroupName.CHILD_HEALTH.getDisplayName());
-
-                createIncentiveRecordforHbncVisit(hbncVisit, benId, isChildDeathActivity, "CHILD_DEATH_REPORTING");
+                    createIncentiveRecordforHbncVisit(hbncVisit, benId, isChildDeathActivity, "CHILD_DEATH_REPORTING");
+                }
             }
 
 
@@ -836,48 +840,71 @@ public class ChildCareServiceImpl implements ChildCareService {
         vaccinationList.forEach(vaccination -> {
             Long benId = beneficiaryRepo.getBenIdFromRegID(vaccination.getBeneficiaryRegId()).longValue();
             Integer userId = userRepo.getUserIdByName(vaccination.getCreatedBy());
+            Integer stateId = userRepo.getUserRole(userId).get(0).getStateId();
             Integer immunizationServiceId = getImmunizationServiceIdForVaccine(vaccination.getVaccineId().shortValue());
             if (immunizationServiceId < 6) {
-                IncentiveActivity immunizationActivityAM =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("FULL_IMMUNIZATION_0_1", GroupName.IMMUNIZATION.getDisplayName());
-                IncentiveActivity immunizationActivityCH =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("FULL_IMMUNIZATION_0_1", GroupName.ACTIVITY.getDisplayName());
+                if (stateId != null && stateId.equals(StateCode.AM.getStateCode())) {
+                    IncentiveActivity immunizationActivityAM =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("FULL_IMMUNIZATION_0_1", GroupName.IMMUNIZATION.getDisplayName());
+
+                    if (immunizationActivityAM != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
+                            .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
+
+                        createIncentiveRecord(vaccination, benId, userId, immunizationActivityAM);
+                    }
 
 
-                if (immunizationActivityAM != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
-                        .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
-                    createIncentiveRecord(vaccination, benId, userId, immunizationActivityAM);
+                }
+                if (stateId != null && stateId.equals(StateCode.CG.getStateCode())) {
+                    IncentiveActivity immunizationActivityCH =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("FULL_IMMUNIZATION_0_1", GroupName.ACTIVITY.getDisplayName());
+
+
+                    if (immunizationActivityCH != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
+                            .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
+                        createIncentiveRecord(vaccination, benId, userId, immunizationActivityCH);
+                    }
                 }
 
-                if (immunizationActivityCH != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
-                        .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
-                    createIncentiveRecord(vaccination, benId, userId, immunizationActivityCH);
-                }
+
             } else if (immunizationServiceId == 7) {
-                IncentiveActivity immunizationActivity2AM =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("COMPLETE_IMMUNIZATION_1_2", GroupName.IMMUNIZATION.getDisplayName());
-                IncentiveActivity immunizationActivity2CH =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("COMPLETE_IMMUNIZATION_1_2", GroupName.ACTIVITY.getDisplayName());
-                if (immunizationActivity2AM != null && childVaccinationRepo.getSecondYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
-                        .equals(childVaccinationRepo.getSecondYearVaccineCount())) {
-                    createIncentiveRecord(vaccination, benId, userId, immunizationActivity2AM);
+                if (stateId != null && stateId.equals(StateCode.AM.getStateCode())) {
+                    IncentiveActivity immunizationActivity2AM =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("COMPLETE_IMMUNIZATION_1_2", GroupName.IMMUNIZATION.getDisplayName());
+                    if (immunizationActivity2AM != null && childVaccinationRepo.getSecondYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
+                            .equals(childVaccinationRepo.getSecondYearVaccineCount())) {
+                        createIncentiveRecord(vaccination, benId, userId, immunizationActivity2AM);
+                    }
                 }
-                if (immunizationActivity2CH != null && childVaccinationRepo.getSecondYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
-                        .equals(childVaccinationRepo.getSecondYearVaccineCount())) {
-                    createIncentiveRecord(vaccination, benId, userId, immunizationActivity2CH);
+
+                if (stateId != null && stateId.equals(StateCode.CG.getStateCode())) {
+                    IncentiveActivity immunizationActivity2CH =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("COMPLETE_IMMUNIZATION_1_2", GroupName.ACTIVITY.getDisplayName());
+                    if (immunizationActivity2CH != null && childVaccinationRepo.getSecondYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
+                            .equals(childVaccinationRepo.getSecondYearVaccineCount())) {
+                        createIncentiveRecord(vaccination, benId, userId, immunizationActivity2CH);
+                    }
                 }
+
+
             }
-            IncentiveActivity immunizationActivity5AM =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("DPT_IMMUNIZATION_5_YEARS", GroupName.IMMUNIZATION.getDisplayName());
-            if (immunizationActivity5AM != null && childVaccinationRepo.checkDptVaccinatedUser(vaccination.getBeneficiaryRegId()) == 1) {
-                createIncentiveRecord(vaccination, benId, userId, immunizationActivity5AM);
+            if (stateId != null && stateId.equals(StateCode.AM.getStateCode())) {
+                IncentiveActivity immunizationActivity5AM =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("DPT_IMMUNIZATION_5_YEARS", GroupName.IMMUNIZATION.getDisplayName());
+                if (immunizationActivity5AM != null && childVaccinationRepo.checkDptVaccinatedUser(vaccination.getBeneficiaryRegId()) == 1) {
+                    createIncentiveRecord(vaccination, benId, userId, immunizationActivity5AM);
+                }
+
+            }
+            if (stateId != null && stateId.equals(StateCode.CG.getStateCode())) {
+
+                IncentiveActivity immunizationActivity5CH =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("DPT_IMMUNIZATION_5_YEARS", GroupName.ACTIVITY.getDisplayName());
+                if (immunizationActivity5CH != null && childVaccinationRepo.checkDptVaccinatedUser(vaccination.getBeneficiaryRegId()) == 1) {
+                    createIncentiveRecord(vaccination, benId, userId, immunizationActivity5CH);
+                }
             }
 
-            IncentiveActivity immunizationActivity5CH =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("DPT_IMMUNIZATION_5_YEARS", GroupName.ACTIVITY.getDisplayName());
-            if (immunizationActivity5CH != null && childVaccinationRepo.checkDptVaccinatedUser(vaccination.getBeneficiaryRegId()) == 1) {
-                createIncentiveRecord(vaccination, benId, userId, immunizationActivity5CH);
-            }
         });
     }
 
@@ -929,13 +956,14 @@ public class ChildCareServiceImpl implements ChildCareService {
                 record.setIsEligible(false);
             } else {
                 record.setIsEligible(false);
-                updatePendingActivity(hbncVisit.getAshaId(),hbncVisit.getId(),record.getActivityId(),immunizationActivity.getId());
+                updatePendingActivity(hbncVisit.getAshaId(), hbncVisit.getId(), record.getActivityId(), immunizationActivity.getId());
 
             }
             record.setAmount(Long.valueOf(immunizationActivity.getRate()));
             recordRepo.save(record);
         }
     }
+
     private void updatePendingActivity(Integer userId, Long recordId, Long activityId, Long mIncentiveId) {
         IncentivePendingActivity incentivePendingActivity = new IncentivePendingActivity();
         incentivePendingActivity.setActivityId(activityId);
@@ -947,7 +975,8 @@ public class ChildCareServiceImpl implements ChildCareService {
         }
 
     }
-    public HbncVisit updateHbncFromFileUpload(MultipartFile[] dischargeSncuImage,Long incentiveRecordId,Long id) throws JsonProcessingException {
+
+    public HbncVisit updateHbncFromFileUpload(MultipartFile[] dischargeSncuImage, Long incentiveRecordId, Long id) throws JsonProcessingException {
         HbncVisit existingHbncVisit = hbncVisitRepo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Meeting not found: " + id));
 
@@ -967,6 +996,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         }
         return hbncVisitRepo.save(existingHbncVisit);
     }
+
     private void updateIncentive(Long id) {
 
         Optional<IncentiveActivityRecord> optionalRecord = recordRepo.findById(id);
@@ -986,6 +1016,7 @@ public class ChildCareServiceImpl implements ChildCareService {
             throw new RuntimeException("Failed to convert image to Base64: " + file.getOriginalFilename(), e);
         }
     }
+
     private void createIncentiveRecordforHbyncVisit(HbycChildVisit data, Long benId, IncentiveActivity immunizationActivity, String createdBy) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
