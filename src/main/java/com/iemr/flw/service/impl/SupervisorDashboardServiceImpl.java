@@ -106,16 +106,17 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
             Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
+            logger.info("Asha ID"+ashaIDs);
 
             List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
             if (statusRows != null) {
                 for (Object[] sRow : statusRows) {
-                    Integer ashaId = (Integer) sRow[0];
-                    long total = ((Number) sRow[1]).longValue();
                     long verified = ((Number) sRow[2]).longValue();
                     long rejected = ((Number) sRow[3]).longValue();
                     long pending = ((Number) sRow[4]).longValue();
-
+                     logger.info("verified"+verified);
+                     logger.info("rejected"+rejected);
+                     logger.info("pending"+pending);
                     overallVerified += verified;
                     overallRejected += rejected;
                     overallPending += pending;
