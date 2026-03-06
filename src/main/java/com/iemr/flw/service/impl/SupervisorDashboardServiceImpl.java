@@ -9,6 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.iemr.flw.masterEnum.IncentiveApprovalStatus;
+import com.iemr.flw.repo.iemr.AshaSupervisorLoginRepo;
+import com.iemr.flw.repo.iemr.FacilityLoginRepo;
+import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
+import com.iemr.flw.utils.JwtUtil;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -18,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import com.iemr.flw.repo.iemr.SupervisorDashboardRepo;
 import com.iemr.flw.service.SupervisorDashboardService;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SupervisorDashboardServiceImpl implements SupervisorDashboardService {
@@ -26,6 +32,18 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
     @Autowired
     private SupervisorDashboardRepo dashboardRepo;
+
+    @Autowired
+    private AshaSupervisorLoginRepo ashaSupervisorLoginRepo;
+
+    @Autowired
+    private FacilityLoginRepo facilityLoginRepo;
+
+    @Autowired
+    private IncentiveRecordRepo incentiveRecordRepo;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Override
     public String getSupervisorDashboard(Integer supervisorUserID, Integer month, Integer year) {
@@ -183,6 +201,164 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         result.put("facilities", facilitiesArray);
         return result.toString();
+    }
+
+    @Override
+    public Map<String, Object> getAshasAtFacility(Integer supervisorId, Integer facilityId,
+                                                  Integer month, Integer year, Integer approvalStatusID) {
+
+        List<Object[]> rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, facilityId, approvalStatusID);
+        List<Object[]> superVisorRow = ashaSupervisorLoginRepo.getAllMappedAshas(supervisorId);
+
+        List<Map<String, Object>> ashaList = new ArrayList<>();
+
+        LocalDate startLocalDate = LocalDate.of(year, month, 1);
+        LocalDate endLocalDate = startLocalDate.plusMonths(1);
+
+        Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
+        Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
+
+        long overallVerified = 0, overallRejected = 0, overallPending = 0;
+
+        String facilityName = "";
+        String facilityType = "";
+        Integer facilityID = null;
+
+        for (Object[] row : superVisorRow) {
+            facilityID = (Integer) row[3];
+            facilityName = str(row[4]);
+            facilityType = str(row[5]);
+        }
+
+        for (Object[] row : rows) {
+
+            Map<String, Object> asha = new HashMap<>(); // ✅ loop ke andar
+
+            Integer ashaId = ((Number) row[0]).intValue();
+
+            List<Object[]> countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
+            Long totalAmount = incentiveRecordRepo.getTotalAmountByAsha(ashaId, startDate, endDate);
+
+            asha.put("facilityId", facilityID);
+            asha.put("facilityName", facilityName);
+            asha.put("facilityType", facilityType);
+
+            asha.put("userId", row[0]);
+            asha.put("fullName", fullName(row[1], row[2]));
+            asha.put("employeeId", str(row[3]).isEmpty() ? null : str(row[3]));
+            asha.put("mobile", str(row[4]).isEmpty() ? null : str(row[4]));
+            asha.put("gender", str(row[5]).isEmpty() ? null : str(row[5]));
+            asha.put("totalAmount", totalAmount);
+
+            long pending = 0;
+            long verified = 0;
+            long rejected = 0;
+
+            if (countList != null && !countList.isEmpty()) {
+
+                Object[] counts = countList.get(0);
+
+                verified = counts[0] != null ? ((Number) counts[0]).longValue() : 0;
+                pending = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
+                rejected = counts[2] != null ? ((Number) counts[2]).longValue() : 0;
+            }
+
+            overallRejected += rejected;
+            overallPending += pending;
+            overallVerified += verified;
+
+            asha.put("pending", pending);
+            asha.put("verified", verified);
+            asha.put("rejected", rejected);
+
+            int approvalStatus = 0;
+
+            if (rejected > 0) {
+                approvalStatus = 103;
+            } else if (pending > 0) {
+                approvalStatus = 102;
+            } else if (verified > 0) {
+                approvalStatus = 101;
+            }
+
+            asha.put("approvalStatus", approvalStatus);
+
+            ashaList.add(asha);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+
+        Map<String, Object> approvalStatus = new HashMap<>();
+        approvalStatus.put("verified", overallVerified>0?1:0);
+        approvalStatus.put("pending", overallPending>0?1:0);
+        approvalStatus.put("rejected", overallRejected>0?1:0);
+
+        response.put("approvalStatus", approvalStatus);
+        response.put("data", ashaList);
+        response.put("statusCode", 200);
+
+        return response;
+    }
+    @Transactional
+    public int updateApprovalStatus(Integer ashaId,
+                                    Integer month,
+                                    Integer year,
+                                    Integer approvalStatus,
+                                    String incentiveIds,
+                                    String reason,
+                                    String otherReason,
+                                    String token) {
+        try {
+
+            LocalDate startLocalDate = LocalDate.of(year, month, 1);
+            LocalDate endLocalDate = startLocalDate.plusMonths(1);
+
+            Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
+            Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
+
+            Integer ashaSupervisorUserId = jwtUtil.extractUserId(token);
+            String ashaSupervisorUsername = jwtUtil.extractUsername(token);
+
+            // 👉 If Rejected → Update only selected incentive IDs
+            if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())
+                    && incentiveIds != null
+                    && !incentiveIds.isEmpty()) {
+
+                String[] ids = incentiveIds.split(",");
+                int totalUpdated = 0;
+
+                for (String idStr : ids) {
+                    Long id = Long.parseLong(idStr.trim());
+
+                    if (incentiveRecordRepo.existsById(id)) {
+                        totalUpdated += incentiveRecordRepo.updateApprovalStatusById(
+                                id,
+                                approvalStatus,
+                                ashaSupervisorUserId,
+                                ashaSupervisorUsername,
+                                reason,
+                                otherReason
+                        );
+                    }
+                }
+
+                return totalUpdated;
+            }
+
+            // 👉 Otherwise update full month data
+            return incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
+                    ashaId,
+                    approvalStatus,
+                    startDate,
+                    endDate,
+                    ashaSupervisorUserId,
+                    ashaSupervisorUsername
+            );
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;   // never return null in int method
+        }
     }
 
     private JSONObject buildEmptyIncentiveSummary() {

@@ -3,7 +3,6 @@ package com.iemr.flw.controller;
 import com.iemr.flw.dto.iemr.AshaByFacilityRequestDTO;
 import com.iemr.flw.dto.iemr.UpdateApprovalRequestDTO;
 import com.iemr.flw.service.SupervisorDashboardService;
-import com.iemr.flw.service.impl.AshaSupervisorLoginService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,9 +23,6 @@ import java.util.Map;
 public class AshaSupervisorIncentiveApproval {
 
     @Autowired
-    private AshaSupervisorLoginService ashaSupervisorLoginService;
-
-    @Autowired
     private SupervisorDashboardService supervisorDashboardService;
 
     @Autowired
@@ -36,31 +32,32 @@ public class AshaSupervisorIncentiveApproval {
 
 
     @PostMapping("/getAshaListByFacility")
-    public ResponseEntity<?> getAshaListByFacility(@RequestBody AshaByFacilityRequestDTO request,@RequestHeader(value = "JwtToken") String token) {
-        try {
-            if(token==null){
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("UNAUTHORIZED");
+    public ResponseEntity<?> getAshaListByFacility(
+            @RequestBody AshaByFacilityRequestDTO request,
+            @RequestHeader(value = "JwtToken") String token) {
 
+        try {
+
+            if (token == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("UNAUTHORIZED");
             }
-            List<Map<String, Object>> result = ashaSupervisorLoginService.getAshasAtFacility(
+
+            Map<String, Object> result = supervisorDashboardService.getAshasAtFacility(
                     jwtUtil.extractUserId(token),
                     request.getFacilityId(),
                     request.getMonth(),
                     request.getYear(),
                     request.getApprovalStatus()
             );
-            Map<String, Object> approvalStatus = new HashMap<>();
 
-            approvalStatus.put("pending", 0);
-            approvalStatus.put("verified", 0);
-            approvalStatus.put("rejected", 0);
-            Map<String, Object> response = new HashMap<>();
-            response.put("statusCode", 200);
-            response.put("approvalStatus", approvalStatus);
-            response.put("data", result);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            logger.info("result {}", result);
+
+            return ResponseEntity.status(HttpStatus.OK).body(result);
 
         } catch (Exception e) {
+
+            logger.error("Error in getAshaListByFacility", e);
+
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Server error: " + e.getMessage());
@@ -98,7 +95,7 @@ public class AshaSupervisorIncentiveApproval {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("UNAUTHORIZED");
             }
 
-            int updatedRows = ashaSupervisorLoginService.updateApprovalStatus(
+            int updatedRows = supervisorDashboardService.updateApprovalStatus(
                     request.getAshaId(),
                     request.getMonth(),
                     request.getYear(),
