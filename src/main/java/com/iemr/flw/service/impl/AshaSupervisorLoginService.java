@@ -392,10 +392,10 @@ public class AshaSupervisorLoginService {
 
 
 			if (rejected > 0) {
-				approvalStatus = 102;
+				approvalStatus = 103;
 			}
 			else if (pending > 0) {
-				approvalStatus = 103;
+				approvalStatus = 102;
 			}
 			else if (verified > 0) {
 				approvalStatus = 101;
