@@ -380,8 +380,8 @@ public class AshaSupervisorLoginService {
 			if (countList != null && !countList.isEmpty()) {
 				Object[] counts = countList.get(0);
 
-				pending  = counts[0] != null ? ((Number) counts[0]).longValue() : 0;
-				verified = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
+				verified  = counts[0] != null ? ((Number) counts[0]).longValue() : 0;
+				pending = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
 				rejected = counts[2] != null ? ((Number) counts[2]).longValue() : 0;
 			}
 
