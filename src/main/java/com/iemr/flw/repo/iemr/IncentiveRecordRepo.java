@@ -73,14 +73,13 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
 
     @Modifying
     @Transactional
-    @Query(value = "UPDATE IncentiveActivityRecord iar "
+    @Query("UPDATE IncentiveActivityRecord iar "
             + "SET iar.approvalStatus = :approvalStatus, "
             + "iar.verifiedByUserId = :ashaSupervisorUserId, "
             + "iar.verifiedByUserName = :ashaSupervisorUserName "
             + "WHERE iar.ashaId = :ashaId "
             + "AND iar.createdDate >= :startDate "
-            + "AND iar.createdDate < :endDate",
-            nativeQuery = true)
+            + "AND iar.createdDate < :endDate")
     int updateApprovalStatusByAshaAndDateRange(
             @Param("ashaId") Integer ashaId,
             @Param("approvalStatus") Integer approvalStatus,
