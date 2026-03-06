@@ -9,5 +9,6 @@ public class UpdateApprovalRequestDTO {
     private Integer year;
     private Integer approvalStatus;
     private String incentiveIds;
-    private String remarks;
+    private String reason;
+    private String otherReason;
 }

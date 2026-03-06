@@ -43,11 +43,13 @@ public class IncentiveRecordDTO {
 
     private String  verifiedByUserName;
 
-    private String remarks;
-
     private String activityDec;
 
     private String groupName;
+
+    private String reason;
+
+    private String otherReason;
 
 }
 

@@ -64,8 +64,11 @@ public class IncentiveActivityRecord {
     @Column(name = "verifiedBy_userName")
     private String  verifiedByUserName;
 
-    @Column(name = "remarks")
-    private String remarks;
+    @Column(name = "reason")
+    private String reason;
+
+    @Column(name = "other_reason")
+    private String otherReason;
 
     @Transient
     private String activityDec;

@@ -7,7 +7,6 @@ import com.iemr.flw.service.impl.AshaSupervisorLoginService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,7 +104,8 @@ public class AshaSupervisorIncentiveApproval {
                     request.getYear(),
                     request.getApprovalStatus(),
                     request.getIncentiveIds(),
-                    request.getRemarks(),
+                    request.getReason(),
+                    request.getOtherReason(),
                     token
             );
 

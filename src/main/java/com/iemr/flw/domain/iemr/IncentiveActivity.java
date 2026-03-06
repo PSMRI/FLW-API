@@ -36,7 +36,6 @@ public class IncentiveActivity {
     @Column(name = "group_name")
     private String group;
 
-
     @Column(name = "fmr_code")
     private String fmrCode;
 

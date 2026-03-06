@@ -276,7 +276,8 @@ public class AshaSupervisorLoginService {
 									Integer year,
 									Integer approvalStatus,
 									String incentiveIds,
-									String remarks,
+									String reason,
+									String otherReason,
 									String token) {
 		try {
 
@@ -304,9 +305,10 @@ public class AshaSupervisorLoginService {
 						totalUpdated += incentiveRecordRepo.updateApprovalStatusById(
 								id,
 								approvalStatus,
-								remarks,
 								ashaSupervisorUserId,
-								ashaSupervisorUsername
+								ashaSupervisorUsername,
+								reason,
+								otherReason
 						);
 					}
 				}

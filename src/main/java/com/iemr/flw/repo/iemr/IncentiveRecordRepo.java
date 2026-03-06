@@ -74,10 +74,10 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
     @Modifying
     @Transactional
     @Query(value = "UPDATE incentive_activity_record iar "
-            + "SET iar.approval_status = :approvalStatus "
-            + "SET iar.verifiedByUserId = :ashaSupervisorUserId "
-            + "SET iar.verifiedByUserName = :ashaSupervisorUserName "
-            + "WHERE iar.asha_id = :ashaId "
+            + "SET iar.approval_status = :approvalStatus, "
+            + "SET iar.verifiedByUserId = :ashaSupervisorUserId, "
+            + "SET iar.verifiedByUserName = :ashaSupervisorUserName, "
+            + "WHERE iar.asha_id = :ashaId, "
             + "AND iar.created_date >= :startDate "
             + "AND iar.created_date < :endDate",
             nativeQuery = true)
@@ -93,15 +93,18 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
     @Modifying
     @Query("UPDATE IncentiveActivityRecord iar "
             + "SET iar.approvalStatus = :status, "
-            + "iar.remarks = :remarks, "
             + "iar.verifiedByUserId = :ashaSupervisorUserId, "
+            + "iar.reason = :reason, "
+            + "iar.otherReason = :otherReason, "
             + "iar.verifiedByUserName = :ashaSupervisorUserName "
             + "WHERE iar.id = :id")
     int updateApprovalStatusById(
             @Param("id") Long id,
             @Param("status") Integer status,
-            @Param("remarks") String remarks,
             @Param("ashaSupervisorUserId") Integer ashaSupervisorUserId,
-            @Param("ashaSupervisorUserName") String ashaSupervisorUserName
+            @Param("ashaSupervisorUserName") String ashaSupervisorUserName,
+            @Param("reason") String reason,
+            @Param("otherReason") String otherReason
+
     );
 }
