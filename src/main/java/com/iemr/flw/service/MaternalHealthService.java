@@ -16,7 +16,7 @@ public interface MaternalHealthService {
 
     List<ANCVisitDTO> getANCVisits(GetBenRequestHandler dto);
 
-    String saveANCVisit(List<ANCVisitDTO> ancVisitDTOs);
+    String saveANCVisit(List<ANCVisitDTO> ancVisitDTOs,Integer userId);
 
     List<PmsmaDTO> getPmsmaRecords(GetBenRequestHandler dto);
 
