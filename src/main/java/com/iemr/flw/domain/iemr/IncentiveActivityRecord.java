@@ -73,6 +73,15 @@ public class IncentiveActivityRecord {
     @Column(name = "is_claimed")
     private Boolean isClaimed;
 
+    @Column(name = "approval_date")
+    private Timestamp approvalDate;
+
+    @Column(name = "calimed_date")
+    private Timestamp calimedDate;
+
+    @Transient
+    private String supervisorRole;
+
     @Transient
     private String activityDec;
 

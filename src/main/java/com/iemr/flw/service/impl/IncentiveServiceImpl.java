@@ -189,6 +189,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                         IncentiveActivity incentiveActivity = incentivesRepo.findById(entry.getActivityId()).get();
                         entry.setGroupName(incentiveActivity.getGroup());
                         entry.setActivityDec(incentiveActivity.getDescription());
+                        entry.setSupervisorRole(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getRoleName());
 
                     }
 
@@ -400,6 +401,8 @@ public class IncentiveServiceImpl implements IncentiveService {
                                     Boolean isClaimed,
                                     String token) {
         try {
+            Timestamp calimedDate = Timestamp.valueOf(LocalDateTime.now());
+
 
             LocalDate startLocalDate = LocalDate.of(year, month, 1);
             LocalDate endLocalDate = startLocalDate.plusMonths(1);
@@ -411,6 +414,7 @@ public class IncentiveServiceImpl implements IncentiveService {
             Integer updateRecord=  recordRepo.updateClaimStatusByAshaAndDateRange(
                     ashaId,
                     isClaimed,
+                    calimedDate,
                     startDate,
                     endDate
             );

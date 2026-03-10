@@ -54,6 +54,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             "SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END) " +
             "FROM IncentiveActivityRecord record " +
             "WHERE record.ashaId = :ashaId " +
+            "AND record.isClaimed = true " +
             "AND record.createdDate >= :startDate " +
             "AND record.createdDate < :endDate")
     List<Object[]> getStatusCountByAshaId(
@@ -65,6 +66,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
     @Query("SELECT COALESCE(SUM(record.amount), 0) " +
             "FROM IncentiveActivityRecord record " +
             "WHERE record.ashaId = :ashaId " +
+            "AND record.isClaimed = true " +
             "AND record.startDate <= :toDate " +
             "AND record.endDate >= :fromDate")
     Long getTotalAmountByAsha(
@@ -79,6 +81,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             + "iar.verifiedByUserId = :ashaSupervisorUserId, "
             + "iar.reason = NULL, "
             + "iar.otherReason = NULL, "
+            + "iar.approvalDate = :approvalDate, "
             + "iar.verifiedByUserName = :ashaSupervisorUserName "
             + "WHERE iar.ashaId = :ashaId "
             + "AND iar.isClaimed = true "
@@ -89,6 +92,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             @Param("approvalStatus") Integer approvalStatus,
             @Param("startDate") Timestamp startDate,
             @Param("endDate") Timestamp endDate,
+            @Param("approvalDate") Timestamp approvalDate,
             @Param("ashaSupervisorUserId") Integer ashaSupervisorUserId,
             @Param("ashaSupervisorUserName") String ashaSupervisorUserName);
 
@@ -99,6 +103,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             + "SET iar.approvalStatus = :status, "
             + "iar.verifiedByUserId = :ashaSupervisorUserId, "
             + "iar.reason = :reason, "
+            + "iar.approvalDate = :approvalDate, "
             + "iar.otherReason = :otherReason, "
             + "iar.verifiedByUserName = :ashaSupervisorUserName "
             + "WHERE iar.id = :id "
@@ -109,19 +114,22 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             @Param("ashaSupervisorUserId") Integer ashaSupervisorUserId,
             @Param("ashaSupervisorUserName") String ashaSupervisorUserName,
             @Param("reason") String reason,
+            @Param("approvalDate") Timestamp approvalDate,
             @Param("otherReason") String otherReason
     );
 
     @Modifying
     @Transactional
     @Query("UPDATE IncentiveActivityRecord iar "
-            + "SET iar.isClaimed = :isClaimed "
+            + "SET iar.isClaimed = :isClaimed, "
+            + "iar.calimedDate = :calimedDate "
             + "WHERE iar.ashaId = :ashaId "
             + "AND iar.createdDate >= :startDate "
             + "AND iar.createdDate < :endDate")
     int updateClaimStatusByAshaAndDateRange(
             @Param("ashaId") Integer ashaId,
             @Param("isClaimed") Boolean isClaimed,
+            @Param("calimedDate") Timestamp calimedDate,
             @Param("startDate") Timestamp startDate,
             @Param("endDate") Timestamp endDate
     );

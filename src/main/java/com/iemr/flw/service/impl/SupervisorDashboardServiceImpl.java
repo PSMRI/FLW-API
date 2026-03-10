@@ -2,6 +2,7 @@ package com.iemr.flw.service.impl;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -316,6 +317,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                     String otherReason,
                                     String token) {
         try {
+            Timestamp approvalDate = Timestamp.valueOf(LocalDateTime.now());
 
             LocalDate startLocalDate = LocalDate.of(year, month, 1);
             LocalDate endLocalDate = startLocalDate.plusMonths(1);
@@ -344,6 +346,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                 ashaSupervisorUserId,
                                 ashaSupervisorUsername,
                                 reason,
+                                approvalDate,
                                 otherReason
                         );
                     }
@@ -358,6 +361,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     approvalStatus,
                     startDate,
                     endDate,
+                    approvalDate,
                     ashaSupervisorUserId,
                     ashaSupervisorUsername
             );

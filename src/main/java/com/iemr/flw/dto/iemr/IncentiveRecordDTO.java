@@ -53,5 +53,14 @@ public class IncentiveRecordDTO {
 
     private Boolean isClaimed;
 
+    private Timestamp approvalDate;
+
+    private Timestamp calimedDate;
+
+    private String supervisorRole;
+
+
+
+
 }
 
