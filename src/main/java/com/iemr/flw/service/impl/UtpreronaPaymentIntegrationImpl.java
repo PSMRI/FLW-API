@@ -16,7 +16,8 @@ import java.time.Duration;
 @Service
 public class UtpreronaPaymentIntegrationImpl {
 //    @Value("${ssdPortalUrl}")
-    private  String API_URL = "";
+    private  String API_URL = "https://nhmssd.assam.gov.in/APPMS_2024_25/api/utpreronaPayment.php";
+    private  String API_KEY = "41202fa384eab2725a17bbac58cf708bf04cd1dd5175010941606156dc36d6b5";
     private static final int TIMEOUT_SECONDS = 30;
 
     private final HttpClient httpClient;
@@ -33,7 +34,7 @@ public class UtpreronaPaymentIntegrationImpl {
             throws IOException, InterruptedException {
 
         String jsonBody = objectMapper.writeValueAsString(paymentRequest);
-        System.out.println("📤 Sending Request:");
+        System.out.println("Sending Request:");
         System.out.println(objectMapper.writerWithDefaultPrettyPrinter()
                 .writeValueAsString(paymentRequest));
 
@@ -42,6 +43,7 @@ public class UtpreronaPaymentIntegrationImpl {
                 .timeout(Duration.ofSeconds(TIMEOUT_SECONDS))
                 .header("Content-Type", "application/json")
                 .header("Accept", "application/json")
+                .header("x-api-key", API_KEY)
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
 
