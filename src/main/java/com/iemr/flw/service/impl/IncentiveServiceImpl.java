@@ -8,6 +8,7 @@ import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.IncentiveApprovalStatus;
 import com.iemr.flw.masterEnum.IncentiveName;
 import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
@@ -21,9 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -391,6 +391,38 @@ public class IncentiveServiceImpl implements IncentiveService {
         }
 
         return null;
+    }
+
+    @Transactional
+    public String  updateClaimStatus(Integer ashaId,
+                                    Integer month,
+                                    Integer year,
+                                    Boolean isClaimed,
+                                    String token) {
+        try {
+
+            LocalDate startLocalDate = LocalDate.of(year, month, 1);
+            LocalDate endLocalDate = startLocalDate.plusMonths(1);
+
+            Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
+            Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
+
+
+            Integer updateRecord=  recordRepo.updateClaimStatusByAshaAndDateRange(
+                    ashaId,
+                    isClaimed,
+                    startDate,
+                    endDate
+            );
+            if(updateRecord>0){
+                return "Incentive is claimed successfully ";
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.getMessage();   // never return null in int method
+        }
+        return  null;
     }
 
     public String convertAttachmentsToJson(MultipartFile file) {

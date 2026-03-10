@@ -51,5 +51,7 @@ public class IncentiveRecordDTO {
 
     private String otherReason;
 
+    private Boolean isClaimed;
+
 }
 

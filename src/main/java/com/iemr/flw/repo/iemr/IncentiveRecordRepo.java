@@ -2,6 +2,7 @@ package com.iemr.flw.repo.iemr;
 
 
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
+import jakarta.persistence.Column;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -80,6 +81,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             + "iar.otherReason = NULL, "
             + "iar.verifiedByUserName = :ashaSupervisorUserName "
             + "WHERE iar.ashaId = :ashaId "
+            + "AND iar.isClaimed = true "
             + "AND iar.createdDate >= :startDate "
             + "AND iar.createdDate < :endDate")
     int updateApprovalStatusByAshaAndDateRange(
@@ -92,13 +94,15 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
 
 
     @Modifying
+    @Transactional
     @Query("UPDATE IncentiveActivityRecord iar "
             + "SET iar.approvalStatus = :status, "
             + "iar.verifiedByUserId = :ashaSupervisorUserId, "
             + "iar.reason = :reason, "
             + "iar.otherReason = :otherReason, "
             + "iar.verifiedByUserName = :ashaSupervisorUserName "
-            + "WHERE iar.id = :id")
+            + "WHERE iar.id = :id "
+            + "AND iar.isClaimed = true")
     int updateApprovalStatusById(
             @Param("id") Long id,
             @Param("status") Integer status,
@@ -106,6 +110,19 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             @Param("ashaSupervisorUserName") String ashaSupervisorUserName,
             @Param("reason") String reason,
             @Param("otherReason") String otherReason
+    );
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE IncentiveActivityRecord iar "
+            + "SET iar.isClaimed = :isClaimed "
+            + "WHERE iar.ashaId = :ashaId "
+            + "AND iar.createdDate >= :startDate "
+            + "AND iar.createdDate < :endDate")
+    int updateClaimStatusByAshaAndDateRange(
+            @Param("ashaId") Integer ashaId,
+            @Param("isClaimed") Boolean isClaimed,
+            @Param("startDate") Timestamp startDate,
+            @Param("endDate") Timestamp endDate
     );
 }

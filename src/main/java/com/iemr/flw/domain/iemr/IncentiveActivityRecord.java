@@ -70,6 +70,9 @@ public class IncentiveActivityRecord {
     @Column(name = "other_reason")
     private String otherReason;
 
+    @Column(name = "is_claimed")
+    private Boolean isClaimed;
+
     @Transient
     private String activityDec;
 

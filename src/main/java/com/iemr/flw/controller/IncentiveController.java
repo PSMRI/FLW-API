@@ -1,9 +1,7 @@
 package com.iemr.flw.controller;
 
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
-import com.iemr.flw.dto.iemr.IncentiveActivityDTO;
-import com.iemr.flw.dto.iemr.IncentiveRequestDTO;
-import com.iemr.flw.dto.iemr.PendingActivityDTO;
+import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.IncentiveService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.response.OutputResponse;
@@ -14,10 +12,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/incentive", consumes = "application/json", produces = "application/json")
@@ -28,6 +30,9 @@ public class IncentiveController {
 
     @Autowired
     IncentiveService incentiveService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Operation(summary = "save incentive master")
     @RequestMapping(value = {"/masterData/saveAll"}, method = {RequestMethod.POST})
@@ -127,5 +132,37 @@ public class IncentiveController {
 
 
     }
+
+    @PostMapping("/updateClaim")
+    public ResponseEntity<?> updateApprovalStatus(
+            @RequestBody UpdateClaimedStatusRequestDTO request,
+            @RequestHeader(value = "JwtToken") String token) {
+
+        try {
+            if (token == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("UNAUTHORIZED");
+            }
+
+            String result = incentiveService.updateClaimStatus(
+                    jwtUtil.extractUserId(token),
+                    request.getMonth(),
+                    request.getYear(),
+                    request.isClaimed(),
+                    token
+            );
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("statusCode", 200);
+            response.put("message", result);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Server error: " + e.getMessage());
+        }
+    }
+
 
 }

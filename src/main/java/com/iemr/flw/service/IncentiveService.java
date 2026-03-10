@@ -16,4 +16,8 @@ public interface IncentiveService {
     String getAllIncentivesByUserId(GetBenRequestHandler requestDTO);
 
     String updateIncentive(PendingActivityDTO pendingActivityDTO);
-}
+    public String updateClaimStatus(Integer ashaId,
+                                    Integer month,
+                                    Integer year,
+                                    Boolean isClaimed,
+                                    String token);}
