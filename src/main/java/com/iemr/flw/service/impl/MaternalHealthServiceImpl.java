@@ -5,6 +5,7 @@ import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.MaternalHealthService;
@@ -615,9 +616,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
 
     private void checkAndAddIncentives(List<ANCVisit> ancList, Integer userId) {
-
         Integer stateId = userRepo.getUserRole(userId).get(0).getStateId();
-
         IncentiveActivity anc1Activity = null;
         IncentiveActivity ancFullActivityAM = null;
         IncentiveActivity identifiedHrpActivityAM = null;
@@ -630,7 +629,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         IncentiveActivity paiucdActivityCH = null;
 
         // ✅ State 5 — Assam
-        if (stateId.equals(5)) {
+        if (stateId.equals(StateCode.AM.getStateCode())) {
             anc1Activity = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "ANC_REGISTRATION_1ST_TRIM", GroupName.MATERNAL_HEALTH.getDisplayName());
             ancFullActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
@@ -644,7 +643,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         }
 
         // ✅ State 8
-        if (stateId.equals(8)) {
+        if (stateId.equals(StateCode.CG.getStateCode())) {
             ancFullActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "ANC_FOUR_CHECKUPS_SUPPORT", GroupName.ACTIVITY.getDisplayName());
             comprehensiveAbortionActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
