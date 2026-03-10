@@ -189,7 +189,10 @@ public class IncentiveServiceImpl implements IncentiveService {
                         IncentiveActivity incentiveActivity = incentivesRepo.findById(entry.getActivityId()).get();
                         entry.setGroupName(incentiveActivity.getGroup());
                         entry.setActivityDec(incentiveActivity.getDescription());
-                        entry.setSupervisorRole(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getRoleName());
+                        if(entry.getVerifiedByUserId()!=null){
+                            entry.setSupervisorRole(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getRoleName());
+
+                        }
 
                     }
 
