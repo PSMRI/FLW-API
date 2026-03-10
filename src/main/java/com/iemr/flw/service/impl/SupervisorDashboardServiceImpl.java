@@ -208,7 +208,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                                   Integer month, Integer year, Integer approvalStatusID) {
         List<Object[]> rows;
 
-        if(!facilityId.equals(0)){
+        if(facilityId.equals(0)){
             rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, approvalStatusID);
 
         }else {
