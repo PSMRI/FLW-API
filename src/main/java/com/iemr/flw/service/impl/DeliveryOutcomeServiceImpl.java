@@ -108,13 +108,14 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
     @Override
     public List<DeliveryOutcomeDTO> getDeliveryOutcome(GetBenRequestHandler dto) {
         try {
-            String user = beneficiaryRepo.getUserName(dto.getAshaId());
-            List<DeliveryOutcome> deliveryOutcomeList = deliveryOutcomeRepo.getDeliveryOutcomeByAshaId(user, dto.getFromDate(), dto.getToDate());
+            String user = userRepo.getUserNamedByUserId(dto.getAshaId());
+            List<DeliveryOutcome> deliveryOutcomeList = deliveryOutcomeRepo.getDeliveryOutcomeByAshaId(user,dto.getFromDate(),dto.getToDate());
+            logger.info("DeliveryOutcome Response{}",deliveryOutcomeList);
             return deliveryOutcomeList.stream()
                     .map(deliveryOutcome -> mapper.convertValue(deliveryOutcome, DeliveryOutcomeDTO.class))
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error("DeliveryOutcome Exception:"+e.getMessage());
         }
         return null;
     }

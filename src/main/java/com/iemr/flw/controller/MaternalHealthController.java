@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/maternalCare", headers = "Authorization", consumes = "application/json", produces = "application/json")
+@RequestMapping(value = "/maternalCare", consumes = "application/json", produces = "application/json")
 public class MaternalHealthController {
 
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
@@ -244,9 +244,9 @@ public class MaternalHealthController {
                 List<DeliveryOutcomeDTO> result = deliveryOutcomeService.getDeliveryOutcome(requestDTO);
                 Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
                 String s = gson.toJson(result);
-                if (s != null)
-                    response.setResponse(s);
-                else
+                if (result != null && !result.isEmpty()) {
+                    response.setResponse(gson.toJson(result));
+                }else
                     response.setError(5000, "No record found");
             } else
                 response.setError(5000, "Invalid/NULL request obj");

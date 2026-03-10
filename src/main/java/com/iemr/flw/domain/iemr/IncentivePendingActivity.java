@@ -24,10 +24,10 @@ public class IncentivePendingActivity {
     
     @Column(name = "record_id", nullable = false)
     private Long recordId;
-    
-    @Column(name = "module_name", nullable = false, length = 100)
-    private String moduleName;
-    
+
+    @Column(name = "m_incentive_id")
+    private Long mincentiveId;
+
     @Column(name = "user_id", nullable = false)
     private Integer userId;
     

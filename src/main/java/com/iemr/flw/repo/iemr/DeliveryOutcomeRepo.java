@@ -16,5 +16,7 @@ public interface DeliveryOutcomeRepo extends JpaRepository<DeliveryOutcome, Long
     List<DeliveryOutcome> getDeliveryOutcomeByAshaId(@Param("userId") String userId,
                                                     @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
+    List<DeliveryOutcome> findByCreatedBy(String userName);
+
     DeliveryOutcome findDeliveryOutcomeByBenIdAndIsActive(Long benId, Boolean isActive);
 }

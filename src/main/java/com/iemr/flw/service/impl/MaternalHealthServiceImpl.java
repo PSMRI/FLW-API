@@ -8,6 +8,8 @@ import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
+import com.iemr.flw.service.IncentiveLogicService;
+import com.iemr.flw.service.IncentiveService;
 import com.iemr.flw.service.MaternalHealthService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.exception.IEMRException;
@@ -22,6 +24,7 @@ import org.springframework.util.StringUtils;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
@@ -68,6 +71,9 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
 
 
     ObjectMapper mapper = new ObjectMapper();
@@ -305,7 +311,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     public List<PNCVisitDTO> getPNCVisits(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
-            List<PNCVisit> pncVisits = pncVisitRepo.getPNCForPW(user, dto.getFromDate(), dto.getToDate());
+            List<PNCVisit> pncVisits = pncVisitRepo.getPNCForPW(user);
             return pncVisits.stream()
                     .map(pnc -> mapper.convertValue(pnc, PNCVisitDTO.class))
                     .collect(Collectors.toList());
@@ -442,6 +448,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         }
 
         ancCounsellingCareRepo.saveAll(entities);
+
         return "ANC Counselling & Care data saved successfully";
     }
 

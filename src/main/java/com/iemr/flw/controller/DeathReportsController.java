@@ -84,8 +84,8 @@ public class DeathReportsController {
             logger.info("fetching All CDR Details for user: " + requestDTO.getAshaId());
             if (requestDTO != null) {
                 List<CdrDTO> result = deathReportsService.getCdrRecords(requestDTO);
-                Gson gson = new GsonBuilder()
-                        .setDateFormat("MMM dd, yyyy h:mm:ss a") // Set the desired date format
+                Gson gson = new GsonBuilder()// Set the desired date format
+                        .setDateFormat("MMM dd, yyyy h:mm:ss a")
                         .create();
                 String s = gson.toJson(result);
                 if (s != null)
@@ -111,8 +111,8 @@ public class DeathReportsController {
             logger.info("fetching All MDSR Details for user: " + requestDTO.getAshaId());
             if (requestDTO != null) {
                 List<MdsrDTO> result = deathReportsService.getMdsrRecords(requestDTO);
-                Gson gson = new GsonBuilder()
-                        .setDateFormat("MMM dd, yyyy h:mm:ss a") // Set the desired date format
+                Gson gson = new GsonBuilder()// Set the desired date format
+                        .setDateFormat("MMM dd, yyyy h:mm:ss a")
                         .create();
                 String s = gson.toJson(result);
                 if (s != null)
