@@ -206,8 +206,15 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
     @Override
     public Map<String, Object> getAshasAtFacility(Integer supervisorId, Integer facilityId,
                                                   Integer month, Integer year, Integer approvalStatusID) {
+        List<Object[]> rows;
 
-        List<Object[]> rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, facilityId, approvalStatusID);
+        if(!facilityId.equals(0)){
+            rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, approvalStatusID);
+
+        }else {
+           rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, facilityId, approvalStatusID);
+
+        }
         List<Object[]> superVisorRow = ashaSupervisorLoginRepo.getAllMappedAshas(supervisorId);
 
         List<Map<String, Object>> ashaList = new ArrayList<>();
