@@ -26,6 +26,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -675,10 +676,9 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                 }
             }
             if (ancFullActivityAM != null) {
-                if (ancVisit.getAncVisit() == 4 || ancVisit.getAncVisit() == 2 || ancVisit.getAncVisit() == 3) {
-                    recordAncRelatedIncentive(ancFullActivityAM, ancVisit);
+                if (ancVisit.getAncVisit() != null && ancVisit.getAncVisit() == 4) {
+                    recordFullAncIncentive(ancFullActivityAM, ancVisit);
                 }
-
             }
             if (ancFullActivityCH != null) {
                 if (ancVisit.getAncVisit() != null) {
@@ -729,7 +729,26 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     }
 
     private void recordAncRelatedIncentive(IncentiveActivity incentiveActivity, ANCVisit ancVisit) {
-        IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), ancVisit.getCreatedDate(), ancVisit.getBenId());
+
+        if (ancVisit.getAncDate() == null || ancVisit.getLmpDate() == null) {
+            return;
+        }
+
+        LocalDate ancLocalDate = ancVisit.getAncDate().toLocalDateTime().toLocalDate();
+        LocalDate lmpLocalDate = ancVisit.getLmpDate().toLocalDateTime().toLocalDate();
+
+        long weeksBetween = ChronoUnit.WEEKS.between(lmpLocalDate, ancLocalDate);
+
+        if (weeksBetween < 0 || weeksBetween >= 12) {
+            return;
+        }
+
+        IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                incentiveActivity.getId(),
+                ancVisit.getCreatedDate(),
+                ancVisit.getBenId()
+        );
+
         Integer userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
 
         if (record == null) {
@@ -739,16 +758,48 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             record.setCreatedBy(ancVisit.getCreatedBy());
             record.setUpdatedDate(ancVisit.getCreatedDate());
             record.setUpdatedBy(ancVisit.getCreatedBy());
-            record.setStartDate(ancVisit.getCreatedDate());
-            record.setEndDate(ancVisit.getCreatedDate());
+            record.setStartDate(ancVisit.getLmpDate());
+            record.setEndDate(ancVisit.getLmpDate());
             record.setBenId(ancVisit.getBenId());
             record.setAshaId(userId);
             record.setAmount(Long.valueOf(incentiveActivity.getRate()));
             recordRepo.save(record);
         }
-
     }
 
+    private void recordFullAncIncentive(IncentiveActivity incentiveActivity, ANCVisit ancVisit) {
+
+        // ✅ Once per case check — already record hai toh return
+        IncentiveActivityRecord existRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                incentiveActivity.getId(),
+                ancVisit.getCreatedDate(),
+                ancVisit.getBenId()
+        );
+
+
+        if (existRecord != null) {
+            return;
+        }
+
+        // ✅ userId null check
+        Integer userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
+        if (userId == null) {
+            return;
+        }
+
+        IncentiveActivityRecord record = new IncentiveActivityRecord();
+        record.setActivityId(incentiveActivity.getId());
+        record.setCreatedDate(ancVisit.getAncDate());
+        record.setCreatedBy(ancVisit.getCreatedBy());
+        record.setUpdatedDate(ancVisit.getAncDate());
+        record.setUpdatedBy(ancVisit.getCreatedBy());
+        record.setStartDate(ancVisit.getAncDate());
+        record.setEndDate(ancVisit.getAncDate());
+        record.setBenId(ancVisit.getBenId());
+        record.setAshaId(userId);
+        record.setAmount(Long.valueOf(incentiveActivity.getRate()));
+        recordRepo.save(record);
+    }
 
     public void sendAncDueTomorrowNotifications(String ashaId) {
         try {
