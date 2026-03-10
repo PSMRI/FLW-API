@@ -769,7 +769,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
     private void recordFullAncIncentive(IncentiveActivity incentiveActivity, ANCVisit ancVisit) {
 
-        // ✅ Once per case check — already record hai toh return
         IncentiveActivityRecord existRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
                 incentiveActivity.getId(),
                 ancVisit.getCreatedDate(),
@@ -781,7 +780,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             return;
         }
 
-        // ✅ userId null check
         Integer userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
         if (userId == null) {
             return;
