@@ -14,6 +14,7 @@ public interface IncentiveService {
     String getIncentiveMaster(IncentiveRequestDTO incentiveRequestDTO);
 
     String getAllIncentivesByUserId(GetBenRequestHandler requestDTO);
+    String getAllIncentivesGroupedSummary(GetBenRequestHandler requestDTO);
 
     String updateIncentive(PendingActivityDTO pendingActivityDTO);
     public String updateClaimStatus(Integer ashaId,

@@ -211,6 +211,65 @@ public class IncentiveServiceImpl implements IncentiveService {
         return gson.toJson(dtos);
     }
 
+    public String getAllIncentivesGroupedSummary(GetBenRequestHandler request) {
+
+        List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getAshaId());
+
+        Set<Long> activityIds = entities.stream()
+                .filter(e -> e.getActivityId() != null)
+                .map(IncentiveActivityRecord::getActivityId)
+                .collect(Collectors.toSet());
+
+        Map<Long, IncentiveActivity> activityMap = incentivesRepo.findAllById(activityIds)
+                .stream()
+                .collect(Collectors.toMap(IncentiveActivity::getId, a -> a));
+
+        // ✅ activityId se group karo
+        Map<Long, List<IncentiveActivityRecord>> groupedByActivity = entities.stream()
+                .filter(e -> e.getActivityId() != null)
+                .collect(Collectors.groupingBy(IncentiveActivityRecord::getActivityId));
+
+        List<Map<String, Object>> summaryList = new ArrayList<>();
+
+        for (Map.Entry<Long, List<IncentiveActivityRecord>> entry : groupedByActivity.entrySet()) {
+            Long activityId = entry.getKey();
+            List<IncentiveActivityRecord> records = entry.getValue();
+
+            // ✅ DB se activity details lo
+            IncentiveActivity activity = activityMap.get(activityId);
+
+
+
+            Long totalAmount = records.stream()
+                    .mapToLong(r -> r.getAmount() != null ? r.getAmount() : 0L)
+                    .sum();
+
+            // ✅ Per activity amount = rate from master
+            Long perActivityAmount = activity != null ? Long.valueOf(activity.getRate()) : 0L;
+
+            Map<String, Object> summary = new LinkedHashMap<>();
+            summary.put("activityId", activityId);
+            summary.put("activityDec", activity != null ? activity.getDescription() : "");
+            summary.put("groupName", activity != null ? activity.getGroup() : "");
+            summary.put("amount", perActivityAmount);   // ✅ naya field
+            summary.put("claimCount", records.size());
+            summary.put("totalAmount", totalAmount);
+
+            summaryList.add(summary);
+        }
+
+        // ✅ Null safe sort by groupName
+        summaryList.sort(Comparator.comparing(
+                m -> m.get("groupName") != null ? m.get("groupName").toString() : ""
+        ));
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("data", summaryList);
+        response.put("statusCode", 200);
+
+        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+        return gson.toJson(response);
+    }
     @Override
     public String updateIncentive(PendingActivityDTO pendingActivityDTO) {
         logger.info("run--1");
