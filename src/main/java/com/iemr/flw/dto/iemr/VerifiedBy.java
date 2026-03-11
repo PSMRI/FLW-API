@@ -1,7 +1,9 @@
 package com.iemr.flw.dto.iemr;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 
+@Data
 public  class VerifiedBy {
         @JsonProperty("employee_id")
         public String employeeId;
@@ -11,8 +13,5 @@ public  class VerifiedBy {
 
         public VerifiedBy() {}
 
-        public VerifiedBy(String employeeId, String name) {
-            this.employeeId = employeeId;
-            this.name = name;
-        }
+
     }

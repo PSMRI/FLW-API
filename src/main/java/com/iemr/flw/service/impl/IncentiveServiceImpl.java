@@ -165,7 +165,7 @@ public class IncentiveServiceImpl implements IncentiveService {
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
 
         if (request.getVillageID() != StateCode.CG.getStateCode()) {
-            checkMonthlyAshaIncentive(request.getAshaId());
+            checkMonthlyAshaIncentive(request.getUserId());
         }
 
         List<IncentiveRecordDTO> dtos = new ArrayList<>();
@@ -217,16 +217,25 @@ public class IncentiveServiceImpl implements IncentiveService {
     public String getAllIncentivesGroupedActivity(GetBenRequestHandler request) {
 
         if (request.getVillageID() != StateCode.CG.getStateCode()) {
-            checkMonthlyAshaIncentive(request.getAshaId());
+            checkMonthlyAshaIncentive(request.getUserId());
         }
-
         boolean isCG = request.getVillageID() == StateCode.CG.getStateCode();
 
-        List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getAshaId())
+        // ✅ Month aur year se date range banao
+        LocalDate firstDay = LocalDate.of(request.getYear(), request.getMonth(), 1);
+        LocalDate lastDay = firstDay.plusMonths(1);
+
+        Timestamp startTs = Timestamp.valueOf(firstDay.atStartOfDay());
+        Timestamp endTs = Timestamp.valueOf(lastDay.atStartOfDay());
+
+        List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getUserId())
                 .stream()
                 .filter(e -> e.getActivityId() != null
-                        && e.getActivityId().equals(request.getActivityId())  // ✅ pehle hi filter
-                        && incentivesRepo.findIncentiveMasterById(e.getActivityId(), isCG) != null)
+                        && e.getActivityId().equals(request.getActivityId())
+                        && incentivesRepo.findIncentiveMasterById(e.getActivityId(), isCG) != null
+                        && e.getCreatedDate() != null
+                        && !e.getCreatedDate().before(startTs)   // ✅ >= startDate
+                        && e.getCreatedDate().before(endTs))      // ✅ < endDate
                 .collect(Collectors.toList());
 
         if (entities.isEmpty()) {
@@ -298,14 +307,25 @@ public class IncentiveServiceImpl implements IncentiveService {
     @Override
     public String getAllIncentivesGroupedSummary(GetBenRequestHandler request) {
 
-        List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getAshaId());
+        LocalDate firstDay = LocalDate.of(request.getYear(), request.getMonth(), 1);
+        LocalDate lastDay = firstDay.plusMonths(1);
+
+        Timestamp startTs = Timestamp.valueOf(firstDay.atStartOfDay());
+        Timestamp endTs = Timestamp.valueOf(lastDay.atStartOfDay());
+
+        boolean isCG = request.getVillageID() == StateCode.CG.getStateCode();
+
+        List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getUserId())
+                .stream()
+                .filter(e -> e.getCreatedDate() != null
+                        && !e.getCreatedDate().before(startTs)
+                        && e.getCreatedDate().before(endTs))
+                .collect(Collectors.toList());
 
         Set<Long> activityIds = entities.stream()
                 .filter(e -> e.getActivityId() != null)
                 .map(IncentiveActivityRecord::getActivityId)
                 .collect(Collectors.toSet());
-
-        boolean isCG = request.getVillageID() == StateCode.CG.getStateCode();
 
         Map<Long, IncentiveActivity> activityMap = incentivesRepo.findAllById(activityIds)
                 .stream()
@@ -317,7 +337,6 @@ public class IncentiveServiceImpl implements IncentiveService {
                     }
                 })
                 .collect(Collectors.toMap(IncentiveActivity::getId, a -> a));
-
 
         Map<Long, List<IncentiveActivityRecord>> groupedByActivity = entities.stream()
                 .filter(e -> e.getActivityId() != null)
@@ -331,27 +350,22 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             IncentiveActivity activity = activityMap.get(activityId);
 
-
+            if (activity == null) continue;
 
             Long totalAmount = records.stream()
                     .mapToLong(r -> r.getAmount() != null ? r.getAmount() : 0L)
                     .sum();
 
-            if (activity == null) {
-                continue;
-            }
-
-            Long perActivityAmount = activity != null ? Long.valueOf(activity.getRate()) : 0L;
+            Long perActivityAmount = Long.valueOf(activity.getRate());
 
             Map<String, Object> summary = new LinkedHashMap<>();
             summary.put("activityId", activityId);
-            summary.put("activityDec", activity != null ? activity.getDescription() : "");
-            summary.put("groupName", activity != null ? activity.getGroup() : "");
-            summary.put("amount", perActivityAmount);   // ✅ naya field
+            summary.put("activityDec", activity.getDescription() != null ? activity.getDescription() : "");
+            summary.put("groupName", activity.getGroup() != null ? activity.getGroup() : "");
+            summary.put("amount", perActivityAmount);
             summary.put("claimCount", records.size());
-            summary.put("isDefaultActivity", activity != null && activity.getIsDefaultActivity() != null
-                    ? activity.getIsDefaultActivity()
-                    : false);
+            summary.put("isDefaultActivity", activity.getIsDefaultActivity() != null
+                    ? activity.getIsDefaultActivity() : false);
             summary.put("totalAmount", totalAmount);
 
             summaryList.add(summary);

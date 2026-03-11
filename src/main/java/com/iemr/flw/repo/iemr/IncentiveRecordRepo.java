@@ -24,7 +24,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
 
 
     @Query("select record from IncentiveActivityRecord record where record.activityId = :id and record.createdDate = :createdDate and record.benId = :benId and record.ashaId = :ashaId")
-    IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(@Param("id") Long id, @Param("createdDate") Timestamp createdDate, @Param("benId") Long benId,@Param("ashaId") Integer ashaId);
+    IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(@Param("id") Long id, @Param("createdDate") Timestamp createdDate, @Param("benId") Long benId, @Param("ashaId") Integer ashaId);
 
 
     @Query("SELECT record FROM IncentiveActivityRecord record " +
@@ -41,8 +41,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
     );
 
     @Query("select record from IncentiveActivityRecord record where record.ashaId = :ashaId and record.startDate >= :fromDate and record.startDate <= :toDate and record.endDate >= :fromDate and record.endDate <= :toDate ")
-    List<IncentiveActivityRecord> findRecordsByAsha(@Param("ashaId") Integer ashaId, @Param("fromDate") Timestamp fromDate,@Param("toDate") Timestamp toDate);
-
+    List<IncentiveActivityRecord> findRecordsByAsha(@Param("ashaId") Integer ashaId, @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
 
     @Query("select record from IncentiveActivityRecord record where record.ashaId = :ashaId")
@@ -130,6 +129,28 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             @Param("ashaId") Integer ashaId,
             @Param("isClaimed") Boolean isClaimed,
             @Param("calimedDate") Timestamp calimedDate,
+            @Param("startDate") Timestamp startDate,
+            @Param("endDate") Timestamp endDate
+    );
+
+    @Query("SELECT DISTINCT iar.ashaId FROM IncentiveActivityRecord iar " +
+            "WHERE iar.calimedDate >= :startDate " +
+            "AND iar.calimedDate < :endDate " +
+            "AND iar.isClaimed = true " +
+            "AND iar.approvalStatus = 101")
+    List<Integer> findDistinctAshaIdsByDateRange(
+            @Param("startDate") Timestamp startDate,
+            @Param("endDate") Timestamp endDate
+    );
+
+    @Query("SELECT iar FROM IncentiveActivityRecord iar " +
+            "WHERE iar.ashaId = :ashaId " +
+            "AND iar.calimedDate >= :startDate " +
+            "AND iar.calimedDate < :endDate " +
+            "AND iar.isClaimed = true " +
+            "AND iar.approvalStatus = 101")
+    List<IncentiveActivityRecord> findClaimedApprovedRecordsByAshaAndDateRange(
+            @Param("ashaId") Integer ashaId,
             @Param("startDate") Timestamp startDate,
             @Param("endDate") Timestamp endDate
     );

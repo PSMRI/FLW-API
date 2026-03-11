@@ -1,7 +1,9 @@
 package com.iemr.flw.dto.iemr;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 
+@Data
 public  class Period {
         @JsonProperty("start")
         public String start;
@@ -12,9 +14,6 @@ public  class Period {
         public Period() {}
 
 
-        public Period(String start, String end) {
-            this.start = start;
-            this.end = end;
-        }
+
     }
 
