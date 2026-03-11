@@ -329,33 +329,21 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             String ashaSupervisorUsername = jwtUtil.extractUsername(token);
 
             // 👉 If Rejected → Update only selected incentive IDs
-            if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())
-                    && incentiveIds != null
-                    && !incentiveIds.isEmpty()) {
-
-                String[] ids = incentiveIds.split(",");
+            if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
                 int totalUpdated = 0;
 
-                for (String idStr : ids) {
-                    Long id = Long.parseLong(idStr.trim());
-
-                    if (incentiveRecordRepo.existsById(id)) {
-                        totalUpdated += incentiveRecordRepo.updateApprovalStatusById(
-                                id,
-                                approvalStatus,
-                                ashaSupervisorUserId,
-                                ashaSupervisorUsername,
-                                reason,
-                                approvalDate,
-                                otherReason
-                        );
-                    }
-                }
+                totalUpdated += incentiveRecordRepo.updateApprovalStatusById(
+                        approvalStatus,
+                        ashaSupervisorUserId,
+                        ashaSupervisorUsername,
+                        reason,
+                        approvalDate,
+                        otherReason
+                );
 
                 return totalUpdated;
             }
 
-            // 👉 Otherwise update full month data
             return incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
                     ashaId,
                     approvalStatus,
