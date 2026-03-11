@@ -211,6 +211,91 @@ public class IncentiveServiceImpl implements IncentiveService {
         return gson.toJson(dtos);
     }
 
+
+
+    @Override
+    public String getAllIncentivesGroupedActivity(GetBenRequestHandler request) {
+
+        if (request.getVillageID() != StateCode.CG.getStateCode()) {
+            checkMonthlyAshaIncentive(request.getAshaId());
+        }
+
+        boolean isCG = request.getVillageID() == StateCode.CG.getStateCode();
+
+        List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getAshaId())
+                .stream()
+                .filter(e -> e.getActivityId() != null
+                        && e.getActivityId().equals(request.getActivityId())  // ✅ pehle hi filter
+                        && incentivesRepo.findIncentiveMasterById(e.getActivityId(), isCG) != null)
+                .collect(Collectors.toList());
+
+        if (entities.isEmpty()) {
+            Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+            return gson.toJson(new ArrayList<>());
+        }
+
+        Set<Long> benIds = entities.stream()
+                .map(IncentiveActivityRecord::getBenId)
+                .filter(b -> b != null && b > 0L)
+                .collect(Collectors.toSet());
+
+        Map<Long, String> benNameMap = new HashMap<>();
+        for (Long benId : benIds) {
+            try {
+                Long regId = beneficiaryRepo.getBenRegIdFromBenId(benId);
+                BigInteger benDetailId = beneficiaryRepo.findByBenRegIdFromMapping(
+                        BigInteger.valueOf(regId)).getBenDetailsId();
+                RMNCHMBeneficiarydetail detail = beneficiaryRepo.findByBeneficiaryDetailsId(benDetailId);
+                benNameMap.put(benId, detail.getFirstName() + " " + detail.getLastName());
+            } catch (Exception e) {
+                benNameMap.put(benId, "");
+            }
+        }
+
+        IncentiveActivity activity = incentivesRepo.findById(request.getActivityId()).orElse(null);
+        String groupName = activity != null ? activity.getGroup() : "";
+        String activityDec = activity != null ? activity.getDescription() : "";
+
+        Set<Integer> userIds = entities.stream()
+                .map(IncentiveActivityRecord::getVerifiedByUserId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Integer, String> roleMap = new HashMap<>();
+        for (Integer uid : userIds) {
+            try {
+                List<?> roles = userRepo.getUserRole(uid);
+                if (roles != null && !roles.isEmpty()) {
+                    roleMap.put(uid, userRepo.getUserRole(uid).get(0).getRoleName());
+                }
+            } catch (Exception e) {
+                roleMap.put(uid, "");
+            }
+        }
+
+        List<IncentiveRecordDTO> dtos = new ArrayList<>();
+
+        entities.forEach(entry -> {
+            if (entry.getName() == null) {
+                entry.setName(entry.getBenId() != null && entry.getBenId() > 0L
+                        ? benNameMap.getOrDefault(entry.getBenId(), "")
+                        : "");
+            }
+
+            entry.setGroupName(groupName);
+            entry.setActivityDec(activityDec);
+
+            if (entry.getVerifiedByUserId() != null) {
+                entry.setSupervisorRole(roleMap.getOrDefault(entry.getVerifiedByUserId(), ""));
+            }
+
+            dtos.add(modelMapper.map(entry, IncentiveRecordDTO.class));
+        });
+
+        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+        return gson.toJson(dtos);
+    }
+    @Override
     public String getAllIncentivesGroupedSummary(GetBenRequestHandler request) {
 
         List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getAshaId());
@@ -220,11 +305,20 @@ public class IncentiveServiceImpl implements IncentiveService {
                 .map(IncentiveActivityRecord::getActivityId)
                 .collect(Collectors.toSet());
 
+        boolean isCG = request.getVillageID() == StateCode.CG.getStateCode();
+
         Map<Long, IncentiveActivity> activityMap = incentivesRepo.findAllById(activityIds)
                 .stream()
+                .filter(a -> {
+                    if (isCG) {
+                        return a.getState() != null && a.getState().equals(StateCode.CG.getStateCode());
+                    } else {
+                        return a.getState() == null || !a.getState().equals(StateCode.CG.getStateCode());
+                    }
+                })
                 .collect(Collectors.toMap(IncentiveActivity::getId, a -> a));
 
-        // ✅ activityId se group karo
+
         Map<Long, List<IncentiveActivityRecord>> groupedByActivity = entities.stream()
                 .filter(e -> e.getActivityId() != null)
                 .collect(Collectors.groupingBy(IncentiveActivityRecord::getActivityId));
@@ -235,7 +329,6 @@ public class IncentiveServiceImpl implements IncentiveService {
             Long activityId = entry.getKey();
             List<IncentiveActivityRecord> records = entry.getValue();
 
-            // ✅ DB se activity details lo
             IncentiveActivity activity = activityMap.get(activityId);
 
 
@@ -244,7 +337,10 @@ public class IncentiveServiceImpl implements IncentiveService {
                     .mapToLong(r -> r.getAmount() != null ? r.getAmount() : 0L)
                     .sum();
 
-            // ✅ Per activity amount = rate from master
+            if (activity == null) {
+                continue;
+            }
+
             Long perActivityAmount = activity != null ? Long.valueOf(activity.getRate()) : 0L;
 
             Map<String, Object> summary = new LinkedHashMap<>();
@@ -253,22 +349,20 @@ public class IncentiveServiceImpl implements IncentiveService {
             summary.put("groupName", activity != null ? activity.getGroup() : "");
             summary.put("amount", perActivityAmount);   // ✅ naya field
             summary.put("claimCount", records.size());
+            summary.put("isDefaultActivity", activity != null && activity.getIsDefaultActivity() != null
+                    ? activity.getIsDefaultActivity()
+                    : false);
             summary.put("totalAmount", totalAmount);
 
             summaryList.add(summary);
         }
 
-        // ✅ Null safe sort by groupName
         summaryList.sort(Comparator.comparing(
                 m -> m.get("groupName") != null ? m.get("groupName").toString() : ""
         ));
 
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("data", summaryList);
-        response.put("statusCode", 200);
-
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
-        return gson.toJson(response);
+        return gson.toJson(summaryList);
     }
     @Override
     public String updateIncentive(PendingActivityDTO pendingActivityDTO) {

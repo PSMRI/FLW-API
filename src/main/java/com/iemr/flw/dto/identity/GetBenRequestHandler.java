@@ -12,6 +12,16 @@
 
 		private Integer ashaId;
 
+		private Long activityId;
+
+		public Long getActivityId() {
+			return activityId;
+		}
+
+		public void setActivityId(Long activityId) {
+			this.activityId = activityId;
+		}
+
 		public Integer getAshaId() {
 			return ashaId;
 		}

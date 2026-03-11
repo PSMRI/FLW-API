@@ -134,6 +134,31 @@ public class IncentiveController {
         return response.toString();
     }
 
+    @Operation(summary = "get high risk assessment data of all beneficiaries registered with given user id")
+    @RequestMapping(value = {"/AllIncentiveByActivityId"}, method = {RequestMethod.POST})
+    public String getAllIncentivesByActivityIdAndUser(@RequestBody GetBenRequestHandler requestDTO,
+                                                       @RequestHeader(value = "Authorization") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+
+            if (requestDTO != null) {
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+                String s = incentiveService.getAllIncentivesGroupedActivity(requestDTO);
+                logger.info("User Incentive:" + s);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(5000, "No record found");
+            } else
+                response.setError(5000, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in high risk assessment data : " + e);
+            response.setError(5000, "Error in high risk assessment data : " + e);
+        }
+        return response.toString();
+    }
+
     @RequestMapping(value = {"/update"}, method = RequestMethod.POST, consumes = {"multipart/form-data"})
     public String updateIncentive(@ModelAttribute  PendingActivityDTO requestDTO) {
         OutputResponse response = new OutputResponse();
