@@ -3,13 +3,10 @@ package com.iemr.flw.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.flw.domain.iemr.CampaignOrs;
-import com.iemr.flw.domain.iemr.FilariasisCampaign;
-import com.iemr.flw.domain.iemr.PulsePolioCampaign;
+import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.iemr.*;
-import com.iemr.flw.repo.iemr.FilariasisCampaignRepo;
-import com.iemr.flw.repo.iemr.OrsCampaignRepo;
-import com.iemr.flw.repo.iemr.PulsePolioCampaignRepo;
+import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.CampaignService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.exception.IEMRException;
@@ -22,6 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -42,7 +42,17 @@ public class CampaignServiceImpl implements CampaignService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    IncentivesRepo incentivesRepo;
+
+    @Autowired
+    IncentiveRecordRepo recordRepo;
+
+    @Autowired
     private ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
+    private UserServiceRoleRepo userServiceRoleRepo;
 
     @Override
     @Transactional
@@ -91,6 +101,9 @@ public class CampaignServiceImpl implements CampaignService {
 
         if (!campaignOrsRequest.isEmpty()) {
             List<CampaignOrs> savedCampaigns = orsCampaignRepo.saveAll(campaignOrsRequest);
+            savedCampaigns.forEach(ors->{
+                checkMonthlyPulseOrsDistribution(ors.getUserId(),ors.getStartDate(),ors.getEndDate());
+            });
             return savedCampaigns;
         }
 
@@ -177,6 +190,12 @@ public class CampaignServiceImpl implements CampaignService {
 
         if (!campaignPolioRequest.isEmpty()) {
             List<PulsePolioCampaign> savedCampaigns = pulsePolioCampaignRepo.saveAll(campaignPolioRequest);
+            savedCampaigns.forEach(pulsePolioCampaign -> {
+                checkMonthlyPulsePolioIncentive(pulsePolioCampaign.getUserId(),pulsePolioCampaign.getStartDate(),pulsePolioCampaign.getEndDate());
+
+            });{
+
+            }
             return savedCampaigns;
         }
 
@@ -255,11 +274,19 @@ public class CampaignServiceImpl implements CampaignService {
 
         if (!campaignPolioRequest.isEmpty()) {
             List<FilariasisCampaign> savedCampaigns = filariasisCampaignRepo.saveAll(campaignPolioRequest);
+
+            savedCampaigns.forEach(filariasisCampaign -> {
+                checkMonthlyFilariasisIncentive(filariasisCampaign.getUserId(),filariasisCampaign.getStartDate(),filariasisCampaign.getEndDate());
+
+            });{
+
+            }
             return savedCampaigns;
         }
 
         throw new IEMRException("No valid campaign data to save");
     }
+
 
 
     @Override
@@ -329,6 +356,7 @@ public class CampaignServiceImpl implements CampaignService {
         orsCampaignListDTO.setNumberOfFamilies(Double.valueOf(campaign.getNumberOfFamilies()));
         dto.setId(campaign.getId());
         dto.setFields(orsCampaignListDTO);
+
         return dto;
     }
 
@@ -402,7 +430,60 @@ public class CampaignServiceImpl implements CampaignService {
         }
     }
 
+    private void checkMonthlyPulsePolioIncentive(Integer ashaId,LocalDate startDate,LocalDate endDate) {
+        IncentiveActivity CHILD_MOBILIZATION_SESSIONS = incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_MOBILIZATION_SESSIONS", GroupName.ACTIVITY.getDisplayName());
+        if (CHILD_MOBILIZATION_SESSIONS != null) {
+            addAshaIncentiveRecord(CHILD_MOBILIZATION_SESSIONS, ashaId,startDate,endDate);
+        }
 
+    }
+
+    private void checkMonthlyFilariasisIncentive(Integer ashaId,LocalDate startDate,LocalDate endDate) {
+        IncentiveActivity FILARIASIS_MEDICINE_DISTRIBUTION = incentivesRepo.findIncentiveMasterByNameAndGroup("FILARIASIS_MEDICINE_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
+        if (FILARIASIS_MEDICINE_DISTRIBUTION != null) {
+            addAshaIncentiveRecord(FILARIASIS_MEDICINE_DISTRIBUTION, ashaId,startDate,endDate);
+        }
+
+    }
+
+    private void checkMonthlyPulseOrsDistribution(Integer ashaId,LocalDate startDate,LocalDate endDate) {
+        IncentiveActivity ORS_DISTRIBUTION = incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
+        if (ORS_DISTRIBUTION != null) {
+            addAshaIncentiveRecord(ORS_DISTRIBUTION, ashaId,startDate,endDate);
+        }
+
+    }
+
+    private void addAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId,LocalDate startDate,LocalDate endDate) {
+        Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+
+        Timestamp startOfMonth = Timestamp.valueOf(startDate.atStartOfDay());
+        Timestamp endOfMonth = Timestamp.valueOf(endDate.atStartOfDay());
+
+        IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                incentiveActivity.getId(),
+                startOfMonth,
+                endOfMonth,
+                0L,
+                ashaId
+        );
+
+
+        if (record == null) {
+            record = new IncentiveActivityRecord();
+            record.setActivityId(incentiveActivity.getId());
+            record.setCreatedDate(timestamp);
+            record.setCreatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId));
+            record.setStartDate(timestamp);
+            record.setEndDate(timestamp);
+            record.setUpdatedDate(timestamp);
+            record.setUpdatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId));
+            record.setBenId(0L);
+            record.setAshaId(ashaId);
+            record.setAmount(Long.valueOf(incentiveActivity.getRate()));
+            recordRepo.save(record);
+        }
+    }
 
 }
 

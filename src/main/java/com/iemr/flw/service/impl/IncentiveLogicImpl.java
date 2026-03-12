@@ -271,6 +271,39 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
         }
     }
 
+
+    @Override
+    public IncentiveActivityRecord incentiveForTBSuspected(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityNameCG = IncentiveName.INFORMANT_INCENTIVE.name();
+
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityNameCG,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check TB Suspected Incentive Exception: ", e);
+            return null;
+        }
+    }
+
     @Override
     public IncentiveActivityRecord incentiveForIdentificationLeprosy(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId) {
         try {
