@@ -121,11 +121,23 @@ public class UTPReronaPaymentJob {
                             .mapToLong(r -> r.getAmount() != null ? r.getAmount() : 0L)
                             .sum();
 
+
+                    String stateActivityCode = activity.getStateActivityCode() != null
+                            ? String.valueOf(activity.getStateActivityCode())
+                            : null;
+
+                    if (stateActivityCode == null) {
+                        log.warn("ASHA {} — ActivityId {} stateActivityCode null, skipping", ashaId, activityId);
+                        continue;  // ✅ Is item ko request mein add hi mat karo
+                    }
+
                     PaymentItem item = new PaymentItem();
-                    item.setActivityCode(String.valueOf(activityId));
+                    item.setActivityCode(stateActivityCode);
                     item.setCount(String.valueOf(records.size()));
                     item.setIncentiveAmount(String.valueOf(totalAmount));
                     items.add(item);
+
+
 
                     log.info("ASHA {} — Activity: {} | Count: {} | Total Amount: {}",
                             ashaId, activityId, records.size(), totalAmount);
