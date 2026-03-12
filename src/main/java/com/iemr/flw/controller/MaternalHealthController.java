@@ -98,16 +98,19 @@ public class MaternalHealthController {
     @Operation(summary = "save anc visit details")
     @RequestMapping(value = { "/ancVisit/saveAll" }, method = { RequestMethod.POST })
     public String saveANCVisit(@RequestBody List<ANCVisitDTO> ancVisitDTOs,
-            @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "jwtToken") String token) {
         OutputResponse response = new OutputResponse();
         try {
             if (ancVisitDTOs.size() != 0) {
                 logger.info("Saving ANC visits with timestamp : " + new Timestamp(System.currentTimeMillis()));
-                String s = maternalHealthService.saveANCVisit(ancVisitDTOs);
-                if (s != null)
-                    response.setResponse(s);
-                else
-                    response.setError(5000, "Saving anc data to db failed");
+                if(token!=null){
+                    String s = maternalHealthService.saveANCVisit(ancVisitDTOs,jwtUtil.extractUserId(token));
+                    if (s != null)
+                        response.setResponse(s);
+                    else
+                        response.setError(5000, "Saving anc data to db failed");
+                }
+
             } else
                 response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
