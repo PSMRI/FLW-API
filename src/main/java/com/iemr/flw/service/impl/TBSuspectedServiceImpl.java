@@ -7,6 +7,7 @@ import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.TBSuspectedDTO;
 import com.iemr.flw.dto.iemr.TBSuspectedRequestDTO;
 import com.iemr.flw.repo.iemr.TBSuspectedRepo;
+import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.TBSuspectedService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -24,6 +25,9 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
     private final ModelMapper modelMapper = new ModelMapper();
     @Autowired
     private TBSuspectedRepo tbSuspectedRepo;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
 
     @Override
     public String getByBenId(Long benId, String authorisation) throws Exception {
@@ -49,6 +53,10 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
 
             tbSuspected.setUserId(requestDTO.getUserId());
             tbSuspectedRepo.save(tbSuspected);
+            if(tbSuspected.getIsConfirmed()){
+                incentiveLogicService.incentiveForTBSuspected(tbSuspected.getBenId(),tbSuspected.getVisitDate(),tbSuspected.getVisitDate(),requestDTO.getUserId());
+
+            }
         });
         return "no of tb suspected items saved:" + requestDTO.getTbSuspectedList().size();
     }
