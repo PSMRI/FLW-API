@@ -15,6 +15,6 @@ public interface TBScreeningRepo extends JpaRepository<TBScreening, Long> {
     @Query(value = "SELECT tbs FROM TBScreening tbs WHERE tbs.benId = :benId and tbs.userId = :userId")
     TBScreening getByUserIdAndBenId(@Param("benId") Long benId, @Param("userId") Integer userId);
 
-    @Query(value = "SELECT tbs FROM TBScreening tbs WHERE tbs.userId = :userId and tbs.visitDate >= :fromDate and tbs.visitDate <= :toDate")
-    List<TBScreening> getByUserId(@Param("userId") Integer userId, @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
+    @Query(value = "SELECT tbs FROM TBScreening tbs WHERE tbs.userId = :userId")
+    List<TBScreening> getByUserId(@Param("userId") Integer userId);
 }

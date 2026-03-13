@@ -77,7 +77,7 @@ public class GeneralOPDController {
 
         } catch (Exception e) {
             logger.error("Error in get data : " + e);
-            response.put("status", 500);
+            response.put("statusCode", 5000);
             response.put("message", "Error in get data : " + e);
         }
         return ResponseEntity.ok(response);

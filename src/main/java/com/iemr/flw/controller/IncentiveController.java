@@ -29,6 +29,9 @@ public class IncentiveController {
     @Autowired
     IncentiveService incentiveService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @Operation(summary = "save incentive master")
     @RequestMapping(value = {"/masterData/saveAll"}, method = {RequestMethod.POST})
     public String saveIncentiveMasterData(@RequestBody List<IncentiveActivityDTO> activityDTOS, @RequestHeader(value = "Authorization") String authorization, HttpServletRequest request) {
@@ -81,11 +84,17 @@ public class IncentiveController {
     @Operation(summary = "get high risk assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/fetchUserData"}, method = {RequestMethod.POST})
     public String getAllIncentivesByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                           @RequestHeader(value = "Authorization") String Authorization) {
+                                           @RequestHeader(value = "jwtToken") String token) {
         OutputResponse response = new OutputResponse();
         try {
 
             if (requestDTO != null) {
+
+                if(token!=null){
+                    requestDTO.setUserId(jwtUtil.extractUserId(token));
+                    requestDTO.setAshaId(jwtUtil.extractUserId(token));
+                    requestDTO.setUserName(jwtUtil.extractUsername(token));
+                }
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
                 String s = incentiveService.getAllIncentivesByUserId(requestDTO);
@@ -103,8 +112,8 @@ public class IncentiveController {
         return response.toString();
     }
 
-    @RequestMapping(value = {"/update"}, method = RequestMethod.POST)
-    public String updateIncentive(@RequestBody PendingActivityDTO requestDTO) {
+    @RequestMapping(value = {"/update"}, method = RequestMethod.POST, consumes = {"multipart/form-data"})
+    public String updateIncentive(@ModelAttribute  PendingActivityDTO requestDTO) {
         OutputResponse response = new OutputResponse();
         try {
 
@@ -116,12 +125,12 @@ public class IncentiveController {
                 if (s != null)
                     response.setResponse(s);
                 else
-                    response.setError(5000, "No record found");
+                    response.setError(500, "No record found");
             } else
-                response.setError(5000, "Invalid/NULL request obj");
+                response.setError(500, "Invalid/NULL request obj");
         } catch (Exception e) {
             logger.error("Error in high risk assessment data : " + e);
-            response.setError(5000, "Error in high risk assessment data : " + e);
+            response.setError(500, "Error in high risk assessment data : " + e);
         }
         return response.toString();
 

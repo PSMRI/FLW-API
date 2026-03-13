@@ -12,7 +12,9 @@ import org.springframework.stereotype.Repository;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Repository
 public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRmnch, Long> {
@@ -28,10 +30,15 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     @Query(nativeQuery = true, value = " SELECT userid FROM db_iemr.m_user WHERE UserName = :userName ")
     Integer getUserIDByUserName(@Param("userName") String userName);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE DATE(t.createdDate) BETWEEN DATE(:fromDate) "
-            + " AND DATE(:toDate) AND t.createdBy = :userName ")
-    Page<RMNCHMBeneficiaryaddress> getBenDataWithinDates(@Param("userName") String userName,
-                                                         @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate, Pageable pageable);
+
+    @Query("SELECT t FROM RMNCHMBeneficiaryaddress t " +
+            "WHERE t.createdDate BETWEEN :fromDate AND :toDate " +
+            "AND t.createdBy = :userName")
+    Page<RMNCHMBeneficiaryaddress> getBenDataWithinDates(
+            @Param("userName") String userName,
+            @Param("fromDate") Timestamp fromDate,
+            @Param("toDate") Timestamp toDate,
+            Pageable pageable);
 
     @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE t.createdBy = :userName ")
     Page<RMNCHMBeneficiaryaddress> getBenDataByUser(@Param("userName") String userName, Pageable pageable);
@@ -83,6 +90,18 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     RMNCHMBeneficiarydetail findByBeneficiaryDetailsId(@Param("beneficiaryDetailsId") BigInteger beneficiaryDetailsId);
 
 
-
-
+    // BeneficiaryRepo — replaces 3 separate queries per beneficiary
+    @Query(value = """
+    SELECT 
+        ibd.BeneficiaryId    AS benId,
+        bd.firstName         AS firstName,
+        bd.lastName          AS lastName
+    FROM db_identity.i_beneficiarydetails_rmnch ibd
+    JOIN db_identity.i_beneficiarymapping bm 
+        ON bm.BenRegId = ibd.BeneficiaryRegID
+    JOIN db_identity.i_beneficiarydetails bd 
+        ON bd.beneficiaryDetailsId = bm.BenDetailsId
+    WHERE ibd.BeneficiaryId IN :benIds
+    """, nativeQuery = true)
+    List<Object[]> findBenNamesByBenIds(@Param("benIds") List<Long> benIds);
 }

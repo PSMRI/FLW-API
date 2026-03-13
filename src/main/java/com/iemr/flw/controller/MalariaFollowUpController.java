@@ -78,7 +78,7 @@ public class MalariaFollowUpController {
             }
         } catch (Exception e) {
             response.put("status", "Error: " + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response);
 

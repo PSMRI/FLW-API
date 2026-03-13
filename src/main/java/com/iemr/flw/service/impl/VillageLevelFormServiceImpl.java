@@ -29,6 +29,7 @@ import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.repo.iemr.*;
+import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.VillageLevelFormService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +38,10 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -69,6 +72,9 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
     @Autowired
     private AHDFormRepo ahdFormRepo;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
 
 
     @Override
@@ -144,7 +150,12 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
         vhncForm.setFormType("VHNC");
         vhncFormRepo.save(vhncForm);
-        checkAndAddIncentives(vhncForm.getVhncDate(), Math.toIntExact(vhncForm.getUserId()), "VHSNC_MEETING", vhncForm.getCreatedBy());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        LocalDate localDate = LocalDate.parse(vhncForm.getVhncDate(), formatter);
+
+        Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        incentiveLogicService.incentiveForAttendingVhsnc(0L,date,date,Math.toIntExact(vhncForm.getUserId()));
 
         return true;
     }
@@ -164,7 +175,12 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         phcReviewForm.setImage2(dto.getImage2());
         phcReviewForm.setFormType("PHC");
         phcReviewFormRepo.save(phcReviewForm);
-        checkAndAddIncentives(phcReviewForm.getPhcReviewDate(), Math.toIntExact(phcReviewForm.getUserId()), "CLUSTER_MEETING", phcReviewForm.getCreatedBy());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        LocalDate localDate = LocalDate.parse(phcReviewForm.getPhcReviewDate(), formatter);
+
+        Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        incentiveLogicService.incentiveForClusterMeeting(0L,date,date,Math.toIntExact(phcReviewForm.getUserId()));
 
         return true;
     }
@@ -226,7 +242,12 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         vhndForm.setFamilyPlanningHealthcare(vhndFormDTO.getFamilyPlanningHealthcare());
         vhndForm.setFormType("VHND");
         vhndRepo.save(vhndForm);
-        checkAndAddIncentives(vhndForm.getVhndDate(), vhndForm.getUserId(), "VHND_PARTICIPATION", vhndForm.getCreatedBy());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        LocalDate localDate = LocalDate.parse(vhndForm.getVhndDate(), formatter);
+
+        Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        incentiveLogicService.incentiveForVhndMeeting(0L,date,date,vhndForm.getUserId());
         return true;
 
 

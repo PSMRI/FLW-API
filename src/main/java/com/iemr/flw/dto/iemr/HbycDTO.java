@@ -47,7 +47,7 @@ public class HbycDTO {
     private String other_place_of_death;
 
     @SerializedName("baby_weight")
-    private BigDecimal baby_weight;
+    private Integer baby_weight;
 
     @SerializedName("is_child_sick")
     private String is_child_sick;
