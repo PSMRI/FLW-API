@@ -1013,7 +1013,7 @@ public class ChildCareServiceImpl implements ChildCareService {
 
                     logger.info("DPT vaccinated result: {}", vaccinated);
 
-                    if (vaccinated != null && vaccinated == 1) {
+                    if (vaccinated !=null) {
 
                         logger.info("DPT vaccine completed. Creating incentive.");
 
