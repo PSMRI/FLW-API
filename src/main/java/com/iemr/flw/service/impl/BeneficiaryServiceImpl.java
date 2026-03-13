@@ -421,19 +421,11 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         fetchHealthIdByBenRegID(m.getBenRegId().longValue(), authorisation, resultMap);
                     }
                     if(benDetailsRMNCH_OBJ.getIsChildrenAdded()!=null){
-                        if(benDetailsRMNCH_OBJ.getDoYouHavechildren()){
-                            if(benDetailsRMNCH_OBJ.getNoOfchildren()==0 && benDetailsRMNCH_OBJ.getNoofAlivechildren()==1){
-                                IncentiveActivity activity2 =
-                                        incentivesRepo.findIncentiveMasterByNameAndGroup("FP_DELAY_2Y", GroupName.FAMILY_PLANNING.getDisplayName());
-                                createIncentiveRecord(benDetailsRMNCH_OBJ, activity2);
-                            }
+                        if(benDetailsRMNCH_OBJ.getDoYouHavechildren() ){
 
-                            if(benDetailsRMNCH_OBJ.getNoOfchildren()==1 && benDetailsRMNCH_OBJ.getNoofAlivechildren()==2){
-                                IncentiveActivity activity2 =
-                                        incentivesRepo.findIncentiveMasterByNameAndGroup("1st_2nd_CHILD_GAP", GroupName.FAMILY_PLANNING.getDisplayName());
-                                createIncentiveRecord(benDetailsRMNCH_OBJ, activity2);
-
-                            }
+                            IncentiveActivity activity2 =
+                                    incentivesRepo.findIncentiveMasterByNameAndGroup("1st_2nd_CHILD_GAP", GroupName.FAMILY_PLANNING.getDisplayName());
+                            createIncentiveRecord(benDetailsRMNCH_OBJ, activity2);
 
                         }
                     }
