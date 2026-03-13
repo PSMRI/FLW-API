@@ -53,7 +53,7 @@ public class HbycChildVisit {
     private String other_place_of_death;
 
     @Column(name = "baby_weight")
-    private BigDecimal baby_weight; // 0.5 - 7.0
+    private Integer baby_weight; // 0.5 - 7.0
 
     @Column(name = "is_child_sick")
     private Boolean is_child_sick;
