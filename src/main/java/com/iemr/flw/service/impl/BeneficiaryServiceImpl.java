@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
 
 import com.iemr.flw.domain.iemr.EyeCheckupVisit;
 import com.iemr.flw.domain.iemr.IncentiveActivity;
+import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
+import com.iemr.flw.dto.iemr.EligibleCoupleDTO;
 import com.iemr.flw.dto.iemr.EyeCheckupListDTO;
 import com.iemr.flw.dto.iemr.EyeCheckupRequestDTO;
 import com.iemr.flw.masterEnum.GroupName;
@@ -418,11 +420,28 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     if (m.getBenRegId() != null) {
                         fetchHealthIdByBenRegID(m.getBenRegId().longValue(), authorisation, resultMap);
                     }
+                    if(benDetailsRMNCH_OBJ.getIsChildrenAdded()!=null){
+                        if(benDetailsRMNCH_OBJ.getDoYouHavechildren()){
+                            if(benDetailsRMNCH_OBJ.getNoOfchildren()==0 && benDetailsRMNCH_OBJ.getNoofAlivechildren()==1){
+                                IncentiveActivity activity2 =
+                                        incentivesRepo.findIncentiveMasterByNameAndGroup("FP_DELAY_2Y", GroupName.FAMILY_PLANNING.getDisplayName());
+                                createIncentiveRecord(benDetailsRMNCH_OBJ, activity2);
+                            }
+
+                            if(benDetailsRMNCH_OBJ.getNoOfchildren()==1 && benDetailsRMNCH_OBJ.getNoofAlivechildren()==2){
+                                IncentiveActivity activity2 =
+                                        incentivesRepo.findIncentiveMasterByNameAndGroup("1st_2nd_CHILD_GAP", GroupName.FAMILY_PLANNING.getDisplayName());
+                                createIncentiveRecord(benDetailsRMNCH_OBJ, activity2);
+
+                            }
+
+                        }
+                    }
 
                     resultList.add(resultMap);
 
                 } else {
-                    // mapping not available
+
                 }
             } catch (Exception e) {
                 logger.error("error for addressID :"+e.getMessage() + a.getId() + " and vanID : " + a.getVanID());
@@ -437,7 +456,27 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         return gson.toJson(response);
     }
 
-
+    private void createIncentiveRecord(RMNCHBeneficiaryDetailsRmnch rmnchBeneficiaryDetailsRmnch, IncentiveActivity activity) {
+        if (activity != null) {
+            IncentiveActivityRecord record = recordRepo
+                    .findRecordByActivityIdCreatedDateBenId(activity.getId(), rmnchBeneficiaryDetailsRmnch.getCreatedDate(), rmnchBeneficiaryDetailsRmnch.getBenficieryid());
+            Integer userId = userRepo.getUserIdByName(rmnchBeneficiaryDetailsRmnch.getCreatedBy());
+            if (record == null) {
+                record = new IncentiveActivityRecord();
+                record.setActivityId(activity.getId());
+                record.setCreatedDate(rmnchBeneficiaryDetailsRmnch.getCreatedDate());
+                record.setCreatedBy(rmnchBeneficiaryDetailsRmnch.getCreatedBy());
+                record.setStartDate(rmnchBeneficiaryDetailsRmnch.getCreatedDate());
+                record.setEndDate(rmnchBeneficiaryDetailsRmnch.getCreatedDate());
+                record.setUpdatedDate(rmnchBeneficiaryDetailsRmnch.getCreatedDate());
+                record.setUpdatedBy(rmnchBeneficiaryDetailsRmnch.getCreatedBy());
+                record.setBenId(rmnchBeneficiaryDetailsRmnch.getBenficieryid());
+                record.setAshaId(userId);
+                record.setAmount(Long.valueOf(activity.getRate()));
+                recordRepo.save(record);
+            }
+        }
+    }
     private Map<String, Object> getBenHealthDetails(BigInteger benRegId) {
         Map<String, Object> healthDetails = new HashMap<>();
         if (null != benRegId) {

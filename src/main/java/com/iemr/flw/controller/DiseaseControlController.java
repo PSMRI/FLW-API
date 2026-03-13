@@ -233,15 +233,15 @@ public class DiseaseControlController {
                     response.put("data", result); // ← Put list directly, no gson.toJson()
                 } else {
                     response.put("message", "No record found");
-                    response.put("statusCode", 404);
+                    response.put("statusCode", 5000);
                 }
             } else {
                 response.put("message", "Invalid request - userName required");
-                response.put("statusCode", 400);
+                response.put("statusCode", 5000);
             }
         } catch (Exception e) {
             response.put("status", "Error: " + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response); // ← Spring serializes the whole map
     }
