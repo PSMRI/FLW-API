@@ -405,7 +405,6 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             record.setUpdatedBy(userServiceRoleRepo.getUserNamedByUserId(userId));
             record.setBenId(benId);
             record.setAshaId(userId);
-            record.setName(activity.getName());
             record.setAmount(Long.valueOf(activity.getRate()));
 
             record = incentiveRecordRepo.save(record);
