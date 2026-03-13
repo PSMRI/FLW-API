@@ -29,6 +29,9 @@ public class IncentiveController {
     @Autowired
     IncentiveService incentiveService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @Operation(summary = "save incentive master")
     @RequestMapping(value = {"/masterData/saveAll"}, method = {RequestMethod.POST})
     public String saveIncentiveMasterData(@RequestBody List<IncentiveActivityDTO> activityDTOS, @RequestHeader(value = "Authorization") String authorization, HttpServletRequest request) {
@@ -81,11 +84,17 @@ public class IncentiveController {
     @Operation(summary = "get high risk assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/fetchUserData"}, method = {RequestMethod.POST})
     public String getAllIncentivesByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                           @RequestHeader(value = "Authorization") String Authorization) {
+                                           @RequestHeader(value = "jwtToken") String token) {
         OutputResponse response = new OutputResponse();
         try {
 
             if (requestDTO != null) {
+
+                if(token!=null){
+                    requestDTO.setUserId(jwtUtil.extractUserId(token));
+                    requestDTO.setAshaId(jwtUtil.extractUserId(token));
+                    requestDTO.setUserName(jwtUtil.extractUsername(token));
+                }
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
                 String s = incentiveService.getAllIncentivesByUserId(requestDTO);
