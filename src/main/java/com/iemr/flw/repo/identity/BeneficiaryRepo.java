@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -89,6 +90,18 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     RMNCHMBeneficiarydetail findByBeneficiaryDetailsId(@Param("beneficiaryDetailsId") BigInteger beneficiaryDetailsId);
 
 
-
-
+    // BeneficiaryRepo — replaces 3 separate queries per beneficiary
+    @Query(value = """
+    SELECT 
+        ibd.BeneficiaryId        AS benId,
+        bd.firstName             AS firstName,
+        bd.lastName              AS lastName
+    FROM db_identity.i_beneficiarydetails_rmnch ibd
+    JOIN db_iemr.m_beneficiary_regid_mapping bm 
+        ON bm.benRegId = ibd.BeneficiaryRegID
+    JOIN db_iemr.m_beneficiary_detail bd 
+        ON bd.beneficiaryDetailsId = bm.benDetailsId
+    WHERE ibd.BeneficiaryId IN :benIds
+    """, nativeQuery = true)
+    List<Object[]> findBenNamesByBenIds(@Param("benIds") List<Long> benIds);
 }
