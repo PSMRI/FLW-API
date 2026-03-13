@@ -117,7 +117,15 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                 if (mapping != null) {
                     dto.setName(mapping.getName());
-                    dto.setGroupName(mapping.getGroup());
+                    if(incentiveRequestDTO.getState().equals(StateCode.CG.getStateCode())){
+                        dto.setGroupName("");
+
+                    }
+                    if(incentiveRequestDTO.getState().equals(StateCode.AM.getStateCode())){
+                        dto.setGroupName(mapping.getGroup());
+
+                    }
+
                     if (Objects.equals(incentiveRequestDTO.getLangCode(), "en")) {
                         dto.setDescription(inc.getDescription());
 
@@ -184,6 +192,9 @@ public class IncentiveServiceImpl implements IncentiveService {
                     BigInteger benDetailId = beneficiaryRepo.findByBenRegIdFromMapping(BigInteger.valueOf(regId)).getBenDetailsId();
                     RMNCHMBeneficiarydetail rmnchBeneficiaryDetails = beneficiaryRepo.findByBeneficiaryDetailsId(benDetailId);
                     String beneName = rmnchBeneficiaryDetails.getFirstName() + " " + rmnchBeneficiaryDetails.getLastName();
+                    if(request.getVillageID().equals(StateCode.CG.getStateCode())){
+                        entry.setIsEligible(true);
+                    }
                     entry.setName(beneName);
 
                 } else {
