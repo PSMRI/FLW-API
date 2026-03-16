@@ -73,6 +73,18 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             @Param("fromDate") Timestamp fromDate,
             @Param("toDate") Timestamp toDate);
 
+
+    @Query("SELECT record " +
+            "FROM IncentiveActivityRecord record " +
+            "WHERE record.ashaId = :ashaId " +
+            "AND record.isClaimed = true " +
+            "AND record.startDate <= :toDate " +
+            "AND record.endDate >= :fromDate")
+    List<IncentiveActivityRecord> getRecordsByAsha(
+            @Param("ashaId") Integer ashaId,
+            @Param("fromDate") Timestamp fromDate,
+            @Param("toDate") Timestamp toDate);
+
     @Modifying
     @Transactional
     @Query("UPDATE IncentiveActivityRecord iar "

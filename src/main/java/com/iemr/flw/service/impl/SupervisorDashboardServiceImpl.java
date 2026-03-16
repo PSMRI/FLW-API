@@ -10,10 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
 import com.iemr.flw.masterEnum.IncentiveApprovalStatus;
-import com.iemr.flw.repo.iemr.AshaSupervisorLoginRepo;
-import com.iemr.flw.repo.iemr.FacilityLoginRepo;
-import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
+import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.utils.JwtUtil;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -22,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.iemr.flw.repo.iemr.SupervisorDashboardRepo;
 import com.iemr.flw.service.SupervisorDashboardService;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +44,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private UserServiceRoleRepo userServiceRoleRepo;
     @Override
     public String getSupervisorDashboard(Integer supervisorUserID, Integer month, Integer year) {
         JSONObject result = new JSONObject();
@@ -246,17 +246,29 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             List<Object[]> countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
             Long totalAmount = incentiveRecordRepo.getTotalAmountByAsha(ashaId, startDate, endDate);
+            List<IncentiveActivityRecord> incentiveActivityRecord = incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate);
+           for (IncentiveActivityRecord incentiveActivityRecord_ :incentiveActivityRecord){
+               asha.put("facilityId", facilityID);
+               asha.put("facilityName", facilityName);
+               asha.put("facilityType", facilityType);
 
-            asha.put("facilityId", facilityID);
-            asha.put("facilityName", facilityName);
-            asha.put("facilityType", facilityType);
+               asha.put("userId", row[0]);
+               asha.put("fullName", fullName(row[1], row[2]));
+               asha.put("employeeId", str(row[3]).isEmpty() ? null : str(row[3]));
+               asha.put("mobile", str(row[4]).isEmpty() ? null : str(row[4]));
+               asha.put("gender", str(row[5]).isEmpty() ? null : str(row[5]));
+               asha.put("reason", incentiveActivityRecord_.getReason());
+               asha.put("OtherReason", incentiveActivityRecord_.getOtherReason());
+               asha.put("totalAmount", totalAmount);
+               asha.put("role", userServiceRoleRepo.getUserRole(incentiveActivityRecord_.getVerifiedByUserId()).get(0).getRoleName());
+               asha.put("approvalDate", incentiveActivityRecord_.getApprovalDate());
+               asha.put("approvalStatus", incentiveActivityRecord_.getApprovalStatus());
+               asha.put("verifiedByUserName", incentiveActivityRecord_.getVerifiedByUserName());
+               asha.put("verifiedByUserId", incentiveActivityRecord_.getVerifiedByUserId());
+               asha.put("isClaimed", incentiveActivityRecord_.getIsClaimed());
+               asha.put("claimedDate", incentiveActivityRecord_.getCalimedDate());
+           }
 
-            asha.put("userId", row[0]);
-            asha.put("fullName", fullName(row[1], row[2]));
-            asha.put("employeeId", str(row[3]).isEmpty() ? null : str(row[3]));
-            asha.put("mobile", str(row[4]).isEmpty() ? null : str(row[4]));
-            asha.put("gender", str(row[5]).isEmpty() ? null : str(row[5]));
-            asha.put("totalAmount", totalAmount);
 
             long pending = 0;
             long verified = 0;
@@ -326,7 +338,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
 
             Integer ashaSupervisorUserId = jwtUtil.extractUserId(token);
-            String ashaSupervisorUsername = jwtUtil.extractUsername(token);
+            String ashaSupervisorUsername = "saurav";
 
             // 👉 If Rejected → Update only selected incentive IDs
             if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
