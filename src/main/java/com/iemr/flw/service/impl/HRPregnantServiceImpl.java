@@ -28,7 +28,12 @@ public class HRPregnantServiceImpl implements HighRiskPregnantService {
     private HRPregnantAssessRepo assessRepo;
     @Autowired
     private HRPregnantTrackRepo trackRepo;
+
+    @Autowired
+    private IncentiveLogicImpl incentiveLogic;
     private final ModelMapper modelMapper = new ModelMapper();
+
+
 
 
     @Override
@@ -65,6 +70,14 @@ public class HRPregnantServiceImpl implements HighRiskPregnantService {
 
             assess.setUserId(requestDTO.getUserId());
             assessRepo.save(assess);
+            if(assess!=null){
+                if(assess.getIsHighRisk()!=null && assess.getIsHighRisk()){
+                    incentiveLogic.incentiveForIdentifiedPNC(assess.getBenId(),assess.getVisitDate(),assess.getVisitDate(),assess.getUserId());
+
+                }
+
+            }
+
         });
         return "no of high risk assessment items saved: " + requestDTO.getEntries().size();
     }

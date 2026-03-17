@@ -3,6 +3,7 @@ package com.iemr.flw.service.impl;
 import com.iemr.flw.domain.iemr.IncentiveActivity;
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.IncentiveName;
 import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
 import com.iemr.flw.repo.iemr.IncentivesRepo;
@@ -229,6 +230,81 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
     }
 
     @Override
+    public IncentiveActivityRecord incentiveForIdentifiedPNC(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityNameAM = IncentiveName.MH_HR_POSTNATAL.name();
+            String activityNameCG = IncentiveName.HIGH_RISK_POSTPARTUM_HEALTH_CHECK.name();
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive(
+                        activityNameAM,
+                        GroupName.MATERNAL_HEALTH.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityNameCG,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check VHSNC_MEETING Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+
+    @Override
+    public IncentiveActivityRecord incentiveForTBSuspected(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityNameCG = IncentiveName.INFORMANT_INCENTIVE.name();
+
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityNameCG,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check TB Suspected Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+    @Override
     public IncentiveActivityRecord incentiveForIdentificationLeprosy(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId) {
         try {
             Integer stateCode = userService.getUserDetail(userId).getStateId();
@@ -329,7 +405,6 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             record.setUpdatedBy(userServiceRoleRepo.getUserNamedByUserId(userId));
             record.setBenId(benId);
             record.setAshaId(userId);
-            record.setName(activity.getName());
             record.setAmount(Long.valueOf(activity.getRate()));
 
             record = incentiveRecordRepo.save(record);

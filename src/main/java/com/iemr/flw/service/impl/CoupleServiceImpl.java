@@ -93,7 +93,7 @@ public class CoupleServiceImpl implements CoupleService {
                         IncentiveActivity activity1 =
                                 incentivesRepo.findIncentiveMasterByNameAndGroup("FP_DELAY_2Y", GroupName.FAMILY_PLANNING.getDisplayName());
                         createIncentiveRecord(recordList, it, activity1);
-                    } else if (existingECR.getNumLiveChildren() == 1 && it.getNumLiveChildren() >= 2 && it.getFirstAndSecondChildGap() != null && it.getFirstAndSecondChildGap() == 3) {
+                    } else if (existingECR.getNumLiveChildren() == 1 && it.getNumLiveChildren() >= 2 && it.getFirstAndSecondChildGap() != null && it.getFirstAndSecondChildGap()>=3) {
                         IncentiveActivity activity2 =
                                 incentivesRepo.findIncentiveMasterByNameAndGroup("1st_2nd_CHILD_GAP", GroupName.FAMILY_PLANNING.getDisplayName());
                         createIncentiveRecord(recordList, it, activity2);

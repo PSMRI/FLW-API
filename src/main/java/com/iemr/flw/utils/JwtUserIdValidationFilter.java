@@ -116,7 +116,7 @@ public class JwtUserIdValidationFilter implements Filter {
 
 		} catch (Exception e) {
 			logger.error("Authorization error: ", e);
-			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: " + e.getMessage());
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: Authentication failed");
 		}
 	}
 
