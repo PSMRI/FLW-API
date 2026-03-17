@@ -10,6 +10,7 @@ import com.iemr.flw.repo.iemr.IncentivesRepo;
 import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.UserService;
+import com.iemr.flw.service.incentiveLogicRespo.IncentiveLogicForFamilyPlaningService;
 import com.iemr.flw.utils.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 
 @Service
-public class IncentiveLogicImpl implements IncentiveLogicService {
+public class IncentiveLogicImpl implements IncentiveLogicService , IncentiveLogicForFamilyPlaningService {
 
     private static final Logger logger = LoggerFactory.getLogger(IncentiveLogicImpl.class);
 
@@ -342,6 +343,181 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
 
         } catch (Exception e) {
             logger.error("Check Leprosy Incentive Exception: ", e);
+            return null;
+        }
+    }
+    @Override
+    public IncentiveActivityRecord incentiveForMarriageToFirstChildGap(
+            Long benId, Date startDate, Date endDate, Integer userId) {
+
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+            if (stateCode == null) return null;
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive("MARRIAGE_1st_CHILD_GAP",
+                        GroupName.FAMILY_PLANNING.getDisplayName(),
+                        benId, startDate, endDate, userId);
+            }
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive("MARRIAGE_1st_CHILD_GAP",
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId, startDate, endDate, userId);
+            }
+
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Marriage Gap Incentive Exception: ", e);
+            return null;
+        }
+    }
+    @Override
+    public IncentiveActivityRecord incentiveForFirstToSecondChildGap(
+            Long benId, Date startDate, Date endDate, Integer userId) {
+
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+            if (stateCode == null) return null;
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive("1st_2nd_CHILD_GAP",
+                        GroupName.FAMILY_PLANNING.getDisplayName(),
+                        benId, startDate, endDate, userId);
+            }
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive("1st_2nd_CHILD_GAP",
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId, startDate, endDate, userId);
+            }
+
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Child Gap Incentive Exception: ", e);
+            return null;
+        }
+    }
+    @Override
+    public IncentiveActivityRecord incentiveForKitDistribution(
+            Long benId, Date startDate, Date endDate, Integer userId) {
+
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+            if (stateCode == null) return null;
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive("FP_NP_KIT",
+                        GroupName.FAMILY_PLANNING.getDisplayName(),
+                        benId, startDate, endDate, userId);
+            }
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive("FP_NP_KIT",
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId, startDate, endDate, userId);
+            }
+
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Kit Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+
+    @Override
+    public IncentiveActivityRecord incentiveForAntaraDose1(Long benId, Date startDate, Date endDate, Integer userId) {
+        return processIncentive("FP_ANC_MPA1", GroupName.FAMILY_PLANNING.getDisplayName(), benId, startDate, endDate, userId);
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForAntaraDose2(Long benId, Date startDate, Date endDate, Integer userId) {
+        return processIncentive("FP_ANC_MPA2", GroupName.FAMILY_PLANNING.getDisplayName(), benId, startDate, endDate, userId);
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForAntaraDose3(Long benId, Date startDate, Date endDate, Integer userId) {
+        return processIncentive("FP_ANC_MPA3", GroupName.FAMILY_PLANNING.getDisplayName(), benId, startDate, endDate, userId);
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForAntaraDose4(Long benId, Date startDate, Date endDate, Integer userId) {
+        return processIncentive("FP_ANC_MPA4", GroupName.FAMILY_PLANNING.getDisplayName(), benId, startDate, endDate, userId);
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForAntaraDose5(Long benId, Date startDate, Date endDate, Integer userId) {
+        return processIncentive("FP_ANC_MPA5", GroupName.FAMILY_PLANNING.getDisplayName(), benId, startDate, endDate, userId);
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForMaleSterilization(
+            Long benId, Date startDate, Date endDate, Integer userId) {
+
+        return processIncentive("FP_MALE_STER",
+                GroupName.FAMILY_PLANNING.getDisplayName(),
+                benId, startDate, endDate, userId);
+    }
+    @Override
+    public IncentiveActivityRecord incentiveForFemaleSterilization(
+            Long benId, Date startDate, Date endDate, Integer userId) {
+
+        return processIncentive("FP_FEMALE_STER",
+                GroupName.FAMILY_PLANNING.getDisplayName(),
+                benId, startDate, endDate, userId);
+    }
+    @Override
+    public IncentiveActivityRecord incentiveForMiniLap(
+            Long benId, Date startDate, Date endDate, Integer userId) {
+
+        return processIncentive("FP_MINILAP",
+                GroupName.FAMILY_PLANNING.getDisplayName(),
+                benId, startDate, endDate, userId);
+    }
+    @Override
+    public IncentiveActivityRecord incentiveForCondom(
+            Long benId, Date startDate, Date endDate, Integer userId) {
+
+        return processIncentive("FP_CONDOM",
+                GroupName.FAMILY_PLANNING.getDisplayName(),
+                benId, startDate, endDate, userId);
+    }
+    @Override
+    public IncentiveActivityRecord incentiveForCopperT(
+            Long benId, Date startDate, Date endDate, Integer userId) {
+
+        return processIncentive("FP_COPPER_T",
+                GroupName.FAMILY_PLANNING.getDisplayName(),
+                benId, startDate, endDate, userId);
+    }
+    @Override
+    public IncentiveActivityRecord incentiveForLimitTwoChildren(
+            Long benId, Date startDate, Date endDate, Integer userId) {
+
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+            if (stateCode == null) return null;
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive("FP_LIMIT_2CHILD",
+                        GroupName.FAMILY_PLANNING.getDisplayName(),
+                        benId, startDate, endDate, userId);
+            }
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive("FP_LIMIT_2CHILD",
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId, startDate, endDate, userId);
+            }
+
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Limit 2 Child Incentive Exception: ", e);
             return null;
         }
     }

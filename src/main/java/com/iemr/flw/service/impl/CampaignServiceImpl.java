@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.CampaignService;
 import com.iemr.flw.utils.JwtUtil;
@@ -91,7 +92,7 @@ public class CampaignServiceImpl implements CampaignService {
 
             OrsCampaignListDTO campaignListDTO = campaignDTO.getFields();
 
-            if(campaignListDTO!=null){
+            if (campaignListDTO != null) {
                 String photosJson = objectMapper.writeValueAsString(campaignListDTO.getCampaignPhotos());
                 campaignOrsEntity.setCampaignPhotos(photosJson);
             }
@@ -101,8 +102,8 @@ public class CampaignServiceImpl implements CampaignService {
 
         if (!campaignOrsRequest.isEmpty()) {
             List<CampaignOrs> savedCampaigns = orsCampaignRepo.saveAll(campaignOrsRequest);
-            savedCampaigns.forEach(ors->{
-                checkMonthlyPulseOrsDistribution(ors.getUserId(),ors.getStartDate(),ors.getEndDate());
+            savedCampaigns.forEach(ors -> {
+                checkMonthlyPulseOrsDistribution(ors.getUserId(), ors.getStartDate(), ors.getEndDate());
             });
             return savedCampaigns;
         }
@@ -178,7 +179,7 @@ public class CampaignServiceImpl implements CampaignService {
             // Convert photos to base64 JSON array
 
             PolioCampaignListDTO polioCampaignListDTO = campaignDTO.getFields();
-            if(polioCampaignListDTO!=null){
+            if (polioCampaignListDTO != null) {
                 String photosJson = objectMapper.writeValueAsString(polioCampaignListDTO.getCampaignPhotos());
                 campaignPolioEntity.setCampaignPhotos(photosJson);
 
@@ -191,9 +192,10 @@ public class CampaignServiceImpl implements CampaignService {
         if (!campaignPolioRequest.isEmpty()) {
             List<PulsePolioCampaign> savedCampaigns = pulsePolioCampaignRepo.saveAll(campaignPolioRequest);
             savedCampaigns.forEach(pulsePolioCampaign -> {
-                checkMonthlyPulsePolioIncentive(pulsePolioCampaign.getUserId(),pulsePolioCampaign.getStartDate(),pulsePolioCampaign.getEndDate());
+                checkMonthlyPulsePolioIncentive(pulsePolioCampaign.getUserId(), pulsePolioCampaign.getStartDate(), pulsePolioCampaign.getEndDate());
 
-            });{
+            });
+            {
 
             }
             return savedCampaigns;
@@ -262,7 +264,7 @@ public class CampaignServiceImpl implements CampaignService {
 
             // Convert photos to base64 JSON array
             FilariasisCampaignListDTO filariasisCampaignListDTO = campaignDTO.getFields();
-            if(filariasisCampaignListDTO!=null){
+            if (filariasisCampaignListDTO != null) {
                 String photosJson = objectMapper.writeValueAsString(filariasisCampaignListDTO.getMdaPhotos());
                 filariasisCampaign.setCampaignPhotos(photosJson);
 
@@ -276,9 +278,10 @@ public class CampaignServiceImpl implements CampaignService {
             List<FilariasisCampaign> savedCampaigns = filariasisCampaignRepo.saveAll(campaignPolioRequest);
 
             savedCampaigns.forEach(filariasisCampaign -> {
-                checkMonthlyFilariasisIncentive(filariasisCampaign.getUserId(),filariasisCampaign.getStartDate(),filariasisCampaign.getEndDate());
+                checkMonthlyFilariasisIncentive(filariasisCampaign.getUserId(), filariasisCampaign.getStartDate(), filariasisCampaign.getEndDate());
 
-            });{
+            });
+            {
 
             }
             return savedCampaigns;
@@ -286,7 +289,6 @@ public class CampaignServiceImpl implements CampaignService {
 
         throw new IEMRException("No valid campaign data to save");
     }
-
 
 
     @Override
@@ -342,7 +344,8 @@ public class CampaignServiceImpl implements CampaignService {
                     // try JSON list
                     photosList = objectMapper.readValue(
                             photoStr,
-                            new TypeReference<List<String>>() {}
+                            new TypeReference<List<String>>() {
+                            }
                     );
                 } catch (Exception e) {
                     // fallback: single image
@@ -373,7 +376,8 @@ public class CampaignServiceImpl implements CampaignService {
                     // try JSON list
                     photosList = objectMapper.readValue(
                             photoStr,
-                            new TypeReference<List<String>>() {}
+                            new TypeReference<List<String>>() {
+                            }
                     );
                 } catch (Exception e) {
                     // fallback: single image
@@ -403,7 +407,8 @@ public class CampaignServiceImpl implements CampaignService {
                     // try JSON list
                     photosList = objectMapper.readValue(
                             photoStr,
-                            new TypeReference<List<String>>() {}
+                            new TypeReference<List<String>>() {
+                            }
                     );
                 } catch (Exception e) {
                     // fallback: single image
@@ -421,40 +426,51 @@ public class CampaignServiceImpl implements CampaignService {
         dto.setFields(filariasisCampaignListDTO);
         return dto;
     }
+
     private List<String> parseBase64Json(String jsonString) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(jsonString, new TypeReference<List<String>>() {});
+            return objectMapper.readValue(jsonString, new TypeReference<List<String>>() {
+            });
         } catch (JsonProcessingException e) {
             return Collections.emptyList();
         }
     }
 
-    private void checkMonthlyPulsePolioIncentive(Integer ashaId,LocalDate startDate,LocalDate endDate) {
-        IncentiveActivity CHILD_MOBILIZATION_SESSIONS = incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_MOBILIZATION_SESSIONS", GroupName.ACTIVITY.getDisplayName());
-        if (CHILD_MOBILIZATION_SESSIONS != null) {
-            addAshaIncentiveRecord(CHILD_MOBILIZATION_SESSIONS, ashaId,startDate,endDate);
+    private void checkMonthlyPulsePolioIncentive(Integer ashaId, LocalDate startDate, LocalDate endDate) {
+        if (userServiceRoleRepo.getStateIdByUserId(ashaId).equals(StateCode.CG.getStateCode())) {
+            IncentiveActivity CHILD_MOBILIZATION_SESSIONS = incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_MOBILIZATION_SESSIONS", GroupName.ACTIVITY.getDisplayName());
+            if (CHILD_MOBILIZATION_SESSIONS != null) {
+                addAshaIncentiveRecord(CHILD_MOBILIZATION_SESSIONS, ashaId, startDate, endDate);
+            }
         }
+
 
     }
 
-    private void checkMonthlyFilariasisIncentive(Integer ashaId,LocalDate startDate,LocalDate endDate) {
-        IncentiveActivity FILARIASIS_MEDICINE_DISTRIBUTION = incentivesRepo.findIncentiveMasterByNameAndGroup("FILARIASIS_MEDICINE_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
-        if (FILARIASIS_MEDICINE_DISTRIBUTION != null) {
-            addAshaIncentiveRecord(FILARIASIS_MEDICINE_DISTRIBUTION, ashaId,startDate,endDate);
+    private void checkMonthlyFilariasisIncentive(Integer ashaId, LocalDate startDate, LocalDate endDate) {
+        if (userServiceRoleRepo.getStateIdByUserId(ashaId).equals(StateCode.CG.getStateCode())) {
+            IncentiveActivity FILARIASIS_MEDICINE_DISTRIBUTION = incentivesRepo.findIncentiveMasterByNameAndGroup("FILARIASIS_MEDICINE_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
+            if (FILARIASIS_MEDICINE_DISTRIBUTION != null) {
+                addAshaIncentiveRecord(FILARIASIS_MEDICINE_DISTRIBUTION, ashaId, startDate, endDate);
+            }
         }
+
 
     }
 
-    private void checkMonthlyPulseOrsDistribution(Integer ashaId,LocalDate startDate,LocalDate endDate) {
-        IncentiveActivity ORS_DISTRIBUTION = incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
-        if (ORS_DISTRIBUTION != null) {
-            addAshaIncentiveRecord(ORS_DISTRIBUTION, ashaId,startDate,endDate);
+    private void checkMonthlyPulseOrsDistribution(Integer ashaId, LocalDate startDate, LocalDate endDate) {
+        if (userServiceRoleRepo.getStateIdByUserId(ashaId).equals(StateCode.CG.getStateCode())) {
+            IncentiveActivity ORS_DISTRIBUTION = incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
+            if (ORS_DISTRIBUTION != null) {
+                addAshaIncentiveRecord(ORS_DISTRIBUTION, ashaId, startDate, endDate);
+            }
         }
+
 
     }
 
-    private void addAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId,LocalDate startDate,LocalDate endDate) {
+    private void addAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId, LocalDate startDate, LocalDate endDate) {
         Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
 
         Timestamp startOfMonth = Timestamp.valueOf(startDate.atStartOfDay());

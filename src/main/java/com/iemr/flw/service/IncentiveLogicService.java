@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 
 public interface IncentiveLogicService {
+
     public IncentiveActivityRecord incentiveForLeprosyPaucibacillaryConfirmed(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId);
     public IncentiveActivityRecord incentiveForIdentificationLeprosy(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId);
     public IncentiveActivityRecord incentiveForLeprosyMultibacillaryConfirmed(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId);
@@ -17,5 +18,8 @@ public interface IncentiveLogicService {
 
     public IncentiveActivityRecord incentiveForIdentifiedPNC(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId);
     public IncentiveActivityRecord incentiveForTBSuspected(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId);
+
+
+
 
 }

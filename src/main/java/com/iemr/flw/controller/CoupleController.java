@@ -57,30 +57,6 @@ public class CoupleController {
         return response.toString();
     }
 
-
-
-    @Operation(summary = "save eligible couple registration details")
-    @RequestMapping(value = { "/register/saveAll" }, method = { RequestMethod.POST })
-    public String saveEligibleCouple(@RequestBody List<EligibleCoupleDTO> eligibleCoupleDTOs,
-                                     @RequestHeader(value = "Authorization") String Authorization) {
-        OutputResponse response = new OutputResponse();
-        try {
-            logger.info("Saving All Eligible Couple Details");
-            if (eligibleCoupleDTOs != null) {
-                String s = coupleService.registerEligibleCouple(eligibleCoupleDTOs);
-                if (s != null)
-                    response.setResponse(s);
-                else
-                    response.setError(5000, "No record found");
-            } else
-                response.setError(5000, "Invalid/NULL request obj");
-        } catch (Exception e) {
-            logger.error("Error in saving eligible couple registration details, " + e);
-            response.setError(5000, "Error in saving eligible couple registration details" + e);
-        }
-        return response.toString();
-    }
-
     @Operation(summary = "save eligible couple tracking details")
     @RequestMapping(value = { "/tracking/saveAll" }, method = { RequestMethod.POST })
     public String saveEligibleCoupleTracking(@RequestBody List<EligibleCoupleTrackingDTO> eligibleCoupleTrackingDTOs,

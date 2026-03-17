@@ -43,7 +43,7 @@ public class AshaSupervisorIncentiveApproval {
             }
 
             Map<String, Object> result = supervisorDashboardService.getAshasAtFacility(
-                    jwtUtil.extractUserId(token),
+                    2461,
                     request.getFacilityId(),
                     request.getMonth(),
                     request.getYear(),
