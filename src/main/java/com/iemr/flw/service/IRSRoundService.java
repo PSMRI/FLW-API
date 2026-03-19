@@ -8,7 +8,7 @@ import java.util.List;
 
 @Service
 public interface IRSRoundService {
-     List<IRSRound> addRounds(List<IRSRoundDTO> dtos);
+     List<IRSRound> addRounds(List<IRSRoundDTO> dtos,Integer userId,String  userName);
 
     List<IRSRound> getRounds(Long householdId);
 }
