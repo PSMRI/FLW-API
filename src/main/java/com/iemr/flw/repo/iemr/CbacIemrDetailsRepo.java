@@ -21,29 +21,24 @@
 */
 package com.iemr.flw.repo.iemr;
 
-
-import com.iemr.flw.domain.iemr.BenReferDetails;
-
-import io.swagger.v3.oas.annotations.info.License;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.iemr.flw.domain.iemr.CbacDetailsImer;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
 
+import java.util.List;
 
 @Repository
-public interface BenReferDetailsRepo extends JpaRepository<BenReferDetails, Long> {
+public interface CbacIemrDetailsRepo extends CrudRepository<CbacDetailsImer, Long> {
+	
+	public CbacDetailsImer findByBeneficiaryRegIdAndVisitCode(Long beneficiaryRegId, Long visitCode);
 
+	List<CbacDetailsImer> findByCreatedBy(String userName);
 
-	@Query("SELECT b.referredToInstituteName FROM BenReferDetails b WHERE b.beneficiaryRegID = :benRegID")
-	String findInstituteNameByBeneficiaryRegID(@Param("benRegID") Long benRegID);
+	@Query(value = "SELECT BeneficiaryID FROM db_identity.m_beneficiaryregidmapping " +
+			"WHERE BenRegId = :benRegId AND Deleted = 0", nativeQuery = true)
+	Long getBeneficiaryId(@Param("benRegId") Long benRegId);
 
-
-	@Query("SELECT b.referralReason FROM BenReferDetails b WHERE b.beneficiaryRegID = :benRegID")
-	String findReasonByBeneficiaryRegID(@Param("benRegID") Long benRegID);
-
-	List<BenReferDetails> findByCreatedBy(String userName);
 }
