@@ -41,4 +41,16 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
 
     @Query("select record from IncentiveActivityRecord record where record.ashaId = :ashaId")
     List<IncentiveActivityRecord> findRecordsByAsha(@Param("ashaId") Integer ashaId);
+
+
+    // RecordRepo — existing records batch mein fetch karo
+    @Query("SELECT r FROM IncentiveActivityRecord r " +
+            "WHERE r.activityId = :activityId " +
+            "AND r.benId IN :benIds " +
+            "AND r.ashaId = :ashaId")
+    List<IncentiveActivityRecord> findExistingRecords(
+            @Param("activityId") Long activityId,
+            @Param("benIds") List<Long> benIds,
+            @Param("ashaId") Integer ashaId
+    );
 }
