@@ -35,4 +35,10 @@ public class MdsrDTO {
     private Timestamp updatedDate;
 
     private String updatedBy;
+
+    private String mdsr1File;
+
+    private String mdsr2File;
+
+    private String mdsrDeathCertFile;
 }

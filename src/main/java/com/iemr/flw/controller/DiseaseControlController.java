@@ -63,12 +63,12 @@ public class DiseaseControlController {
                  response.put("data", diseaseControlService.saveMalaria(malariaDTO));
              }else {
                  response.put("message", "Invalid request");
-                 response.put("statusCode", 400);
+                 response.put("statusCode", 5000);
              }
 
         } catch (Exception e) {
             response.put("status", "Error" + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response);
 
