@@ -53,7 +53,6 @@ public class DeliveryOutcome {
     @Column(name = "still_birth")
     private Integer stillBirth;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "MMM dd, yyyy, h:mm:ss a")
     @Column(name = "discharge_date")
     private Timestamp dateOfDischarge;
 
