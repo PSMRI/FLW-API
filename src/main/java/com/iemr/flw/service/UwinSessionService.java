@@ -1,5 +1,6 @@
 package com.iemr.flw.service;
 
+import com.iemr.flw.domain.iemr.UwinSession;
 import com.iemr.flw.dto.iemr.UwinSessionRequestDTO;
 import com.iemr.flw.dto.iemr.UwinSessionResponseDTO;
 

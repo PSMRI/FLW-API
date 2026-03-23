@@ -34,7 +34,7 @@ public class FilariasisCampaign {
      * Store JSON array like ["img1.jpg","img2.jpg"]
      * MySQL JSON column
      */
-    @Column(name = "mda_photos", columnDefinition = "json")
+    @Column(name = "campaign_photos", columnDefinition = "json")
     private String campaignPhotos;
 
     @Column(name = "created_by", length = 200)

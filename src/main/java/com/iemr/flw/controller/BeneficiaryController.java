@@ -91,7 +91,7 @@ public class BeneficiaryController {
 
         } catch (Exception e) {
             logger.error("Error saving eye checkup visit:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode", 5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -112,14 +112,14 @@ public class BeneficiaryController {
                 response.put("data", responseObject);
                 return ResponseEntity.ok(response);
             } else {
-                response.put("statusCode", HttpStatus.NOT_FOUND.value());
+                response.put("statusCode", 5000);
                 response.put("message", "No records found");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
         } catch (Exception e) {
             logger.error("Error fetching eye checkup visit:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode", 5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }

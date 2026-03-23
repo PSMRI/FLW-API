@@ -55,6 +55,8 @@ public class CdrDTO {
 
     private String deathCertImage2;
 
+    private String cdrImage;
+
     private Timestamp updatedDate;
 
     private String updatedBy;

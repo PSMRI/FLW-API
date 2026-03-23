@@ -17,7 +17,6 @@ public class DeliveryOutcome {
     @Column(name = "ben_id")
     private Long benId;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "MMM dd, yyyy, h:mm:ss a")
     @Column(name = "delivery_date")
     private Timestamp dateOfDelivery;
 
