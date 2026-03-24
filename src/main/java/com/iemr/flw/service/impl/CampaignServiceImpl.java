@@ -231,8 +231,13 @@ public class CampaignServiceImpl implements CampaignService {
 
             // Parse number of children
             try {
-                String numberOfFamilies = campaignDTO.getFields().getNumberOfFamilies();
-                String numberOfIndividuals = campaignDTO.getFields().getNumberOfIndividuals();
+                String numberOfFamilies = (campaignDTO != null && campaignDTO.getFields() != null)
+                        ? campaignDTO.getFields().getNumberOfFamilies()
+                        : null;
+
+                String numberOfIndividuals = (campaignDTO != null && campaignDTO.getFields() != null)
+                        ? campaignDTO.getFields().getNumberOfIndividuals()
+                        : null;
                 if (numberOfFamilies != null && !numberOfFamilies.trim().isEmpty()) {
                     try {
                         // parse as double first, then cast to int
@@ -415,8 +420,19 @@ public class CampaignServiceImpl implements CampaignService {
         }
         filariasisCampaignListDTO.setEndDate(campaign.getEndDate());
         filariasisCampaignListDTO.setStartDate(campaign.getStartDate());
-        filariasisCampaignListDTO.setNumberOfIndividuals(Double.valueOf(campaign.getNumberOfIndividuals()));
-        filariasisCampaignListDTO.setNumberOfFamilies(Double.valueOf(campaign.getNumberOfFamilies()));
+        Double numberOfIndividuals = null;
+        Double numberOfFamilies = null;
+
+        if (campaign.getNumberOfIndividuals() != null) {
+            numberOfIndividuals = Double.valueOf(campaign.getNumberOfIndividuals());
+        }
+
+        if (campaign.getNumberOfFamilies() != null) {
+            numberOfFamilies = Double.valueOf(campaign.getNumberOfFamilies());
+        }
+
+        filariasisCampaignListDTO.setNumberOfIndividuals(numberOfIndividuals);
+        filariasisCampaignListDTO.setNumberOfFamilies(numberOfFamilies);
 
         dto.setFields(filariasisCampaignListDTO);
         return dto;
