@@ -397,7 +397,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Fetch and filter malaria disease records
         List<ScreeningMalaria> filteredList = diseaseMalariaRepository.findAll().stream()
-                .filter(disease -> Objects.equals(disease.getUserId(), getDiseaseRequestHandler.getUserId()))
+                .filter(disease -> Objects.equals(disease.getUserId(), getDiseaseRequestHandler.getAshaId()))
                 .collect(Collectors.toList());
 
         // Check if the list is empty
@@ -485,7 +485,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Fetch and filter Kala Azar disease records
         List<ScreeningKalaAzar> filteredList = diseaseKalaAzarRepository.findAll().stream()
-                .filter(disease -> (Objects.equals(disease.getUserId(), getDiseaseRequestHandler.getUserId())))
+                .filter(disease -> (Objects.equals(disease.getUserId(), getDiseaseRequestHandler.getAshaId())))
                 .collect(Collectors.toList());
 
         // Check if the list is empty
@@ -532,14 +532,14 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             return Collections.singletonMap("message", "No data found for AES.");
         }
 
-        return diseaseAESJERepository.findAll().stream().filter(diseaseAesje -> Objects.equals(diseaseAesje.getUserId(), getDiseaseRequestHandler.getUserId())).collect(Collectors.toList());
+        return diseaseAESJERepository.findAll().stream().filter(diseaseAesje -> Objects.equals(diseaseAesje.getUserId(), getDiseaseRequestHandler.getAshaId())).collect(Collectors.toList());
     }
 
 
     public Object getAllFilaria(GetDiseaseRequestHandler getDiseaseRequestHandler) {
 
         // Fetch and filter Filaria disease records
-        List<ScreeningFilariasis> filteredList = diseaseFilariasisRepository.findAll().stream().filter(screeningFilariasis -> Objects.equals(screeningFilariasis.getUserId(), getDiseaseRequestHandler.getUserId())).collect(Collectors.toList());
+        List<ScreeningFilariasis> filteredList = diseaseFilariasisRepository.findAll().stream().filter(screeningFilariasis -> Objects.equals(screeningFilariasis.getUserId(), getDiseaseRequestHandler.getAshaId())).collect(Collectors.toList());
 
         // Check if the list is empty
         if (filteredList.isEmpty()) {
@@ -575,7 +575,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Fetch and filter Leprosy disease records
         List<ScreeningLeprosy> filteredList = diseaseLeprosyRepository.findAll().stream()
-                .filter(disease -> Objects.equals(disease.getUserId(), getDiseaseRequestHandler.getUserId()))
+                .filter(disease -> Objects.equals(disease.getUserId(), getDiseaseRequestHandler.getAshaId()))
                 .collect(Collectors.toList());
 
         // Check if the list is empty
