@@ -1078,7 +1078,10 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             entity.setVersion(dto.getVersion());
             entity.setVisitNo(dto.getVisitNo());
             entity.setFollowUpNo(dto.getFollowUpNo());
-            entity.setFollowUpDate(dto.getFollowUpDate());
+            if(dto.getFollowUpDate()!=null){
+                entity.setFollowUpDate(dto.getFollowUpDate());
+
+            }
             entity.setDiagnosisCodes(dto.getDiagnosisCodes());
             entity.setFormDataJson(dto.getFormDataJson());
             entity.setUserID(jwtUtil.extractUserId(token));
@@ -1109,7 +1112,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.NCD.getDisplayName());
         if(incentiveActivity!=null){
             if (chronicDiseaseVisitEntity.getFollowUpNo() != null
-                    && chronicDiseaseVisitEntity.getFollowUpDate() != null
+                    && chronicDiseaseVisitEntity.getCreatedDate() != null
                     && chronicDiseaseVisitEntity.getDiagnosisCodes() != null) {
 
                 List<String> targetDiseases = Arrays.asList(
@@ -1127,9 +1130,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                         .anyMatch(targetDiseases::contains);
 
                 if (matchFound && Integer.valueOf(6).equals(chronicDiseaseVisitEntity.getFollowUpNo())) {
+                    LocalDateTime localDateTime = chronicDiseaseVisitEntity.getCreatedDate();
 
-                    LocalDate localDate = chronicDiseaseVisitEntity.getFollowUpDate();
-                    Timestamp followUpTimestamp = Timestamp.valueOf(localDate.atStartOfDay());
+                    Timestamp followUpTimestamp = Timestamp.valueOf(localDateTime);
 
                     addNCDFolloupIncentiveRecord(
                             incentiveActivity,
@@ -1191,7 +1194,10 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             dto.setVersion(entity.getVersion());
             dto.setVisitNo(entity.getVisitNo());
             dto.setFollowUpNo(entity.getFollowUpNo());
-            dto.setFollowUpDate(entity.getFollowUpDate());
+            if(entity.getFollowUpDate()!=null){
+                dto.setFollowUpDate(entity.getFollowUpDate());
+
+            }
             dto.setDiagnosisCodes(entity.getDiagnosisCodes());
             dto.setFormDataJson(entity.getFormDataJson());
 
@@ -1200,7 +1206,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                         entity.getTreatmentStartDate().toString()
                 );
             }
-
+             checkIncentive(entity,entity.getUserID());
             dtoList.add(dto);
         }
         return dtoList;
