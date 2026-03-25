@@ -290,42 +290,17 @@ public class IncentiveServiceImpl implements IncentiveService {
                     ).stream().collect(Collectors.toMap(IncentiveActivity::getName, Function.identity()));
 
             IncentiveActivity ncdPopEnumeration   = activityMap.get("NCD_POP_ENUMERATION");
-            IncentiveActivity ncdFollowupTreatment = activityMap.get("NCD_FOLLOWUP_TREATMENT");
 
             CompletableFuture<List<BenReferDetails>> benReferFuture =
                     CompletableFuture.supplyAsync(() -> benReferDetailsRepo.findByCreatedBy(userName));
             CompletableFuture<List<CbacDetailsImer>> cbacFuture =
                     CompletableFuture.supplyAsync(() -> cbacIemrDetailsRepo.findByCreatedBy(userName));
 
-            List<BenReferDetails> benReferDetails = benReferFuture.get();
             List<CbacDetailsImer> cbacDetailsImer = cbacFuture.get();
 
             List<IncentiveActivityRecord> recordsToSave = new ArrayList<>();
 
-            if (ncdFollowupTreatment != null && !benReferDetails.isEmpty()) {
 
-                List<Long> benIds = benReferDetails.stream()
-                        .map(BenReferDetails::getBeneficiaryRegID)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-
-                Set<String> existingKeys = recordRepo
-                        .findExistingRecords(ncdFollowupTreatment.getId(), benIds, ashaId)
-                        .stream()
-                        .map(r -> r.getActivityId() + "_" + r.getBenId() + "_" + r.getCreatedDate())
-                        .collect(Collectors.toSet());
-
-                final IncentiveActivity activity = ncdFollowupTreatment;
-                benReferDetails.forEach(ref -> {
-                    Long benId = ref.getBeneficiaryRegID();
-                    if (benId != null) {
-                        String key = activity.getId() + "_" + benId + "_" + ref.getCreatedDate();
-                        if (!existingKeys.contains(key)) {
-                            recordsToSave.add(addNCDandCBACIncentiveRecord(activity, ashaId, benId, ref.getCreatedDate(), userName));
-                        }
-                    }
-                });
-            }
 
             if (ncdPopEnumeration != null && !cbacDetailsImer.isEmpty()) {
                 List<Long> cbacBenIds = cbacDetailsImer.stream()

@@ -1107,57 +1107,71 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     private void checkIncentive(ChronicDiseaseVisitEntity chronicDiseaseVisitEntity,Integer ashaId){
         String userName = userRepo.getUserNamedByUserId(ashaId);
         IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.NCD.getDisplayName());
-        if (chronicDiseaseVisitEntity.getFollowUpNo() != null
-                && chronicDiseaseVisitEntity.getFollowUpDate() != null
-                && chronicDiseaseVisitEntity.getDiagnosisCodes() != null) {
+        if(incentiveActivity!=null){
+            if (chronicDiseaseVisitEntity.getFollowUpNo() != null
+                    && chronicDiseaseVisitEntity.getFollowUpDate() != null
+                    && chronicDiseaseVisitEntity.getDiagnosisCodes() != null) {
 
-            List<String> targetDiseases = Arrays.asList(
-                    "Hypertension (BP)",
-                    "Diabetes (DM)",
-                    "Cancer"
-            );
-
-            List<String> diagnosisList = Arrays.asList(
-                    chronicDiseaseVisitEntity.getDiagnosisCodes().split(",")
-            );
-
-            boolean matchFound = diagnosisList.stream()
-                    .map(String::trim)
-                    .anyMatch(targetDiseases::contains);
-
-            if (matchFound && Integer.valueOf(6).equals(chronicDiseaseVisitEntity.getFollowUpNo())) {
-
-                LocalDate localDate = chronicDiseaseVisitEntity.getFollowUpDate();
-                Timestamp followUpTimestamp = Timestamp.valueOf(localDate.atStartOfDay());
-
-                addNCDFolloupIncentiveRecord(
-                        incentiveActivity,
-                        ashaId,
-                        chronicDiseaseVisitEntity.getBenId(),
-                        followUpTimestamp,
-                        userName
+                List<String> targetDiseases = Arrays.asList(
+                        "Hypertension (BP)",
+                        "Diabetes (DM)",
+                        "Cancer"
                 );
+
+                List<String> diagnosisList = Arrays.asList(
+                        chronicDiseaseVisitEntity.getDiagnosisCodes().split(",")
+                );
+
+                boolean matchFound = diagnosisList.stream()
+                        .map(String::trim)
+                        .anyMatch(targetDiseases::contains);
+
+                if (matchFound && Integer.valueOf(6).equals(chronicDiseaseVisitEntity.getFollowUpNo())) {
+
+                    LocalDate localDate = chronicDiseaseVisitEntity.getFollowUpDate();
+                    Timestamp followUpTimestamp = Timestamp.valueOf(localDate.atStartOfDay());
+
+                    addNCDFolloupIncentiveRecord(
+                            incentiveActivity,
+                            ashaId,
+                            chronicDiseaseVisitEntity.getBenId(),
+                            followUpTimestamp,
+                            userName
+                    );
+                }
             }
         }
 
 
+
     }
 
-    private IncentiveActivityRecord addNCDFolloupIncentiveRecord(IncentiveActivity activity, Integer ashaId,
+    private void addNCDFolloupIncentiveRecord(IncentiveActivity activity, Integer ashaId,
                                                                  Long benId, Timestamp createdDate, String userName) {
-        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
-        IncentiveActivityRecord record = new IncentiveActivityRecord();
-        record.setActivityId(activity.getId());
-        record.setCreatedDate(createdDate);
-        record.setCreatedBy(userName);
-        record.setStartDate(createdDate);
-        record.setEndDate(createdDate);
-        record.setUpdatedDate(now);
-        record.setUpdatedBy(userName);
-        record.setBenId(benId);
-        record.setAshaId(ashaId);
-        record.setAmount(Long.valueOf(activity.getRate()));
-        return record;
+       try {
+           IncentiveActivityRecord record = recordRepo
+                   .findRecordByActivityIdCreatedDateBenId(activity.getId(), createdDate, benId);
+
+           Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+           if(record==null){
+               record.setActivityId(activity.getId());
+               record.setCreatedDate(createdDate);
+               record.setCreatedBy(userName);
+               record.setStartDate(createdDate);
+               record.setEndDate(createdDate);
+               record.setUpdatedDate(now);
+               record.setUpdatedBy(userName);
+               record.setBenId(benId);
+               record.setAshaId(ashaId);
+               record.setAmount(Long.valueOf(activity.getRate()));
+               record .setIsEligible(true);
+               recordRepo.save(record);
+           }
+       }catch (Exception e){
+           logger.error("Fail to save IncentiveActivityRecord " + e.getMessage());
+       }
+
+
     }
     @Override
     public List<ChronicDiseaseVisitDTO> getCdtfVisits(GetBenRequestHandler getBenRequestHandler) {
