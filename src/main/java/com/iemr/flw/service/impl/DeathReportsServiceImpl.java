@@ -139,7 +139,10 @@ public class DeathReportsServiceImpl implements DeathReportsService {
             Integer userId = userRepo.getUserIdByName(cdr.getCreatedBy());
             IncentiveActivity immunizationActivity =
                     incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_DEATH_REPORTING", GroupName.CHILD_HEALTH.getDisplayName());
-            createIncentiveRecord(cdr,cdr.getBenId(),userId,immunizationActivity);
+            if(immunizationActivity!=null){
+                createIncentiveRecord(cdr,cdr.getBenId(),userId,immunizationActivity);
+
+            }
         });
     }
 
@@ -151,8 +154,10 @@ public class DeathReportsServiceImpl implements DeathReportsService {
             Integer userId = userRepo.getUserIdByName(mdsr.getCreatedBy());
             IncentiveActivity immunizationActivity =
                     incentivesRepo.findIncentiveMasterByNameAndGroup("MATERNAL_DEATH_REPORT", GroupName.MATERNAL_HEALTH.getDisplayName());
+              if(immunizationActivity!=null){
+                  createIncentiveRecord(mdsr,mdsr.getBenId(),userId,immunizationActivity);
 
-            createIncentiveRecord(mdsr,mdsr.getBenId(),userId,immunizationActivity);
+              }
         });
     }
 
