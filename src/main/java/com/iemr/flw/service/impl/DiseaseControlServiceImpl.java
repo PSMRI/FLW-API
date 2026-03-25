@@ -30,6 +30,7 @@ import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.DiseaseType;
+import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.DiseaseControlService;
 import com.iemr.flw.utils.JwtUtil;
@@ -1077,7 +1078,10 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             entity.setVersion(dto.getVersion());
             entity.setVisitNo(dto.getVisitNo());
             entity.setFollowUpNo(dto.getFollowUpNo());
-            entity.setFollowUpDate(dto.getFollowUpDate());
+            if(dto.getFollowUpDate()!=null){
+                entity.setFollowUpDate(dto.getFollowUpDate());
+
+            }
             entity.setDiagnosisCodes(dto.getDiagnosisCodes());
             entity.setFormDataJson(dto.getFormDataJson());
             entity.setUserID(jwtUtil.extractUserId(token));
@@ -1096,11 +1100,82 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
             dto.setId(savedEntity.getId());
             responseList.add(dto);
+            checkIncentive(savedEntity,savedEntity.getUserID());
+
+
         }
 
         return responseList;
     }
+    private void checkIncentive(ChronicDiseaseVisitEntity chronicDiseaseVisitEntity,Integer ashaId){
+        String userName = userRepo.getUserNamedByUserId(ashaId);
+        IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.NCD.getDisplayName());
+        if(incentiveActivity!=null){
+            if (chronicDiseaseVisitEntity.getFollowUpNo() != null
+                    && chronicDiseaseVisitEntity.getCreatedDate() != null
+                    && chronicDiseaseVisitEntity.getDiagnosisCodes() != null) {
 
+                List<String> targetDiseases = Arrays.asList(
+                        "Hypertension (BP)",
+                        "Diabetes (DM)",
+                        "Cancer"
+                );
+
+                List<String> diagnosisList = Arrays.asList(
+                        chronicDiseaseVisitEntity.getDiagnosisCodes().split(",")
+                );
+
+                boolean matchFound = diagnosisList.stream()
+                        .map(String::trim)
+                        .anyMatch(targetDiseases::contains);
+
+                if (matchFound && Integer.valueOf(6).equals(chronicDiseaseVisitEntity.getFollowUpNo())) {
+                    LocalDateTime localDateTime = chronicDiseaseVisitEntity.getCreatedDate();
+
+                    Timestamp followUpTimestamp = Timestamp.valueOf(localDateTime);
+
+                    addNCDFolloupIncentiveRecord(
+                            incentiveActivity,
+                            ashaId,
+                            chronicDiseaseVisitEntity.getBenId(),
+                            followUpTimestamp,
+                            userName
+                    );
+                }
+            }
+        }
+
+
+
+    }
+
+    private void addNCDFolloupIncentiveRecord(IncentiveActivity activity, Integer ashaId,
+                                                                 Long benId, Timestamp createdDate, String userName) {
+       try {
+           IncentiveActivityRecord record = recordRepo
+                   .findRecordByActivityIdCreatedDateBenId(activity.getId(), createdDate, benId);
+
+           Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+           if(record==null){
+               record.setActivityId(activity.getId());
+               record.setCreatedDate(createdDate);
+               record.setCreatedBy(userName);
+               record.setStartDate(createdDate);
+               record.setEndDate(createdDate);
+               record.setUpdatedDate(now);
+               record.setUpdatedBy(userName);
+               record.setBenId(benId);
+               record.setAshaId(ashaId);
+               record.setAmount(Long.valueOf(activity.getRate()));
+               record .setIsEligible(true);
+               recordRepo.save(record);
+           }
+       }catch (Exception e){
+           logger.error("Fail to save IncentiveActivityRecord " + e.getMessage());
+       }
+
+
+    }
     @Override
     public List<ChronicDiseaseVisitDTO> getCdtfVisits(GetBenRequestHandler getBenRequestHandler) {
 
@@ -1119,7 +1194,10 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             dto.setVersion(entity.getVersion());
             dto.setVisitNo(entity.getVisitNo());
             dto.setFollowUpNo(entity.getFollowUpNo());
-            dto.setFollowUpDate(entity.getFollowUpDate());
+            if(entity.getFollowUpDate()!=null){
+                dto.setFollowUpDate(entity.getFollowUpDate());
+
+            }
             dto.setDiagnosisCodes(entity.getDiagnosisCodes());
             dto.setFormDataJson(entity.getFormDataJson());
 
@@ -1128,10 +1206,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                         entity.getTreatmentStartDate().toString()
                 );
             }
-
+             checkIncentive(entity,entity.getUserID());
             dtoList.add(dto);
         }
-
         return dtoList;
     }
 
