@@ -24,10 +24,10 @@ public class FilariasisCampaign {
     @Column(name = "user_id", nullable = false)
     private Integer userId;
 
-    @Column(name = "no_of_families", nullable = false)
+    @Column(name = "number_of_families", nullable = false)
     private Integer numberOfFamilies = 0;
 
-    @Column(name = "no_of_individuals", nullable = false)
+    @Column(name = "number_of_individuals", nullable = false)
     private Integer numberOfIndividuals = 0;
 
     /**
