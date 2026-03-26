@@ -36,6 +36,7 @@ import java.util.Date;
 @Data
 public class ScreeningFilariasis {
 
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
@@ -52,7 +53,6 @@ public class ScreeningFilariasis {
     @Column(name = "affected_body_part", length = 50)
     private String affectedBodyPart;
 
-    // DATE → LocalDate
     @Column(name = "mda_home_visit_date")
     private LocalDate mdaHomeVisitDate;
 
