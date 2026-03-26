@@ -1,5 +1,7 @@
 package com.iemr.flw.service;
 
+import java.util.Map;
+
 public interface AbhaTokenService {
-    String getAbhaToken() throws Exception;
+    Map<String, Object> getAbhaToken() throws Exception;
 }

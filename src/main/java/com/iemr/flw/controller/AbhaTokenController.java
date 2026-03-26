@@ -27,9 +27,7 @@ public class AbhaTokenController {
     public ResponseEntity<?> getAbhaToken(
             @RequestHeader(value = "Authorization") String authorization) {
         try {
-            String accessToken = abhaTokenService.getAbhaToken();
-            Map<String, String> tokenResponse = new HashMap<>();
-            tokenResponse.put("accessToken", accessToken);
+            Map<String, Object> tokenResponse = abhaTokenService.getAbhaToken();
             return new ResponseEntity<>(
                     new ApiResponse(true, null, tokenResponse), HttpStatus.OK);
         } catch (Exception e) {

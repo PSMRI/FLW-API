@@ -25,7 +25,7 @@ public class AbhaTokenServiceImpl implements AbhaTokenService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-    private static String ABHA_AUTH_TOKEN;
+    private static Map<String, Object> ABHA_TOKEN_RESPONSE;
     private static Long ABHA_TOKEN_EXP;
 
     @Value("${abha.client.id}")
@@ -41,9 +41,9 @@ public class AbhaTokenServiceImpl implements AbhaTokenService {
     private String xCmId;
 
     @Override
-    public synchronized String getAbhaToken() throws Exception {
+    public synchronized Map<String, Object> getAbhaToken() throws Exception {
         try {
-            if (ABHA_AUTH_TOKEN == null || ABHA_TOKEN_EXP == null
+            if (ABHA_TOKEN_RESPONSE == null || ABHA_TOKEN_EXP == null
                     || ABHA_TOKEN_EXP < System.currentTimeMillis()) {
                 generateAbhaToken();
                 logger.info("ABHA token generated successfully");
@@ -52,7 +52,7 @@ public class AbhaTokenServiceImpl implements AbhaTokenService {
             logger.error("Error generating ABHA token: " + e.getMessage());
             throw new Exception("Failed to generate ABHA token: " + e.getMessage());
         }
-        return ABHA_AUTH_TOKEN;
+        return ABHA_TOKEN_RESPONSE;
     }
 
     private void generateAbhaToken() throws Exception {
@@ -82,12 +82,20 @@ public class AbhaTokenServiceImpl implements AbhaTokenService {
         String responseBody = responseEntity.getBody();
         if (responseBody != null) {
             JsonObject jsonResponse = JsonParser.parseString(responseBody).getAsJsonObject();
-            ABHA_AUTH_TOKEN = jsonResponse.get("accessToken").getAsString();
-            Integer expiresIn = jsonResponse.get("expiresIn").getAsInt();
 
+            Map<String, Object> tokenResponse = new HashMap<>();
+            tokenResponse.put("accessToken", jsonResponse.get("accessToken").getAsString());
+            tokenResponse.put("expiresIn", jsonResponse.get("expiresIn").getAsInt());
+            tokenResponse.put("refreshExpiresIn", jsonResponse.get("refreshExpiresIn").getAsInt());
+            tokenResponse.put("refreshToken", jsonResponse.get("refreshToken").getAsString());
+            tokenResponse.put("tokenType", jsonResponse.get("tokenType").getAsString());
+
+            Integer expiresIn = jsonResponse.get("expiresIn").getAsInt();
             Calendar calendar = Calendar.getInstance();
             calendar.add(Calendar.SECOND, expiresIn);
             ABHA_TOKEN_EXP = calendar.getTimeInMillis();
+
+            ABHA_TOKEN_RESPONSE = tokenResponse;
         } else {
             throw new Exception("Empty response from ABDM token API");
         }
