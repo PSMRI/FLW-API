@@ -27,6 +27,7 @@ package com.iemr.flw.dto.iemr;
 import jakarta.persistence.Column;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.Date;
 @Data
 public class DiseaseMalariaDTO {
@@ -34,9 +35,9 @@ public class DiseaseMalariaDTO {
     private Long id;
     private Long benId;
     private Long houseHoldDetailsId;
-    private Date screeningDate;
+    private LocalDate screeningDate;
     private String beneficiaryStatus;
-    private Date dateOfDeath;
+    private LocalDate dateOfDeath;
     private String placeOfDeath;
     private String otherPlaceOfDeath;
     private String reasonForDeath;
@@ -44,18 +45,18 @@ public class DiseaseMalariaDTO {
     private String symptoms;
     private String caseStatus;
     private String rapidDiagnosticTest;
-    private Date dateOfRdt;
+    private LocalDate dateOfRdt;
     private String slideTestPf;
     private String slideTestPv;
-    private Date dateOfSlideTest;
+    private LocalDate dateOfSlideTest;
     private String slideNo;
     private Integer referredTo;
     private String otherReferredFacility;
     private String remarks;
-    private Date dateOfVisitBySupervisor;
+    private LocalDate dateOfVisitBySupervisor;
     private Integer diseaseTypeId;
     private Integer userId;
-    private Date createdDate;
+    private LocalDate createdDate;
     private String createdBy;
     private boolean feverMoreThanTwoWeeks;
     private boolean fluLikeIllness;
@@ -71,6 +72,6 @@ public class DiseaseMalariaDTO {
     private  String  malariaTestType;
     private String malariaSlideTestType;
     private Long visitId;
-    private Date visitDate;
+    private LocalDate visitDate;
 
 }

@@ -27,6 +27,8 @@ package com.iemr.flw.domain.iemr;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -41,12 +43,11 @@ public class ScreeningLeprosy {
     @Column(name = "ben_id")
     private Long benId;
 
-    @Column(name = "house_hold_details_Id",nullable = false)
+    @Column(name = "house_hold_details_Id", nullable = false)
     private Long houseHoldDetailsId;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "home_visit_date")
-    private Date homeVisitDate;
+    private LocalDate homeVisitDate;
 
     @Column(name = "leprosy_status", length = 225)
     private String leprosyStatus;
@@ -57,16 +58,14 @@ public class ScreeningLeprosy {
     @Column(name = "other_referred_to", columnDefinition = "TEXT")
     private String otherReferredTo;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "leprosy_status_date")
-    private Date leprosyStatusDate;
+    private LocalDate leprosyStatusDate;
 
     @Column(name = "type_of_leprosy", length = 225)
     private String typeOfLeprosy;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "follow_up_date")
-    private Date followUpDate;
+    private LocalDate followUpDate;
 
     @Column(name = "remark", length = 225)
     private String remark;
@@ -87,7 +86,7 @@ public class ScreeningLeprosy {
     private String beneficiaryStatus;
 
     @Column(name = "date_of_death")
-    private Date dateOfDeath;
+    private LocalDate dateOfDeath;
 
     @Column(name = "place_of_death")
     private String placeOfDeath;
@@ -125,16 +124,14 @@ public class ScreeningLeprosy {
     @Column(name = "leprosy_state", length = 255)
     private String leprosyState;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "treatment_start_date")
-    private Date treatmentStartDate;
+    private LocalDate treatmentStartDate;
 
     @Column(name = "total_followup_months_required")
     private Integer totalFollowUpMonthsRequired;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "treatment_end_date")
-    private Date treatmentEndDate;
+    private LocalDate treatmentEndDate;
 
     @Column(name = "mdt_blister_pack_recived", length = 100)
     private String mdtBlisterPackRecived;
@@ -218,11 +215,11 @@ public class ScreeningLeprosy {
     private String createdBy;
 
     @Column(name = "CreatedDate")
-    private Timestamp createdDate;
+    private LocalDateTime createdDate;
 
     @Column(name = "ModifiedBy", length = 100)
     private String modifiedBy;
 
     @Column(name = "LastModDate")
-    private Timestamp lastModDate;
+    private LocalDateTime lastModDate;
 }

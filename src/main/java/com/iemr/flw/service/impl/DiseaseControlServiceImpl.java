@@ -183,7 +183,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         diseaseAesje.setFollowUpPoint(diseaseControlData.getFollowUpPoint());
         diseaseAesje.setReferredTo(diseaseControlData.getReferredTo());
         diseaseAesje.setOtherReferredFacility(diseaseControlData.getOtherReferredFacility());
-        diseaseAesje.setCreatedDate(new Timestamp(System.currentTimeMillis())); // Set current timestamp
+        diseaseAesje.setCreatedDate(LocalDate.now());
         diseaseAesje.setCreatedBy(diseaseControlData.getCreatedBy());
         diseaseAesje.setBeneficiaryStatusId(diseaseControlData.getBeneficiaryStatusId());
         diseaseAesje.setReferToName(diseaseControlData.getReferToName());
@@ -630,7 +630,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         entity.setFollowUpPoint(dto.getFollowUpPoint());
         entity.setReferredTo(dto.getReferredTo());
         entity.setOtherReferredFacility(dto.getOtherReferredFacility());
-        entity.setCreatedDate(new Timestamp(System.currentTimeMillis()));  // or dto.getCreatedDate()
+        entity.setCreatedDate(LocalDateTime.now());  // or dto.getCreatedDate()
         entity.setCreatedBy(dto.getCreatedBy());
         entity.setBeneficiaryStatusId(dto.getBeneficiaryStatusId());
         entity.setReferToName(dto.getReferToName());
@@ -672,7 +672,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         entity.setOtherReferredFacility(dto.getOtherReferredFacility());
         entity.setCreatedBy(dto.getCreatedBy());
         // You can also update createdDate if required
-        entity.setCreatedDate(new Timestamp(System.currentTimeMillis()));
+        entity.setCreatedDate(LocalDateTime.now());
         entity.setReferToName(dto.getReferToName());
         entity.setBeneficiaryStatusId(dto.getBeneficiaryStatusId());
         entity.setUserId(dto.getUserId());

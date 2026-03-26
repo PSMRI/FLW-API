@@ -27,6 +27,9 @@ package com.iemr.flw.domain.iemr;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.Date;
 
 @Entity
@@ -45,16 +48,14 @@ public class ScreeningMalaria {
     @Column(name = "house_hold_details_Id",nullable = false)
     private Long houseHoldDetailsId;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "screening_date")
-    private Date screeningDate;
+    private LocalDate screeningDate;
 
     @Column(name = "beneficiary_status")
     private String beneficiaryStatus;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_death")
-    private Date dateOfDeath;
+    private LocalDate dateOfDeath;
 
     @Column(name = "place_of_death")
     private String placeOfDeath;
@@ -77,9 +78,8 @@ public class ScreeningMalaria {
     @Column(name = "rapid_diagnostic_test")
     private String rapidDiagnosticTest;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_rdt")
-    private Date dateOfRdt;
+    private LocalDate dateOfRdt;
 
     @Column(name = "slide_test_pf")
     private String slideTestPf;
@@ -87,9 +87,8 @@ public class ScreeningMalaria {
     @Column(name = "slide_test_pv")
     private String slideTestPv;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_slide_test")
-    private Date dateOfSlideTest;
+    private LocalDate dateOfSlideTest;
 
     @Column(name = "slide_no")
     private String slideNo;
@@ -103,9 +102,8 @@ public class ScreeningMalaria {
     @Column(name = "remarks")
     private String remarks;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_visit_by_supervisor")
-    private Date dateOfVisitBySupervisor;
+    private LocalDate dateOfVisitBySupervisor;
 
     @Column(name = "disease_type_id")
     private Integer diseaseTypeId;
@@ -113,9 +111,8 @@ public class ScreeningMalaria {
     @Column(name = "user_id")
     private Integer userId;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "created_date")
-    private Date createdDate;
+    private Timestamp createdDate;
 
     @Column(name = "created_by")
     private String createdBy;
@@ -137,7 +134,7 @@ public class ScreeningMalaria {
     private Long visitId;
 
     @Column(name = "visit_date")
-    private Date visitDate;
+    private LocalDate visitDate;
 
 
 }

@@ -1,33 +1,9 @@
-/*
-* AMRIT – Accessible Medical Records via Integrated Technology
-* Integrated EHR (Electronic Health Records) Solution
-*
-* Copyright (C) "Piramal Swasthya Management and Research Institute"
-*
-* This file is part of AMRIT.
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see https://www.gnu.org/licenses/.
-*
-/*
-* AMRIT – Accessible Medical Records via Integrated Technology
-*/
 package com.iemr.flw.domain.iemr;
 
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "screening_aesje", schema = "db_iemr")
@@ -42,19 +18,17 @@ public class ScreeningAesje {
     @Column(name = "ben_id")
     private Long benId;
 
-    @Column(name = "house_hold_details_Id",nullable = false)
+    @Column(name = "house_hold_details_Id", nullable = false)
     private Long houseHoldDetailsId;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "visit_date")
-    private Date visitDate;
+    private LocalDate visitDate;
 
     @Column(name = "beneficiary_status")
     private String beneficiaryStatus = "Not Applicable";
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_death")
-    private Date dateOfDeath;
+    private LocalDate dateOfDeath;
 
     @Column(name = "place_of_death")
     private String placeOfDeath;
@@ -84,7 +58,7 @@ public class ScreeningAesje {
     private String otherReferredFacility;
 
     @Column(name = "created_date")
-    private Date createdDate = new Date();
+    private LocalDate createdDate = LocalDate.now();
 
     @Column(name = "created_by")
     private String createdBy;
@@ -100,6 +74,4 @@ public class ScreeningAesje {
 
     @Column(name = "beneficiary_status_id")
     private Integer beneficiaryStatusId;
-
-    // Getters and Setters
 }

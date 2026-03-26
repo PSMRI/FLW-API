@@ -27,6 +27,8 @@ package com.iemr.flw.domain.iemr;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.Date;
 
 @Entity
@@ -34,7 +36,6 @@ import java.util.Date;
 @Data
 public class ScreeningFilariasis {
 
-    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
@@ -42,7 +43,7 @@ public class ScreeningFilariasis {
     @Column(name = "ben_id")
     private Long benId;
 
-    @Column(name = "house_hold_details_Id",nullable = false)
+    @Column(name = "house_hold_details_Id", nullable = false)
     private Long houseHoldDetailsId;
 
     @Column(name = "suffering_from_filariasis")
@@ -51,9 +52,9 @@ public class ScreeningFilariasis {
     @Column(name = "affected_body_part", length = 50)
     private String affectedBodyPart;
 
-    @Temporal(TemporalType.DATE)
+    // DATE → LocalDate
     @Column(name = "mda_home_visit_date")
-    private Date mdaHomeVisitDate;
+    private LocalDate mdaHomeVisitDate;
 
     @Column(name = "dose_status", length = 5)
     private String doseStatus;
@@ -70,9 +71,8 @@ public class ScreeningFilariasis {
     @Column(name = "other_side_effect_details", columnDefinition = "TEXT")
     private String otherSideEffectDetails;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_date")
-    private Date createdDate;
+    private Timestamp createdDate;
 
     @Column(name = "created_by", length = 100)
     private String createdBy;

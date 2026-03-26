@@ -25,11 +25,9 @@
 package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
-import java.sql.Timestamp;
-import java.util.Date;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
 public class DiseaseLeprosyDTO {
@@ -37,20 +35,20 @@ public class DiseaseLeprosyDTO {
     private Long id;
     private Long benId;
     private Long houseHoldDetailsId;
-    private Date homeVisitDate;
+    private LocalDate homeVisitDate;
     private String leprosyStatus;
     private String referredTo;
     private String otherReferredTo;
-    private Date leprosyStatusDate;
+    private LocalDate leprosyStatusDate;
     private String typeOfLeprosy;
-    private Date followUpDate;
+    private LocalDate followUpDate;
     private String beneficiaryStatus;
     private String remark;
     private Integer userId;
     private Integer diseaseTypeId;
     private String referToName;
     private Integer beneficiaryStatusId;
-    private Date dateOfDeath;
+    private LocalDate dateOfDeath;
     private String placeOfDeath;
     private String otherPlaceOfDeath;
     private String reasonForDeath;
@@ -63,15 +61,15 @@ public class DiseaseLeprosyDTO {
     private Integer visitNumber;
     private Boolean isConfirmed;
     private String leprosyState;
-    private Date treatmentStartDate;
+    private LocalDate treatmentStartDate;
     private Integer totalFollowUpMonthsRequired;
-    private Date treatmentEndDate;
+    private LocalDate treatmentEndDate;
     private String mdtBlisterPackRecived;
     private String treatmentStatus;
     private String createdBy;
-    private Timestamp createdDate;
+    private LocalDateTime createdDate;
     private String modifiedBy;
-    private Timestamp lastModDate;
+    private LocalDateTime lastModDate;
     private Integer recurrentUlcerationId;
     private Integer recurrentTinglingId;
     private Integer hypopigmentedPatchId;

@@ -3,6 +3,7 @@ package com.iemr.flw.domain.iemr;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 @Entity
@@ -27,12 +28,10 @@ public class MalariaFollowUp {
     private Long diseaseId;
 
     @Column(name = "date_of_diagnosis", nullable = false)
-    @Temporal(TemporalType.DATE)
-    private Date dateOfDiagnosis;
+    private LocalDate dateOfDiagnosis;
 
     @Column(name = "treatment_start_date", nullable = false)
-    @Temporal(TemporalType.DATE)
-    private Date treatmentStartDate;
+    private LocalDate treatmentStartDate;
 
     @Column(name = "treatment_given", nullable = false)
     private String treatmentGiven;
@@ -41,10 +40,8 @@ public class MalariaFollowUp {
     private String day;
 
     @Column(name = "treatment_completion_date")
-    @Temporal(TemporalType.DATE)
-    private Date treatmentCompletionDate;
+    private LocalDate treatmentCompletionDate;
 
     @Column(name = "referral_date")
-    @Temporal(TemporalType.DATE)
-    private Date referralDate;
+    private LocalDate referralDate;
 }

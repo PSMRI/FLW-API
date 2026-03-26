@@ -26,15 +26,16 @@ package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.Date;
 @Data
 public class DiseaseAesjeDto {
     private Long id;
     private Long benId;
     private Long houseHoldDetailsId;
-    private Date visitDate;
+    private LocalDate visitDate;
     private String beneficiaryStatus;
-    private Date dateOfDeath;
+    private LocalDate dateOfDeath;
     private String placeOfDeath;
     private String otherPlaceOfDeath;
     private String reasonForDeath;
@@ -44,7 +45,7 @@ public class DiseaseAesjeDto {
     private Integer followUpPoint;
     private String referredTo;
     private String otherReferredFacility;
-    private Date createdDate;
+    private LocalDate createdDate;
     private String createdBy;
     private Integer userId;
     private Integer diseaseTypeId;

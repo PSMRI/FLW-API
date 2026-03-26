@@ -26,6 +26,8 @@ package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
 
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.Date;
 @Data
 public class DiseaseFilariasisDTO {
@@ -35,13 +37,13 @@ public class DiseaseFilariasisDTO {
     private Long houseHoldDetailsId;
     private Boolean sufferingFromFilariasis;
     private String affectedBodyPart;
-    private Date mdaHomeVisitDate;
+    private LocalDate mdaHomeVisitDate;   // DATE
     private String doseStatus;
     private Integer filariasisCaseCount;
     private String otherDoseStatusDetails;
     private String medicineSideEffect;
     private String otherSideEffectDetails;
-    private Date createdDate;
+    private Timestamp createdDate;    // TIMESTAMP
     private String createdBy;
     private Integer userId;
     private Integer diseaseTypeId;

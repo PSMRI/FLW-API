@@ -26,6 +26,8 @@ package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 @Data
 public class DiseaseKalaAzarDTO {
@@ -33,9 +35,9 @@ public class DiseaseKalaAzarDTO {
     private Long id;
     private Long benId;
     private Long houseHoldDetailsId;
-    private Date visitDate;
+    private LocalDate visitDate;
     private String beneficiaryStatus;
-    private Date dateOfDeath;
+    private LocalDate dateOfDeath;
     private String placeOfDeath;
     private String otherPlaceOfDeath;
     private String reasonForDeath;
@@ -43,11 +45,11 @@ public class DiseaseKalaAzarDTO {
     private String kalaAzarCaseStatus;
     private Integer kalaAzarCaseCount;
     private String rapidDiagnosticTest;
-    private Date dateOfRdt;
+    private LocalDate dateOfRdt;
     private Integer followUpPoint;
     private String referredTo;
     private String otherReferredFacility;
-    private Date createdDate;
+    private LocalDateTime createdDate;
     private String createdBy;
     private Integer userId;
     private Integer diseaseTypeId;

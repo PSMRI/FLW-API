@@ -27,6 +27,8 @@ package com.iemr.flw.domain.iemr;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -42,19 +44,17 @@ public class ScreeningKalaAzar {
     @Column(name = "ben_id")
     private Long benId;
 
-    @Column(name = "house_hold_details_Id",nullable = false)
+    @Column(name = "house_hold_details_Id", nullable = false)
     private Long houseHoldDetailsId;
 
     @Column(name = "user_id")
     private Integer userId;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "visit_date")
-    private Date visitDate;
+    private LocalDate visitDate;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_death")
-    private Date dateOfDeath;
+    private LocalDate dateOfDeath;
 
     @Column(name = "place_of_death")
     private String placeOfDeath;
@@ -77,9 +77,8 @@ public class ScreeningKalaAzar {
     @Column(name = "rapid_diagnostic_test")
     private String rapidDiagnosticTest;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_rdt")
-    private Date dateOfRdt;
+    private LocalDate dateOfRdt;
 
     @Column(name = "follow_up_point")
     private Integer followUpPoint;
@@ -90,9 +89,8 @@ public class ScreeningKalaAzar {
     @Column(name = "other_referred_facility")
     private String otherReferredFacility;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "created_date")
-    private Date createdDate;
+    private LocalDateTime createdDate;
 
     @Column(name = "created_by")
     private String createdBy;
