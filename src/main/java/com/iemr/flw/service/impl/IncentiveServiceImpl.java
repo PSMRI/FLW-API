@@ -168,22 +168,26 @@ public class IncentiveServiceImpl implements IncentiveService {
     }
 
     @Override
-    public String getAllIncentivesByUserId(GetBenRequestHandler request) {
+    public String getAllIncentivesByUserId(GetBenRequestHandler request,String  token) {
+        Integer stateId =0;
         try {
-            if (request.getVillageID() != StateCode.CG.getStateCode()) {
-                checkMonthlyAshaIncentive(request.getAshaId());
+            if(token!=null){
+                UserServiceRoleDTO userRole = userRepo.getUserRole(jwtUtil.extractUserId(token)).get(0);
+                if(userRole!=null) {
+                    stateId = userRole.getStateId();
+                }
+                if (stateId != StateCode.CG.getStateCode()) {
+                    checkMonthlyAshaIncentive(request.getAshaId());
+                }
+                incentiveOfNcdReferal(request.getAshaId(), stateId);
+
             }
+
         } catch (Exception e) {
             logger.error("Error in checkMonthlyAshaIncentive: ", e);
         }
 
-        try {
 
-            incentiveOfNcdReferal(request.getAshaId(), request.getVillageID());
-
-        } catch (Exception e) {
-            logger.error("Error in incentiveOfNcdReferal: ", e);
-        }
 
         Integer villageID = request.getVillageID();
         boolean isCG = villageID != null && villageID.intValue() == StateCode.CG.getStateCode();
