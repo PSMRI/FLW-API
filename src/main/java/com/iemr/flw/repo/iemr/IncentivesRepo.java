@@ -40,7 +40,7 @@ public interface IncentivesRepo extends JpaRepository<IncentiveActivity, Long> {
             "AND i.is_deleted = false",
             nativeQuery = true)
     Object[] getStatusCountByAshaId(@Param("ashaId") Integer ashaId);
-}
+
     List<IncentiveActivity> findByGroupAndIsDeleted(String group, Boolean isDeleted);
 
     List<IncentiveActivity> findByGroupNotAndIsDeleted(String group, Boolean isDeleted);

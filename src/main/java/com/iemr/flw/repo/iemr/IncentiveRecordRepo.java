@@ -163,6 +163,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             @Param("ashaId") Integer ashaId,
             @Param("startDate") Timestamp startDate,
             @Param("endDate") Timestamp endDate
+    );
 
     // RecordRepo — existing records batch mein fetch karo
     @Query("SELECT r FROM IncentiveActivityRecord r " +
