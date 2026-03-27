@@ -20,7 +20,6 @@ public class JwtUtil {
 
 	@Value("${jwt.secret}")
 	private String SECRET_KEY;
-	private String userName;
 
 	@Autowired
 	private TokenDenylist tokenDenylist;
@@ -90,13 +89,4 @@ public class JwtUtil {
 				.getPayload();
 	}
 
-	public String getUserNameFromStorage() {
-		return  userName;
-
-	}
-
-	public void setUserNameFromStorage(String loginUserName) {
-		  this.userName = loginUserName;
-
-	}
 }
