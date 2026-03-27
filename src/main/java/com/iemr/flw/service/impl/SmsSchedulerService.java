@@ -2,22 +2,16 @@ package com.iemr.flw.service.impl;
 
 import com.iemr.flw.domain.identity.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.flw.domain.iemr.ANCVisit;
-import com.iemr.flw.domain.iemr.M_User;
-import com.iemr.flw.dto.iemr.ANCVisitDTO;
+import com.iemr.flw.domain.iemr.User;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.ANCVisitRepo;
 import com.iemr.flw.service.EmployeeMasterInter;
 import com.iemr.flw.utils.CookieUtil;
-import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.math.BigInteger;
 import java.sql.Timestamp;
@@ -25,7 +19,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class SmsSchedulerService {
@@ -94,7 +87,7 @@ public class SmsSchedulerService {
 
     @Scheduled(cron = "0 0 9 * * *")
     public void trigerTomorrowImmunizationReminders() {
-        for (M_User m_user : employeeMasterInter.getAllUsers()) {
+        for (User m_user : employeeMasterInter.getAllUsers()) {
             childCareService.getTomorrowImmunizationReminders(m_user.getUserID());
 
         }

@@ -41,6 +41,9 @@ public class UwinSessionServiceImpl implements UwinSessionService {
     @Autowired
     private IncentiveRecordRepo recordRepo;
 
+    @Autowired
+    private UpdateIncentivePendindDocService updateIncentivePendindDocService;
+
 
     @Override
     public UwinSessionResponseDTO saveSession(UwinSessionRequestDTO req) throws Exception {
@@ -106,6 +109,44 @@ public class UwinSessionServiceImpl implements UwinSessionService {
 
         return dto;
     }
+    @Override
+    public UwinSession updateSession(UwinSessionRequestDTO req, Long recordId, Long activityId) throws Exception {
+        Optional<UwinSession> optionalUwinSession = repo.findById(recordId);
+
+        if (optionalUwinSession.isPresent()) {
+            UwinSession session = optionalUwinSession.get(); // ✅ Use existing session
+
+            // Update fields if present in request
+            if (req.getPlace() != null) session.setPlace(req.getPlace());
+            if (req.getParticipants() != null) session.setParticipants(req.getParticipants());
+            if (req.getDate() != null) session.setDate(req.getDate());
+
+            // Update attachments if present
+            if (req.getAttachments() != null && req.getAttachments().length > 0) {
+                List<String> base64Images = Arrays.stream(req.getAttachments())
+                        .filter(file -> !file.isEmpty())
+                        .map(file -> {
+                            try {
+                                return Base64.getEncoder().encodeToString(file.getBytes());
+                            } catch (IOException e) {
+                                throw new RuntimeException("Error converting image to Base64", e);
+                            }
+                        })
+                        .collect(Collectors.toList());
+
+                String imagesJson = objectMapper.writeValueAsString(base64Images);
+                session.setAttachmentsJson(imagesJson);
+
+                // Trigger incentive update if attachments exist
+                updateIncentivePendindDocService.updateIncentive(activityId);
+            }
+
+            repo.save(session); // ✅ Save updated session
+            return session;
+        } else {
+            throw new RuntimeException("Session not found for id: " + recordId);
+        }
+    }
 
     @Override
     public List<UwinSessionResponseDTO> getSessionsByAsha(Integer ashaId) throws Exception {
@@ -155,7 +196,11 @@ public class UwinSessionServiceImpl implements UwinSessionService {
 
                  }else {
                      record.setIsEligible(false);
+                   IncentiveActivityRecord incentiveActivityRecord =   recordRepo.save(record);
+                     if(incentiveActivityRecord!=null){
+                         updateIncentivePendindDocService.updatePendingActivity(session.getAshaId(),session.getId(),incentiveActivityRecord.getId(),incentiveActivityAM.getId());
 
+                     }
                  }
 
              }
@@ -176,7 +221,12 @@ public class UwinSessionServiceImpl implements UwinSessionService {
                 record.setBenId(0L);
                 record.setAshaId(session.getAshaId());
                 record.setAmount(Long.valueOf(incentiveActivityCH.getRate()));
-                record.setIsEligible(true);
+                if(session.getAttachmentsJson()!=null){
+                    record.setIsEligible(true);
+                }else {
+                    record.setIsEligible(false);
+                    updateIncentivePendindDocService.updatePendingActivity(session.getAshaId(),session.getId(),record.getId(),incentiveActivityCH.getId());
+                }
                 recordRepo.save(record);
             }
         }

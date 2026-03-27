@@ -1,7 +1,6 @@
 package com.iemr.flw.domain.iemr;
 
 import java.sql.Timestamp;
-import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.Expose;
@@ -14,18 +13,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
-import com.google.gson.annotations.Expose;
-import jakarta.persistence.*;
-import lombok.Data;
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.time.LocalDate;
-
 @Entity
-@Table(name = "m_User", schema = "db_iemr")
+@Table(name = "m_user", schema = "db_iemr")
 @Data
-public class M_User {
-
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Expose
@@ -144,11 +135,11 @@ public class M_User {
     @Column(name = "failed_attempt", insertable = false)
     private Integer failedAttempt;
 
-    public M_User() {
+    public User() {
         // TODO Auto-generated constructor stub
     }
 
-    public M_User(Integer userID, String userName) {
+    public User(Integer userID, String userName) {
         // TODO Auto-generated constructor stub
         this.userID = userID;
         this.userName = userName;

@@ -51,6 +51,8 @@ public class SammelanServiceImpl implements SammelanService {
     @Autowired
     private IncentivesRepo incentivesRepo;
 
+    @Autowired
+    private UpdateIncentivePendindDocService updateIncentivePendindDocService;
 
 
     @Override
@@ -62,36 +64,36 @@ public class SammelanServiceImpl implements SammelanService {
             // Save Sammelan record
             record = new SammelanRecord();
             record.setAshaId(sammelanRequestDTO.getAshaId());
-            logger.info("Meeting Date:"+sammelanRequestDTO.getDate());
+            logger.info("Meeting Date:" + sammelanRequestDTO.getDate());
             Timestamp timestamp = new Timestamp(sammelanRequestDTO.getDate());
             record.setMeetingDate(timestamp);
             record.setPlace(sammelanRequestDTO.getPlace());
             record.setParticipants(sammelanRequestDTO.getParticipants());
 
 
-                if (sammelanRequestDTO.getSammelanImages() != null && sammelanRequestDTO.getSammelanImages().length > 0) {
-                    List<String> base64Images = Arrays.stream(sammelanRequestDTO.getSammelanImages())
-                            .filter(file -> !file.isEmpty())
-                            .map(file -> {
-                                try {
-                                    return Base64.getEncoder().encodeToString(file.getBytes());
-                                } catch (IOException e) {
-                                    throw new RuntimeException("Error converting image to Base64", e);
-                                }
-                            })
-                            .collect(Collectors.toList());
+            if (sammelanRequestDTO.getSammelanImages() != null && sammelanRequestDTO.getSammelanImages().length > 0) {
+                List<String> base64Images = Arrays.stream(sammelanRequestDTO.getSammelanImages())
+                        .filter(file -> !file.isEmpty())
+                        .map(file -> {
+                            try {
+                                return Base64.getEncoder().encodeToString(file.getBytes());
+                            } catch (IOException e) {
+                                throw new RuntimeException("Error converting image to Base64", e);
+                            }
+                        })
+                        .collect(Collectors.toList());
 
-                    String imagesJson = objectMapper.writeValueAsString(base64Images);
-                    record .setAttachments(imagesJson);
-                }
+                String imagesJson = objectMapper.writeValueAsString(base64Images);
+                record.setAttachments(imagesJson);
+            }
 
-           if(record!=null){
-               record = recordRepo.save(record);
-               checkIncentive(record);
+            if (record != null) {
+                record = recordRepo.save(record);
+                checkIncentive(record);
 
 
-           }
-        // Prepare Response DTO
+            }
+            // Prepare Response DTO
             response.setId(record.getId());
             response.setAshaId(record.getAshaId());
             Timestamp ts = Timestamp.valueOf(record.getMeetingDate().toLocalDateTime());
@@ -103,7 +105,7 @@ public class SammelanServiceImpl implements SammelanService {
 
         } catch (Exception e) {
 
-            logger.info("SammelanRecord Exception: "+e.getMessage());
+            logger.info("SammelanRecord Exception: " + e.getMessage());
         }
         return response;
 
@@ -112,14 +114,14 @@ public class SammelanServiceImpl implements SammelanService {
 
     private void checkIncentive(SammelanRecord record) {
         IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("FP_SAAS_BAHU", GroupName.FAMILY_PLANNING.getDisplayName());
-        logger.info("SammelanRecord: "+incentiveActivity.getRate());
-        if(incentiveActivity!=null){
-            addSammelanIncentive(incentiveActivity,record);
+        logger.info("SammelanRecord: " + incentiveActivity.getRate());
+        if (incentiveActivity != null) {
+            addSammelanIncentive(incentiveActivity, record);
         }
     }
 
     private void addSammelanIncentive(IncentiveActivity incentiveActivity, SammelanRecord record) {
-        IncentiveActivityRecord incentiveActivityRecord = incentiveRecordRepo .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), record.getMeetingDate(), 0L,record.getAshaId());
+        IncentiveActivityRecord incentiveActivityRecord = incentiveRecordRepo.findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), record.getMeetingDate(), 0L, record.getAshaId());
         try {
             if (incentiveActivityRecord == null) {
                 incentiveActivityRecord = new IncentiveActivityRecord();
@@ -133,10 +135,21 @@ public class SammelanServiceImpl implements SammelanService {
                 incentiveActivityRecord.setBenId(0L);
                 incentiveActivityRecord.setAshaId(record.getAshaId());
                 incentiveActivityRecord.setAmount(Long.valueOf(incentiveActivity.getRate()));
-                incentiveRecordRepo.save(incentiveActivityRecord);
+                if (record.getAttachments() != null) {
+                    incentiveActivityRecord.setIsEligible(true);
+                    incentiveRecordRepo.save(incentiveActivityRecord);
+
+                } else {
+                    incentiveActivityRecord.setIsEligible(false);
+                    IncentiveActivityRecord activityRecord = incentiveRecordRepo.save(incentiveActivityRecord);
+                    if (activityRecord != null) {
+                        updateIncentivePendindDocService.updatePendingActivity(record.getAshaId(), record.getId(), activityRecord.getActivityId(), incentiveActivity.getId());
+
+                    }
+                }
             }
-        }catch (Exception e){
-            logger.info("SammelanRecord save Record: ",e);
+        } catch (Exception e) {
+            logger.info("SammelanRecord save Record: ", e);
 
         }
 

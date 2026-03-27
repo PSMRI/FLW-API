@@ -11,6 +11,7 @@ import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.ChildCareService;
 import com.iemr.flw.utils.JwtUtil;
+import jakarta.persistence.EntityNotFoundException;
 import org.aspectj.weaver.ast.Or;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -75,6 +76,8 @@ public class ChildCareServiceImpl implements ChildCareService {
     @Autowired
     private OrsDistributionRepo orsDistributionRepo;
 
+    @Autowired
+    private IncentivePendingActivityRepository incentivePendingActivityRepository;
 
 
     @Override
@@ -544,7 +547,8 @@ public class ChildCareServiceImpl implements ChildCareService {
                 try {
                     List<String> followUpDates = mapper.readValue(
                             entity.getFollowUpVisitDate(),
-                            new TypeReference<List<String>>() {});
+                            new TypeReference<List<String>>() {
+                            });
                     dto.setFollowUpVisitDate(followUpDates);
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
@@ -557,7 +561,6 @@ public class ChildCareServiceImpl implements ChildCareService {
             samResponseDTO.setFields(dto);
             samResponseListDTO.add(samResponseDTO);
         }
-
 
 
         return samResponseListDTO;
@@ -576,25 +579,25 @@ public class ChildCareServiceImpl implements ChildCareService {
                 orsDistribution.setChildCount(orsDistributionDTO.getFields().getNum_under5_children().toString());
                 orsDistribution.setHouseholdId(orsDistributionDTO.getHouseHoldId());
                 orsDistribution.setUserId(userRepo.getUserIdByName(orsDistributionDTO.getUserName()));
-                orsDistribution.setVisitDate(LocalDate.parse(orsDistributionDTO.getFields().getVisit_date(),formatter));
+                orsDistribution.setVisitDate(LocalDate.parse(orsDistributionDTO.getFields().getVisit_date(), formatter));
                 orsDistributionList.add(orsDistribution);
 
             });
-            logger.info("orsList"+orsDistributionList.size());
-            if(!orsDistributionList.isEmpty()){
+            logger.info("orsList" + orsDistributionList.size());
+            if (!orsDistributionList.isEmpty()) {
                 orsDistributionRepo.saveAll(orsDistributionList);
                 checkAndAddOrdDistributionIncentive(orsDistributionList);
 
                 return "Saved " + orsDistributionList.size() + " ORS visit records successfully";
 
             }
-        }catch (Exception e){
-            logger.error("ORS Error"+e);
+        } catch (Exception e) {
+            logger.error("ORS Error" + e);
 
 
         }
 
-        return null ;
+        return null;
     }
 
 
@@ -603,7 +606,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         List<OrsDistribution> entities = orsDistributionRepo.findByUserId(request.getAshaId());
         List<OrsDistributionResponseDTO> orsDistributionResponseDTOSList = new ArrayList<>();
 
-        for(OrsDistribution orsDistribution: entities){
+        for (OrsDistribution orsDistribution : entities) {
 
             OrsDistributionResponseDTO orsDistributionResponseDTO = new OrsDistributionResponseDTO();
             OrsDistributionResponseListDTO orsDistributionResponseListDTO = new OrsDistributionResponseListDTO();
@@ -617,9 +620,8 @@ public class ChildCareServiceImpl implements ChildCareService {
             orsDistributionResponseDTOSList.add(orsDistributionResponseDTO);
 
 
-
         }
-        return  orsDistributionResponseDTOSList;
+        return orsDistributionResponseDTOSList;
 
     }
 
@@ -633,11 +635,13 @@ public class ChildCareServiceImpl implements ChildCareService {
         for (DateTimeFormatter f : formatters) {
             try {
                 return LocalDate.parse(dateStr, f);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         throw new DateTimeParseException("Invalid date format: " + dateStr, dateStr, 0);
     }
+
     @Override
     public List<IfaDistribution> saveAllIfa(List<IfaDistributionDTO> dtoList) {
         return dtoList.stream()
@@ -647,16 +651,16 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
 
-
     @Override
     public List<IfaDistributionDTO> getByBeneficiaryId(GetBenRequestHandler requestHandler) {
         return ifaDistributionRepository.findByUserId(requestHandler.getAshaId()).stream()
                 .map(this::mapToDTO)
                 .toList();
     }
+
     // 🔁 Entity → DTO (date formatted as dd-MM-yyyy)
     private IfaDistributionDTO mapToDTO(IfaDistribution entity) {
-         final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
         IfaDistributionDTO dto = new IfaDistributionDTO();
 
@@ -707,20 +711,20 @@ public class ChildCareServiceImpl implements ChildCareService {
         return entity;
     }
 
-    private void  checkAndAddSamVisitNRCReferalIncentive(List<SamVisit> samVisits){
+    private void checkAndAddSamVisitNRCReferalIncentive(List<SamVisit> samVisits) {
         samVisits.forEach(samVisit -> {
             IncentiveActivity samreferralnrcActivityAm =
                     incentivesRepo.findIncentiveMasterByNameAndGroup("SAM_REFERRAL_NRC", GroupName.CHILD_HEALTH.getDisplayName());
-            IncentiveActivity samreferralnrcActivityCH =       incentivesRepo.findIncentiveMasterByNameAndGroup("SAM_REFERRAL_NRC", GroupName.ACTIVITY.getDisplayName());
-            if(samreferralnrcActivityAm!=null){
-                if(samVisit.getIsChildReferredNrc().equals("Yes")){
-                    createIncentiveRecordforSamReferalToNrc(samVisit,samVisit.getBeneficiaryId(),samreferralnrcActivityAm,jwtUtil.getUserNameFromStorage());
+            IncentiveActivity samreferralnrcActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("SAM_REFERRAL_NRC", GroupName.ACTIVITY.getDisplayName());
+            if (samreferralnrcActivityAm != null) {
+                if (samVisit.getIsChildReferredNrc().equals("Yes")) {
+                    createIncentiveRecordforSamReferalToNrc(samVisit, samVisit.getBeneficiaryId(), samreferralnrcActivityAm, jwtUtil.getUserNameFromStorage());
                 }
             }
 
-            if(samreferralnrcActivityCH!=null){
-                if(samVisit.getIsChildReferredNrc().equals("Yes")){
-                    createIncentiveRecordforSamReferalToNrc(samVisit,samVisit.getBeneficiaryId(),samreferralnrcActivityCH,jwtUtil.getUserNameFromStorage());
+            if (samreferralnrcActivityCH != null) {
+                if (samVisit.getIsChildReferredNrc().equals("Yes")) {
+                    createIncentiveRecordforSamReferalToNrc(samVisit, samVisit.getBeneficiaryId(), samreferralnrcActivityCH, jwtUtil.getUserNameFromStorage());
                 }
             }
 
@@ -728,20 +732,21 @@ public class ChildCareServiceImpl implements ChildCareService {
         });
 
     }
-    private void  checkAndAddOrdDistributionIncentive(List<OrsDistribution> orsDistributionList){
+
+    private void checkAndAddOrdDistributionIncentive(List<OrsDistribution> orsDistributionList) {
         orsDistributionList.forEach(orsDistribution -> {
             IncentiveActivity orsPacketActivityAM =
                     incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.CHILD_HEALTH.getDisplayName());
-            IncentiveActivity orsPacketActivityCH =       incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
-            if(orsPacketActivityAM!=null){
-                if(orsDistribution.getNumOrsPackets()!=null){
-                    createIncentiveRecordforOrsDistribution(orsDistribution,orsDistribution.getBeneficiaryId(),orsPacketActivityAM,userRepo.getUserNamedByUserId(orsDistribution.getUserId()),false);
+            IncentiveActivity orsPacketActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
+            if (orsPacketActivityAM != null) {
+                if (orsDistribution.getNumOrsPackets() != null) {
+                    createIncentiveRecordforOrsDistribution(orsDistribution, orsDistribution.getBeneficiaryId(), orsPacketActivityAM, userRepo.getUserNamedByUserId(orsDistribution.getUserId()), false);
                 }
             }
 
-            if(orsPacketActivityCH!=null){
-                if(orsDistribution.getNumOrsPackets()!=null){
-                    createIncentiveRecordforOrsDistribution(orsDistribution,orsDistribution.getBeneficiaryId(),orsPacketActivityCH,userRepo.getUserNamedByUserId(orsDistribution.getUserId()),true);
+            if (orsPacketActivityCH != null) {
+                if (orsDistribution.getNumOrsPackets() != null) {
+                    createIncentiveRecordforOrsDistribution(orsDistribution, orsDistribution.getBeneficiaryId(), orsPacketActivityCH, userRepo.getUserNamedByUserId(orsDistribution.getUserId()), true);
                 }
             }
 
@@ -770,9 +775,6 @@ public class ChildCareServiceImpl implements ChildCareService {
             if (hbync15MonethVisitActivityCH != null && eligibleHbycVisits.contains(hbyc.getVisit_day())) {
                 createIncentiveRecordforHbyncVisit(hbyc, hbyc.getBeneficiaryId(), hbync15MonethVisitActivityCH, hbyc.getCreated_by());
             }
-
-
-
 
 
             if (hbyncOrsPacketActivityCH != null) {
@@ -806,7 +808,7 @@ public class ChildCareServiceImpl implements ChildCareService {
             }
             logger.info("getDischarged_from_sncu" + hbncVisit.getDischarged_from_sncu());
 
-            if (hbncVisit.getVisit_day().equals("42nd Day") && hbncVisit.getDischarged_from_sncu() && hbncVisit.getBaby_weight() <=2.5) {
+            if (hbncVisit.getVisit_day().equals("42nd Day") && hbncVisit.getDischarged_from_sncu() && hbncVisit.getBaby_weight() <= 2.5) {
                 IncentiveActivity babyDisChargeSNCUAActivity =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("SNCU_LBW_FOLLOWUP", GroupName.CHILD_HEALTH.getDisplayName());
 
@@ -923,11 +925,67 @@ public class ChildCareServiceImpl implements ChildCareService {
             record.setUpdatedBy(hbncVisit.getCreatedBy());
             record.setBenId(benId);
             record.setAshaId(hbncVisit.getAshaId());
+            if (hbncVisit.getDischarge_summary_upload() == null || hbncVisit.getDischarge_summary_upload().isEmpty()) {
+                record.setIsEligible(false);
+            } else {
+                record.setIsEligible(false);
+                updatePendingActivity(hbncVisit.getAshaId(),hbncVisit.getId(),record.getActivityId(),immunizationActivity.getId());
+
+            }
             record.setAmount(Long.valueOf(immunizationActivity.getRate()));
             recordRepo.save(record);
         }
     }
+    private void updatePendingActivity(Integer userId, Long recordId, Long activityId, Long mIncentiveId) {
+        IncentivePendingActivity incentivePendingActivity = new IncentivePendingActivity();
+        incentivePendingActivity.setActivityId(activityId);
+        incentivePendingActivity.setRecordId(recordId);
+        incentivePendingActivity.setUserId(userId);
+        incentivePendingActivity.setMincentiveId(mIncentiveId);
+        if (incentivePendingActivity != null) {
+            incentivePendingActivityRepository.save(incentivePendingActivity);
+        }
 
+    }
+    public HbncVisit updateHbncFromFileUpload(MultipartFile[] dischargeSncuImage,Long incentiveRecordId,Long id) throws JsonProcessingException {
+        HbncVisit existingHbncVisit = hbncVisitRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Meeting not found: " + id));
+
+
+        // Images - only if provided
+        if (dischargeSncuImage != null && dischargeSncuImage.length > 0) {
+            List<String> base64Images = Arrays.stream(dischargeSncuImage)
+                    .filter(file -> file != null && !file.isEmpty())
+                    .map(this::convertToBase64)
+                    .collect(Collectors.toList());
+            existingHbncVisit.setDischarge_summary_upload(mapper.writeValueAsString(base64Images));
+        }
+
+        if (existingHbncVisit.getDischarge_summary_upload() != null) {
+            updateIncentive(incentiveRecordId);
+
+        }
+        return hbncVisitRepo.save(existingHbncVisit);
+    }
+    private void updateIncentive(Long id) {
+
+        Optional<IncentiveActivityRecord> optionalRecord = recordRepo.findById(id);
+
+        if (optionalRecord.isPresent()) {
+            IncentiveActivityRecord record = optionalRecord.get();
+            record.setIsEligible(true);
+            recordRepo.save(record);
+        }
+    }
+
+
+    private String convertToBase64(MultipartFile file) {
+        try {
+            return Base64.getEncoder().encodeToString(file.getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to convert image to Base64: " + file.getOriginalFilename(), e);
+        }
+    }
     private void createIncentiveRecordforHbyncVisit(HbycChildVisit data, Long benId, IncentiveActivity immunizationActivity, String createdBy) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
@@ -987,40 +1045,40 @@ public class ChildCareServiceImpl implements ChildCareService {
         }
     }
 
-    private void createIncentiveRecordforOrsDistribution(OrsDistribution data, Long benId, IncentiveActivity immunizationActivity, String createdBy,boolean isCH) {
-         try {
-             // Convert to LocalDate
-             Timestamp visitDate = Timestamp.valueOf(data.getVisitDate().atStartOfDay());
-             IncentiveActivityRecord record = recordRepo
-                     .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId);
-             double packets = Double.parseDouble(data.getNumOrsPackets());
-             double rate = immunizationActivity.getRate();
+    private void createIncentiveRecordforOrsDistribution(OrsDistribution data, Long benId, IncentiveActivity immunizationActivity, String createdBy, boolean isCH) {
+        try {
+            // Convert to LocalDate
+            Timestamp visitDate = Timestamp.valueOf(data.getVisitDate().atStartOfDay());
+            IncentiveActivityRecord record = recordRepo
+                    .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId);
+            double packets = Double.parseDouble(data.getNumOrsPackets());
+            double rate = immunizationActivity.getRate();
 
-             if (record == null) {
+            if (record == null) {
 
-                 record = new IncentiveActivityRecord();
-                 record.setActivityId(immunizationActivity.getId());
-                 record.setCreatedDate(visitDate);
-                 record.setCreatedBy(createdBy);
-                 record.setStartDate(visitDate);
-                 record.setEndDate(visitDate);
-                 record.setUpdatedDate(visitDate);
-                 record.setUpdatedBy(createdBy);
-                 record.setBenId(benId);
-                 record.setAshaId(beneficiaryRepo.getUserIDByUserName(createdBy));
-                 if(isCH){
-                     record.setAmount((long) rate);
+                record = new IncentiveActivityRecord();
+                record.setActivityId(immunizationActivity.getId());
+                record.setCreatedDate(visitDate);
+                record.setCreatedBy(createdBy);
+                record.setStartDate(visitDate);
+                record.setEndDate(visitDate);
+                record.setUpdatedDate(visitDate);
+                record.setUpdatedBy(createdBy);
+                record.setBenId(benId);
+                record.setAshaId(beneficiaryRepo.getUserIDByUserName(createdBy));
+                if (isCH) {
+                    record.setAmount((long) rate);
 
-                 }else {
-                     record.setAmount((long) (rate * packets));
+                } else {
+                    record.setAmount((long) (rate * packets));
 
-                 }
-                 recordRepo.save(record);
-             }
-         }catch (Exception e){
-             logger.error("Exp"+e.getMessage());
+                }
+                recordRepo.save(record);
+            }
+        } catch (Exception e) {
+            logger.error("Exp" + e.getMessage());
 
-         }
+        }
 
     }
 
@@ -1046,8 +1104,8 @@ public class ChildCareServiceImpl implements ChildCareService {
                 record.setAmount((long) incentiveActivity.getRate());
                 recordRepo.save(record);
             }
-        }catch (Exception e){
-            logger.error("Exp"+e.getMessage());
+        } catch (Exception e) {
+            logger.error("Exp" + e.getMessage());
 
         }
 

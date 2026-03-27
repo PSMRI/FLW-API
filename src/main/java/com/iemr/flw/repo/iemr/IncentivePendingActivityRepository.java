@@ -9,10 +9,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface IncentivePendingActivityRepository extends JpaRepository<IncentivePendingActivity, Long> {
 
-    Optional<IncentivePendingActivity>
-    findByUserIdAndModuleNameAndActivityId(
-            Integer userId,
-            String moduleName,
-            Long activityId
-    );
+    Optional<IncentivePendingActivity> findByMincentiveIdAndActivityId(Long mIncentiveId,Long activityId);
 }

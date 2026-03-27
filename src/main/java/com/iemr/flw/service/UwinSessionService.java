@@ -8,5 +8,6 @@ import java.util.List;
 
 public interface UwinSessionService {
     UwinSessionResponseDTO saveSession(UwinSessionRequestDTO req) throws Exception;
+    UwinSession updateSession(UwinSessionRequestDTO req, Long recordId,Long activityId) throws Exception;
     List<UwinSessionResponseDTO> getSessionsByAsha(Integer ashaId) throws Exception;
 }
