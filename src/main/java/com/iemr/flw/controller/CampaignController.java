@@ -123,9 +123,9 @@ public class CampaignController {
                 response.put("data", result);
                 return ResponseEntity.ok(response);
             } else {
-                response.put("statusCode", HttpStatus.NOT_FOUND.value());
+                response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
                 response.put("message", "No records found");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
         } catch (Exception e) {
@@ -233,9 +233,9 @@ public class CampaignController {
                 response.put("data", result);
                 return ResponseEntity.ok(response);
             } else {
-                response.put("statusCode", HttpStatus.NOT_FOUND.value());
+                response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
                 response.put("message", "No records found");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
         } catch (Exception e) {
@@ -345,9 +345,9 @@ public class CampaignController {
                 response.put("data", result);
                 return ResponseEntity.ok(response);
             } else {
-                response.put("statusCode", HttpStatus.NOT_FOUND.value());
+                response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
                 response.put("message", "No records found");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
         } catch (Exception e) {

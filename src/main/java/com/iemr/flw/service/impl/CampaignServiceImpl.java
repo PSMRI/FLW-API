@@ -233,8 +233,13 @@ public class CampaignServiceImpl implements CampaignService {
 
             // Parse number of children
             try {
-                String numberOfFamilies = campaignDTO.getFields().getNumberOfFamilies();
-                String numberOfIndividuals = campaignDTO.getFields().getNumberOfIndividuals();
+                String numberOfFamilies = (campaignDTO != null && campaignDTO.getFields() != null)
+                        ? campaignDTO.getFields().getNumberOfFamilies()
+                        : null;
+
+                String numberOfIndividuals = (campaignDTO != null && campaignDTO.getFields() != null)
+                        ? campaignDTO.getFields().getNumberOfIndividuals()
+                        : null;
                 if (numberOfFamilies != null && !numberOfFamilies.trim().isEmpty()) {
                     try {
                         // parse as double first, then cast to int
@@ -289,6 +294,7 @@ public class CampaignServiceImpl implements CampaignService {
 
         throw new IEMRException("No valid campaign data to save");
     }
+
 
 
     @Override
@@ -420,8 +426,19 @@ public class CampaignServiceImpl implements CampaignService {
         }
         filariasisCampaignListDTO.setEndDate(campaign.getEndDate());
         filariasisCampaignListDTO.setStartDate(campaign.getStartDate());
-        filariasisCampaignListDTO.setNumberOfIndividuals(Double.valueOf(campaign.getNumberOfIndividuals()));
-        filariasisCampaignListDTO.setNumberOfFamilies(Double.valueOf(campaign.getNumberOfFamilies()));
+        Double numberOfIndividuals = null;
+        Double numberOfFamilies = null;
+
+        if (campaign.getNumberOfIndividuals() != null) {
+            numberOfIndividuals = Double.valueOf(campaign.getNumberOfIndividuals());
+        }
+
+        if (campaign.getNumberOfFamilies() != null) {
+            numberOfFamilies = Double.valueOf(campaign.getNumberOfFamilies());
+        }
+
+        filariasisCampaignListDTO.setNumberOfIndividuals(numberOfIndividuals);
+        filariasisCampaignListDTO.setNumberOfFamilies(numberOfFamilies);
 
         dto.setFields(filariasisCampaignListDTO);
         return dto;
@@ -443,8 +460,61 @@ public class CampaignServiceImpl implements CampaignService {
             if (CHILD_MOBILIZATION_SESSIONS != null) {
                 addAshaIncentiveRecord(CHILD_MOBILIZATION_SESSIONS, ashaId, startDate, endDate);
             }
+    private void checkMonthlyPulsePolioIncentive(Integer ashaId,LocalDate startDate,LocalDate endDate) {
+
+        IncentiveActivity CHILD_MOBILIZATION_SESSIONS = incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_MOBILIZATION_SESSIONS", GroupName.ACTIVITY.getDisplayName());
+        if (CHILD_MOBILIZATION_SESSIONS != null) {
+            addAshaIncentiveRecord(CHILD_MOBILIZATION_SESSIONS, ashaId,startDate,endDate);
         }
 
+    }
+
+    private void checkMonthlyFilariasisIncentive(Integer ashaId,LocalDate startDate,LocalDate endDate) {
+        IncentiveActivity FILARIASIS_MEDICINE_DISTRIBUTION = incentivesRepo.findIncentiveMasterByNameAndGroup("FILARIASIS_MEDICINE_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
+        if (FILARIASIS_MEDICINE_DISTRIBUTION != null) {
+            addAshaIncentiveRecord(FILARIASIS_MEDICINE_DISTRIBUTION, ashaId,startDate,endDate);
+        }
+
+    }
+
+    private void checkMonthlyPulseOrsDistribution(Integer ashaId,LocalDate startDate,LocalDate endDate) {
+        IncentiveActivity ORS_DISTRIBUTION = incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
+        if (ORS_DISTRIBUTION != null) {
+            addAshaIncentiveRecord(ORS_DISTRIBUTION, ashaId,startDate,endDate);
+        }
+
+    }
+
+    private void addAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId,LocalDate startDate,LocalDate endDate) {
+        Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+
+        Timestamp startOfMonth = Timestamp.valueOf(startDate.atStartOfDay());
+        Timestamp endOfMonth = Timestamp.valueOf(endDate.atStartOfDay());
+
+        IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                incentiveActivity.getId(),
+                startOfMonth,
+                endOfMonth,
+                0L,
+                ashaId
+        );
+
+
+        if (record == null) {
+            record = new IncentiveActivityRecord();
+            record.setActivityId(incentiveActivity.getId());
+            record.setCreatedDate(timestamp);
+            record.setCreatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId));
+            record.setStartDate(timestamp);
+            record.setEndDate(timestamp);
+            record.setUpdatedDate(timestamp);
+            record.setUpdatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId));
+            record.setBenId(0L);
+            record.setAshaId(ashaId);
+            record.setAmount(Long.valueOf(incentiveActivity.getRate()));
+            recordRepo.save(record);
+        }
+    }
 
     }
 

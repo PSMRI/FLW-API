@@ -83,25 +83,25 @@ public class ScreeningLeprosy {
     @Column(name = "beneficiary_statusId")
     private Integer beneficiaryStatusId;
 
-    @Column(name = "beneficiary_status", length = 255)
+    @Column(name = "beneficiary_status")
     private String beneficiaryStatus;
 
     @Column(name = "date_of_death")
     private Date dateOfDeath;
 
-    @Column(name = "place_of_death", length = 255)
+    @Column(name = "place_of_death")
     private String placeOfDeath;
 
     @Column(name = "other_place_of_death", columnDefinition = "TEXT")
     private String otherPlaceOfDeath;
 
-    @Column(name = "reason_for_death", length = 255)
+    @Column(name = "reason_for_death")
     private String reasonForDeath;
 
     @Column(name = "other_reason_for_death", columnDefinition = "TEXT")
     private String otherReasonForDeath;
 
-    @Column(name = "leprosy_symptoms", length = 255)
+    @Column(name = "leprosy_symptoms")
     private String leprosySymptoms;
 
     @Column(name = "leprosy_symptoms_position")
@@ -113,7 +113,7 @@ public class ScreeningLeprosy {
     @Column(name = "current_visit_number")
     private Integer currentVisitNumber;
 
-    @Column(name = "visit_label", length = 255)
+    @Column(name = "visit_label")
     private String visitLabel;
 
     @Column(name = "visit_number")
@@ -178,40 +178,40 @@ public class ScreeningLeprosy {
     @Column(name = "weakness_feet_id")
     private Integer weaknessFeetId;
 
-    @Column(name = "recurrent_ulceration", length = 255)
+    @Column(name = "recurrent_ulceration")
     private String recurrentUlceration;
 
-    @Column(name = "recurrent_tingling", length = 255)
+    @Column(name = "recurrent_tingling")
     private String recurrentTingling;
 
-    @Column(name = "hypopigmented_patch", length = 255)
+    @Column(name = "hypopigmented_patch")
     private String hypopigmentedPatch;
 
-    @Column(name = "thickened_skin", length = 255)
+    @Column(name = "thickened_skin")
     private String thickenedSkin;
 
-    @Column(name = "skin_nodules", length = 255)
+    @Column(name = "skin_nodules")
     private String skinNodules;
 
-    @Column(name = "skin_patch_discoloration", length = 255)
+    @Column(name = "skin_patch_discoloration")
     private String skinPatchDiscoloration;
 
-    @Column(name = "recurrent_numbness", length = 255)
+    @Column(name = "recurrent_numbness")
     private String recurrentNumbness;
 
-    @Column(name = "clawing_fingers", length = 255)
+    @Column(name = "clawing_fingers")
     private String clawingFingers;
 
-    @Column(name = "tingling_numbness_extremities", length = 255)
+    @Column(name = "tingling_numbness_extremities")
     private String tinglingNumbnessExtremities;
 
-    @Column(name = "inability_close_eyelid", length = 255)
+    @Column(name = "inability_close_eyelid")
     private String inabilityCloseEyelid;
 
-    @Column(name = "difficulty_holding_objects", length = 255)
+    @Column(name = "difficulty_holding_objects")
     private String difficultyHoldingObjects;
 
-    @Column(name = "weakness_feet", length = 255)
+    @Column(name = "weakness_feet")
     private String weaknessFeet;
 
     @Column(name = "CreatedBy", length = 100)

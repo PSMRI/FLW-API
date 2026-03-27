@@ -3,6 +3,7 @@ package com.iemr.flw.repo.iemr;
 import com.iemr.flw.domain.iemr.IncentiveActivityLangMapping;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 

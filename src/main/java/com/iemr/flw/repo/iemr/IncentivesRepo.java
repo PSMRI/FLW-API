@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -38,4 +39,10 @@ public interface IncentivesRepo extends JpaRepository<IncentiveActivity, Long> {
     // IncentivesRepo — replaces N calls to findIncentiveMasterById()
     @Query("SELECT i.id FROM IncentiveActivity i WHERE i.id IN :ids AND i.isDeleted = false AND " +
             "(:isCG = true AND i.group = 'ACTIVITY' OR :isCG = false AND i.group != 'ACTIVITY')")
-    Set<Long> findValidActivityIds(@Param("ids") List<Long> ids, @Param("isCG") boolean isCG);}
+    Set<Long> findValidActivityIds(@Param("ids") List<Long> ids, @Param("isCG") boolean isCG);
+
+    @Query("SELECT i FROM IncentiveActivity i WHERE i.name IN :names AND i.group = :groupName")
+    List<IncentiveActivity> findIncentiveMasterByNameAndGroup(
+            @Param("names") List<String> names,
+            @Param("groupName") String groupName
+    );}

@@ -10,4 +10,5 @@ import java.util.List;
 public
 interface  EyeCheckUpVisitRepo extends JpaRepository<EyeCheckupVisit,Long> {
     List<EyeCheckupVisit> findByUserId(Integer userId);
+    List<EyeCheckupVisit> findByCreatedBy(String userName);
 }

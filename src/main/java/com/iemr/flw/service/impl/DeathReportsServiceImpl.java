@@ -233,6 +233,8 @@ public class DeathReportsServiceImpl implements DeathReportsService {
             Integer userId = userRepo.getUserIdByName(mdsr.getCreatedBy());
             IncentiveActivity immunizationActivity =
                     incentivesRepo.findIncentiveMasterByNameAndGroup("MATERNAL_DEATH_REPORT", GroupName.MATERNAL_HEALTH.getDisplayName());
+              if(immunizationActivity!=null){
+                  createIncentiveRecord(mdsr,mdsr.getBenId(),userId,immunizationActivity);
 
             createIncentiveRecord(mdsr, mdsr.getBenId(), userId, immunizationActivity);
         });

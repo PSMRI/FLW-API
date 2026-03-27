@@ -104,4 +104,10 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     WHERE ibd.BeneficiaryId IN :benIds
     """, nativeQuery = true)
     List<Object[]> findBenNamesByBenIds(@Param("benIds") List<Long> benIds);
+
+// BeneficiaryRepo — replaces the per-row getBenIdFromRegID call
+@Query("SELECT b.BenRegId, b.benficieryid " +
+        "FROM RMNCHBeneficiaryDetailsRmnch b " +
+        "WHERE b.BenRegId IN :regIds AND b.benficieryid IS NOT NULL")
+List<Object[]> getBenIdsFromRegIDs(@Param("regIds") List<Long> regIds);
 }

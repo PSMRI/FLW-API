@@ -30,6 +30,7 @@ import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.DiseaseType;
+import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.DiseaseControlService;
 import com.iemr.flw.service.IncentiveLogicService;
@@ -458,7 +459,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Fetch and filter malaria disease records
         List<ScreeningMalaria> filteredList = diseaseMalariaRepository.findAll().stream()
-                .filter(disease -> Objects.equals(disease.getUserId(), getDiseaseRequestHandler.getUserId()))
+                .filter(disease -> Objects.equals(disease.getUserId(), getDiseaseRequestHandler.getAshaId()))
                 .collect(Collectors.toList());
 
         // Check if the list is empty
@@ -546,7 +547,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Fetch and filter Kala Azar disease records
         List<ScreeningKalaAzar> filteredList = diseaseKalaAzarRepository.findAll().stream()
-                .filter(disease -> (Objects.equals(disease.getUserId(), getDiseaseRequestHandler.getUserId())))
+                .filter(disease -> (Objects.equals(disease.getUserId(), getDiseaseRequestHandler.getAshaId())))
                 .collect(Collectors.toList());
 
         // Check if the list is empty
@@ -593,14 +594,14 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             return diseaseAESJERepository.findAll();
         }
 
-        return diseaseAESJERepository.findAll().stream().filter(diseaseAesje -> Objects.equals(diseaseAesje.getUserId(), getDiseaseRequestHandler.getUserId())).collect(Collectors.toList());
+        return diseaseAESJERepository.findAll().stream().filter(diseaseAesje -> Objects.equals(diseaseAesje.getUserId(), getDiseaseRequestHandler.getAshaId())).collect(Collectors.toList());
     }
 
 
     public Object getAllFilaria(GetDiseaseRequestHandler getDiseaseRequestHandler) {
 
         // Fetch and filter Filaria disease records
-        List<ScreeningFilariasis> filteredList = diseaseFilariasisRepository.findAll().stream().filter(screeningFilariasis -> Objects.equals(screeningFilariasis.getUserId(), getDiseaseRequestHandler.getUserId())).collect(Collectors.toList());
+        List<ScreeningFilariasis> filteredList = diseaseFilariasisRepository.findAll().stream().filter(screeningFilariasis -> Objects.equals(screeningFilariasis.getUserId(), getDiseaseRequestHandler.getAshaId())).collect(Collectors.toList());
 
         // Check if the list is empty
         if (filteredList.isEmpty()) {
@@ -636,7 +637,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Fetch and filter Leprosy disease records
         List<ScreeningLeprosy> filteredList = diseaseLeprosyRepository.findAll().stream()
-                .filter(disease -> Objects.equals(disease.getUserId(), getDiseaseRequestHandler.getUserId()))
+                .filter(disease -> Objects.equals(disease.getUserId(), getDiseaseRequestHandler.getAshaId()))
                 .collect(Collectors.toList());
 
         // Check if the list is empty
@@ -1133,7 +1134,10 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             entity.setVersion(dto.getVersion());
             entity.setVisitNo(dto.getVisitNo());
             entity.setFollowUpNo(dto.getFollowUpNo());
-            entity.setFollowUpDate(dto.getFollowUpDate());
+            if(dto.getFollowUpDate()!=null){
+                entity.setFollowUpDate(dto.getFollowUpDate());
+
+            }
             entity.setDiagnosisCodes(dto.getDiagnosisCodes());
             entity.setFormDataJson(dto.getFormDataJson());
             entity.setUserID(jwtUtil.extractUserId(token));
@@ -1152,41 +1156,122 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
             dto.setId(savedEntity.getId());
             responseList.add(dto);
+            checkIncentive(savedEntity,savedEntity.getUserID());
+
+
         }
 
         return responseList;
     }
+    private void checkIncentive(ChronicDiseaseVisitEntity chronicDiseaseVisitEntity,Integer ashaId){
+        String userName = userRepo.getUserNamedByUserId(ashaId);
+        IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.NCD.getDisplayName());
+        logger.info("incentiveActivity:"+ incentiveActivity.getId());
+        if(incentiveActivity!=null){
+            if (chronicDiseaseVisitEntity.getFollowUpNo() != null
+                    && chronicDiseaseVisitEntity.getCreatedDate() != null
+                    && chronicDiseaseVisitEntity.getDiagnosisCodes() != null) {
 
+                List<String> targetDiseases = Arrays.asList(
+                        "Hypertension (BP)",
+                        "Diabetes (DM)",
+                        "Cancer"
+                );
+
+                List<String> diagnosisList = Arrays.asList(
+                        chronicDiseaseVisitEntity.getDiagnosisCodes().split(",")
+                );
+
+                boolean matchFound = diagnosisList.stream()
+                        .map(String::trim)
+                        .anyMatch(targetDiseases::contains);
+
+                if (matchFound && Integer.valueOf(6).equals(chronicDiseaseVisitEntity.getFollowUpNo())) {
+                    LocalDateTime localDateTime = chronicDiseaseVisitEntity.getCreatedDate();
+
+                    Timestamp followUpTimestamp = Timestamp.valueOf(localDateTime);
+
+                    addNCDFolloupIncentiveRecord(
+                            incentiveActivity,
+                            ashaId,
+                            chronicDiseaseVisitEntity.getBenId(),
+                            followUpTimestamp,
+                            userName
+                    );
+                }
+            }
+        }
+
+
+
+    }
+
+    private void addNCDFolloupIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId,
+                                                                 Long benId, Timestamp createdDate, String userName) {
+       try {
+           IncentiveActivityRecord record = recordRepo
+                   .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), createdDate, benId);
+
+           Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+           if(record==null){
+               record = new IncentiveActivityRecord();
+               record.setActivityId(incentiveActivity.getId());
+               record.setCreatedDate(createdDate);
+               record.setCreatedBy(userName);
+               record.setStartDate(createdDate);
+               record.setEndDate(createdDate);
+               record.setUpdatedDate(now);
+               record.setUpdatedBy(userName);
+               record.setBenId(benId);
+               record.setAshaId(ashaId);
+               record.setAmount(Long.valueOf(incentiveActivity.getRate()));
+               record .setIsEligible(true);
+               recordRepo.save(record);
+           }
+       }catch (Exception e){
+           logger.error("Fail to save IncentiveActivityRecord " + e.getMessage());
+       }
+
+
+    }
     @Override
     public List<ChronicDiseaseVisitDTO> getCdtfVisits(GetBenRequestHandler getBenRequestHandler) {
-
-        List<ChronicDiseaseVisitEntity> entityList = chronicDiseaseVisitRepository.findByUserID(getBenRequestHandler.getAshaId());
-
         List<ChronicDiseaseVisitDTO> dtoList = new ArrayList<>();
 
-        for (ChronicDiseaseVisitEntity entity : entityList) {
+        try {
 
-            ChronicDiseaseVisitDTO dto = new ChronicDiseaseVisitDTO();
+               List<ChronicDiseaseVisitEntity> entityList = chronicDiseaseVisitRepository.findByUserID(getBenRequestHandler.getAshaId());
 
-            dto.setId(entity.getId());
-            dto.setBenId(entity.getBenId());
-            dto.setHhId(entity.getHhId());
-            dto.setFormId(entity.getFormId());
-            dto.setVersion(entity.getVersion());
-            dto.setVisitNo(entity.getVisitNo());
-            dto.setFollowUpNo(entity.getFollowUpNo());
-            dto.setFollowUpDate(entity.getFollowUpDate());
-            dto.setDiagnosisCodes(entity.getDiagnosisCodes());
-            dto.setFormDataJson(entity.getFormDataJson());
 
-            if (entity.getTreatmentStartDate() != null) {
-                dto.setTreatmentStartDate(
-                        entity.getTreatmentStartDate().toString()
-                );
-            }
+               for (ChronicDiseaseVisitEntity entity : entityList) {
 
-            dtoList.add(dto);
-        }
+                   ChronicDiseaseVisitDTO dto = new ChronicDiseaseVisitDTO();
+
+                   dto.setId(entity.getId());
+                   dto.setBenId(entity.getBenId());
+                   dto.setHhId(entity.getHhId());
+                   dto.setFormId(entity.getFormId());
+                   dto.setVersion(entity.getVersion());
+                   dto.setVisitNo(entity.getVisitNo());
+                   dto.setFollowUpNo(entity.getFollowUpNo());
+                   if(entity.getFollowUpDate()!=null){
+                       dto.setFollowUpDate(entity.getFollowUpDate());
+
+                   }
+                   dto.setDiagnosisCodes(entity.getDiagnosisCodes());
+                   dto.setFormDataJson(entity.getFormDataJson());
+
+                   if (entity.getTreatmentStartDate() != null) {
+                       dto.setTreatmentStartDate(
+                               entity.getTreatmentStartDate().toString()
+                       );
+                   }
+                   checkIncentive(entity,entity.getUserID());
+                   dtoList.add(dto);
+               }
+           }catch (Exception e){
+
+           }
 
         return dtoList;
     }

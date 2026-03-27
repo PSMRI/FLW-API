@@ -176,6 +176,24 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
+        try {
+            if (request.getVillageID() != StateCode.CG.getStateCode()) {
+                checkMonthlyAshaIncentive(request.getAshaId());
+            }
+        } catch (Exception e) {
+            logger.error("Error in checkMonthlyAshaIncentive: ", e);
+        }
+
+        try {
+
+            incentiveOfNcdReferal(request.getAshaId(), request.getVillageID());
+
+        } catch (Exception e) {
+            logger.error("Error in incentiveOfNcdReferal: ", e);
+        }
+
+        Integer villageID = request.getVillageID();
+        boolean isCG = villageID != null && villageID.intValue() == StateCode.CG.getStateCode();
 
         Integer villageID = request.getVillageID();
         boolean isCG = villageID != null && villageID.intValue() == StateCode.CG.getStateCode();
@@ -335,6 +353,28 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             dtos.add(modelMapper.map(entry, IncentiveRecordDTO.class));
         });
+                Long benId = ((Number) row[0]).longValue();
+                String first = row[1] != null ? (String) row[1] : "";
+                String last = row[2] != null ? (String) row[2] : "";
+                benIdToNameMap.put(benId, (first + " " + last).trim());
+            }
+        }
+
+        // Step 5: Map entities to DTOs
+        List<IncentiveRecordDTO> dtos = entities.stream().map(entry -> {
+            if (entry.getName() == null) {
+                if (entry.getBenId() != null && entry.getBenId() > 0) {
+                    String name = benIdToNameMap.getOrDefault(entry.getBenId(), "");
+                    entry.setName(name);
+                    if (isCG) {
+                        entry.setIsEligible(true);
+                    }
+                } else {
+                    entry.setName("");
+                }
+            }
+            return modelMapper.map(entry, IncentiveRecordDTO.class);
+        }).collect(Collectors.toList());
 
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         return gson.toJson(dtos);
@@ -488,6 +528,22 @@ public class IncentiveServiceImpl implements IncentiveService {
                     );
                     if(meeting!=null){
                         return  "Incentive update successfully";
+
+    @Override
+    public String updateIncentive(PendingActivityDTO pendingActivityDTO) {
+        Optional<IncentivePendingActivity> incentivePendingActivity = incentivePendingActivityRepository.findByUserIdAndModuleNameAndActivityId(pendingActivityDTO.getUserId(), pendingActivityDTO.getModuleName(), pendingActivityDTO.getId());
+
+        if (incentivePendingActivity.isPresent()) {
+            IncentivePendingActivity existingIncentivePendingActivity = incentivePendingActivity.get();
+            if (existingIncentivePendingActivity.getModuleName().equals("MAA_MEETING")) {
+                if (pendingActivityDTO.getImages() != null) {
+                    try {
+                        MaaMeetingRequestDTO maaMeetingRequestDTO = new MaaMeetingRequestDTO();
+                        maaMeetingRequestDTO.setMeetingImages(pendingActivityDTO.getImages().toArray(new MultipartFile[0]));
+                        maaMeetingService.updateMeeting(maaMeetingRequestDTO);
+
+                    } catch (Exception e) {
+                        return e.getMessage();
                     }
                 }
 
@@ -595,100 +651,155 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             return e.getMessage();
         }
-
         return null;
+
     }
 
-    @Transactional
-    public String  updateClaimStatus(Integer ashaId,
-                                    Integer month,
-                                    Integer year,
-                                    Boolean isClaimed,
-                                    String token) {
+    private void incentiveOfNcdReferal(Integer ashaId, Integer stateId) {
         try {
-            Timestamp calimedDate = Timestamp.valueOf(LocalDateTime.now());
+            String userName = userRepo.getUserNamedByUserId(ashaId);
+            String groupName = resolveGroupName(stateId);
+
+            Map<String, IncentiveActivity> activityMap =
+                    incentivesRepo.findIncentiveMasterByNameAndGroup(
+                            List.of("NCD_POP_ENUMERATION", "NCD_FOLLOWUP_TREATMENT"), groupName
+                    ).stream().collect(Collectors.toMap(IncentiveActivity::getName, Function.identity()));
+
+            IncentiveActivity ncdPopEnumeration   = activityMap.get("NCD_POP_ENUMERATION");
+
+            CompletableFuture<List<BenReferDetails>> benReferFuture =
+                    CompletableFuture.supplyAsync(() -> benReferDetailsRepo.findByCreatedBy(userName));
+            CompletableFuture<List<CbacDetailsImer>> cbacFuture =
+                    CompletableFuture.supplyAsync(() -> cbacIemrDetailsRepo.findByCreatedBy(userName));
+
+            List<CbacDetailsImer> cbacDetailsImer = cbacFuture.get();
+
+            List<IncentiveActivityRecord> recordsToSave = new ArrayList<>();
 
 
-            LocalDate startLocalDate = LocalDate.of(year, month, 1);
-            LocalDate endLocalDate = startLocalDate.plusMonths(1);
 
-            Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
-            Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
+            if (ncdPopEnumeration != null && !cbacDetailsImer.isEmpty()) {
+                List<Long> cbacBenIds = cbacDetailsImer.stream()
+                        .filter(c -> c != null && c.getBeneficiaryRegId() != null)
+                        .map(CbacDetailsImer::getBeneficiaryRegId)
+                        .collect(Collectors.toList());
 
+                // Batch fetch existing records — 1 query instead of N
+                Set<String> existingKeys = recordRepo
+                        .findExistingRecords(ncdPopEnumeration.getId(), cbacBenIds, ashaId)
+                        .stream()
+                        .map(r -> r.getActivityId() + "_" + r.getBenId() + "_" + r.getCreatedDate())
+                        .collect(Collectors.toSet());
 
-            Integer updateRecord=  recordRepo.updateClaimStatusByAshaAndDateRange(
-                    ashaId,
-                    isClaimed,
-                    calimedDate,
-                    startDate,
-                    endDate
-            );
-            if(updateRecord>0){
-                return "Incentive is claimed successfully ";
+                final IncentiveActivity activity = ncdPopEnumeration;
+                cbacDetailsImer.stream()
+                        .filter(c -> c != null && c.getBeneficiaryRegId() != null)
+                        .forEach(c -> {
+                            String key = activity.getId() + "_" + c.getBeneficiaryRegId() + "_" + c.getCreatedDate();
+                            if (!existingKeys.contains(key)) {
+                                recordsToSave.add(addNCDandCBACIncentiveRecord(activity, ashaId, c.getBeneficiaryRegId(), c.getCreatedDate(), userName));
+                            }
+                        });
+            }
+
+            // ---- Single batch insert instead of N individual saves ----
+            if (!recordsToSave.isEmpty()) {
+                recordRepo.saveAll(recordsToSave);
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return e.getMessage();   // never return null in int method
+            logger.error("Error in incentiveOfNcdReferal for ashaId={}, stateId={}", ashaId, stateId, e);
         }
-        return  null;
     }
 
-    public String convertAttachmentsToJson(MultipartFile file) {
-        try {
-            String base64 = Base64.getEncoder().encodeToString(file.getBytes());
-            return new ObjectMapper().writeValueAsString(base64);
-        } catch (Exception e) {
-            throw new RuntimeException("Error converting file", e);
-        }
+    // Helper — record banana
+    private IncentiveActivityRecord addNCDandCBACIncentiveRecord(IncentiveActivity activity, Integer ashaId,
+                                                Long benId, Timestamp createdDate, String userName) {
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+        IncentiveActivityRecord record = new IncentiveActivityRecord();
+        record.setActivityId(activity.getId());
+        record.setCreatedDate(createdDate);
+        record.setCreatedBy(userName);
+        record.setStartDate(createdDate);
+        record.setEndDate(createdDate);
+        record.setUpdatedDate(now);
+        record.setUpdatedBy(userName);
+        record.setBenId(benId);
+        record.setAshaId(ashaId);
+        record.setAmount(Long.valueOf(activity.getRate()));
+        return record;
     }
+
+    private String resolveGroupName(Integer stateId) {
+        if (stateId.equals(StateCode.CG.getStateCode())) {
+            logger.info("State id: {}", StateCode.CG.getStateCode());
+            return GroupName.ACTIVITY.getDisplayName();
+        }
+        logger.info("State id: {}", stateId);
+        return GroupName.NCD.getDisplayName();
+    }
+
     private void checkMonthlyAshaIncentive(Integer ashaId) {
-        IncentiveActivity MOBILEBILLREIMB_ACTIVITY = incentivesRepo.findIncentiveMasterByNameAndGroup("MOBILE_BILL_REIMB", GroupName.OTHER_INCENTIVES.getDisplayName());
-        IncentiveActivity ADDITIONAL_ASHA_INCENTIVE = incentivesRepo.findIncentiveMasterByNameAndGroup("ADDITIONAL_ASHA_INCENTIVE", GroupName.ADDITIONAL_INCENTIVE.getDisplayName());
-        IncentiveActivity ASHA_MONTHLY_ROUTINE = incentivesRepo.findIncentiveMasterByNameAndGroup("ASHA_MONTHLY_ROUTINE", GroupName.ASHA_MONTHLY_ROUTINE.getDisplayName());
-        if (MOBILEBILLREIMB_ACTIVITY != null) {
-            addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY, ashaId);
-        }
-        if (ADDITIONAL_ASHA_INCENTIVE != null) {
-            addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE, ashaId);
+        try {
+            String userName = userRepo.getUserNamedByUserId(ashaId);
+
+            IncentiveActivity MOBILEBILLREIMB_ACTIVITY = incentivesRepo.findIncentiveMasterByNameAndGroup("MOBILE_BILL_REIMB", GroupName.OTHER_INCENTIVES.getDisplayName());
+            IncentiveActivity ADDITIONAL_ASHA_INCENTIVE = incentivesRepo.findIncentiveMasterByNameAndGroup("ADDITIONAL_ASHA_INCENTIVE", GroupName.ADDITIONAL_INCENTIVE.getDisplayName());
+            IncentiveActivity ASHA_MONTHLY_ROUTINE = incentivesRepo.findIncentiveMasterByNameAndGroup("ASHA_MONTHLY_ROUTINE", GroupName.ASHA_MONTHLY_ROUTINE.getDisplayName());
+            if (MOBILEBILLREIMB_ACTIVITY != null) {
+                addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY, ashaId,userName);
+            }
+            if (ADDITIONAL_ASHA_INCENTIVE != null) {
+                addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE, ashaId,userName);
+
+            }
+
+            if (ASHA_MONTHLY_ROUTINE != null) {
+                addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId,userName);
+
+            }
+        } catch (Exception e) {
+            logger.error("Error in addMonthlyAshaIncentiveRecord", e);
 
         }
 
-        if (ASHA_MONTHLY_ROUTINE != null) {
-            addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId);
-
-        }
     }
 
-    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId) {
-        Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId,String userName) {
+        try {
+            Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
 
-        Timestamp startOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(1).atStartOfDay());
-        Timestamp endOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth()).atTime(23, 59, 59));
+            Timestamp startOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(1).atStartOfDay());
+            Timestamp endOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth()).atTime(23, 59, 59));
 
-        IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
-                incentiveActivity.getId(),
-                startOfMonth,
-                endOfMonth,
-                0L,
-                ashaId
-        );
+            IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                    incentiveActivity.getId(),
+                    startOfMonth,
+                    endOfMonth,
+                    0L,
+                    ashaId
+            );
 
 
-        if (record == null) {
-            record = new IncentiveActivityRecord();
-            record.setActivityId(incentiveActivity.getId());
-            record.setCreatedDate(timestamp);
-            record.setCreatedBy(userRepo.getUserNamedByUserId(ashaId));
-            record.setStartDate(timestamp);
-            record.setEndDate(timestamp);
-            record.setUpdatedDate(timestamp);
-            record.setUpdatedBy(userRepo.getUserNamedByUserId(ashaId));
-            record.setBenId(0L);
-            record.setAshaId(ashaId);
-            record.setAmount(Long.valueOf(incentiveActivity.getRate()));
-            recordRepo.save(record);
+            if (record == null) {
+                record = new IncentiveActivityRecord();
+                record.setActivityId(incentiveActivity.getId());
+                record.setCreatedDate(timestamp);
+                record.setCreatedBy(userName);
+                record.setStartDate(timestamp);
+                record.setEndDate(timestamp);
+                record.setUpdatedDate(timestamp);
+                record.setUpdatedBy(userName);
+                record.setBenId(0L);
+                record.setAshaId(ashaId);
+                record.setAmount(Long.valueOf(incentiveActivity.getRate()));
+                recordRepo.save(record);
+            }
+        } catch (Exception e) {
+            logger.error("Error in addMonthlyAshaIncentiveRecord", e);
+
         }
+
     }
 
 
