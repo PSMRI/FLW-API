@@ -28,6 +28,7 @@ import com.iemr.flw.dto.iemr.GetDiseaseRequestHandler;
 import com.iemr.flw.dto.iemr.MalariaFollowListUpDTO;
 import com.iemr.flw.dto.iemr.MalariaFollowUpDTO;
 import com.iemr.flw.service.MalariaFollowUpService;
+import com.iemr.flw.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,44 +42,54 @@ import java.util.Map;
 public class MalariaFollowUpController {
 
     @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
     private MalariaFollowUpService followUpService;
 
     @RequestMapping(value = "save", method = RequestMethod.POST)
-    public ResponseEntity<Map<String, Object>> save(@RequestBody MalariaFollowUpDTO dto) {
+    public ResponseEntity<Map<String, Object>> save(@RequestBody MalariaFollowUpDTO dto,@RequestHeader(value = "JwtToken") String token) {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            Boolean result = followUpService.saveFollowUp(dto);
-            if (result) {
-                response.put("status", "Success");
-                response.put("statusCode", 200);
-                response.put("message", "Follow-up saved successfully");
-            } else {
-                response.put("status", "Failed");
-                response.put("statusCode", 400);
+            if(token!=null){
+
+                Boolean result = followUpService.saveFollowUp(dto,token);
+                if (result) {
+                    response.put("status", "Success");
+                    response.put("statusCode", 200);
+                    response.put("message", "Follow-up saved successfully");
+                } else {
+                    response.put("status", "Failed");
+                    response.put("statusCode", 5000);
+                }
             }
+
         } catch (Exception e) {
             response.put("status", "Error: " + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response);
     }
 
     @RequestMapping(value = "get", method = RequestMethod.POST)
-    public ResponseEntity<Map<String, Object>> getFollowUpsByUserId(@RequestBody GetDiseaseRequestHandler getDiseaseRequestHandler) {
+    public ResponseEntity<Map<String, Object>> getFollowUpsByUserId(@RequestBody GetDiseaseRequestHandler getDiseaseRequestHandler,@RequestHeader(value = "JwtToken") String token) {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            List<MalariaFollowListUpDTO> data = followUpService.getByUserId(getDiseaseRequestHandler.getUserId());
-            response.put("status", "Success");
-            response.put("statusCode", 200);
-            response.put("data", data);
-            if (data.isEmpty()) {
-                response.put("message", "No records found");
+            if(token!=null){
+                List<MalariaFollowListUpDTO> data = followUpService.getByUserId(jwtUtil.extractUserId(token));
+                response.put("status", "Success");
+                response.put("statusCode", 200);
+                response.put("data", data);
+                if (data.isEmpty()) {
+                    response.put("message", "No records found");
+                }
             }
+
         } catch (Exception e) {
             response.put("status", "Error: " + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response);
 

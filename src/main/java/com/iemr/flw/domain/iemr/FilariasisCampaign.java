@@ -24,17 +24,17 @@ public class FilariasisCampaign {
     @Column(name = "user_id", nullable = false)
     private Integer userId;
 
-    @Column(name = "no_of_families", nullable = false)
+    @Column(name = "number_of_families", nullable = false)
     private Integer numberOfFamilies = 0;
 
-    @Column(name = "no_of_individuals", nullable = false)
+    @Column(name = "number_of_individuals", nullable = false)
     private Integer numberOfIndividuals = 0;
 
     /**
      * Store JSON array like ["img1.jpg","img2.jpg"]
      * MySQL JSON column
      */
-    @Column(name = "mda_photos", columnDefinition = "json")
+    @Column(name = "campaign_photos", columnDefinition = "json")
     private String campaignPhotos;
 
     @Column(name = "created_by", length = 200)

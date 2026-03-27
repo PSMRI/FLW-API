@@ -10,7 +10,6 @@ public class DeliveryOutcomeDTO {
     private Long id;
     private Long benId;
 
-    @JsonFormat(pattern = "MMM d yyyy h:mm:ss a")
     private Timestamp dateOfDelivery;
     private String timeOfDelivery;
     private String placeOfDelivery;

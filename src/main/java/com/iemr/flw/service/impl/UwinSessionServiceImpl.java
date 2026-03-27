@@ -8,6 +8,7 @@ import com.iemr.flw.domain.iemr.UwinSession;
 import com.iemr.flw.dto.iemr.UwinSessionRequestDTO;
 import com.iemr.flw.dto.iemr.UwinSessionResponseDTO;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
 import com.iemr.flw.repo.iemr.IncentivesRepo;
 import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
@@ -75,6 +76,7 @@ public class UwinSessionServiceImpl implements UwinSessionService {
         session.setAshaId(req.getAshaId());
         session.setDate(req.getDate());
         session.setPlace(req.getPlace());
+        session.setSessionDate(req.getDate());
         session.setParticipants(req.getParticipants());
         session.setCreatedBy(req.getCreatedBy());
         if (req.getAttachments() != null && req.getAttachments().length > 0) {
@@ -171,9 +173,9 @@ public class UwinSessionServiceImpl implements UwinSessionService {
     private void checkAndAddIncentive(UwinSession session) {
         IncentiveActivity incentiveActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_MOBILIZATION_SESSIONS", GroupName.IMMUNIZATION.getDisplayName());
         IncentiveActivity incentiveActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_MOBILIZATION_SESSIONS", GroupName.ACTIVITY.getDisplayName());
+        Integer stateId = userRepo.getUserRole(session.getAshaId()).get(0).getStateId();
 
-
-         if(incentiveActivityAM!=null){
+         if(incentiveActivityAM!=null && stateId!=null && stateId.equals(StateCode.AM.getStateCode())){
              IncentiveActivityRecord record = recordRepo
                      .findRecordByActivityIdCreatedDateBenId(incentiveActivityAM.getId(), session.getDate(), 0L,session.getAshaId());
              if (record == null) {
@@ -204,7 +206,7 @@ public class UwinSessionServiceImpl implements UwinSessionService {
              }
          }
 
-        if(incentiveActivityCH!=null){
+        if(incentiveActivityCH!=null && stateId!=null && stateId.equals(StateCode.CG.getStateCode())){
             IncentiveActivityRecord record = recordRepo
                     .findRecordByActivityIdCreatedDateBenId(incentiveActivityCH.getId(), session.getDate(), 0L,session.getAshaId());
             if (record == null) {

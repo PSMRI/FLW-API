@@ -17,7 +17,7 @@ public class IRSRoundServiceImpl implements IRSRoundService {
     private IRSRoundRepo irsRoundRepository;
 
     @Override
-    public List<IRSRound> addRounds(List<IRSRoundDTO> dtos) {
+    public List<IRSRound> addRounds(List<IRSRoundDTO> dtos,Integer userId,String userName) {
         // Validate input DTOs
         for (IRSRoundDTO dto : dtos) {
             if (dto.getDate() == null || dto.getHouseholdId() == null) {
@@ -26,7 +26,7 @@ public class IRSRoundServiceImpl implements IRSRoundService {
         }
         return irsRoundRepository.saveAll(
                 dtos.stream()
-                        .map(dto -> new IRSRound(null, dto.getDate(), dto.getRounds(), dto.getHouseholdId()))
+                        .map(dto -> new IRSRound(null, dto.getDate(), dto.getRounds(), dto.getHouseholdId(),userName,userId))
                         .collect(Collectors.toList())
         );
     }

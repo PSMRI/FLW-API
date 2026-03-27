@@ -87,7 +87,7 @@ public class JwtAuthenticationUtil {
 			return true; // Valid userId and JWT token
 		} catch (Exception e) {
 			logger.error("Validation failed: " + e.getMessage(), e);
-			throw new IEMRException("Validation error: " + e.getMessage(), e);
+			throw new IEMRException("Validation error: Authentication failed", e);
 		}
 	}
 
