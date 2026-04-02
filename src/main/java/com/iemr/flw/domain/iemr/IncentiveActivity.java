@@ -57,8 +57,6 @@ public class IncentiveActivity {
     @Column(name = "is_deleted")
     private Boolean isDeleted;
 
-    @Column(name = "is_default_activity")
-    private Boolean isDefaultActivity;
 
     @Column(name = "state_activity_code")
     private Integer stateActivityCode;
