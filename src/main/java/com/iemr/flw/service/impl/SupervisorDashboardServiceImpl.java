@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
+import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
 import com.iemr.flw.masterEnum.IncentiveApprovalStatus;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.utils.JwtUtil;
@@ -260,7 +261,15 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                asha.put("reason", incentiveActivityRecord_.getReason());
                asha.put("OtherReason", incentiveActivityRecord_.getOtherReason());
                asha.put("totalAmount", totalAmount);
-               asha.put("role", userServiceRoleRepo.getUserRole(incentiveActivityRecord_.getVerifiedByUserId()).get(0).getRoleName());
+               List<UserServiceRoleDTO> roles = userServiceRoleRepo.getUserRole(incentiveActivityRecord_.getVerifiedByUserId());
+
+               String roleName = null;
+
+               if (roles != null && !roles.isEmpty()) {
+                   roleName = roles.get(0).getRoleName();
+               }
+
+               asha.put("role", roleName);
                asha.put("approvalDate", incentiveActivityRecord_.getApprovalDate());
                asha.put("approvalStatus", incentiveActivityRecord_.getApprovalStatus());
                asha.put("verifiedByUserName", incentiveActivityRecord_.getVerifiedByUserName());
