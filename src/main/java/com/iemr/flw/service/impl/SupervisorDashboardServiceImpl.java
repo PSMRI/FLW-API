@@ -137,9 +137,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                      logger.info("verified"+verified);
                      logger.info("rejected"+rejected);
                      logger.info("pending"+pending);
-                    overallVerified += verified;
-                    overallRejected += rejected;
-                    overallPending += pending;
+                    overallVerified = verified;
+                    overallRejected = rejected;
+                    overallPending = pending;
                 }
             }
         } catch (Exception e) {
@@ -318,9 +318,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         Map<String, Object> response = new HashMap<>();
 
         Map<String, Object> approvalStatus = new HashMap<>();
-        approvalStatus.put("verified", overallRejected);
+        approvalStatus.put("verified", overallVerified);
         approvalStatus.put("pending", overallPending);
-        approvalStatus.put("rejected", overallPending);
+        approvalStatus.put("rejected", overallRejected);
 
         response.put("approvalStatus", approvalStatus);
         response.put("data", ashaList);
