@@ -148,9 +148,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         // Overall incentive summary across all ASHAs
         JSONObject overallSummary = new JSONObject();
-        overallSummary.put("verified", overallVerified > 0 ? 1 : 0);
-        overallSummary.put("rejected", overallRejected > 0 ? 1 : 0);
-        overallSummary.put("pending", overallPending > 0 ? 1 : 0);
+        overallSummary.put("verified", overallVerified);
+        overallSummary.put("rejected", overallRejected);
+        overallSummary.put("pending", overallPending);
         overallSummary.put("overDue", 0);
         result.put("incentiveSummary", overallSummary);
 
@@ -292,9 +292,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 rejected = counts[2] != null ? ((Number) counts[2]).longValue() : 0;
             }
 
-            overallRejected += rejected;
-            overallPending += pending;
-            overallVerified += verified;
+            overallRejected = rejected;
+            overallPending = pending;
+            overallVerified = verified;
 
             asha.put("pending", pending);
             asha.put("verified", verified);
@@ -318,7 +318,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         Map<String, Object> response = new HashMap<>();
 
         Map<String, Object> approvalStatus = new HashMap<>();
-        approvalStatus.put("verified", overallVerified);
+        approvalStatus.put("verified", overallRejected);
         approvalStatus.put("pending", overallPending);
         approvalStatus.put("rejected", overallPending);
 
