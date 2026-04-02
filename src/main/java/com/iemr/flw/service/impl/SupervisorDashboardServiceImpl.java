@@ -318,9 +318,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         Map<String, Object> response = new HashMap<>();
 
         Map<String, Object> approvalStatus = new HashMap<>();
-        approvalStatus.put("verified", overallVerified>0?1:0);
-        approvalStatus.put("pending", overallPending>0?1:0);
-        approvalStatus.put("rejected", overallRejected>0?1:0);
+        approvalStatus.put("verified", overallVerified);
+        approvalStatus.put("pending", overallPending);
+        approvalStatus.put("rejected", overallPending);
 
         response.put("approvalStatus", approvalStatus);
         response.put("data", ashaList);
