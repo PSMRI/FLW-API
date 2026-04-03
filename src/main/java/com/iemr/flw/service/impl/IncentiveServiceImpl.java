@@ -10,16 +10,20 @@ import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
 import com.iemr.flw.repo.iemr.IncentivesRepo;
 import com.iemr.flw.service.IncentiveService;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
 public class IncentiveServiceImpl implements IncentiveService {
 
+    private final Logger logger = LoggerFactory.getLogger(IncentiveServiceImpl.class);
 
     ModelMapper modelMapper = new ModelMapper();
 
@@ -46,11 +50,15 @@ public class IncentiveServiceImpl implements IncentiveService {
                 }
                 incentivesRepo.save(activity);
             });
-            String saved = "";
-            activityDTOS.forEach(dto -> saved.concat(dto.getGroup() + ": " + dto.getName()));
-            return "saved master data for " + saved ;
+            StringBuilder saved = new StringBuilder();
+            activityDTOS.forEach(dto -> saved.append(Objects.toString(dto.getGroup(), "")).append(": ").append(Objects.toString(dto.getName(), "")).append(", "));
+            // Remove trailing ", " if present
+            if (saved.length() > 0) {
+                saved.setLength(saved.length() - 2);
+            }
+            return "saved master data for " + saved.toString();
         } catch (Exception e) {
-            
+            logger.error("Error saving incentive master data: " + e.getMessage(), e);
         }
         return null;
     }
@@ -66,7 +74,7 @@ public class IncentiveServiceImpl implements IncentiveService {
             Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
             return gson.toJson(dtos);
         } catch (Exception e) {
-
+            logger.error("Error getting incentive master data: " + e.getMessage(), e);
         }
         return null;
     }
