@@ -47,6 +47,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
     @Autowired
     private UserServiceRoleRepo userServiceRoleRepo;
+
     @Override
     public String getSupervisorDashboard(Integer supervisorUserID, Integer month, Integer year) {
         JSONObject result = new JSONObject();
@@ -126,7 +127,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
             Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
-            logger.info("Asha ID"+ashaIDs);
+            logger.info("Asha ID" + ashaIDs);
 
             List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
             if (statusRows != null) {
@@ -208,11 +209,11 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                                   Integer month, Integer year, Integer approvalStatusID) {
         List<Object[]> rows;
 
-        if(facilityId.equals(0)){
+        if (facilityId.equals(0)) {
             rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, approvalStatusID);
 
-        }else {
-           rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, facilityId, approvalStatusID);
+        } else {
+            rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, facilityId, approvalStatusID);
 
         }
         List<Object[]> superVisorRow = ashaSupervisorLoginRepo.getAllMappedAshas(supervisorId);
@@ -246,45 +247,38 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             List<Object[]> countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
             Long totalAmount = incentiveRecordRepo.getTotalAmountByAsha(ashaId, startDate, endDate);
             List<IncentiveActivityRecord> incentiveActivityRecord = incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate);
-           for (IncentiveActivityRecord incentiveActivityRecord_ :incentiveActivityRecord){
-               asha.put("facilityId", facilityID);
-               asha.put("facilityName", facilityName);
-               asha.put("facilityType", facilityType);
+            List<Map<String, Object>> activityList = new ArrayList<>();
+            for (IncentiveActivityRecord record : incentiveActivityRecord) {
+                Map<String, Object> activity = new HashMap<>();
+                activity.put("reason", record.getReason());
+                activity.put("otherReason", record.getOtherReason());
+                activity.put("approvalDate", record.getApprovalDate());
+                activity.put("approvalStatus", record.getApprovalStatus());
+                activity.put("verifiedByUserName", record.getVerifiedByUserName());
+                activity.put("verifiedByUserId", record.getVerifiedByUserId());
+                activity.put("isClaimed", record.getIsClaimed());
+                activity.put("claimedDate", record.getCalimedDate());
 
-               asha.put("userId", row[0]);
-               asha.put("fullName", fullName(row[1], row[2]));
-               asha.put("employeeId", str(row[3]).isEmpty() ? null : str(row[3]));
-               asha.put("mobile", str(row[4]).isEmpty() ? null : str(row[4]));
-               asha.put("gender", str(row[5]).isEmpty() ? null : str(row[5]));
-               asha.put("reason", incentiveActivityRecord_.getReason());
-               asha.put("OtherReason", incentiveActivityRecord_.getOtherReason());
-               asha.put("totalAmount", totalAmount);
-               List<UserServiceRoleDTO> roles = userServiceRoleRepo.getUserRole(incentiveActivityRecord_.getVerifiedByUserId());
+                List<UserServiceRoleDTO> roles = userServiceRoleRepo.getUserRole(record.getVerifiedByUserId());
+                activity.put("role", (roles != null && !roles.isEmpty()) ? roles.get(0).getRoleName() : null);
 
-               String roleName = null;
+                activityList.add(activity);
+            }
 
-               if (roles != null && !roles.isEmpty()) {
-                   roleName = roles.get(0).getRoleName();
-               }
+            asha.put("facilityId", facilityID);
+            asha.put("facilityName", facilityName);
+            asha.put("facilityType", facilityType);
+            asha.put("userId", row[0]);
+            asha.put("fullName", fullName(row[1], row[2]));
+            asha.put("employeeId", str(row[3]).isEmpty() ? null : str(row[3]));
+            asha.put("mobile", str(row[4]).isEmpty() ? null : str(row[4]));
+            asha.put("gender", str(row[5]).isEmpty() ? null : str(row[5]));
+            asha.put("totalAmount", totalAmount);
+            asha.put("activities", activityList);
 
-               asha.put("role", roleName);
-               asha.put("approvalDate", incentiveActivityRecord_.getApprovalDate());
-               asha.put("approvalStatus", incentiveActivityRecord_.getApprovalStatus());
-               asha.put("verifiedByUserName", incentiveActivityRecord_.getVerifiedByUserName());
-               asha.put("verifiedByUserId", incentiveActivityRecord_.getVerifiedByUserId());
-               asha.put("isClaimed", incentiveActivityRecord_.getIsClaimed());
-               asha.put("claimedDate", incentiveActivityRecord_.getCalimedDate());
-           }
-
-
-            long pending = 0;
-            long verified = 0;
-            long rejected = 0;
-
+            long pending = 0, verified = 0, rejected = 0;
             if (countList != null && !countList.isEmpty()) {
-
                 Object[] counts = countList.get(0);
-
                 verified = counts[0] != null ? ((Number) counts[0]).longValue() : 0;
                 pending = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
                 rejected = counts[2] != null ? ((Number) counts[2]).longValue() : 0;
@@ -294,7 +288,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             if (rejected > 0) overallRejected += 1;
             if (pending > 0) overallPending += 1;
 
-
             asha.put("pending", pending);
             asha.put("verified", verified);
             asha.put("rejected", rejected);
@@ -303,9 +296,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             if (rejected > 0) approvalStatus = 103;
             else if (pending > 0) approvalStatus = 102;
             else if (verified > 0) approvalStatus = 101;
-
-            asha.put("approvalStatus", approvalStatus);
-            ashaList.add(asha);
 
             asha.put("approvalStatus", approvalStatus);
 
@@ -325,6 +315,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         return response;
     }
+
     @Transactional
     public int updateApprovalStatus(Integer ashaId,
                                     Integer month,
