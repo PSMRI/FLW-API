@@ -67,6 +67,7 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			+ "FROM incentive_activity_record iar "
 			+ "WHERE iar.asha_id IN (:ashaIds) "
 			+ "AND iar.created_date >= :startDate "
+			+ "AND record.isClaimed = true "
 			+ "AND iar.created_date < :endDate "
 			+ "GROUP BY iar.asha_id",
 			nativeQuery = true)
