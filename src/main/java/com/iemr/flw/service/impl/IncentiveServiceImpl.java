@@ -287,9 +287,11 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             Map<String, Object> map = new HashMap<>();
             map.put("activityId", activityId);
-            map.put("activity", activity.getDescription());
-            map.put("count", list.size());
+            map.put("activityDec", activity.getDescription());
+            map.put("groupName", activity.getGroup());
+            map.put("claimCount", list.size());
             map.put("totalAmount", total);
+            map.put("amount", activity.getRate());
 
             result.add(map);
         }
