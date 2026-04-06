@@ -134,12 +134,10 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     long verified = ((Number) sRow[2]).longValue();
                     long rejected = ((Number) sRow[3]).longValue();
                     long pending = ((Number) sRow[4]).longValue();
-                     logger.info("verified"+verified);
-                     logger.info("rejected"+rejected);
-                     logger.info("pending"+pending);
-                    overallVerified += verified;
-                    overallRejected += rejected;
-                    overallPending += pending;
+
+                    if (verified > 0) overallVerified += 1;
+                    if (rejected > 0) overallRejected += 1;
+                    if (pending > 0) overallPending += 1;
                 }
             }
         } catch (Exception e) {
