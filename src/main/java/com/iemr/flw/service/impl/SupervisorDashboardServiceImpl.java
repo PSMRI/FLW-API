@@ -296,9 +296,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             overallPending += pending;
             overallVerified += verified;
 
-            asha.put("pending", pending);
-            asha.put("verified", verified);
-            asha.put("rejected", rejected);
+            asha.put("pending", overallPending);
+            asha.put("verified", overallVerified);
+            asha.put("rejected", overallRejected);
 
             int approvalStatus = 0;
 
