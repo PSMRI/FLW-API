@@ -290,23 +290,22 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 rejected = counts[2] != null ? ((Number) counts[2]).longValue() : 0;
             }
 
-            overallRejected += rejected;
-            overallPending += pending;
-            overallVerified += verified;
+            if (verified > 0) overallVerified += 1;
+            if (rejected > 0) overallRejected += 1;
+            if (pending > 0) overallPending += 1;
 
-            asha.put("pending", overallPending);
-            asha.put("verified", overallVerified);
-            asha.put("rejected", overallRejected);
+
+            asha.put("pending", pending);
+            asha.put("verified", verified);
+            asha.put("rejected", rejected);
 
             int approvalStatus = 0;
+            if (rejected > 0) approvalStatus = 103;
+            else if (pending > 0) approvalStatus = 102;
+            else if (verified > 0) approvalStatus = 101;
 
-            if (rejected > 0) {
-                approvalStatus = 103;
-            } else if (pending > 0) {
-                approvalStatus = 102;
-            } else if (verified > 0) {
-                approvalStatus = 101;
-            }
+            asha.put("approvalStatus", approvalStatus);
+            ashaList.add(asha);
 
             asha.put("approvalStatus", approvalStatus);
 
