@@ -296,6 +296,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             if (rejected > 0) approvalStatus = 103;
             else if (pending > 0) approvalStatus = 102;
             else if (verified > 0) approvalStatus = 101;
+            if (pending == 0 && verified == 0 && rejected == 0) continue;
 
             asha.put("approvalStatus", approvalStatus);
 
