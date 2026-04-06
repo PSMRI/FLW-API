@@ -44,7 +44,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
     List<IncentiveActivityRecord> findRecordsByAsha(@Param("ashaId") Integer ashaId, @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
 
-    @Query("select record from IncentiveActivityRecord record where record.ashaId = :ashaId")
+    @Query("SELECT DISTINCT record FROM IncentiveActivityRecord record WHERE record.ashaId = :ashaId")
     List<IncentiveActivityRecord> findRecordsByAsha(@Param("ashaId") Integer ashaId);
 
     @Query("SELECT " +
