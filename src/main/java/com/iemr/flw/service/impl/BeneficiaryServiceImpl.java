@@ -549,13 +549,17 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
                 // fields mapping
                 EyeCheckupListDTO f = dto.getFields();
-                sb.append(f.getDischarge_summary_upload());
-                String longText = sb.toString();
+                String upload = f.getDischarge_summary_upload();
+
+                if (upload != null && !upload.equalsIgnoreCase("null")) {
+                    visit.setDischargeSummaryUpload(upload);
+                } else {
+                    visit.setDischargeSummaryUpload(null);
+                }
                 visit.setVisitDate(LocalDate.parse(f.getVisit_date(), FORMATTER));
                 visit.setSymptomsObserved(f.getSymptoms_observed());
                 visit.setEyeAffected(f.getEye_affected());
                 visit.setReferredTo(f.getReferred_to());
-                visit.setDischargeSummaryUpload(longText);
                 visit.setFollowUpStatus(f.getFollow_up_status());
                 visit.setDateOfSurgery(f.getDate_of_surgery());
 
