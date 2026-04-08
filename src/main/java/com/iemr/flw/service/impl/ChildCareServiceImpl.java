@@ -576,7 +576,10 @@ public class ChildCareServiceImpl implements ChildCareService {
                 orsDistribution.setId(orsDistributionDTO.getId());
                 orsDistribution.setBeneficiaryId(orsDistributionDTO.getBeneficiaryId());
                 orsDistribution.setNumOrsPackets(orsDistributionDTO.getFields().getNum_ors_packets().toString());
-                orsDistribution.setChildCount(orsDistributionDTO.getFields().getNum_under5_children().toString());
+                if(orsDistributionDTO.getFields().getNum_under5_children()!=null){
+                    orsDistribution.setChildCount(orsDistributionDTO.getFields().getNum_under5_children().toString());
+
+                }
                 orsDistribution.setHouseholdId(orsDistributionDTO.getHouseHoldId());
                 orsDistribution.setUserId(userRepo.getUserIdByName(orsDistributionDTO.getUserName()));
                 orsDistribution.setVisitDate(LocalDate.parse(orsDistributionDTO.getFields().getVisit_date(), formatter));

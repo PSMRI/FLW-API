@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -534,7 +535,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
 
     @Override
-    public String saveEyeCheckupVsit(List<EyeCheckupRequestDTO> eyeCheckupRequestDTOS,String token) {
+    public String saveEyeCheckupVsit(List<EyeCheckupRequestDTO> eyeCheckupRequestDTOS, String token) {
 
         try {
             for (EyeCheckupRequestDTO dto : eyeCheckupRequestDTOS) {
@@ -544,34 +545,38 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                 visit.setHouseholdId(dto.getHouseHoldId());
                 visit.setUserId(jwtUtil.extractUserId(token));
                 visit.setCreatedBy(dto.getUserName());
-                StringBuilder sb = new StringBuilder();
 
-
-                // fields mapping
                 EyeCheckupListDTO f = dto.getFields();
-                String upload = f.getDischarge_summary_upload();
 
-                if (upload != null && !upload.equalsIgnoreCase("null")) {
-                    visit.setDischargeSummaryUpload(upload);
-                } else {
-                    visit.setDischargeSummaryUpload(null);
-                }
+                visit.setSymptomsObserved(f.getSymptomsAsString());
+
+                String upload = f.getDischarge_summary_upload();
+                visit.setDischargeSummaryUpload(
+                        (upload != null && !upload.equalsIgnoreCase("null")) ? upload : null
+                );
+
                 visit.setVisitDate(LocalDate.parse(f.getVisit_date(), FORMATTER));
-                visit.setSymptomsObserved(f.getSymptoms_observed());
+
+                visit.setDateOfSurgery(f.getDate_of_surgery());
+
+
                 visit.setEyeAffected(f.getEye_affected());
                 visit.setReferredTo(f.getReferred_to());
                 visit.setFollowUpStatus(f.getFollow_up_status());
-                visit.setDateOfSurgery(f.getDate_of_surgery());
 
-                // save/update
                 eyeCheckUpVisitRepo.save(visit);
             }
+
             return "Eye checkup data saved successfully.";
+
+        } catch (DateTimeParseException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Invalid date format. Expected dd-MM-yyyy. " + e.getMessage());
+
         } catch (Exception e) {
             e.printStackTrace();
-
+            throw new RuntimeException("Failed to save eye checkup data: " + e.getMessage());
         }
-        return null ;
     }
 
     @Override
