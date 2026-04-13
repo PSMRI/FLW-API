@@ -222,6 +222,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 Page<HbncVisit> hbncVisits = hbncVisitRepo.findByAshaId(dto.getAshaId(),pageable);
                 if (hbncVisits!=null){
                     List<HbncVisit> hbncList = hbncVisits.getContent();
+                    if (hbncVisits == null || !hbncVisits.hasContent()) break;
 
                     for (HbncVisit visit : hbncList) {
                         HbncVisitResponseDTO responseDTO = new HbncVisitResponseDTO();
