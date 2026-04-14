@@ -13,7 +13,7 @@ public interface IncentiveService {
 
     String getIncentiveMaster(IncentiveRequestDTO incentiveRequestDTO);
 
-    String getAllIncentivesByUserId(GetBenRequestHandler requestDTO);
+    String getAllIncentivesByUserId(GetBenRequestHandler requestDTO,String token);
 
     String updateIncentive(PendingActivityDTO pendingActivityDTO);
 }

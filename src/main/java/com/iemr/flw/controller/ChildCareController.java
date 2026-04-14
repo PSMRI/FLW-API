@@ -254,7 +254,7 @@ public class ChildCareController {
 
         } catch (Exception e) {
             logger.error("Error saving SAM details:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode",5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -272,14 +272,14 @@ public class ChildCareController {
                 response.put("data", responseObject);
                 return ResponseEntity.ok(response);
             } else {
-                response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+                response.put("statusCode",5000);
                 response.put("message", "No SAM records found");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
         } catch (Exception e) {
             logger.error("Error fetching SAM records:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode", 5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -305,14 +305,14 @@ public class ChildCareController {
                 response.put("message", responseObject);
                 return ResponseEntity.ok(response);
             } else {
-                response.put("statusCode", HttpStatus.BAD_REQUEST.value());
+                response.put("statusCode", 5000);
                 response.put("message", "Failed to save ORS details");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
         } catch (Exception e) {
             logger.error("Error saving ORS:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode", 5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -331,14 +331,14 @@ public class ChildCareController {
                 response.put("data", responseObject);
                 return ResponseEntity.ok(response);
             } else {
-                response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+                response.put("statusCode", 5000);
                 response.put("message", "No ORS records found");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
         } catch (Exception e) {
             logger.error("Error fetching ORS records:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode", 5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -364,14 +364,14 @@ public class ChildCareController {
                 response.put("message", "IFA saved successfully");
                 return ResponseEntity.ok(response);
             } else {
-                response.put("statusCode", HttpStatus.BAD_REQUEST.value());
+                response.put("statusCode", 5000);
                 response.put("message", "Failed to save IFA details");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
         } catch (Exception e) {
             logger.error("Error saving IFA:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode", 5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -390,14 +390,14 @@ public class ChildCareController {
                 response.put("data", responseObject);
                 return ResponseEntity.ok(response);
             } else {
-                response.put("statusCode", HttpStatus.OK.value());
+                response.put("statusCode", 5000);
                 response.put("message", "No IFA records found");
-                return ResponseEntity.status(HttpStatus.OK).body(response);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
         } catch (Exception e) {
             logger.error("Error fetching IFA records:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode", 5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }

@@ -16,6 +16,9 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -211,45 +214,59 @@ public class ChildCareServiceImpl implements ChildCareService {
     public List<HbncVisitResponseDTO> getHBNCDetails(GetBenRequestHandler dto) {
         List<HbncVisitResponseDTO> result = new ArrayList<>();
         try {
-            List<HbncVisit> hbncVisits = hbncVisitRepo.findByAshaId(dto.getAshaId());
 
-            for (HbncVisit visit : hbncVisits) {
-                HbncVisitResponseDTO responseDTO = new HbncVisitResponseDTO();
-                responseDTO.setId(visit.getId());
-                responseDTO.setBeneficiaryId(visit.getBeneficiaryId()); // Update with actual value
-                responseDTO.setHouseHoldId(visit.getHouseHoldId());   // Update with actual value
-                responseDTO.setVisitDate(visit.getVisit_date().split(" ")[0]); // Format visit.getVisitDate()
+            int page = 0;
+            int pageSize = 10;
+            while (true){
+                Pageable pageable = PageRequest.of(page,pageSize);
+                Page<HbncVisit> hbncVisits = hbncVisitRepo.findByAshaId(dto.getAshaId(),pageable);
+                if (hbncVisits!=null){
+                    List<HbncVisit> hbncList = hbncVisits.getContent();
+                    if (hbncVisits == null || !hbncVisits.hasContent()) break;
 
-                // Convert all fields to Map
-                Map<String, Object> fields = new HashMap<>();
-                addIfValid(fields, "visit_day", visit.getVisit_day());
-                addIfValid(fields, "due_date", visit.getDue_date());
-                addIfValid(fields, "is_baby_alive", convert(visit.getIs_baby_alive()));
-                addIfValid(fields, "date_of_death", visit.getDate_of_death());
-                addIfValid(fields, "reason_for_death", visit.getReasonForDeath());
-                addIfValid(fields, "place_of_death", visit.getPlace_of_death());
-                addIfValid(fields, "other_place_of_death", visit.getOther_place_of_death());
-                addIfValid(fields, "baby_weight", visit.getBaby_weight());
-                addIfValid(fields, "urine_passed", convert(visit.getUrine_passed()));
-                addIfValid(fields, "stool_passed", convert(visit.getStool_passed()));
-                addIfValid(fields, "diarrhoea", convert(visit.getDiarrhoea()));
-                addIfValid(fields, "vomiting", convert(visit.getVomiting()));
-                addIfValid(fields, "convulsions", convert(visit.getConvulsions()));
-                addIfValid(fields, "activity", visit.getActivity());
-                addIfValid(fields, "sucking", visit.getSucking());
-                addIfValid(fields, "breathing", visit.getBreathing());
-                addIfValid(fields, "chest_indrawing", visit.getChest_indrawing());
-                addIfValid(fields, "temperature", visit.getTemperature());
-                addIfValid(fields, "jaundice", convert(visit.getJaundice()));
-                addIfValid(fields, "umbilical_stump", visit.getUmbilical_stump());
-                addIfValid(fields, "discharged_from_sncu", convert(visit.getDischarged_from_sncu()));
-                addIfValid(fields, "discharge_summary_upload", visit.getDischarge_summary_upload());
+                    for (HbncVisit visit : hbncList) {
+                        HbncVisitResponseDTO responseDTO = new HbncVisitResponseDTO();
+                        responseDTO.setId(visit.getId());
+                        responseDTO.setBeneficiaryId(visit.getBeneficiaryId()); // Update with actual value
+                        responseDTO.setHouseHoldId(visit.getHouseHoldId());   // Update with actual value
+                        responseDTO.setVisitDate(visit.getVisit_date().split(" ")[0]); // Format visit.getVisitDate()
 
-                // Add more fields as required
+                        // Convert all fields to Map
+                        Map<String, Object> fields = new HashMap<>();
+                        addIfValid(fields, "visit_day", visit.getVisit_day());
+                        addIfValid(fields, "due_date", visit.getDue_date());
+                        addIfValid(fields, "is_baby_alive", convert(visit.getIs_baby_alive()));
+                        addIfValid(fields, "date_of_death", visit.getDate_of_death());
+                        addIfValid(fields, "reason_for_death", visit.getReasonForDeath());
+                        addIfValid(fields, "place_of_death", visit.getPlace_of_death());
+                        addIfValid(fields, "other_place_of_death", visit.getOther_place_of_death());
+                        addIfValid(fields, "baby_weight", visit.getBaby_weight());
+                        addIfValid(fields, "urine_passed", convert(visit.getUrine_passed()));
+                        addIfValid(fields, "stool_passed", convert(visit.getStool_passed()));
+                        addIfValid(fields, "diarrhoea", convert(visit.getDiarrhoea()));
+                        addIfValid(fields, "vomiting", convert(visit.getVomiting()));
+                        addIfValid(fields, "convulsions", convert(visit.getConvulsions()));
+                        addIfValid(fields, "activity", visit.getActivity());
+                        addIfValid(fields, "sucking", visit.getSucking());
+                        addIfValid(fields, "breathing", visit.getBreathing());
+                        addIfValid(fields, "chest_indrawing", visit.getChest_indrawing());
+                        addIfValid(fields, "temperature", visit.getTemperature());
+                        addIfValid(fields, "jaundice", convert(visit.getJaundice()));
+                        addIfValid(fields, "umbilical_stump", visit.getUmbilical_stump());
+                        addIfValid(fields, "discharged_from_sncu", convert(visit.getDischarged_from_sncu()));
+                        addIfValid(fields, "discharge_summary_upload", visit.getDischarge_summary_upload());
 
-                responseDTO.setFields(fields);
-                result.add(responseDTO);
+
+                        responseDTO.setFields(fields);
+                        result.add(responseDTO);
+
+                    }
+                    if (!hbncVisits.hasNext()) break ;
+                    page++;
+
+                }
             }
+
 
         } catch (Exception e) {
             logger.error("Error in getHBNCDetails: ", e);
@@ -610,8 +627,14 @@ public class ChildCareServiceImpl implements ChildCareService {
             orsDistributionResponseDTO.setId(orsDistribution.getId());
             orsDistributionResponseDTO.setBeneficiaryId(orsDistribution.getBeneficiaryId());
             orsDistributionResponseDTO.setHouseHoldId(orsDistribution.getHouseholdId());
-            orsDistributionResponseListDTO.setNum_ors_packets(orsDistribution.getNumOrsPackets().toString());
-            orsDistributionResponseListDTO.setNum_under5_children(orsDistribution.getChildCount().toString());
+            if(orsDistribution.getNumOrsPackets()!=null){
+                orsDistributionResponseListDTO.setNum_ors_packets(orsDistribution.getNumOrsPackets().toString());
+
+            }
+            if(orsDistribution.getChildCount()!=null){
+                orsDistributionResponseListDTO.setNum_under5_children(orsDistribution.getChildCount().toString());
+
+            }
             orsDistributionResponseDTO.setFields(orsDistributionResponseListDTO);
             orsDistributionResponseDTO.setVisitDate(parseDate(orsDistribution.getVisitDate().toString()).toString());
             orsDistributionResponseDTOSList.add(orsDistributionResponseDTO);

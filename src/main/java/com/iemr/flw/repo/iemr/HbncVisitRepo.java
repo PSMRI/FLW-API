@@ -1,6 +1,8 @@
 package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.HbncVisit;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,5 +23,7 @@ public interface HbncVisitRepo extends JpaRepository<HbncVisit, Long> {
                                               @Param("visitDay") String visitDay);
 
     List<HbncVisit> findByAshaId(Integer ashaId);
+
+    Page<HbncVisit>findByAshaId (Integer ashaId, Pageable pageable);
 
 }

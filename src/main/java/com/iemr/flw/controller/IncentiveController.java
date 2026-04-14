@@ -81,14 +81,14 @@ public class IncentiveController {
     @Operation(summary = "get high risk assessment data of all beneficiaries registered with given user id")
     @RequestMapping(value = {"/fetchUserData"}, method = {RequestMethod.POST})
     public String getAllIncentivesByUserId(@RequestBody GetBenRequestHandler requestDTO,
-                                           @RequestHeader(value = "Authorization") String Authorization) {
+                                           @RequestHeader(value = "JwtToken") String token) {
         OutputResponse response = new OutputResponse();
         try {
 
             if (requestDTO != null) {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
-                String s = incentiveService.getAllIncentivesByUserId(requestDTO);
+                String s = incentiveService.getAllIncentivesByUserId(requestDTO,token);
                 logger.info("User Incentive:" + s);
                 if (s != null)
                     response.setResponse(s);
