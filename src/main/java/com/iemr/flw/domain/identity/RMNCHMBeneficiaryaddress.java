@@ -216,6 +216,18 @@ public class RMNCHMBeneficiaryaddress implements Serializable {
 	@Column(name = "EmerServicePoint")
 	private String emerServicePoint;
 
+	@Column(name = "CurrCoordinate", length = 50)
+	private String currCoordinate;
+
+	@Column(name = "PermCoordinate", length = 50)
+	private String permCoordinate;
+
+	@Column(name = "EmerCoordinate", length = 50)
+	private String emerCoordinate;
+
+	@Column(name = "OtherResidentialArea", length = 200)
+	private String otherResidentialArea;
+
 	@Column(nullable = false, length = 4)
 	private String processed = "N";
 

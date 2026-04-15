@@ -488,6 +488,32 @@ public class RMNCHBeneficiaryDetailsRmnch {
 	@Transient
 	private String ageFull;
 
+	// new fields for extended registration response
+	@Expose
+	@Transient
+	private String occupation;
+	@Expose
+	@Transient
+	private Integer occupationId;
+	@Expose
+	@Transient
+	private String economicStatus;
+	@Expose
+	@Transient
+	private Integer economicStatusId;
+	@Expose
+	@Transient
+	private String residentialArea;
+	@Expose
+	@Transient
+	private Integer residentialAreaId;
+	@Expose
+	@Transient
+	private String otherResidentialArea;
+	@Expose
+	@Transient
+	private String genderName;
+
 	// 07-07-2021
 	@Expose
 	@Column(name = "WhoConductedDelivery")

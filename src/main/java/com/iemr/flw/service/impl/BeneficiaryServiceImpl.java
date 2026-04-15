@@ -209,6 +209,30 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     if (benDetailsOBJ.getLiteracyStatus() != null)
                         benDetailsRMNCH_OBJ.setLiteracyStatus(benDetailsOBJ.getLiteracyStatus());
 
+                    // extended registration fields
+                    benDetailsRMNCH_OBJ.setOccupation(benDetailsOBJ.getOccupation());
+                    benDetailsRMNCH_OBJ.setOccupationId(benDetailsOBJ.getOccupationId());
+                    benDetailsRMNCH_OBJ.setEconomicStatus(benDetailsOBJ.getIncomeStatus());
+                    benDetailsRMNCH_OBJ.setEconomicStatusId(benDetailsOBJ.getIncomeStatusId());
+                    benDetailsRMNCH_OBJ.setGenderName(benDetailsOBJ.getGender());
+                    if (benAddressOBJ != null) {
+                        benDetailsRMNCH_OBJ.setResidentialArea(benAddressOBJ.getCurrArea());
+                        benDetailsRMNCH_OBJ.setResidentialAreaId(benAddressOBJ.getCurrAreaId());
+                        benDetailsRMNCH_OBJ.setOtherResidentialArea(benAddressOBJ.getOtherResidentialArea());
+                        if (benAddressOBJ.getCurrCoordinate() != null
+                                && benAddressOBJ.getCurrCoordinate().contains(",")) {
+                            String[] latLng = benAddressOBJ.getCurrCoordinate().split(",");
+                            try {
+                                if (latLng.length == 2) {
+                                    benDetailsRMNCH_OBJ.setLatitude(new java.math.BigDecimal(latLng[0].trim()));
+                                    benDetailsRMNCH_OBJ.setLongitude(new java.math.BigDecimal(latLng[1].trim()));
+                                }
+                            } catch (NumberFormatException ignore) {
+                                // invalid coordinate string — leave lat/lng as-is from rmnch table
+                            }
+                        }
+                    }
+
                     // bank
                     if (benAccountOBJ.getNameOfBank() != null)
                         benDetailsRMNCH_OBJ.setNameOfBank(benAccountOBJ.getNameOfBank());
