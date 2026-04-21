@@ -587,6 +587,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         return visits.stream().map(v -> {
             EyeCheckupRequestDTO dto = new EyeCheckupRequestDTO();
             dto.setId(v.getId());
+            dto.setEyeSide(v.getEyeAffected());
             dto.setBeneficiaryId(v.getBeneficiaryId());
             dto.setHouseHoldId(v.getHouseholdId());
             dto.setUserName(v.getCreatedBy());
