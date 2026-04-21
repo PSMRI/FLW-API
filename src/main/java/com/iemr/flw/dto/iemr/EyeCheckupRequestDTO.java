@@ -9,6 +9,7 @@ public class EyeCheckupRequestDTO {
     private Long houseHoldId;
     private String visitDate;
     private String  userName;
+    private String eyeSide;
     private EyeCheckupListDTO fields;
 
 }
