@@ -1,5 +1,6 @@
 package com.iemr.flw.dto.iemr;
 
+import jakarta.persistence.Column;
 import lombok.Data;
 
 import java.sql.Timestamp;
@@ -26,4 +27,6 @@ public class TBSuspectedDTO {
     private Boolean isDRTBConfirmed;
     private Boolean referred;
     private String followUps;
+    private Boolean isLiquidCultureConducted;
+    private String  liquidCultureResult;
 }

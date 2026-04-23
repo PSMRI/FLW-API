@@ -75,5 +75,11 @@ public class TBSuspected {
     @Column(name = "is_confirmed")
      private Boolean isConfirmed;
 
+    @Column(name = "is_liquid_culture_conducted")
+    private Boolean isLiquidCultureConducted;
+
+    @Column(name = "liquid_culture_result")
+    private String  liquidCultureResult;
+
 
 }
