@@ -615,6 +615,8 @@ public class IncentiveServiceImpl implements IncentiveService {
                 record.setUpdatedBy(userName);
                 record.setBenId(0L);
                 record.setAshaId(ashaId);
+                record.setIsEligible(true);
+                record.setIsDefaultActivity(true);
                 record.setAmount(Long.valueOf(incentiveActivity.getRate()));
                 recordRepo.save(record);
             }

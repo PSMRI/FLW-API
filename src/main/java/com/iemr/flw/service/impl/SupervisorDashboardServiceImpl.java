@@ -365,7 +365,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         } catch (Exception e) {
             e.printStackTrace();
-            return 0;   // never return null in int method
+            return 0;
         }
     }
 
