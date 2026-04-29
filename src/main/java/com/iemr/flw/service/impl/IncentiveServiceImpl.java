@@ -450,14 +450,11 @@ public class IncentiveServiceImpl implements IncentiveService {
         }
     }
 
-    @Override
-    public String updateClaimStatus(Integer ashaId, Integer month, Integer year, Boolean isClaimed, String token) {
-        return null;
-    }
+
 
     // ================= UPDATE CLAIM =================
     @Transactional
-    public String updateClaimStatus(Integer ashaId, Integer month, Integer year, Boolean isClaimed) {
+    public String updateClaimStatus(Integer ashaId, Integer month, Integer year, Boolean isClaimed, String token) {
         try {
             LocalDate start = LocalDate.of(year, month, 1);
             LocalDate end = start.plusMonths(1);
