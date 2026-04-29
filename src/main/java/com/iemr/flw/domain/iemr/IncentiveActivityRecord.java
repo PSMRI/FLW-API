@@ -55,8 +55,8 @@ public class IncentiveActivityRecord {
     @Column(name = "is_default_activity",columnDefinition = "tinyint(1) default 0")
     private Boolean isDefaultActivity = false;
 
-    @Column(name = "approval_status",columnDefinition = "int default 101")
-     Integer approvalStatus = 101;
+    @Column(name = "approval_status",columnDefinition = "int default 102")
+     Integer approvalStatus = 102;
 
     @Column(name = "verifiedBy_userId")
     private Integer verifiedByUserId;
