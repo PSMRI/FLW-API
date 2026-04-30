@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
 import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
@@ -208,14 +209,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
     public Map<String, Object> getAshasAtFacility(Integer supervisorId, Integer facilityId,
                                                   Integer month, Integer year, Integer approvalStatusID) {
         List<Object[]> rows;
+        logger.info("approvalStatusID:"+approvalStatusID);
 
-        if (facilityId.equals(0)) {
-            rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, approvalStatusID);
-
-        } else {
-            rows = ashaSupervisorLoginRepo.getAshasAtFacility(supervisorId, facilityId, approvalStatusID);
-
-        }
         List<Object[]> superVisorRow = ashaSupervisorLoginRepo.getAllMappedAshas(supervisorId);
 
         List<Map<String, Object>> ashaList = new ArrayList<>();
@@ -225,6 +220,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
         Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
+
+        if (facilityId.equals(0)) {
+            rows = ashaSupervisorLoginRepo.getAshasAtFacility(
+                    supervisorId, approvalStatusID, startDate, endDate);
+        } else {
+            rows = ashaSupervisorLoginRepo.getAshasAtFacility(
+                    supervisorId, facilityId, approvalStatusID, startDate, endDate);
+        }
 
         long overallVerified = 0, overallRejected = 0, overallPending = 0;
 
@@ -245,8 +248,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             Integer ashaId = ((Number) row[0]).intValue();
 
             List<Object[]> countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
-            Long totalAmount = incentiveRecordRepo.getTotalAmountByAsha(ashaId, startDate, endDate);
-            List<IncentiveActivityRecord> incentiveActivityRecord = incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate);
+            Long totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
+                    ashaId, startDate, endDate, approvalStatusID);
+            List<IncentiveActivityRecord> incentiveActivityRecord =
+                    incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate)
+                            .stream()
+                            .filter(r -> approvalStatusID == 0 ||
+                                    approvalStatusID.equals(r.getApprovalStatus()))
+                            .collect(Collectors.toList());
             List<Map<String, Object>> activityList = new ArrayList<>();
             for (IncentiveActivityRecord record : incentiveActivityRecord) {
                 Map<String, Object> activity = new HashMap<>();
@@ -293,9 +302,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             asha.put("rejected", rejected);
 
             int approvalStatus = 0;
-            if (rejected > 0) approvalStatus = 103;
-            else if (pending > 0) approvalStatus = 102;
-            else if (verified > 0) approvalStatus = 101;
+
+            if (rejected > 0) {
+                approvalStatus = 103;
+            } else if (pending > 0) {
+                approvalStatus = 101;
+            } else if (verified > 0) {
+                approvalStatus = 102;
+            }
             if (pending == 0 && verified == 0 && rejected == 0) continue;
 
             asha.put("approvalStatus", approvalStatus);
@@ -364,6 +378,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             );
 
         } catch (Exception e) {
+            logger.error("Update claim :"+e.getMessage());
             e.printStackTrace();
             return 0;
         }

@@ -67,11 +67,13 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             "WHERE record.ashaId = :ashaId " +
             "AND record.isClaimed = true " +
             "AND record.startDate <= :toDate " +
-            "AND record.endDate >= :fromDate")
+            "AND record.endDate >= :fromDate " +
+            "AND (:approvalStatus = 0 OR record.approvalStatus = :approvalStatus)")
     Long getTotalAmountByAsha(
             @Param("ashaId") Integer ashaId,
             @Param("fromDate") Timestamp fromDate,
-            @Param("toDate") Timestamp toDate);
+            @Param("toDate") Timestamp toDate,
+            @Param("approvalStatus") Integer approvalStatus);
 
 
     @Query("SELECT record " +
@@ -175,4 +177,13 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             @Param("benIds") List<Long> benIds,
             @Param("ashaId") Integer ashaId
     );
+
+    @Query("SELECT r FROM IncentiveActivityRecord r WHERE r.ashaId = :ashaId " +
+            "AND r.calimedDate >= :startDate AND r.calimedDate < :endDate " +
+            "AND (:approvalStatus = 0 OR r.approvalStatus = :approvalStatus)")
+    List<IncentiveActivityRecord> getRecordsBySuperVisor(
+            @Param("ashaId") Integer ashaId,
+            @Param("startDate") Timestamp startDate,
+            @Param("endDate") Timestamp endDate,
+            @Param("approvalStatus") Integer approvalStatus);
 }
