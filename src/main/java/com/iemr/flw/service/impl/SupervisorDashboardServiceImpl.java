@@ -311,8 +311,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 approvalStatus = 102;
             }
             if (pending == 0 && verified == 0 && rejected == 0) continue;
+            if(approvalStatusID.equals(0)){
+                asha.put("approvalStatus", approvalStatus);
 
-            asha.put("approvalStatus", approvalStatus);
+            }else {
+                asha.put("approvalStatus", approvalStatusID);
+
+            }
 
             ashaList.add(asha);
         }
