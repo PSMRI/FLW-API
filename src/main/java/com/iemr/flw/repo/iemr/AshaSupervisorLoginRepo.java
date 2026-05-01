@@ -42,8 +42,8 @@ public interface AshaSupervisorLoginRepo extends CrudRepository<AshaSupervisorMa
 			+ "AND asm.facilityID = :facilityID "
 			+ "AND asm.deleted = false "
 			+ "AND iar.is_claimed = true "
-			+ "AND iar.calimed_date >= :startDate "
-			+ "AND iar.calimed_date < :endDate "
+			+ "AND iar.start_date >= :startDate "
+			+ "AND iar.end_date < :endDate "
 			+ "AND (:approvalStatus = 0 "
 			+ "OR iar.approval_status = :approvalStatus)",
 			nativeQuery = true)
@@ -72,8 +72,8 @@ public interface AshaSupervisorLoginRepo extends CrudRepository<AshaSupervisorMa
 			+ "WHERE asm.supervisorUserID = :supervisorUserID "
 			+ "AND asm.deleted = false "
 			+ "AND iar.is_claimed = true "
-			+ "AND iar.claimed_date >= :startDate "
-			+ "AND iar.claimed_date < :endDate "
+			+ "AND iar.start_date >= :startDate "
+			+ "AND iar.end_date < :endDate "
 			+ "AND ( :approvalStatus = 0 "
 			+ "OR iar.approval_status = :approvalStatus )",
 			nativeQuery = true)
