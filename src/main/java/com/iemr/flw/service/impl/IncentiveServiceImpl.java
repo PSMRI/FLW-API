@@ -253,10 +253,10 @@ public class IncentiveServiceImpl implements IncentiveService {
     public String getAllIncentivesGroupedSummary(GetBenRequestHandler request) {
 
         LocalDate start = LocalDate.of(request.getYear(), request.getMonth(), 1);
-        LocalDate end = start.plusMonths(1);
+        LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
 
         Timestamp startTs = Timestamp.valueOf(start.atStartOfDay());
-        Timestamp endTs = Timestamp.valueOf(end.atStartOfDay());
+        Timestamp endTs = Timestamp.valueOf(end.atTime(23, 59, 59));
 
         Integer villageID = userRepo.getUserRole(request.getUserId()).get(0).getStateId();
         boolean isCG = villageID != null && villageID.intValue() == StateCode.CG.getStateCode();
@@ -265,8 +265,9 @@ public class IncentiveServiceImpl implements IncentiveService {
                 recordRepo.findRecordsByAsha(request.getUserId())
                         .stream()
                         .filter(r -> r.getCreatedDate() != null
-                                && !r.getCreatedDate().before(startTs)
-                                && r.getCreatedDate().before(endTs) && r.getIsClaimed())
+                                && !r.getStartDate().before(startTs)
+                                && !r.getEndDate().after(endTs)
+                                && r.getIsClaimed())
                         .toList();
 
         // Bulk fetch valid activity IDs — state wise
