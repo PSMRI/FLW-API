@@ -258,13 +258,31 @@ public class IncentiveServiceImpl implements IncentiveService {
         Timestamp startTs = Timestamp.valueOf(start.atStartOfDay());
         Timestamp endTs = Timestamp.valueOf(end.atStartOfDay());
 
+        Integer villageID = userRepo.getUserRole(request.getUserId()).get(0).getStateId();
+        boolean isCG = villageID != null && villageID.intValue() == StateCode.CG.getStateCode();
+
         List<IncentiveActivityRecord> records =
                 recordRepo.findRecordsByAsha(request.getUserId())
                         .stream()
                         .filter(r -> r.getCreatedDate() != null
                                 && !r.getCreatedDate().before(startTs)
-                                && r.getCreatedDate().before(endTs))
+                                && r.getCreatedDate().before(endTs) && r.getIsClaimed())
                         .toList();
+
+        // Bulk fetch valid activity IDs — state wise
+        List<Long> activityIds = records.stream()
+                .map(IncentiveActivityRecord::getActivityId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Set<Long> validActivityIds = isCG
+                ? incentivesRepo.findValidActivityIds(activityIds, true)
+                : incentivesRepo.findValidActivityIds(activityIds, false);
+
+        // Filter records based on valid activity IDs
+        records = records.stream()
+                .filter(r -> validActivityIds.contains(r.getActivityId()))
+                .collect(Collectors.toList());
 
         Map<Long, List<IncentiveActivityRecord>> grouped =
                 records.stream().collect(Collectors.groupingBy(IncentiveActivityRecord::getActivityId));
