@@ -64,16 +64,19 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
 
     @Query("SELECT COALESCE(SUM(record.amount), 0) " +
             "FROM IncentiveActivityRecord record " +
+            "JOIN IncentiveActivity master ON record.activityId = master.id " +
             "WHERE record.ashaId = :ashaId " +
+            "AND master.state = :stateCode " +
             "AND record.isClaimed = true " +
-            "AND record.startDate <= :toDate " +
-            "AND record.endDate >= :fromDate " +
+            "AND record.startDate >= :fromDate " +
+            "AND record.endDate <= :toDate " +
             "AND (:approvalStatus = 0 OR record.approvalStatus = :approvalStatus)")
     Long getTotalAmountByAsha(
             @Param("ashaId") Integer ashaId,
             @Param("fromDate") Timestamp fromDate,
             @Param("toDate") Timestamp toDate,
-            @Param("approvalStatus") Integer approvalStatus);
+            @Param("approvalStatus") Integer approvalStatus,
+            @Param("stateCode") Integer stateCode);
 
 
     @Query("SELECT record " +

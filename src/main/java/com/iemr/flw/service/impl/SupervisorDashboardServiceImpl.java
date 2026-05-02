@@ -248,8 +248,17 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             Integer ashaId = ((Number) row[0]).intValue();
 
             List<Object[]> countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
-            Long totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
-                    ashaId, startDate, endDate, approvalStatusID);
+            Long  totalAmount = null;
+            if(userServiceRoleRepo.getUserNamedByUserId(ashaId)!=null){
+                Integer stateCode = userServiceRoleRepo.getUserRole(ashaId).get(0).getStateId();
+                String groupName = getGroupNameByState(stateCode);
+
+                 totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
+                        ashaId, startDate, endDate, approvalStatusID, stateCode);
+
+            }
+
+
             List<IncentiveActivityRecord> incentiveActivityRecord =
                     incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate)
                             .stream()
@@ -334,6 +343,12 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         response.put("statusCode", 200);
 
         return response;
+    }
+    private String getGroupNameByState(Integer stateCode) {
+        switch (stateCode) {
+            case 5:  return "! ACTIVITY";
+            default: return "ACTIVITY";
+        }
     }
 
     @Transactional
