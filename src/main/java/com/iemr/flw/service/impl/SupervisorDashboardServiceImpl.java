@@ -209,7 +209,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
     public Map<String, Object> getAshasAtFacility(Integer supervisorId, Integer facilityId,
                                                   Integer month, Integer year, Integer approvalStatusID) {
         List<Object[]> rows;
-        logger.info("approvalStatusID:"+approvalStatusID);
+        logger.info("approvalStatusID:" + approvalStatusID);
 
         List<Object[]> superVisorRow = ashaSupervisorLoginRepo.getAllMappedAshas(supervisorId);
 
@@ -248,12 +248,10 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             Integer ashaId = ((Number) row[0]).intValue();
 
             List<Object[]> countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
-            Long  totalAmount = null;
-            if(userServiceRoleRepo.getUserNamedByUserId(ashaId)!=null){
+            Long totalAmount = null;
+            if (userServiceRoleRepo.getUserNamedByUserId(ashaId) != null) {
                 Integer stateCode = userServiceRoleRepo.getUserRole(ashaId).get(0).getStateId();
-                String groupName = getGroupNameByState(stateCode);
-
-                 totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
+                totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
                         ashaId, startDate, endDate, approvalStatusID, stateCode);
 
             }
@@ -312,18 +310,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             int approvalStatus = 0;
 
-            if (rejected > 0) {
-                approvalStatus = 103;
-            } else if (pending > 0) {
-                approvalStatus = 101;
-            } else if (verified > 0) {
-                approvalStatus = 102;
+            if (!activityList.isEmpty()) {
+                approvalStatus = (int) activityList.get(0).get("approvalStatus");
             }
             if (pending == 0 && verified == 0 && rejected == 0) continue;
-            if(approvalStatusID.equals(0)){
+            if (approvalStatusID.equals(0)) {
                 asha.put("approvalStatus", approvalStatus);
 
-            }else {
+            } else {
                 asha.put("approvalStatus", approvalStatusID);
 
             }
@@ -344,10 +338,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         return response;
     }
+
     private String getGroupNameByState(Integer stateCode) {
         switch (stateCode) {
-            case 5:  return "! ACTIVITY";
-            default: return "ACTIVITY";
+            case 5:
+                return "! ACTIVITY";
+            default:
+                return "ACTIVITY";
         }
     }
 
@@ -398,7 +395,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             );
 
         } catch (Exception e) {
-            logger.error("Update claim :"+e.getMessage());
+            logger.error("Update claim :" + e.getMessage());
             e.printStackTrace();
             return 0;
         }
