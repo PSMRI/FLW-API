@@ -33,13 +33,17 @@ public class AshaSupervisorIncentiveApproval {
 
     @PostMapping("/getAshaListByFacility")
     public ResponseEntity<?> getAshaListByFacility(
-            @RequestBody AshaByFacilityRequestDTO request) {
+            @RequestBody AshaByFacilityRequestDTO request,
+            @RequestHeader(value = "JwtToken") String token) {
 
         try {
 
+            if (token == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("UNAUTHORIZED");
+            }
 
             Map<String, Object> result = supervisorDashboardService.getAshasAtFacility(
-                    4206,
+                    jwtUtil.extractUserId(token),
                     request.getFacilityId(),
                     request.getMonth(),
                     request.getYear(),
@@ -83,22 +87,23 @@ public class AshaSupervisorIncentiveApproval {
 
     @PostMapping("/updateApprovalStatus")
     public ResponseEntity<?> updateApprovalStatus(
-            @RequestBody UpdateApprovalRequestDTO request) {
+            @RequestBody UpdateApprovalRequestDTO request,
+            @RequestHeader(value = "JwtToken") String token) {
 
         try {
-//            if (token != null) {
-//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("UNAUTHORIZED");
-//            }
+            if (token == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("UNAUTHORIZED");
+            }
 
             int updatedRows = supervisorDashboardService.updateApprovalStatus(
-                    4206,
+                    request.getAshaId(),
                     request.getMonth(),
                     request.getYear(),
                     request.getApprovalStatus(),
                     request.getIncentiveIds(),
                     request.getReason(),
                     request.getOtherReason(),
-                    "token"
+                    token
             );
 
             Map<String, Object> response = new HashMap<>();
