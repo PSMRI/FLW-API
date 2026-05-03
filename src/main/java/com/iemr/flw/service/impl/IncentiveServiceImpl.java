@@ -234,6 +234,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                 if (entry.getBenId() != null && entry.getBenId() > 0) {
                     String name = benIdToNameMap.getOrDefault(entry.getBenId(), "");
                     entry.setName(name);
+                    entry.setSupervisorRole(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getRoleName());
                     if (isCG) {
                         entry.setIsEligible(true);
                     }
