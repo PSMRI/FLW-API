@@ -275,7 +275,6 @@ public class IncentiveServiceImpl implements IncentiveService {
         // Bulk fetch valid activity IDs — state wise
         List<Long> activityIds = records.stream()
                 .map(IncentiveActivityRecord::getActivityId)
-                .distinct()
                 .collect(Collectors.toList());
 
         Set<Long> validActivityIds = isCG
