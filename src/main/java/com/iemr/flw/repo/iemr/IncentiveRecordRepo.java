@@ -121,7 +121,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             + "iar.reason = :reason, "
             + "iar.approvalDate = :approvalDate, "
             + "iar.approvalDate = :approvalDate, "
-            + "iar.isClaimed = :false, "
+            + "iar.isClaimed = false, "
             + "iar.verifiedByUserName = :ashaSupervisorUserName "
             + "WHERE iar.isClaimed = true")
     int updateApprovalStatusById(
