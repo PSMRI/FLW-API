@@ -119,7 +119,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             + "SET iar.approvalStatus = :status, "
             + "iar.verifiedByUserId = :ashaSupervisorUserId, "
             + "iar.reason = :reason, "
-            + "iar.approvalDate = :approvalDate, "
+            + "iar.otherReason = :otherReason, "
             + "iar.approvalDate = :approvalDate, "
             + "iar.isClaimed = false, "
             + "iar.verifiedByUserName = :ashaSupervisorUserName "
