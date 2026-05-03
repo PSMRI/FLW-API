@@ -265,10 +265,12 @@ public class IncentiveServiceImpl implements IncentiveService {
                 recordRepo.findRecordsByAsha(request.getUserId())
                         .stream()
                         .filter(r -> r.getCreatedDate() != null
-                                && !r.getStartDate().before(startTs)
-                                && !r.getEndDate().after(endTs)
+                                && r.getStartDate() != null
+                                && r.getStartDate().toLocalDateTime().getMonthValue() == request.getMonth()
+                                && r.getStartDate().toLocalDateTime().getYear() == request.getYear()
                                 && r.getIsClaimed())
                         .toList();
+
 
         // Bulk fetch valid activity IDs — state wise
         List<Long> activityIds = records.stream()
