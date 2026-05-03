@@ -232,16 +232,31 @@ public class DeathReportsServiceImpl implements DeathReportsService {
 
     private void checkAndAddIncentivesMdsr(List<MDSR> mdsrList) {
 
-
         mdsrList.forEach(mdsr -> {
             Integer userId = userRepo.getUserIdByName(mdsr.getCreatedBy());
-            IncentiveActivity immunizationActivity =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("MATERNAL_DEATH_REPORT", GroupName.MATERNAL_HEALTH.getDisplayName());
-              if(immunizationActivity!=null){
-                  createIncentiveRecord(mdsr,mdsr.getBenId(),userId,immunizationActivity);
+            Integer stateId =  userRepo.getUserRole(userId).get(0).getStateId();
+            if(stateId.equals(StateCode.AM.getStateCode())){
+                IncentiveActivity immunizationActivity =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("MATERNAL_DEATH_REPORT", GroupName.MATERNAL_HEALTH.getDisplayName());
 
-            createIncentiveRecord(mdsr, mdsr.getBenId(), userId, immunizationActivity);
-              }
+                if(immunizationActivity!=null){
+                    createIncentiveRecord(mdsr,mdsr.getBenId(),userId,immunizationActivity);
+
+                }
+
+
+            }
+            if(stateId.equals(StateCode.CG.getStateCode())){
+                IncentiveActivity cgImmunizationActivity =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("MATERNAL_DEATH_REPORT", GroupName.ACTIVITY.getDisplayName());
+
+                if(cgImmunizationActivity!=null){
+                    createIncentiveRecord(mdsr,mdsr.getBenId(),userId,cgImmunizationActivity);
+
+                }
+            }
+
+
         });
     }
 
