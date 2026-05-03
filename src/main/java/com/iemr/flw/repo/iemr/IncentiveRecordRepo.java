@@ -136,7 +136,8 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
     @Transactional
     @Query("UPDATE IncentiveActivityRecord iar "
             + "SET iar.isClaimed = :isClaimed, "
-            + "iar.calimedDate = :calimedDate "
+            + "iar.calimedDate = :calimedDate, "
+            + "iar.approvalStatus = 102 "
             + "WHERE iar.ashaId = :ashaId "
             + "AND iar.createdDate >= :startDate "
             + "AND iar.createdDate < :endDate")
