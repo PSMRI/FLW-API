@@ -265,9 +265,9 @@ public class IncentiveServiceImpl implements IncentiveService {
                 recordRepo.findRecordsByAsha(request.getUserId())
                         .stream()
                         .filter(r -> r.getCreatedDate() != null
-                                && r.getStartDate() != null
-                                && r.getStartDate().toLocalDateTime().getMonthValue() == request.getMonth()
-                                && r.getStartDate().toLocalDateTime().getYear() == request.getYear()
+                                && r.getEndDate() != null
+                                && r.getEndDate().toLocalDateTime().getMonthValue() == request.getMonth()
+                                && r.getEndDate().toLocalDateTime().getYear() == request.getYear()
                                 && r.getIsClaimed())
                         .toList();
 
