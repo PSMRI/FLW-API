@@ -270,7 +270,10 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 activity.put("otherReason", record.getOtherReason());
                 activity.put("approvalDate", record.getApprovalDate());
                 activity.put("approvalStatus", record.getApprovalStatus());
-                activity.put("verifiedByUserName", record.getVerifiedByUserName());
+                if(record.getVerifiedByUserId()!=null){
+                    activity.put("verifiedByUserName", userServiceRoleRepo.getUserRole(record.getVerifiedByUserId()).get(0).getName());
+
+                }
                 activity.put("verifiedByUserId", record.getVerifiedByUserId());
                 activity.put("isClaimed", record.getIsClaimed());
                 activity.put("claimedDate", record.getCalimedDate());
