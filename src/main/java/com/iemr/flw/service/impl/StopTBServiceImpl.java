@@ -8,6 +8,8 @@ import com.iemr.flw.dto.iemr.StopTBRegistrationDto;
 import com.iemr.flw.repo.iemr.BenFlowStatusRepo;
 import com.iemr.flw.repo.iemr.StopTBRegistrationRepo;
 import com.iemr.flw.service.StopTBService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -72,11 +76,30 @@ public class StopTBServiceImpl implements StopTBService {
         jsonObject.remove("bmi");
         jsonObject.remove("temperatureValue");
 
+        // Prevent TM-API from creating its own flow record — we create Stop TB specific one
+        jsonObject.addProperty("isMobile", true);
+
         // Step 1 — forward to TM-API for standard beneficiary registration
+        // Extract auth headers from current request — same pattern as FLW-API
+        String jwtToken = authorization;
+        String cookieValue = null;
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            HttpServletRequest httpRequest = attributes.getRequest();
+            if (httpRequest.getCookies() != null) {
+                for (Cookie cookie : httpRequest.getCookies()) {
+                    if ("Jwttoken".equals(cookie.getName())) {
+                        cookieValue = cookie.getValue();
+                    }
+                }
+            }
+        }
+
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", authorization);
+        headers.set("Authorization", jwtToken);
+        headers.set("User-Agent", "okhttp");
 
         HttpEntity<String> request = new HttpEntity<>(jsonObject.toString(), headers);
         String tmRegistrationUrl = tmUrl + "/registrar/registrarBeneficaryRegistrationNew";
@@ -88,9 +111,16 @@ public class StopTBServiceImpl implements StopTBService {
         }
 
         Map responseBody = response.getBody();
-        Map data = (Map) responseBody.get("data");
-        Long benRegID = Long.valueOf(data.get("benRegId").toString());
-        Long beneficiaryID = Long.valueOf(data.get("benGenId").toString());
+        // TM-API returns data as a JSON string — parse it
+        Object dataObj = responseBody.get("data");
+        JsonObject dataJson;
+        if (dataObj instanceof String) {
+            dataJson = JsonParser.parseString((String) dataObj).getAsJsonObject();
+        } else {
+            dataJson = JsonParser.parseString(new com.google.gson.Gson().toJson(dataObj)).getAsJsonObject();
+        }
+        Long benRegID = dataJson.get("benRegId").getAsLong();
+        Long beneficiaryID = dataJson.get("benGenId").getAsLong();
 
         // Step 2 — save Stop TB specific fields @Transactional — all or nothing
         StopTBRegistration registration = new StopTBRegistration();
@@ -181,7 +211,13 @@ public class StopTBServiceImpl implements StopTBService {
     }
 
     private Integer getIntField(JsonObject obj, String field) {
-        return obj.has(field) && !obj.get(field).isJsonNull() ? obj.get(field).getAsInt() : null;
+        if (!obj.has(field) || obj.get(field).isJsonNull()) return null;
+        try {
+            return obj.get(field).getAsInt();
+        } catch (Exception e) {
+            // handle string values like "1727"
+            return Integer.parseInt(obj.get(field).getAsString().trim());
+        }
     }
 
     private Double getDoubleField(JsonObject obj, String field) {

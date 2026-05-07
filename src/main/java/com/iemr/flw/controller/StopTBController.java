@@ -25,10 +25,10 @@ public class StopTBController {
     @Operation(summary = "Save Stop TB beneficiary registration")
     public ResponseEntity<Map<String, Object>> saveRegistration(
             @RequestBody String requestBody,
-            @RequestHeader("Authorization") String authorization) {
+            @RequestHeader("JwtToken") String jwtToken) {
         Map<String, Object> response = new LinkedHashMap<>();
         try {
-            Map<String, Object> data = stopTBService.saveRegistration(requestBody, authorization);
+            Map<String, Object> data = stopTBService.saveRegistration(requestBody, jwtToken);
             response.put("data", data);
             response.put("statusCode", 200);
             response.put("status", "Success");
