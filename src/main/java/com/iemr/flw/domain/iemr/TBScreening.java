@@ -79,4 +79,37 @@ public class TBScreening {
 
     @Column(name = "recommandate_test")
     private String recommandateTest;
+
+    // Added for Stop TB nurse flow — nullable, not used by ASHA flow
+    @Column(name = "ben_reg_id")
+    private Long benRegID;
+
+    @Column(name = "provider_service_map_id")
+    private Integer providerServiceMapID;
+
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "deleted", insertable = false)
+    private Boolean deleted;
+
+    // Diagnostics / referrals — Stop TB nurse flow only
+    @Column(name = "referred_for_digital_chest_xray")
+    private Boolean referredForDigitalChestXray;
+
+    @Column(name = "referred_for_sputum_collection")
+    private Boolean referredForSputumCollection;
+
+    @Column(name = "sputum_sample_submitted_at", length = 50)
+    private String sputumSampleSubmittedAt;
+
+    @Column(name = "recommended_for_truenat")
+    private Boolean recommendedForTruenat;
+
+    @Column(name = "recommended_for_liquid_culture")
+    private Boolean recommendedForLiquidCulture;
+
+    // JSON array of denial reasons when patient refuses a test
+    @Column(name = "test_denial_reasons", columnDefinition = "TEXT")
+    private String testDenialReasons;
 }

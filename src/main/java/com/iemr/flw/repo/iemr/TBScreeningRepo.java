@@ -17,4 +17,10 @@ public interface TBScreeningRepo extends JpaRepository<TBScreening, Long> {
 
     @Query(value = "SELECT tbs FROM TBScreening tbs WHERE tbs.userId = :userId")
     List<TBScreening> getByUserId(@Param("userId") Integer userId);
+
+    @Query("SELECT tbs FROM TBScreening tbs WHERE tbs.benRegID = :benRegID AND tbs.deleted = false")
+    TBScreening findByBenRegID(@Param("benRegID") Long benRegID);
+
+    @Query("SELECT tbs FROM TBScreening tbs WHERE tbs.providerServiceMapID = :psmId AND tbs.deleted = false ORDER BY tbs.visitDate DESC")
+    List<TBScreening> findAllByProviderServiceMapID(@Param("psmId") Integer psmId);
 }

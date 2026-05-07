@@ -15,11 +15,6 @@ public interface StopTBRegistrationRepo extends JpaRepository<StopTBRegistration
     @Query("SELECT t FROM StopTBRegistration t WHERE t.benRegID = :benRegID AND t.deleted = false")
     StopTBRegistration findByBenRegID(@Param("benRegID") Long benRegID);
 
-    @Query("SELECT t FROM StopTBRegistration t WHERE t.providerServiceMapID = :psmId AND t.createdBy = :createdBy AND t.createdDate >= :fromDate AND t.createdDate <= :toDate AND t.deleted = false")
-    List<StopTBRegistration> getRegistrarWorklist(
-            @Param("psmId") Integer psmId,
-            @Param("createdBy") String createdBy,
-            @Param("fromDate") Timestamp fromDate,
-            @Param("toDate") Timestamp toDate
-    );
+    @Query("SELECT t FROM StopTBRegistration t WHERE t.providerServiceMapID = :psmId AND t.deleted = false ORDER BY t.createdDate DESC")
+    List<StopTBRegistration> getRegistrarWorklist(@Param("psmId") Integer psmId);
 }
