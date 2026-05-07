@@ -23,6 +23,13 @@ public class UserServiceImpl implements UserService {
         logger.info("calling getUserRole for userId: " + userId);
         UserServiceRoleDTO userRole = userServiceRoleRepo.getUserRole(userId).get(0);
         userRole.setFacilityData(facilityDataService.buildFacilityData(userId, userRole.getRoleName()));
+        if (userRole.getWorkingDistrictId() == null && userRole.getBlockId() != null) {
+            Object[] district = userServiceRoleRepo.getDistrictByBlockId(userRole.getBlockId());
+            if (district != null && district.length == 2) {
+                userRole.setWorkingDistrictId(((Number) district[0]).intValue());
+                userRole.setWorkingDistrictName((String) district[1]);
+            }
+        }
         return userRole;
     }
 }
