@@ -24,4 +24,9 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
     @Query("select u.userName from UserServiceRole u where u.userId = :userId and u.userServciceRoleDeleted = false")
     String  getUserNamedByUserId(@Param("userId") Integer userId);
 
+    @Query(value = "SELECT d.DistrictID, d.DistrictName FROM m_districtblock db " +
+            "JOIN m_district d ON d.DistrictID = db.DistrictID " +
+            "WHERE db.BlockID = :blockId LIMIT 1", nativeQuery = true)
+    Object[] getDistrictByBlockId(@Param("blockId") Integer blockId);
+
 }
