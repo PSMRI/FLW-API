@@ -219,8 +219,14 @@ public class StopTBServiceImpl implements StopTBService {
         headers.set("Authorization", authorization);
         headers.set("User-Agent", "okhttp");
 
+        // TM-API quickSearchNew requires 12-digit beneficiaryID — look it up from BenFlowStatus
+        List<BenFlowStatus> flows = benFlowStatusRepo.findByBeneficiaryRegID(beneficiaryRegID);
+        if (flows == null || flows.isEmpty())
+            throw new Exception("No flow record found for beneficiaryRegID: " + beneficiaryRegID);
+        Long beneficiaryID = flows.get(0).getBeneficiaryID();
+
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("beneficiaryRegID", beneficiaryRegID);
+        requestBody.put("beneficiaryID", beneficiaryID);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
         ResponseEntity<Map> response = restTemplate.exchange(

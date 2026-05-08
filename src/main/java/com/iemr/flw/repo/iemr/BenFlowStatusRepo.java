@@ -19,6 +19,9 @@ public interface BenFlowStatusRepo extends JpaRepository<BenFlowStatus, Long> {
     @Query("SELECT b FROM BenFlowStatus b WHERE b.providerServiceMapId = :psmId AND b.villageID = :villageId AND b.deleted = false ORDER BY b.registrationDate DESC")
     List<BenFlowStatus> getRegistrarWorklist(@Param("psmId") Integer psmId, @Param("villageId") Integer villageId);
 
+    @Query("SELECT b FROM BenFlowStatus b WHERE b.beneficiaryRegID = :benRegID AND b.deleted = false ORDER BY b.registrationDate DESC")
+    List<BenFlowStatus> findByBeneficiaryRegID(@Param("benRegID") Long benRegID);
+
     @Modifying
     @Query("UPDATE BenFlowStatus b SET b.nurseFlag = 9, b.pharmacistFlag = 1 WHERE b.benFlowID = :benFlowID")
     int updateAfterNurseSubmit(@Param("benFlowID") Long benFlowID);
