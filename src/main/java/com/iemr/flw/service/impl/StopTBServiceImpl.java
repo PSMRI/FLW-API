@@ -209,44 +209,78 @@ public class StopTBServiceImpl implements StopTBService {
         return result;
     }
 
+    // ── Beneficiary Details ───────────────────────────────────────────────────
+
+    @Override
+    public Map<String, Object> getBeneficiaryDetails(Long beneficiaryRegID, String authorization) throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", authorization);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("beneficiaryRegID", beneficiaryRegID);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+        ResponseEntity<Map> response = restTemplate.exchange(
+                tmUrl + "/registrar/quickSearchNew",
+                HttpMethod.POST, entity, Map.class);
+
+        if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null)
+            throw new Exception("Failed to fetch beneficiary details from TM-API");
+
+        Map<String, Object> body = response.getBody();
+        Object dataObj = body.get("data");
+        if (dataObj == null)
+            throw new Exception("No data in TM-API response");
+
+        // quickSearchNew returns a list — take first element
+        java.util.List<?> dataList = (java.util.List<?>) dataObj;
+        if (dataList.isEmpty())
+            throw new Exception("Beneficiary not found");
+
+        Map<String, Object> benData = new HashMap<>((Map<String, Object>) dataList.get(0));
+
+        // Parse otherFields JSON string and merge into response
+        Object otherFieldsRaw = benData.get("otherFields");
+        if (otherFieldsRaw != null) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                Map<String, Object> otherFields = mapper.readValue(otherFieldsRaw.toString(), Map.class);
+                benData.putAll(otherFields);
+            } catch (Exception e) {
+                logger.warn("Could not parse otherFields: " + e.getMessage());
+            }
+        }
+        benData.remove("otherFields");
+        return benData;
+    }
+
     // ── Worklists ─────────────────────────────────────────────────────────────
 
     @Override
     public Map<String, Object> getRegistrarWorklist(StopTBRegistrationDto dto) throws Exception {
-        List<StopTBRegistration> list = stopTBRegistrationRepo.getRegistrarWorklist(
+        List<BenFlowStatus> list = benFlowStatusRepo.getRegistrarWorklist(
                 dto.getProviderServiceMapID(), dto.getVillageId());
 
         List<Map<String, Object>> worklist = new java.util.ArrayList<>();
-        for (StopTBRegistration reg : list) {
+        for (BenFlowStatus flow : list) {
             Map<String, Object> item = new HashMap<>();
-            item.put("benRegID", reg.getBenRegID());
-            item.put("providerServiceMapID", reg.getProviderServiceMapID());
-            item.put("villageId", reg.getVillageId());
-            item.put("villageName", reg.getVillageName());
-            item.put("personFrom", reg.getPersonFrom());
-            item.put("caseFindingType", reg.getCaseFindingType());
-            item.put("tuId", reg.getTuId());
-            item.put("tuName", reg.getTuName());
-            item.put("healthFacilityId", reg.getHealthFacilityId());
-            item.put("healthFacilityName", reg.getHealthFacilityName());
-            item.put("weight", reg.getWeight());
-            item.put("height", reg.getHeight());
-            item.put("bmi", reg.getBmi());
-            item.put("temperatureValue", reg.getTemperatureValue());
-            item.put("createdBy", reg.getCreatedBy());
-            item.put("createdDate", reg.getCreatedDate());
-
-            RMNCHMBeneficiarydetail detail = beneficiaryRepo.getDetailByBenRegID(
-                    java.math.BigInteger.valueOf(reg.getBenRegID()));
-            if (detail != null) {
-                item.put("firstName", detail.getFirstName());
-                item.put("middleName", detail.getMiddleName());
-                item.put("lastName", detail.getLastName());
-                item.put("dob", detail.getDob());
-                item.put("gender", detail.getGender());
-                item.put("fatherName", detail.getFatherName());
-                item.put("motherName", detail.getMotherName());
-            }
+            item.put("benFlowID", flow.getBenFlowID());
+            item.put("benRegID", flow.getBeneficiaryRegID());
+            item.put("beneficiaryID", flow.getBeneficiaryID());
+            item.put("benName", flow.getBenName());
+            item.put("dob", flow.getDob());
+            item.put("genderID", flow.getGenderID());
+            item.put("genderName", flow.getGenderName());
+            item.put("phoneNo", flow.getPreferredPhoneNum());
+            item.put("villageID", flow.getVillageID());
+            item.put("villageName", flow.getVillageName());
+            item.put("districtID", flow.getDistrictID());
+            item.put("districtName", flow.getDistrictName());
+            item.put("registrationDate", flow.getRegistrationDate());
+            item.put("nurseFlag", flow.getNurseFlag());
+            item.put("doctorFlag", flow.getDoctorFlag());
             worklist.add(item);
         }
 

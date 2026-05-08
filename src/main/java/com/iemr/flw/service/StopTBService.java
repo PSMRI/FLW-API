@@ -9,6 +9,7 @@ public interface StopTBService {
     Map<String, Object> saveRegistration(String requestBody, String authorization) throws Exception;
     Map<String, Object> getRegistration(StopTBRegistrationDto dto) throws Exception;
     Map<String, Object> getRegistrarWorklist(StopTBRegistrationDto dto) throws Exception;
+    Map<String, Object> getBeneficiaryDetails(Long beneficiaryRegID, String authorization) throws Exception;
 
     // Nurse — worklist
     Map<String, Object> getNurseWorklist(StopTBRegistrationDto dto) throws Exception;
