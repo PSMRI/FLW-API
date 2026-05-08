@@ -63,13 +63,13 @@ public class StopTBController {
     @Operation(summary = "Get full beneficiary details with Stop TB fields as individual objects")
     public ResponseEntity<Map<String, Object>> getBeneficiaryDetails(
             @RequestBody Map<String, Object> body,
-            @RequestHeader("Authorization") String authorization) {
+            @RequestHeader("JwtToken") String jwtToken) {
         Map<String, Object> response = new LinkedHashMap<>();
         try {
             Object raw = body.get("beneficiaryRegID");
             if (raw == null) throw new Exception("beneficiaryRegID is required");
             Long beneficiaryRegID = Long.parseLong(raw.toString());
-            Map<String, Object> data = stopTBService.getBeneficiaryDetails(beneficiaryRegID, authorization);
+            Map<String, Object> data = stopTBService.getBeneficiaryDetails(beneficiaryRegID, jwtToken);
             response.put("data", data);
             response.put("statusCode", 200);
             response.put("status", "Success");
