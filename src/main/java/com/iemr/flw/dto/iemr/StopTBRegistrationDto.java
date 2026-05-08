@@ -28,6 +28,9 @@ public class StopTBRegistrationDto {
 
     private String createdBy;
 
+    private Integer villageId;
+    private String villageName;
+
     // For get/update
     private Long benRegID;
     private String modifiedBy;

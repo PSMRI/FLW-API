@@ -53,6 +53,12 @@ public class StopTBRegistration {
     @Column(name = "isMobileAvailable")
     private Boolean isMobileAvailable;
 
+    @Column(name = "villageId")
+    private Integer villageId;
+
+    @Column(name = "villageName")
+    private String villageName;
+
     @Column(name = "createdBy")
     private String createdBy;
 
