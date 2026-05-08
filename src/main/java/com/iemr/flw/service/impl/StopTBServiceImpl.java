@@ -301,23 +301,19 @@ public class StopTBServiceImpl implements StopTBService {
             item.put("benFlowID", flow.getBenFlowID());
             item.put("benRegID", flow.getBeneficiaryRegID());
             item.put("beneficiaryID", flow.getBeneficiaryID());
-            item.put("visitCategory", flow.getVisitCategory());
-            item.put("nurseFlag", flow.getNurseFlag());
-            item.put("villageId", flow.getVillageID());
+            item.put("benName", flow.getBenName());
+            item.put("dob", flow.getDob());
+            item.put("genderID", flow.getGenderID());
+            item.put("genderName", flow.getGenderName());
+            item.put("phoneNo", flow.getPreferredPhoneNum());
+            item.put("districtID", flow.getDistrictID());
+            item.put("districtName", flow.getDistrictName());
+            item.put("villageID", flow.getVillageID());
             item.put("villageName", flow.getVillageName());
+            item.put("providerServiceMapID", flow.getProviderServiceMapId());
+            item.put("nurseFlag", flow.getNurseFlag());
+            item.put("doctorFlag", flow.getDoctorFlag());
             item.put("registrationDate", flow.getRegistrationDate());
-
-            RMNCHMBeneficiarydetail detail = beneficiaryRepo.getDetailByBenRegID(
-                    java.math.BigInteger.valueOf(flow.getBeneficiaryRegID()));
-            if (detail != null) {
-                item.put("firstName", detail.getFirstName());
-                item.put("middleName", detail.getMiddleName());
-                item.put("lastName", detail.getLastName());
-                item.put("dob", detail.getDob());
-                item.put("gender", detail.getGender());
-                item.put("fatherName", detail.getFatherName());
-                item.put("motherName", detail.getMotherName());
-            }
             worklist.add(item);
         }
 
