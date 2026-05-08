@@ -16,15 +16,15 @@ public class StopTBGeneralExamination {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "ben_reg_id")
-    private Long benRegID;
+    @Column(name = "beneficiary_reg_id")
+    private Long beneficiaryRegID;
 
     @Column(name = "provider_service_map_id")
     private Integer providerServiceMapID;
 
     // Vitals
-    @Column(name = "pulse")
-    private Integer pulse;
+    @Column(name = "pulse_rate")
+    private Integer pulseRate;
 
     @Column(name = "systolic_bp")
     private Integer systolicBP;
@@ -32,33 +32,57 @@ public class StopTBGeneralExamination {
     @Column(name = "diastolic_bp")
     private Integer diastolicBP;
 
-    @Column(name = "rbs_value")
-    private Double rbsValue;
+    @Column(name = "random_blood_sugar")
+    private Double randomBloodSugar;
 
-    // Clinical signs
+    // Clinical signs — ID + label ("PRESENT" / "ABSENT")
+    @Column(name = "pallor_id")
+    private Integer pallorId;
+
     @Column(name = "pallor")
-    private Boolean pallor;
+    private String pallor;
+
+    @Column(name = "icterus_id")
+    private Integer icterusId;
 
     @Column(name = "icterus")
-    private Boolean icterus;
+    private String icterus;
+
+    @Column(name = "lymphadenopathy_id")
+    private Integer lymphadenopathyId;
 
     @Column(name = "lymphadenopathy")
-    private Boolean lymphadenopathy;
+    private String lymphadenopathy;
 
-    @Column(name = "edema")
-    private Boolean edema;
+    @Column(name = "oedema_id")
+    private Integer oedemaId;
+
+    @Column(name = "oedema")
+    private String oedema;
+
+    @Column(name = "cyanosis_id")
+    private Integer cyanosisId;
 
     @Column(name = "cyanosis")
-    private Boolean cyanosis;
+    private String cyanosis;
+
+    @Column(name = "clubbing_id")
+    private Integer clubbingId;
 
     @Column(name = "clubbing")
-    private Boolean clubbing;
+    private String clubbing;
 
-    // JSON array of selected key population risk factors
+    // JSON arrays serialised from mobile
+    @Column(name = "key_population_risk_factor_ids", columnDefinition = "TEXT")
+    private String keyPopulationRiskFactorIds;
+
     @Column(name = "key_population_risk_factors", columnDefinition = "TEXT")
     private String keyPopulationRiskFactors;
 
-    // Positive | Reactive | Negative | Unknown
+    @Column(name = "hiv_status_id")
+    private Integer hivStatusId;
+
+    // "Positive" | "Reactive" | "Negative" | "Unknown"
     @Column(name = "hiv_status")
     private String hivStatus;
 
