@@ -59,6 +59,29 @@ public class StopTBController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/beneficiary/getDetails")
+    @Operation(summary = "Get full beneficiary details with Stop TB fields as individual objects")
+    public ResponseEntity<Map<String, Object>> getBeneficiaryDetails(
+            @RequestBody Map<String, Object> body,
+            @RequestHeader("Authorization") String authorization) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        try {
+            Object raw = body.get("beneficiaryRegID");
+            if (raw == null) throw new Exception("beneficiaryRegID is required");
+            Long beneficiaryRegID = Long.parseLong(raw.toString());
+            Map<String, Object> data = stopTBService.getBeneficiaryDetails(beneficiaryRegID, authorization);
+            response.put("data", data);
+            response.put("statusCode", 200);
+            response.put("status", "Success");
+        } catch (Exception e) {
+            logger.error("Error in getBeneficiaryDetails: " + e);
+            response.put("statusCode", 5000);
+            response.put("errorMessage", "Error fetching beneficiary details: " + e.getMessage());
+            response.put("status", "FAILURE");
+        }
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/registrar/worklist")
     @Operation(summary = "Get registrar worklist for Stop TB")
     public ResponseEntity<Map<String, Object>> getRegistrarWorklist(@RequestBody StopTBRegistrationDto dto) {
