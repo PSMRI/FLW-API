@@ -216,7 +216,7 @@ public class StopTBServiceImpl implements StopTBService {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", authorization);
+        headers.set("JwtToken", authorization);
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("beneficiaryRegID", beneficiaryRegID);
