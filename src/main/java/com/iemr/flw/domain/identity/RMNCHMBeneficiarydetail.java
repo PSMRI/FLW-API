@@ -190,4 +190,7 @@ public class RMNCHMBeneficiarydetail {
 	@Column(name = "familyid")
 	private String familyId;
 
+	@Column(name = "ExtraFields")
+	private String otherFields;
+
 }

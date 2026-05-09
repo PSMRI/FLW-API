@@ -21,14 +21,16 @@ public class StopTBController {
     @Autowired
     private StopTBService stopTBService;
 
+    // ── Registration ──────────────────────────────────────────────────────────
+
     @PostMapping("/registration/save")
     @Operation(summary = "Save Stop TB beneficiary registration")
     public ResponseEntity<Map<String, Object>> saveRegistration(
             @RequestBody String requestBody,
-            @RequestHeader("JwtToken") String jwtToken) {
+            @RequestHeader("Authorization") String authorization) {
         Map<String, Object> response = new LinkedHashMap<>();
         try {
-            Map<String, Object> data = stopTBService.saveRegistration(requestBody, jwtToken);
+            Map<String, Object> data = stopTBService.saveRegistration(requestBody, authorization);
             response.put("data", data);
             response.put("statusCode", 200);
             response.put("status", "Success");
@@ -41,54 +43,15 @@ public class StopTBController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/registration/get")
-    @Operation(summary = "Get Stop TB beneficiary registration details")
-    public ResponseEntity<Map<String, Object>> getRegistration(@RequestBody StopTBRegistrationDto dto) {
-        Map<String, Object> response = new LinkedHashMap<>();
-        try {
-            Map<String, Object> data = stopTBService.getRegistration(dto);
-            response.put("data", data);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
-        } catch (Exception e) {
-            logger.error("Error in getRegistration: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error fetching registration: " + e.getMessage());
-            response.put("status", "FAILURE");
-        }
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/beneficiary/getDetails")
-    @Operation(summary = "Get full beneficiary details with Stop TB fields as individual objects")
-    public ResponseEntity<Map<String, Object>> getBeneficiaryDetails(
-            @RequestBody Map<String, Object> body,
-            @RequestHeader("JwtToken") String jwtToken) {
-        Map<String, Object> response = new LinkedHashMap<>();
-        try {
-            Object raw = body.get("beneficiaryRegID");
-            if (raw == null) throw new Exception("beneficiaryRegID is required");
-            Long beneficiaryRegID = Long.parseLong(raw.toString());
-            Map<String, Object> data = stopTBService.getBeneficiaryDetails(beneficiaryRegID, jwtToken);
-            response.put("data", data);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
-        } catch (Exception e) {
-            logger.error("Error in getBeneficiaryDetails: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error fetching beneficiary details: " + e.getMessage());
-            response.put("status", "FAILURE");
-        }
-        return ResponseEntity.ok(response);
-    }
+    // ── Worklists ─────────────────────────────────────────────────────────────
 
     @PostMapping("/registrar/worklist")
-    @Operation(summary = "Get registrar worklist for Stop TB")
+    @Operation(summary = "Get registrar worklist — full beneficiary details for Stop TB")
     public ResponseEntity<Map<String, Object>> getRegistrarWorklist(@RequestBody StopTBRegistrationDto dto) {
         Map<String, Object> response = new LinkedHashMap<>();
         try {
             Map<String, Object> data = stopTBService.getRegistrarWorklist(dto);
-            response.put("data", data);
+            response.put("data", data.get("data"));
             response.put("statusCode", 200);
             response.put("status", "Success");
         } catch (Exception e) {
@@ -101,12 +64,12 @@ public class StopTBController {
     }
 
     @PostMapping("/nurse/worklist")
-    @Operation(summary = "Get nurse worklist for Stop TB")
+    @Operation(summary = "Get nurse worklist — full beneficiary details + nurse module data")
     public ResponseEntity<Map<String, Object>> getNurseWorklist(@RequestBody StopTBRegistrationDto dto) {
         Map<String, Object> response = new LinkedHashMap<>();
         try {
             Map<String, Object> data = stopTBService.getNurseWorklist(dto);
-            response.put("data", data);
+            response.put("data", data.get("data"));
             response.put("statusCode", 200);
             response.put("status", "Success");
         } catch (Exception e) {
@@ -145,8 +108,7 @@ public class StopTBController {
         try {
             Object raw = body.get("benRegID");
             if (raw == null) throw new Exception("benRegID is required");
-            Long benRegID = Long.parseLong(raw.toString());
-            Map<String, Object> data = stopTBService.getGeneralExamination(benRegID);
+            Map<String, Object> data = stopTBService.getGeneralExamination(Long.parseLong(raw.toString()));
             response.put("data", data);
             response.put("statusCode", 200);
             response.put("status", "Success");
@@ -160,14 +122,13 @@ public class StopTBController {
     }
 
     @PostMapping("/nurse/generalExamination/getAll")
-    @Operation(summary = "Get all general examinations at a camp")
+    @Operation(summary = "Get all general examinations for a camp")
     public ResponseEntity<Map<String, Object>> getAllGeneralExaminations(@RequestBody Map<String, Object> body) {
         Map<String, Object> response = new LinkedHashMap<>();
         try {
             Object raw = body.get("providerServiceMapID");
             if (raw == null) throw new Exception("providerServiceMapID is required");
-            Integer psmId = Integer.parseInt(raw.toString());
-            Map<String, Object> data = stopTBService.getAllGeneralExaminations(psmId);
+            Map<String, Object> data = stopTBService.getAllGeneralExaminations(Integer.parseInt(raw.toString()));
             response.put("data", data);
             response.put("statusCode", 200);
             response.put("status", "Success");
@@ -207,8 +168,7 @@ public class StopTBController {
         try {
             Object raw = body.get("benRegID");
             if (raw == null) throw new Exception("benRegID is required");
-            Long benRegID = Long.parseLong(raw.toString());
-            Map<String, Object> data = stopTBService.getNurseTBScreening(benRegID);
+            Map<String, Object> data = stopTBService.getNurseTBScreening(Long.parseLong(raw.toString()));
             response.put("data", data);
             response.put("statusCode", 200);
             response.put("status", "Success");
@@ -222,14 +182,13 @@ public class StopTBController {
     }
 
     @PostMapping("/nurse/tbScreening/getAll")
-    @Operation(summary = "Get all TB screenings at a camp")
+    @Operation(summary = "Get all TB screenings for a camp")
     public ResponseEntity<Map<String, Object>> getAllNurseTBScreenings(@RequestBody Map<String, Object> body) {
         Map<String, Object> response = new LinkedHashMap<>();
         try {
             Object raw = body.get("providerServiceMapID");
             if (raw == null) throw new Exception("providerServiceMapID is required");
-            Integer psmId = Integer.parseInt(raw.toString());
-            Map<String, Object> data = stopTBService.getAllNurseTBScreenings(psmId);
+            Map<String, Object> data = stopTBService.getAllNurseTBScreenings(Integer.parseInt(raw.toString()));
             response.put("data", data);
             response.put("statusCode", 200);
             response.put("status", "Success");
@@ -242,7 +201,7 @@ public class StopTBController {
         return ResponseEntity.ok(response);
     }
 
-    // ── Nurse: General OPD ───────────────────────────────────────────────────
+    // ── Nurse: General OPD ────────────────────────────────────────────────────
 
     @PostMapping("/nurse/generalOpd/save")
     @Operation(summary = "Save general OPD record for Stop TB beneficiary")
@@ -269,8 +228,7 @@ public class StopTBController {
         try {
             Object raw = body.get("benRegID");
             if (raw == null) throw new Exception("benRegID is required");
-            Long benRegID = Long.parseLong(raw.toString());
-            Map<String, Object> data = stopTBService.getGeneralOpd(benRegID);
+            Map<String, Object> data = stopTBService.getGeneralOpd(Long.parseLong(raw.toString()));
             response.put("data", data);
             response.put("statusCode", 200);
             response.put("status", "Success");
@@ -284,14 +242,13 @@ public class StopTBController {
     }
 
     @PostMapping("/nurse/generalOpd/getAll")
-    @Operation(summary = "Get all general OPD records at a camp")
+    @Operation(summary = "Get all general OPD records for a camp")
     public ResponseEntity<Map<String, Object>> getAllGeneralOpd(@RequestBody Map<String, Object> body) {
         Map<String, Object> response = new LinkedHashMap<>();
         try {
             Object raw = body.get("providerServiceMapID");
             if (raw == null) throw new Exception("providerServiceMapID is required");
-            Integer psmId = Integer.parseInt(raw.toString());
-            Map<String, Object> data = stopTBService.getAllGeneralOpd(psmId);
+            Map<String, Object> data = stopTBService.getAllGeneralOpd(Integer.parseInt(raw.toString()));
             response.put("data", data);
             response.put("statusCode", 200);
             response.put("status", "Success");
