@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiarymapping;
 import com.iemr.flw.domain.iemr.BenFlowStatus;
 import com.iemr.flw.domain.iemr.StopTBGeneralExamination;
 import com.iemr.flw.domain.iemr.StopTBGeneralOpd;
@@ -205,8 +206,11 @@ public class StopTBServiceImpl implements StopTBService {
         benDetails.put("registrationDate", flow.getRegistrationDate());
 
         try {
-            RMNCHMBeneficiarydetail detail = beneficiaryRepo.getDetailByBenRegID(
+            RMNCHMBeneficiarymapping mapping = beneficiaryRepo.getById(
                     BigInteger.valueOf(flow.getBeneficiaryRegID()));
+            RMNCHMBeneficiarydetail detail = (mapping != null && mapping.getBenDetailsId() != null)
+                    ? beneficiaryRepo.getDetailsById(mapping.getBenDetailsId())
+                    : null;
             if (detail != null) {
                 benDetails.put("fatherName",    detail.getFatherName());
                 benDetails.put("motherName",    detail.getMotherName());
