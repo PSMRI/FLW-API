@@ -186,4 +186,7 @@ public class RMNCHMBeneficiarydetail {
 	@Transient
 	private Integer ProviderServiceMapID;
 
+	@Column(name = "ExtraFields")
+	private String otherFields;
+
 }
