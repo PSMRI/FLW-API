@@ -80,6 +80,11 @@ public class StopTBServiceImpl implements StopTBService {
             phoneNo = getStringField(contacts, "phoneNo1");
         }
         if (phoneNo == null) phoneNo = getStringField(jsonObject, "phoneNo1");
+        if (phoneNo == null && jsonObject.has("benPhoneMaps") && jsonObject.get("benPhoneMaps").isJsonArray()) {
+            com.google.gson.JsonArray phoneMaps = jsonObject.getAsJsonArray("benPhoneMaps");
+            if (phoneMaps.size() > 0 && !phoneMaps.get(0).isJsonNull())
+                phoneNo = getStringField(phoneMaps.get(0).getAsJsonObject(), "phoneNo");
+        }
 
         Integer villageId   = null;
         String  villageName = null;
