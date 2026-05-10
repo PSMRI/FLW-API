@@ -1,15 +1,15 @@
 package com.iemr.flw.controller;
 
+import com.google.gson.Gson;
 import com.iemr.flw.dto.iemr.StopTBRegistrationDto;
 import com.iemr.flw.service.StopTBService;
+import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
@@ -25,259 +25,207 @@ public class StopTBController {
 
     @PostMapping("/registration/save")
     @Operation(summary = "Save Stop TB beneficiary registration")
-    public ResponseEntity<Map<String, Object>> saveRegistration(
+    public String saveRegistration(
             @RequestBody String requestBody,
             @RequestHeader("Authorization") String authorization) {
-        Map<String, Object> response = new LinkedHashMap<>();
+        OutputResponse response = new OutputResponse();
         try {
             Map<String, Object> data = stopTBService.saveRegistration(requestBody, authorization);
-            response.put("data", data);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            response.setResponse(new Gson().toJson(data));
         } catch (Exception e) {
             logger.error("Error in saveRegistration: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error in registration: " + e.getMessage());
-            response.put("status", "FAILURE");
+            response.setError(5000, "Error in registration: " + e.getMessage());
         }
-        return ResponseEntity.ok(response);
+        return response.toString();
     }
 
     // ── Worklists ─────────────────────────────────────────────────────────────
 
     @PostMapping("/registrar/worklist")
     @Operation(summary = "Get registrar worklist — full beneficiary details for Stop TB")
-    public ResponseEntity<Map<String, Object>> getRegistrarWorklist(@RequestBody StopTBRegistrationDto dto) {
-        Map<String, Object> response = new LinkedHashMap<>();
+    public String getRegistrarWorklist(@RequestBody StopTBRegistrationDto dto) {
+        OutputResponse response = new OutputResponse();
         try {
             Map<String, Object> data = stopTBService.getRegistrarWorklist(dto);
-            response.put("data", data.get("data"));
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            response.setResponse(new Gson().toJson(data.get("data")));
         } catch (Exception e) {
             logger.error("Error in getRegistrarWorklist: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error fetching worklist: " + e.getMessage());
-            response.put("status", "FAILURE");
+            response.setError(5000, "Error fetching worklist: " + e.getMessage());
         }
-        return ResponseEntity.ok(response);
+        return response.toString();
     }
 
     @PostMapping("/nurse/worklist")
     @Operation(summary = "Get nurse worklist — full beneficiary details + nurse module data")
-    public ResponseEntity<Map<String, Object>> getNurseWorklist(@RequestBody StopTBRegistrationDto dto) {
-        Map<String, Object> response = new LinkedHashMap<>();
+    public String getNurseWorklist(@RequestBody StopTBRegistrationDto dto) {
+        OutputResponse response = new OutputResponse();
         try {
             Map<String, Object> data = stopTBService.getNurseWorklist(dto);
-            response.put("data", data.get("data"));
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            response.setResponse(new Gson().toJson(data.get("data")));
         } catch (Exception e) {
             logger.error("Error in getNurseWorklist: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error fetching nurse worklist: " + e.getMessage());
-            response.put("status", "FAILURE");
+            response.setError(5000, "Error fetching nurse worklist: " + e.getMessage());
         }
-        return ResponseEntity.ok(response);
+        return response.toString();
     }
 
     // ── Nurse: General Examination ────────────────────────────────────────────
 
     @PostMapping("/nurse/generalExamination/save")
     @Operation(summary = "Save general examination for Stop TB beneficiary")
-    public ResponseEntity<Map<String, Object>> saveGeneralExamination(@RequestBody Map<String, Object> data) {
-        Map<String, Object> response = new LinkedHashMap<>();
+    public String saveGeneralExamination(@RequestBody Map<String, Object> data) {
+        OutputResponse response = new OutputResponse();
         try {
             Map<String, Object> result = stopTBService.saveGeneralExamination(data);
-            response.put("data", result);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            response.setResponse(new Gson().toJson(result));
         } catch (Exception e) {
             logger.error("Error in saveGeneralExamination: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error saving general examination: " + e.getMessage());
-            response.put("status", "FAILURE");
+            response.setError(5000, "Error saving general examination: " + e.getMessage());
         }
-        return ResponseEntity.ok(response);
+        return response.toString();
     }
 
     @PostMapping("/nurse/generalExamination/get")
     @Operation(summary = "Get general examination for a Stop TB beneficiary")
-    public ResponseEntity<Map<String, Object>> getGeneralExamination(@RequestBody Map<String, Object> body) {
-        Map<String, Object> response = new LinkedHashMap<>();
+    public String getGeneralExamination(@RequestBody Map<String, Object> body) {
+        OutputResponse response = new OutputResponse();
         try {
             Object raw = body.get("benRegID");
             if (raw == null) throw new Exception("benRegID is required");
             Map<String, Object> data = stopTBService.getGeneralExamination(Long.parseLong(raw.toString()));
-            response.put("data", data);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            response.setResponse(new Gson().toJson(data));
         } catch (Exception e) {
             logger.error("Error in getGeneralExamination: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error fetching general examination: " + e.getMessage());
-            response.put("status", "FAILURE");
+            response.setError(5000, "Error fetching general examination: " + e.getMessage());
         }
-        return ResponseEntity.ok(response);
+        return response.toString();
     }
 
     @PostMapping("/nurse/generalExamination/getAll")
     @Operation(summary = "Get all general examinations for a camp")
-    public ResponseEntity<Map<String, Object>> getAllGeneralExaminations(@RequestBody Map<String, Object> body) {
-        Map<String, Object> response = new LinkedHashMap<>();
+    public String getAllGeneralExaminations(@RequestBody Map<String, Object> body) {
+        OutputResponse response = new OutputResponse();
         try {
             Object raw = body.get("providerServiceMapID");
             if (raw == null) throw new Exception("providerServiceMapID is required");
             Map<String, Object> data = stopTBService.getAllGeneralExaminations(Integer.parseInt(raw.toString()));
-            response.put("data", data);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            response.setResponse(new Gson().toJson(data));
         } catch (Exception e) {
             logger.error("Error in getAllGeneralExaminations: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error fetching general examinations: " + e.getMessage());
-            response.put("status", "FAILURE");
+            response.setError(5000, "Error fetching general examinations: " + e.getMessage());
         }
-        return ResponseEntity.ok(response);
+        return response.toString();
     }
 
     // ── Nurse: TB Screening ───────────────────────────────────────────────────
 
     @PostMapping("/nurse/tbScreening/save")
     @Operation(summary = "Save TB screening for Stop TB beneficiary")
-    public ResponseEntity<Map<String, Object>> saveNurseTBScreening(@RequestBody Map<String, Object> data) {
-        Map<String, Object> response = new LinkedHashMap<>();
+    public String saveNurseTBScreening(@RequestBody Map<String, Object> data) {
+        OutputResponse response = new OutputResponse();
         try {
             Map<String, Object> result = stopTBService.saveNurseTBScreening(data);
-            response.put("data", result);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            response.setResponse(new Gson().toJson(result));
         } catch (Exception e) {
             logger.error("Error in saveNurseTBScreening: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error saving TB screening: " + e.getMessage());
-            response.put("status", "FAILURE");
+            response.setError(5000, "Error saving TB screening: " + e.getMessage());
         }
-        return ResponseEntity.ok(response);
+        return response.toString();
     }
 
     @PostMapping("/nurse/tbScreening/get")
     @Operation(summary = "Get TB screening for a Stop TB beneficiary")
-    public ResponseEntity<Map<String, Object>> getNurseTBScreening(@RequestBody Map<String, Object> body) {
-        Map<String, Object> response = new LinkedHashMap<>();
+    public String getNurseTBScreening(@RequestBody Map<String, Object> body) {
+        OutputResponse response = new OutputResponse();
         try {
             Object raw = body.get("benRegID");
             if (raw == null) throw new Exception("benRegID is required");
             Map<String, Object> data = stopTBService.getNurseTBScreening(Long.parseLong(raw.toString()));
-            response.put("data", data);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            response.setResponse(new Gson().toJson(data));
         } catch (Exception e) {
             logger.error("Error in getNurseTBScreening: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error fetching TB screening: " + e.getMessage());
-            response.put("status", "FAILURE");
+            response.setError(5000, "Error fetching TB screening: " + e.getMessage());
         }
-        return ResponseEntity.ok(response);
+        return response.toString();
     }
 
     @PostMapping("/nurse/tbScreening/getAll")
     @Operation(summary = "Get all TB screenings for a camp")
-    public ResponseEntity<Map<String, Object>> getAllNurseTBScreenings(@RequestBody Map<String, Object> body) {
-        Map<String, Object> response = new LinkedHashMap<>();
+    public String getAllNurseTBScreenings(@RequestBody Map<String, Object> body) {
+        OutputResponse response = new OutputResponse();
         try {
             Object raw = body.get("providerServiceMapID");
             if (raw == null) throw new Exception("providerServiceMapID is required");
             Map<String, Object> data = stopTBService.getAllNurseTBScreenings(Integer.parseInt(raw.toString()));
-            response.put("data", data);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            response.setResponse(new Gson().toJson(data));
         } catch (Exception e) {
             logger.error("Error in getAllNurseTBScreenings: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error fetching TB screenings: " + e.getMessage());
-            response.put("status", "FAILURE");
+            response.setError(5000, "Error fetching TB screenings: " + e.getMessage());
         }
-        return ResponseEntity.ok(response);
+        return response.toString();
     }
 
     // ── Nurse: General OPD ────────────────────────────────────────────────────
 
     @PostMapping("/nurse/generalOpd/save")
     @Operation(summary = "Save general OPD record for Stop TB beneficiary")
-    public ResponseEntity<Map<String, Object>> saveGeneralOpd(@RequestBody Map<String, Object> data) {
-        Map<String, Object> response = new LinkedHashMap<>();
+    public String saveGeneralOpd(@RequestBody Map<String, Object> data) {
+        OutputResponse response = new OutputResponse();
         try {
             Map<String, Object> result = stopTBService.saveGeneralOpd(data);
-            response.put("data", result);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            response.setResponse(new Gson().toJson(result));
         } catch (Exception e) {
             logger.error("Error in saveGeneralOpd: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error saving general OPD: " + e.getMessage());
-            response.put("status", "FAILURE");
+            response.setError(5000, "Error saving general OPD: " + e.getMessage());
         }
-        return ResponseEntity.ok(response);
+        return response.toString();
     }
 
     @PostMapping("/nurse/generalOpd/get")
     @Operation(summary = "Get general OPD record for a Stop TB beneficiary")
-    public ResponseEntity<Map<String, Object>> getGeneralOpd(@RequestBody Map<String, Object> body) {
-        Map<String, Object> response = new LinkedHashMap<>();
+    public String getGeneralOpd(@RequestBody Map<String, Object> body) {
+        OutputResponse response = new OutputResponse();
         try {
             Object raw = body.get("benRegID");
             if (raw == null) throw new Exception("benRegID is required");
             Map<String, Object> data = stopTBService.getGeneralOpd(Long.parseLong(raw.toString()));
-            response.put("data", data);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            response.setResponse(new Gson().toJson(data));
         } catch (Exception e) {
             logger.error("Error in getGeneralOpd: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error fetching general OPD: " + e.getMessage());
-            response.put("status", "FAILURE");
+            response.setError(5000, "Error fetching general OPD: " + e.getMessage());
         }
-        return ResponseEntity.ok(response);
+        return response.toString();
     }
 
     @PostMapping("/nurse/generalOpd/getAll")
     @Operation(summary = "Get all general OPD records for a camp")
-    public ResponseEntity<Map<String, Object>> getAllGeneralOpd(@RequestBody Map<String, Object> body) {
-        Map<String, Object> response = new LinkedHashMap<>();
+    public String getAllGeneralOpd(@RequestBody Map<String, Object> body) {
+        OutputResponse response = new OutputResponse();
         try {
             Object raw = body.get("providerServiceMapID");
             if (raw == null) throw new Exception("providerServiceMapID is required");
             Map<String, Object> data = stopTBService.getAllGeneralOpd(Integer.parseInt(raw.toString()));
-            response.put("data", data);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            response.setResponse(new Gson().toJson(data));
         } catch (Exception e) {
             logger.error("Error in getAllGeneralOpd: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error fetching general OPD records: " + e.getMessage());
-            response.put("status", "FAILURE");
+            response.setError(5000, "Error fetching general OPD records: " + e.getMessage());
         }
-        return ResponseEntity.ok(response);
+        return response.toString();
     }
 
     // ── Nurse: Submit ─────────────────────────────────────────────────────────
 
     @PostMapping("/nurse/submit")
     @Operation(summary = "Submit nurse data — mark nurse done for a Stop TB beneficiary")
-    public ResponseEntity<Map<String, Object>> submitNurseData(@RequestBody Map<String, Object> data) {
-        Map<String, Object> response = new LinkedHashMap<>();
+    public String submitNurseData(@RequestBody Map<String, Object> data) {
+        OutputResponse response = new OutputResponse();
         try {
             Map<String, Object> result = stopTBService.submitNurseData(data);
-            response.put("data", result);
-            response.put("statusCode", 200);
-            response.put("status", "Success");
+            response.setResponse(new Gson().toJson(result));
         } catch (Exception e) {
             logger.error("Error in submitNurseData: " + e);
-            response.put("statusCode", 5000);
-            response.put("errorMessage", "Error submitting nurse data: " + e.getMessage());
-            response.put("status", "FAILURE");
+            response.setError(5000, "Error submitting nurse data: " + e.getMessage());
         }
-        return ResponseEntity.ok(response);
+        return response.toString();
     }
 }
