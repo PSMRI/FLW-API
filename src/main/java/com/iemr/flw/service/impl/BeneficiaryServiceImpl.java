@@ -480,10 +480,10 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             if (extraFields.containsKey("tuName")) stopTBDetails.put("tuName", extraFields.get("tuName"));
 
                             // economicStatus and residentialArea into beneficiaryDetails
-                            if (extraFields.containsKey("tbEconomicStatus")) benDetailsRMNCH_OBJ.setEconomicStatus((String) extraFields.get("tbEconomicStatus"));
-                            if (extraFields.containsKey("tbEconomicStatusId")) benDetailsRMNCH_OBJ.setEconomicStatusId(((Number) extraFields.get("tbEconomicStatusId")).intValue());
-                            if (extraFields.containsKey("tbResidentialArea")) benDetailsRMNCH_OBJ.setResidentialArea((String) extraFields.get("tbResidentialArea"));
-                            if (extraFields.containsKey("tbResidentialAreaId")) benDetailsRMNCH_OBJ.setResidentialAreaId(((Number) extraFields.get("tbResidentialAreaId")).intValue());
+                            if (extraFields.containsKey("economicStatus")) benDetailsRMNCH_OBJ.setEconomicStatus((String) extraFields.get("economicStatus"));
+                            if (extraFields.containsKey("economicStatusId")) benDetailsRMNCH_OBJ.setEconomicStatusId(((Number) extraFields.get("economicStatusId")).intValue());
+                            if (extraFields.containsKey("residentialArea")) benDetailsRMNCH_OBJ.setResidentialArea((String) extraFields.get("residentialArea"));
+                            if (extraFields.containsKey("residentialAreaId")) benDetailsRMNCH_OBJ.setResidentialAreaId(((Number) extraFields.get("residentialAreaId")).intValue());
                         } catch (Exception ex) {
                             logger.warn("Could not parse ExtraFields for benDetailsId: " + benDetailsOBJ.getBeneficiaryDetailsId());
                         }
