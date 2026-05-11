@@ -96,6 +96,11 @@ public class StopTBServiceImpl implements StopTBService {
             villageName  = getStringField(demo, "districtBranchName");
             districtID   = getIntField(demo, "districtID");
             districtName = getStringField(demo, "districtName");
+            // promote to top-level so Identity-API saves them in ExtraFields
+            if (demo.has("economicStatus"))    jsonObject.add("economicStatus", demo.get("economicStatus"));
+            if (demo.has("economicStatusId"))  jsonObject.add("economicStatusId", demo.get("economicStatusId"));
+            if (demo.has("residentialArea"))   jsonObject.add("residentialArea", demo.get("residentialArea"));
+            if (demo.has("residentialAreaId")) jsonObject.add("residentialAreaId", demo.get("residentialAreaId"));
         }
 
         // isMobile=true tells TM-API to skip its own BenFlowStatus creation — FLW-API owns it
