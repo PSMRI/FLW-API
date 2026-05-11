@@ -96,11 +96,11 @@ public class StopTBServiceImpl implements StopTBService {
             villageName  = getStringField(demo, "districtBranchName");
             districtID   = getIntField(demo, "districtID");
             districtName = getStringField(demo, "districtName");
-            // use tb-prefixed keys so Identity-API treats as unknown and saves in ExtraFields
-            if (demo.has("economicStatus"))    jsonObject.addProperty("tbEconomicStatus", getStringField(demo, "economicStatus"));
-            if (demo.has("economicStatusId"))  jsonObject.addProperty("tbEconomicStatusId", getIntField(demo, "economicStatusId"));
-            if (demo.has("residentialArea"))   jsonObject.addProperty("tbResidentialArea", getStringField(demo, "residentialArea"));
-            if (demo.has("residentialAreaId")) jsonObject.addProperty("tbResidentialAreaId", getIntField(demo, "residentialAreaId"));
+            // promote to top-level so Identity-API saves them in ExtraFields
+            if (demo.has("economicStatus"))    jsonObject.addProperty("economicStatus", getStringField(demo, "economicStatus"));
+            if (demo.has("economicStatusId"))  jsonObject.addProperty("economicStatusId", getIntField(demo, "economicStatusId"));
+            if (demo.has("residentialArea"))   jsonObject.addProperty("residentialArea", getStringField(demo, "residentialArea"));
+            if (demo.has("residentialAreaId")) jsonObject.addProperty("residentialAreaId", getIntField(demo, "residentialAreaId"));
         }
 
         // isMobile=true tells TM-API to skip its own BenFlowStatus creation — FLW-API owns it
