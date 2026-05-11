@@ -6,12 +6,14 @@ import com.google.gson.JsonParser;
 import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
 import com.iemr.flw.domain.identity.RMNCHMBeneficiarymapping;
 import com.iemr.flw.domain.iemr.BenFlowStatus;
+import com.iemr.flw.domain.iemr.StopTBDiagnostics;
 import com.iemr.flw.domain.iemr.StopTBGeneralExamination;
 import com.iemr.flw.domain.iemr.StopTBGeneralOpd;
 import com.iemr.flw.domain.iemr.TBScreening;
 import com.iemr.flw.dto.iemr.StopTBRegistrationDto;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.BenFlowStatusRepo;
+import com.iemr.flw.repo.iemr.StopTBDiagnosticsRepo;
 import com.iemr.flw.repo.iemr.StopTBGeneralExaminationRepo;
 import com.iemr.flw.repo.iemr.StopTBGeneralOpdRepo;
 import com.iemr.flw.repo.iemr.TBScreeningRepo;
@@ -48,6 +50,9 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Autowired
     private StopTBGeneralOpdRepo generalOpdRepo;
+
+    @Autowired
+    private StopTBDiagnosticsRepo diagnosticsRepo;
 
     @Value("${tm-url}")
     private String tmUrl;
@@ -305,7 +310,7 @@ public class StopTBServiceImpl implements StopTBService {
         exam.setHivStatus(getString(data, "hivStatus"));
         exam.setCreatedBy(getString(data, "createdBy"));
         exam.setDeleted(false);
-        exam.setReferralToHWCNeeded(calculateReferralNeeded(exam));
+        exam.setReferralToHWCNeeded(getBool(data, "referralToHWCNeeded"));
 
         generalExaminationRepo.save(exam);
 
@@ -331,8 +336,10 @@ public class StopTBServiceImpl implements StopTBService {
     }
 
     @Override
-    public Map<String, Object> getAllGeneralExaminations(Integer providerServiceMapID) throws Exception {
-        List<StopTBGeneralExamination> list = generalExaminationRepo.findAllByProviderServiceMapID(providerServiceMapID);
+    public Map<String, Object> getAllGeneralExaminations(Integer providerServiceMapID, Integer villageID) throws Exception {
+        List<StopTBGeneralExamination> list = (villageID != null)
+                ? generalExaminationRepo.findAllByProviderServiceMapIDAndVillageID(providerServiceMapID, villageID)
+                : generalExaminationRepo.findAllByProviderServiceMapID(providerServiceMapID);
         List<Map<String, Object>> items = new ArrayList<>();
         for (StopTBGeneralExamination e : list) items.add(examToMap(e));
         Map<String, Object> result = new HashMap<>();
@@ -404,7 +411,11 @@ public class StopTBServiceImpl implements StopTBService {
         screening.setRecommendedForLiquidCulture(getBool(data, "recommendedForLiquidCulture"));
         screening.setTestDenialReasons(getString(data, "testDenialReasons"));
         screening.setCreatedBy(getString(data, "createdBy"));
-        screening.setVisitDate(new Timestamp(System.currentTimeMillis()));
+        // PRD: date is user-provided, mandatory, not editable once submitted
+        if (screening.getVisitDate() == null) {
+            Timestamp provided = getTimestamp(data, "visitDate");
+            screening.setVisitDate(provided != null ? provided : new Timestamp(System.currentTimeMillis()));
+        }
 
         tbScreeningRepo.save(screening);
 
@@ -421,8 +432,10 @@ public class StopTBServiceImpl implements StopTBService {
     }
 
     @Override
-    public Map<String, Object> getAllNurseTBScreenings(Integer providerServiceMapID) throws Exception {
-        List<TBScreening> list = tbScreeningRepo.findAllByProviderServiceMapID(providerServiceMapID);
+    public Map<String, Object> getAllNurseTBScreenings(Integer providerServiceMapID, Integer villageID) throws Exception {
+        List<TBScreening> list = (villageID != null)
+                ? tbScreeningRepo.findAllByProviderServiceMapIDAndVillageID(providerServiceMapID, villageID)
+                : tbScreeningRepo.findAllByProviderServiceMapID(providerServiceMapID);
         List<Map<String, Object>> items = new ArrayList<>();
         for (TBScreening s : list) items.add(screeningToMap(s));
         Map<String, Object> result = new HashMap<>();
@@ -472,7 +485,7 @@ public class StopTBServiceImpl implements StopTBService {
 
         opd.setBenRegID(beneficiaryRegID);
         opd.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
-        opd.setChiefComplaint(getString(data, "chiefComplaint"));
+        opd.setChiefComplaint(toJsonString(data.get("chiefComplaint")));
         opd.setMedication(getString(data, "medication"));
         opd.setDosage(getString(data, "dosage"));
         opd.setFrequency(getString(data, "frequency"));
@@ -496,8 +509,10 @@ public class StopTBServiceImpl implements StopTBService {
     }
 
     @Override
-    public Map<String, Object> getAllGeneralOpd(Integer providerServiceMapID) throws Exception {
-        List<StopTBGeneralOpd> list = generalOpdRepo.findAllByProviderServiceMapID(providerServiceMapID);
+    public Map<String, Object> getAllGeneralOpd(Integer providerServiceMapID, Integer villageID) throws Exception {
+        List<StopTBGeneralOpd> list = (villageID != null)
+                ? generalOpdRepo.findAllByProviderServiceMapIDAndVillageID(providerServiceMapID, villageID)
+                : generalOpdRepo.findAllByProviderServiceMapID(providerServiceMapID);
         List<Map<String, Object>> items = new ArrayList<>();
         for (StopTBGeneralOpd o : list) items.add(opdToMap(o));
         Map<String, Object> result = new HashMap<>();
@@ -519,6 +534,84 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("notes", o.getNotes());
         m.put("createdBy", o.getCreatedBy());
         m.put("createdDate", o.getCreatedDate());
+        return m;
+    }
+
+    // ── Nurse: Diagnostics ────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public Map<String, Object> saveDiagnostics(Map<String, Object> data) throws Exception {
+        Long benRegID = getLong(data, "benRegID");
+        if (benRegID == null) throw new Exception("benRegID is required");
+
+        StopTBDiagnostics diag = diagnosticsRepo.findByBenRegID(benRegID);
+        if (diag == null) diag = new StopTBDiagnostics();
+
+        diag.setBenRegID(benRegID);
+        diag.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
+
+        // PRD: date is user-provided, not editable once submitted
+        if (diag.getVisitDate() == null) {
+            Timestamp provided = getTimestamp(data, "visitDate");
+            diag.setVisitDate(provided != null ? provided : new Timestamp(System.currentTimeMillis()));
+        }
+
+        diag.setNikshayId(getString(data, "nikshayId"));
+        diag.setIsDigitalChestXrayConducted(getBool(data, "isDigitalChestXrayConducted"));
+        diag.setDigitalChestXrayResult(getString(data, "digitalChestXrayResult"));
+        diag.setIsTruenatConducted(getBool(data, "isTruenatConducted"));
+        diag.setTruenatResult(getString(data, "truenatResult"));
+        diag.setRecommendedForLiquidCulture(getBool(data, "recommendedForLiquidCulture"));
+        // PRD: liquid culture result can be updated after submission (results come after 40-45 days)
+        if (data.containsKey("liquidCultureResult")) {
+            diag.setLiquidCultureResult(getString(data, "liquidCultureResult"));
+        }
+        diag.setCreatedBy(getString(data, "createdBy"));
+        diag.setDeleted(false);
+
+        diagnosticsRepo.save(diag);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("benRegID", benRegID);
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> getDiagnostics(Long benRegID) throws Exception {
+        StopTBDiagnostics diag = diagnosticsRepo.findByBenRegID(benRegID);
+        if (diag == null) throw new Exception("No diagnostics record found for benRegID: " + benRegID);
+        return diagnosticsToMap(diag);
+    }
+
+    @Override
+    public Map<String, Object> getAllDiagnostics(Integer providerServiceMapID, Integer villageID) throws Exception {
+        List<StopTBDiagnostics> list = (villageID != null)
+                ? diagnosticsRepo.findAllByProviderServiceMapIDAndVillageID(providerServiceMapID, villageID)
+                : diagnosticsRepo.findAllByProviderServiceMapID(providerServiceMapID);
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (StopTBDiagnostics d : list) items.add(diagnosticsToMap(d));
+        Map<String, Object> result = new HashMap<>();
+        result.put("data", items);
+        result.put("count", items.size());
+        return result;
+    }
+
+    private Map<String, Object> diagnosticsToMap(StopTBDiagnostics d) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", d.getId());
+        m.put("benRegID", d.getBenRegID());
+        m.put("providerServiceMapID", d.getProviderServiceMapID());
+        m.put("visitDate", d.getVisitDate());
+        m.put("nikshayId", d.getNikshayId());
+        m.put("isDigitalChestXrayConducted", d.getIsDigitalChestXrayConducted());
+        m.put("digitalChestXrayResult", d.getDigitalChestXrayResult());
+        m.put("isTruenatConducted", d.getIsTruenatConducted());
+        m.put("truenatResult", d.getTruenatResult());
+        m.put("recommendedForLiquidCulture", d.getRecommendedForLiquidCulture());
+        m.put("liquidCultureResult", d.getLiquidCultureResult());
+        m.put("createdBy", d.getCreatedBy());
+        m.put("createdDate", d.getCreatedDate());
         return m;
     }
 
@@ -585,6 +678,13 @@ public class StopTBServiceImpl implements StopTBService {
         if (v == null) return null;
         if (v instanceof Boolean) return (Boolean) v;
         return Boolean.parseBoolean(v.toString());
+    }
+
+    private Timestamp getTimestamp(Map<String, Object> m, String key) {
+        Object v = m.get(key);
+        if (v == null) return null;
+        if (v instanceof Number) return new Timestamp(((Number) v).longValue());
+        try { return new Timestamp(Long.parseLong(v.toString())); } catch (Exception e) { return null; }
     }
 
     private String getStringField(JsonObject obj, String field) {

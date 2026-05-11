@@ -50,6 +50,9 @@ public class StopTBRegistration {
     @Column(name = "temperatureValue")
     private Double temperatureValue;
 
+    @Column(name = "isMobileAvailableId")
+    private Integer isMobileAvailableId;
+
     @Column(name = "isMobileAvailable")
     private Boolean isMobileAvailable;
 
