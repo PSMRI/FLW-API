@@ -457,12 +457,12 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     resultMap.put("isDeactivate",benDetailsRMNCH_OBJ.getIsDeactivate());
                     resultMap.put("BenRegId", m.getBenRegId());
 
-                    // anthropometry and Stop TB fields
-                    Map<String, Object> stopTBDetails = new HashMap<>();
-                    // occupation from i_beneficiarydetails (stored by Identity-API)
+                    // occupation from i_beneficiarydetails
                     if (benDetailsOBJ != null && benDetailsOBJ.getOccupation() != null)
-                        stopTBDetails.put("occupation", benDetailsOBJ.getOccupation());
+                        benDetailsRMNCH_OBJ.setOccupation(benDetailsOBJ.getOccupation());
 
+                    // anthropometry and Stop TB fields from ExtraFields
+                    Map<String, Object> stopTBDetails = new HashMap<>();
                     if (benDetailsOBJ != null && benDetailsOBJ.getOtherFields() != null) {
                         try {
                             Map<?, ?> extraFields = new Gson().fromJson(benDetailsOBJ.getOtherFields(), Map.class);
@@ -478,10 +478,12 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             if (extraFields.containsKey("isMobileAvailable")) stopTBDetails.put("isMobileAvailable", extraFields.get("isMobileAvailable"));
                             if (extraFields.containsKey("tuId")) stopTBDetails.put("tuId", extraFields.get("tuId"));
                             if (extraFields.containsKey("tuName")) stopTBDetails.put("tuName", extraFields.get("tuName"));
-                            if (extraFields.containsKey("tbEconomicStatus")) stopTBDetails.put("economicStatus", extraFields.get("tbEconomicStatus"));
-                            if (extraFields.containsKey("tbEconomicStatusId")) stopTBDetails.put("economicStatusId", extraFields.get("tbEconomicStatusId"));
-                            if (extraFields.containsKey("tbResidentialArea")) stopTBDetails.put("residentialArea", extraFields.get("tbResidentialArea"));
-                            if (extraFields.containsKey("tbResidentialAreaId")) stopTBDetails.put("residentialAreaId", extraFields.get("tbResidentialAreaId"));
+
+                            // economicStatus and residentialArea into beneficiaryDetails
+                            if (extraFields.containsKey("tbEconomicStatus")) benDetailsRMNCH_OBJ.setEconomicStatus((String) extraFields.get("tbEconomicStatus"));
+                            if (extraFields.containsKey("tbEconomicStatusId")) benDetailsRMNCH_OBJ.setEconomicStatusId(((Number) extraFields.get("tbEconomicStatusId")).intValue());
+                            if (extraFields.containsKey("tbResidentialArea")) benDetailsRMNCH_OBJ.setResidentialArea((String) extraFields.get("tbResidentialArea"));
+                            if (extraFields.containsKey("tbResidentialAreaId")) benDetailsRMNCH_OBJ.setResidentialAreaId(((Number) extraFields.get("tbResidentialAreaId")).intValue());
                         } catch (Exception ex) {
                             logger.warn("Could not parse ExtraFields for benDetailsId: " + benDetailsOBJ.getBeneficiaryDetailsId());
                         }
