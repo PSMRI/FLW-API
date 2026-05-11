@@ -87,11 +87,6 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     @Query("SELECT b FROM RMNCHMBeneficiarymapping b WHERE b.benRegId = :benRegId")
     RMNCHMBeneficiarymapping findByBenRegIdFromMapping(@Param("benRegId") BigInteger benRegId);
 
-    @Query(nativeQuery = true, value =
-        "SELECT a.* FROM db_identity.i_beneficiaryaddress a " +
-        "INNER JOIN db_identity.i_beneficiarymapping m ON a.VanSerialNo = m.BenAddressId " +
-        "WHERE m.BenRegId IN :benRegIds")
-    List<RMNCHMBeneficiaryaddress> getAddressesByBenRegIds(@Param("benRegIds") List<BigInteger> benRegIds);
 
     @Query("SELECT d FROM RMNCHMBeneficiarydetail d WHERE d.beneficiaryDetailsId = :beneficiaryDetailsId")
     RMNCHMBeneficiarydetail findByBeneficiaryDetailsId(@Param("beneficiaryDetailsId") BigInteger beneficiaryDetailsId);
