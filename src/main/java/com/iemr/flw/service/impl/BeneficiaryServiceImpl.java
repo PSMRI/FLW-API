@@ -131,17 +131,17 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
             if (flows == null || flows.isEmpty()) return null;
 
-            List<BigInteger> benRegIds = flows.stream()
-                    .filter(f -> f.getBeneficiaryRegID() != null)
-                    .map(f -> BigInteger.valueOf(f.getBeneficiaryRegID()))
-                    .collect(Collectors.toList());
+            List<RMNCHMBeneficiaryaddress> allAddresses = new ArrayList<>();
+            for (BenFlowStatus flow : flows) {
+                if (flow.getBeneficiaryRegID() == null) continue;
+                RMNCHMBeneficiarymapping mapping = beneficiaryRepo.findByBenRegIdFromMapping(
+                        BigInteger.valueOf(flow.getBeneficiaryRegID()));
+                if (mapping == null || mapping.getBenAddressId() == null) continue;
+                RMNCHMBeneficiaryaddress address = beneficiaryRepo.getAddressById(mapping.getBenAddressId());
+                if (address != null) allAddresses.add(address);
+            }
 
-            if (benRegIds.isEmpty()) return null;
-
-            List<RMNCHMBeneficiaryaddress> allAddresses =
-                    beneficiaryRepo.getAddressesByBenRegIds(benRegIds);
-
-            if (allAddresses == null || allAddresses.isEmpty()) return null;
+            if (allAddresses.isEmpty()) return null;
 
             int totalPage = (int) Math.ceil((double) allAddresses.size() / pageSize);
             int start = request.getPageNo() * pageSize;
