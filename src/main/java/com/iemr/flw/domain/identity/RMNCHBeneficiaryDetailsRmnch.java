@@ -521,4 +521,31 @@ public class RMNCHBeneficiaryDetailsRmnch {
 	@Column(name = "noOfDaysForDelivery")
 	private Integer noOfDaysForDelivery;
 
+	@Expose
+	@Transient
+	private String occupation;
+	@Expose
+	@Transient
+	private String economicStatus;
+	@Expose
+	@Transient
+	private Integer economicStatusId;
+	@Expose
+	@Transient
+	private String residentialArea;
+	@Expose
+	@Transient
+	private Integer residentialAreaId;
+
+	public String getOccupation() { return occupation; }
+	public void setOccupation(String occupation) { this.occupation = occupation; }
+	public String getEconomicStatus() { return economicStatus; }
+	public void setEconomicStatus(String economicStatus) { this.economicStatus = economicStatus; }
+	public Integer getEconomicStatusId() { return economicStatusId; }
+	public void setEconomicStatusId(Integer economicStatusId) { this.economicStatusId = economicStatusId; }
+	public String getResidentialArea() { return residentialArea; }
+	public void setResidentialArea(String residentialArea) { this.residentialArea = residentialArea; }
+	public Integer getResidentialAreaId() { return residentialAreaId; }
+	public void setResidentialAreaId(Integer residentialAreaId) { this.residentialAreaId = residentialAreaId; }
+
 }
