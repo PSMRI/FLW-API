@@ -480,9 +480,13 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
                         // anthropometry and Stop TB fields
                         Map<String, Object> stopTBDetails = new HashMap<>();
-                        // occupation from i_beneficiarydetails (stored by Identity-API)
+                        // demographics block: address, occupation, economicStatus, residentialArea
+                        Map<String, Object> demographics = new HashMap<>();
+                        demographics.put("addressLine1", benAddressOBJ.getPermAddrLine1());
+                        demographics.put("addressLine2", benAddressOBJ.getPermAddrLine2());
+                        demographics.put("addressLine3", benAddressOBJ.getPermAddrLine3());
                         if (benDetailsOBJ != null && benDetailsOBJ.getOccupation() != null)
-                            stopTBDetails.put("occupation", benDetailsOBJ.getOccupation());
+                            demographics.put("occupation", benDetailsOBJ.getOccupation());
 
                         if (benDetailsOBJ != null && benDetailsOBJ.getOtherFields() != null) {
                             try {
@@ -499,15 +503,17 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                                 if (extraFields.containsKey("isMobileAvailable")) stopTBDetails.put("isMobileAvailable", extraFields.get("isMobileAvailable"));
                                 if (extraFields.containsKey("tuId")) stopTBDetails.put("tuId", extraFields.get("tuId"));
                                 if (extraFields.containsKey("tuName")) stopTBDetails.put("tuName", extraFields.get("tuName"));
-                                if (extraFields.containsKey("economicStatus")) stopTBDetails.put("economicStatus", extraFields.get("economicStatus"));
-                                if (extraFields.containsKey("economicStatusId")) stopTBDetails.put("economicStatusId", extraFields.get("economicStatusId"));
-                                if (extraFields.containsKey("residentialArea")) stopTBDetails.put("residentialArea", extraFields.get("residentialArea"));
-                                if (extraFields.containsKey("residentialAreaId")) stopTBDetails.put("residentialAreaId", extraFields.get("residentialAreaId"));
+
+                                if (extraFields.containsKey("economicStatus")) demographics.put("economicStatus", extraFields.get("economicStatus"));
+                                if (extraFields.containsKey("economicStatusId")) demographics.put("economicStatusId", extraFields.get("economicStatusId"));
+                                if (extraFields.containsKey("residentialArea")) demographics.put("residentialArea", extraFields.get("residentialArea"));
+                                if (extraFields.containsKey("residentialAreaId")) demographics.put("residentialAreaId", extraFields.get("residentialAreaId"));
                             } catch (Exception ex) {
                                 logger.warn("Could not parse ExtraFields for benDetailsId: " + benDetailsOBJ.getBeneficiaryDetailsId());
                             }
                         }
                         if (!stopTBDetails.isEmpty()) resultMap.put("stopTBDetails", stopTBDetails);
+                        resultMap.put("demographics", demographics);
 
                         // adding asha id / created by - user id
                         if (benAddressOBJ.getCreatedBy() != null) {
