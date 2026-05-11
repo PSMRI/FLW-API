@@ -457,7 +457,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     resultMap.put("isDeactivate",benDetailsRMNCH_OBJ.getIsDeactivate());
                     resultMap.put("BenRegId", m.getBenRegId());
 
-                    // anthropometry from ExtraFields
+                    // anthropometry and Stop TB fields from ExtraFields
                     if (benDetailsOBJ != null && benDetailsOBJ.getOtherFields() != null) {
                         try {
                             Map<?, ?> extraFields = new Gson().fromJson(benDetailsOBJ.getOtherFields(), Map.class);
@@ -467,6 +467,14 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             if (extraFields.containsKey("bmi")) anthropometry.put("bmi", extraFields.get("bmi"));
                             if (extraFields.containsKey("temperatureValue")) anthropometry.put("temperatureValue", extraFields.get("temperatureValue"));
                             if (!anthropometry.isEmpty()) resultMap.put("anthropometry", anthropometry);
+
+                            Map<String, Object> stopTBDetails = new HashMap<>();
+                            if (extraFields.containsKey("personFrom")) stopTBDetails.put("personFrom", extraFields.get("personFrom"));
+                            if (extraFields.containsKey("caseFindingType")) stopTBDetails.put("caseFindingType", extraFields.get("caseFindingType"));
+                            if (extraFields.containsKey("isMobileAvailable")) stopTBDetails.put("isMobileAvailable", extraFields.get("isMobileAvailable"));
+                            if (extraFields.containsKey("tuId")) stopTBDetails.put("tuId", extraFields.get("tuId"));
+                            if (extraFields.containsKey("tuName")) stopTBDetails.put("tuName", extraFields.get("tuName"));
+                            if (!stopTBDetails.isEmpty()) resultMap.put("stopTBDetails", stopTBDetails);
                         } catch (Exception ex) {
                             logger.warn("Could not parse ExtraFields for benDetailsId: " + benDetailsOBJ.getBeneficiaryDetailsId());
                         }

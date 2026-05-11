@@ -249,7 +249,7 @@ public class StopTBServiceImpl implements StopTBService {
                 }
             }
         } catch (Exception e) {
-            logger.warn("Cannot fetch detail for benRegID: " + flow.getBeneficiaryRegID());
+            logger.error("Cannot fetch identity detail for benRegID: " + flow.getBeneficiaryRegID() + " — " + e.getClass().getName() + ": " + e.getMessage());
         }
 
         item.put("beneficiaryDetails", benDetails);
