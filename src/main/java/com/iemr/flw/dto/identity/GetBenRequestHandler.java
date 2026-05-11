@@ -92,6 +92,10 @@
 			this.villageID = villageID;
 		}
 
+		public void setVillageId(Integer villageId) {
+			this.villageID = villageId;
+		}
+
 		public Timestamp getFromDate() {
 			return fromDate;
 		}
