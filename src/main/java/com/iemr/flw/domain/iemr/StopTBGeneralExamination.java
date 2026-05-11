@@ -86,7 +86,9 @@ public class StopTBGeneralExamination {
     @Column(name = "hiv_status")
     private String hivStatus;
 
-    // Server-calculated from vitals thresholds
+    @Column(name = "referral_to_hwc_needed_id")
+    private Integer referralToHWCNeededId;
+
     @Column(name = "referral_to_hwc_needed")
     private Boolean referralToHWCNeeded;
 

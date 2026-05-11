@@ -23,32 +23,62 @@ public class TBScreening {
     @Column(name = "visit_date")
     private Timestamp visitDate;
 
+    @Column(name = "cough_check_id")
+    private Integer coughMoreThan2WeeksId;
+
     @Column(name = "cough_check")
     private Boolean coughMoreThan2Weeks;
+
+    @Column(name = "blood_check_id")
+    private Integer bloodInSputumId;
 
     @Column(name = "blood_check")
     private Boolean bloodInSputum;
 
+    @Column(name = "fever_check_id")
+    private Integer feverMoreThan2WeeksId;
+
     @Column(name = "fever_check")
     private Boolean feverMoreThan2Weeks;
+
+    @Column(name = "weight_check_id")
+    private Integer lossOfWeightId;
 
     @Column(name = "weight_check")
     private Boolean lossOfWeight;
 
+    @Column(name = "sweats_check_id")
+    private Integer nightSweatsId;
+
     @Column(name = "sweats_check")
     private Boolean nightSweats;
+
+    @Column(name = "history_check_id")
+    private Integer historyOfTbId;
 
     @Column(name = "history_check")
     private Boolean historyOfTb;
 
+    @Column(name = "drugs_check_id")
+    private Integer takingAntiTBDrugsId;
+
     @Column(name = "drugs_check")
     private Boolean takingAntiTBDrugs;
+
+    @Column(name = "family_check_id")
+    private Integer familySufferingFromTBId;
 
     @Column(name = "family_check")
     private Boolean familySufferingFromTB;
 
+    @Column(name = "rise_of_fever_id")
+    private Integer riseOfFeverId;
+
     @Column(name = "rise_of_fever")
     private Boolean riseOfFever;
+
+    @Column(name = "loss_of_appetite_id")
+    private Integer lossOfAppetiteId;
 
     @Column(name = "loss_of_appetite")
     private Boolean lossOfAppetite;
@@ -94,8 +124,14 @@ public class TBScreening {
     private Boolean deleted;
 
     // Diagnostics / referrals — Stop TB nurse flow only
+    @Column(name = "referred_for_digital_chest_xray_id")
+    private Integer referredForDigitalChestXrayId;
+
     @Column(name = "referred_for_digital_chest_xray")
     private Boolean referredForDigitalChestXray;
+
+    @Column(name = "referred_for_sputum_collection_id")
+    private Integer referredForSputumCollectionId;
 
     @Column(name = "referred_for_sputum_collection")
     private Boolean referredForSputumCollection;
@@ -103,13 +139,18 @@ public class TBScreening {
     @Column(name = "sputum_sample_submitted_at", length = 50)
     private String sputumSampleSubmittedAt;
 
+    @Column(name = "recommended_for_truenat_id")
+    private Integer recommendedForTruenatId;
+
     @Column(name = "recommended_for_truenat")
     private Boolean recommendedForTruenat;
+
+    @Column(name = "recommended_for_liquid_culture_id")
+    private Integer recommendedForLiquidCultureId;
 
     @Column(name = "recommended_for_liquid_culture")
     private Boolean recommendedForLiquidCulture;
 
-    // JSON array of denial reasons when patient refuses a test
     @Column(name = "test_denial_reasons", columnDefinition = "TEXT")
     private String testDenialReasons;
 }
