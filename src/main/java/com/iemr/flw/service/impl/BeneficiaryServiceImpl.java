@@ -499,10 +499,10 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                                 if (extraFields.containsKey("isMobileAvailable")) stopTBDetails.put("isMobileAvailable", extraFields.get("isMobileAvailable"));
                                 if (extraFields.containsKey("tuId")) stopTBDetails.put("tuId", extraFields.get("tuId"));
                                 if (extraFields.containsKey("tuName")) stopTBDetails.put("tuName", extraFields.get("tuName"));
-                                if (extraFields.containsKey("economicStatus")) stopTBDetails.put("economicStatus", extraFields.get("economicStatus"));
-                                if (extraFields.containsKey("economicStatusId")) stopTBDetails.put("economicStatusId", extraFields.get("economicStatusId"));
-                                if (extraFields.containsKey("residentialArea")) stopTBDetails.put("residentialArea", extraFields.get("residentialArea"));
-                                if (extraFields.containsKey("residentialAreaId")) stopTBDetails.put("residentialAreaId", extraFields.get("residentialAreaId"));
+                                if (extraFields.containsKey("tbEconomicStatus")) stopTBDetails.put("economicStatus", extraFields.get("tbEconomicStatus"));
+                                if (extraFields.containsKey("tbEconomicStatusId")) stopTBDetails.put("economicStatusId", extraFields.get("tbEconomicStatusId"));
+                                if (extraFields.containsKey("tbResidentialArea")) stopTBDetails.put("residentialArea", extraFields.get("tbResidentialArea"));
+                                if (extraFields.containsKey("tbResidentialAreaId")) stopTBDetails.put("residentialAreaId", extraFields.get("tbResidentialAreaId"));
                             } catch (Exception ex) {
                                 logger.warn("Could not parse ExtraFields for benDetailsId: " + benDetailsOBJ.getBeneficiaryDetailsId());
                             }
