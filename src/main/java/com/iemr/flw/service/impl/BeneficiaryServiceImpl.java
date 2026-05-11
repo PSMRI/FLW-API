@@ -21,6 +21,7 @@ import com.iemr.flw.domain.iemr.IncentiveActivity;
 import com.iemr.flw.dto.iemr.EyeCheckupListDTO;
 import com.iemr.flw.dto.iemr.EyeCheckupRequestDTO;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.domain.iemr.BenFlowStatus;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.UserService;
@@ -101,18 +102,58 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     @Autowired
     private IncentiveLogicService incentiveLogicService;
 
+    @Autowired
+    private BenFlowStatusRepo benFlowStatusRepo;
+
+    @Autowired
+    private UserServiceRoleRepo userRepo;
+
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
 
     @Override
     public String getBenData(GetBenRequestHandler request, String authorisation) throws Exception {
 
-        if (request == null || request.getAshaId() == null) {
-            throw new Exception("Invalid/missing asha details");
+        if (request == null) {
+            throw new Exception("Invalid request");
         }
 
         if (request.getPageNo() == null || request.getPageNo() < 0) {
             throw new Exception("Invalid page number");
+        }
+
+        int pageSize = Integer.parseInt(door_to_door_page_size);
+
+        // Stop TB path: filter by providerServiceMapID + villageID
+        if (request.getProviderServiceMapID() != null && request.getVillageID() != null) {
+            List<BenFlowStatus> flows = benFlowStatusRepo.getRegistrarWorklist(
+                    request.getProviderServiceMapID(), request.getVillageID());
+
+            if (flows == null || flows.isEmpty()) return null;
+
+            List<BigInteger> benRegIds = flows.stream()
+                    .filter(f -> f.getBeneficiaryRegID() != null)
+                    .map(f -> BigInteger.valueOf(f.getBeneficiaryRegID()))
+                    .collect(Collectors.toList());
+
+            if (benRegIds.isEmpty()) return null;
+
+            List<RMNCHMBeneficiaryaddress> allAddresses =
+                    beneficiaryRepo.getAddressesByBenRegIds(benRegIds);
+
+            if (allAddresses == null || allAddresses.isEmpty()) return null;
+
+            int totalPage = (int) Math.ceil((double) allAddresses.size() / pageSize);
+            int start = request.getPageNo() * pageSize;
+            int end = Math.min(start + pageSize, allAddresses.size());
+            if (start >= allAddresses.size()) return null;
+
+            return getMappingsForAddressIDs(allAddresses.subList(start, end), totalPage, authorisation);
+        }
+
+        // Normal FLW/ASHA path
+        if (request.getAshaId() == null) {
+            throw new Exception("Invalid/missing asha details");
         }
 
         String userName = beneficiaryRepo.getUserName(request.getAshaId());
@@ -123,12 +164,10 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
         request.setUserName(userName);
 
-        int pageSize = Integer.parseInt(door_to_door_page_size);
         PageRequest pageRequest = PageRequest.of(request.getPageNo(), pageSize);
 
         Page<RMNCHMBeneficiaryaddress> pageResult;
 
-        // ✅ Date Filter Handling
         if (request.getFromDate() != null && request.getToDate() != null) {
 
             if (request.getFromDate().after(request.getToDate())) {
@@ -143,7 +182,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
             );
 
         } else {
-
             pageResult = beneficiaryRepo.getBenDataByUser(userName, pageRequest);
         }
 
@@ -439,6 +477,21 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                                 : false
                         );
                         resultMap.put("BenRegId", m.getBenRegId());
+
+                        // anthropometry from ExtraFields
+                        if (benDetailsOBJ != null && benDetailsOBJ.getOtherFields() != null) {
+                            try {
+                                Map<?, ?> extraFields = new Gson().fromJson(benDetailsOBJ.getOtherFields(), Map.class);
+                                Map<String, Object> anthropometry = new HashMap<>();
+                                if (extraFields.containsKey("weight")) anthropometry.put("weight", extraFields.get("weight"));
+                                if (extraFields.containsKey("height")) anthropometry.put("height", extraFields.get("height"));
+                                if (extraFields.containsKey("bmi")) anthropometry.put("bmi", extraFields.get("bmi"));
+                                if (extraFields.containsKey("temperatureValue")) anthropometry.put("temperatureValue", extraFields.get("temperatureValue"));
+                                if (!anthropometry.isEmpty()) resultMap.put("anthropometry", anthropometry);
+                            } catch (Exception ex) {
+                                logger.warn("Could not parse ExtraFields for benDetailsId: " + benDetailsOBJ.getBeneficiaryDetailsId());
+                            }
+                        }
 
                         // adding asha id / created by - user id
                         if (benAddressOBJ.getCreatedBy() != null) {
