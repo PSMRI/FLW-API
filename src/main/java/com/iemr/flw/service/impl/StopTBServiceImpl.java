@@ -279,45 +279,49 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Override
     @Transactional
-    public Map<String, Object> saveGeneralExamination(Map<String, Object> data) throws Exception {
-        Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
-        if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
+    public List<Map<String, Object>> saveGeneralExamination(List<Map<String, Object>> dataList) throws Exception {
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (Map<String, Object> data : dataList) {
+            Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
+            if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
 
-        StopTBGeneralExamination exam = generalExaminationRepo.findByBeneficiaryRegID(beneficiaryRegID);
-        if (exam == null) exam = new StopTBGeneralExamination();
+            StopTBGeneralExamination exam = generalExaminationRepo.findByBeneficiaryRegID(beneficiaryRegID);
+            if (exam == null) exam = new StopTBGeneralExamination();
 
-        exam.setBeneficiaryRegID(beneficiaryRegID);
-        exam.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
-        exam.setPulseRate(getInt(data, "pulseRate"));
-        exam.setSystolicBP(getInt(data, "systolicBP"));
-        exam.setDiastolicBP(getInt(data, "diastolicBP"));
-        exam.setRandomBloodSugar(getDouble(data, "randomBloodSugar"));
-        exam.setPallorId(getInt(data, "pallorId"));
-        exam.setPallor(getString(data, "pallor"));
-        exam.setIcterusId(getInt(data, "icterusId"));
-        exam.setIcterus(getString(data, "icterus"));
-        exam.setLymphadenopathyId(getInt(data, "lymphadenopathyId"));
-        exam.setLymphadenopathy(getString(data, "lymphadenopathy"));
-        exam.setOedemaId(getInt(data, "oedemaId"));
-        exam.setOedema(getString(data, "oedema"));
-        exam.setCyanosisId(getInt(data, "cyanosisId"));
-        exam.setCyanosis(getString(data, "cyanosis"));
-        exam.setClubbingId(getInt(data, "clubbingId"));
-        exam.setClubbing(getString(data, "clubbing"));
-        exam.setKeyPopulationRiskFactorIds(toJsonString(data.get("keyPopulationRiskFactorIds")));
-        exam.setKeyPopulationRiskFactors(toJsonString(data.get("keyPopulationRiskFactors")));
-        exam.setHivStatusId(getInt(data, "hivStatusId"));
-        exam.setHivStatus(getString(data, "hivStatus"));
-        exam.setCreatedBy(getString(data, "createdBy"));
-        exam.setDeleted(false);
-        exam.setReferralToHWCNeeded(getBool(data, "referralToHWCNeeded"));
+            exam.setBeneficiaryRegID(beneficiaryRegID);
+            exam.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
+            exam.setPulseRate(getInt(data, "pulseRate"));
+            exam.setSystolicBP(getInt(data, "systolicBP"));
+            exam.setDiastolicBP(getInt(data, "diastolicBP"));
+            exam.setRandomBloodSugar(getDouble(data, "randomBloodSugar"));
+            exam.setPallorId(getInt(data, "pallorId"));
+            exam.setPallor(getString(data, "pallor"));
+            exam.setIcterusId(getInt(data, "icterusId"));
+            exam.setIcterus(getString(data, "icterus"));
+            exam.setLymphadenopathyId(getInt(data, "lymphadenopathyId"));
+            exam.setLymphadenopathy(getString(data, "lymphadenopathy"));
+            exam.setOedemaId(getInt(data, "oedemaId"));
+            exam.setOedema(getString(data, "oedema"));
+            exam.setCyanosisId(getInt(data, "cyanosisId"));
+            exam.setCyanosis(getString(data, "cyanosis"));
+            exam.setClubbingId(getInt(data, "clubbingId"));
+            exam.setClubbing(getString(data, "clubbing"));
+            exam.setKeyPopulationRiskFactorIds(toJsonString(data.get("keyPopulationRiskFactorIds")));
+            exam.setKeyPopulationRiskFactors(toJsonString(data.get("keyPopulationRiskFactors")));
+            exam.setHivStatusId(getInt(data, "hivStatusId"));
+            exam.setHivStatus(getString(data, "hivStatus"));
+            exam.setCreatedBy(getString(data, "createdBy"));
+            exam.setDeleted(false);
+            exam.setReferralToHWCNeeded(getBool(data, "referralToHWCNeeded"));
 
-        generalExaminationRepo.save(exam);
+            generalExaminationRepo.save(exam);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("beneficiaryRegID", beneficiaryRegID);
-        result.put("referralToHWCNeeded", exam.getReferralToHWCNeeded());
-        return result;
+            Map<String, Object> result = new HashMap<>();
+            result.put("beneficiaryRegID", beneficiaryRegID);
+            result.put("referralToHWCNeeded", exam.getReferralToHWCNeeded());
+            results.add(result);
+        }
+        return results;
     }
 
     private boolean calculateReferralNeeded(StopTBGeneralExamination e) {
@@ -383,45 +387,49 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Override
     @Transactional
-    public Map<String, Object> saveNurseTBScreening(Map<String, Object> data) throws Exception {
-        Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
-        if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
+    public List<Map<String, Object>> saveNurseTBScreening(List<Map<String, Object>> dataList) throws Exception {
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (Map<String, Object> data : dataList) {
+            Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
+            if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
 
-        TBScreening screening = tbScreeningRepo.findByBenRegID(beneficiaryRegID);
-        if (screening == null) screening = new TBScreening();
+            TBScreening screening = tbScreeningRepo.findByBenRegID(beneficiaryRegID);
+            if (screening == null) screening = new TBScreening();
 
-        screening.setBenRegID(beneficiaryRegID);
-        screening.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
-        screening.setCoughMoreThan2Weeks(getBool(data, "coughMoreThan2Weeks"));
-        screening.setBloodInSputum(getBool(data, "bloodInSputum"));
-        screening.setFeverMoreThan2Weeks(getBool(data, "feverMoreThan2Weeks"));
-        screening.setLossOfWeight(getBool(data, "lossOfWeight"));
-        screening.setNightSweats(getBool(data, "nightSweats"));
-        screening.setHistoryOfTb(getBool(data, "historyOfTb"));
-        screening.setTakingAntiTBDrugs(getBool(data, "takingAntiTBDrugs"));
-        screening.setFamilySufferingFromTB(getBool(data, "familySufferingFromTB"));
-        screening.setRiseOfFever(getBool(data, "riseOfFever"));
-        screening.setLossOfAppetite(getBool(data, "lossOfAppetite"));
-        screening.setContactWithTBPatient(getBool(data, "contactWithTBPatient"));
-        screening.setSympotomatic(getString(data, "symptomatic"));
-        screening.setReferredForDigitalChestXray(getBool(data, "referredForDigitalChestXray"));
-        screening.setReferredForSputumCollection(getBool(data, "referredForSputumCollection"));
-        screening.setSputumSampleSubmittedAt(getString(data, "sputumSampleSubmittedAt"));
-        screening.setRecommendedForTruenat(getBool(data, "recommendedForTruenat"));
-        screening.setRecommendedForLiquidCulture(getBool(data, "recommendedForLiquidCulture"));
-        screening.setTestDenialReasons(getString(data, "testDenialReasons"));
-        screening.setCreatedBy(getString(data, "createdBy"));
-        // PRD: date is user-provided, mandatory, not editable once submitted
-        if (screening.getVisitDate() == null) {
-            Timestamp provided = getTimestamp(data, "visitDate");
-            screening.setVisitDate(provided != null ? provided : new Timestamp(System.currentTimeMillis()));
+            screening.setBenRegID(beneficiaryRegID);
+            screening.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
+            screening.setCoughMoreThan2Weeks(getBool(data, "coughMoreThan2Weeks"));
+            screening.setBloodInSputum(getBool(data, "bloodInSputum"));
+            screening.setFeverMoreThan2Weeks(getBool(data, "feverMoreThan2Weeks"));
+            screening.setLossOfWeight(getBool(data, "lossOfWeight"));
+            screening.setNightSweats(getBool(data, "nightSweats"));
+            screening.setHistoryOfTb(getBool(data, "historyOfTb"));
+            screening.setTakingAntiTBDrugs(getBool(data, "takingAntiTBDrugs"));
+            screening.setFamilySufferingFromTB(getBool(data, "familySufferingFromTB"));
+            screening.setRiseOfFever(getBool(data, "riseOfFever"));
+            screening.setLossOfAppetite(getBool(data, "lossOfAppetite"));
+            screening.setContactWithTBPatient(getBool(data, "contactWithTBPatient"));
+            screening.setSympotomatic(getString(data, "symptomatic"));
+            screening.setReferredForDigitalChestXray(getBool(data, "referredForDigitalChestXray"));
+            screening.setReferredForSputumCollection(getBool(data, "referredForSputumCollection"));
+            screening.setSputumSampleSubmittedAt(getString(data, "sputumSampleSubmittedAt"));
+            screening.setRecommendedForTruenat(getBool(data, "recommendedForTruenat"));
+            screening.setRecommendedForLiquidCulture(getBool(data, "recommendedForLiquidCulture"));
+            screening.setTestDenialReasons(getString(data, "testDenialReasons"));
+            screening.setCreatedBy(getString(data, "createdBy"));
+            // PRD: date is user-provided, mandatory, not editable once submitted
+            if (screening.getVisitDate() == null) {
+                Timestamp provided = getTimestamp(data, "visitDate");
+                screening.setVisitDate(provided != null ? provided : new Timestamp(System.currentTimeMillis()));
+            }
+
+            tbScreeningRepo.save(screening);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("beneficiaryRegID", beneficiaryRegID);
+            results.add(result);
         }
-
-        tbScreeningRepo.save(screening);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("beneficiaryRegID", beneficiaryRegID);
-        return result;
+        return results;
     }
 
     @Override
@@ -476,29 +484,33 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Override
     @Transactional
-    public Map<String, Object> saveGeneralOpd(Map<String, Object> data) throws Exception {
-        Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
-        if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
+    public List<Map<String, Object>> saveGeneralOpd(List<Map<String, Object>> dataList) throws Exception {
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (Map<String, Object> data : dataList) {
+            Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
+            if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
 
-        StopTBGeneralOpd opd = generalOpdRepo.findByBenRegID(beneficiaryRegID);
-        if (opd == null) opd = new StopTBGeneralOpd();
+            StopTBGeneralOpd opd = generalOpdRepo.findByBenRegID(beneficiaryRegID);
+            if (opd == null) opd = new StopTBGeneralOpd();
 
-        opd.setBenRegID(beneficiaryRegID);
-        opd.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
-        opd.setChiefComplaint(toJsonString(data.get("chiefComplaint")));
-        opd.setMedication(getString(data, "medication"));
-        opd.setDosage(getString(data, "dosage"));
-        opd.setFrequency(getString(data, "frequency"));
-        opd.setDuration(getString(data, "duration"));
-        opd.setNotes(getString(data, "notes"));
-        opd.setCreatedBy(getString(data, "createdBy"));
-        opd.setDeleted(false);
+            opd.setBenRegID(beneficiaryRegID);
+            opd.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
+            opd.setChiefComplaint(toJsonString(data.get("chiefComplaint")));
+            opd.setMedication(getString(data, "medication"));
+            opd.setDosage(getString(data, "dosage"));
+            opd.setFrequency(getString(data, "frequency"));
+            opd.setDuration(getString(data, "duration"));
+            opd.setNotes(getString(data, "notes"));
+            opd.setCreatedBy(getString(data, "createdBy"));
+            opd.setDeleted(false);
 
-        generalOpdRepo.save(opd);
+            generalOpdRepo.save(opd);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("beneficiaryRegID", beneficiaryRegID);
-        return result;
+            Map<String, Object> result = new HashMap<>();
+            result.put("beneficiaryRegID", beneficiaryRegID);
+            results.add(result);
+        }
+        return results;
     }
 
     @Override
@@ -541,40 +553,44 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Override
     @Transactional
-    public Map<String, Object> saveDiagnostics(Map<String, Object> data) throws Exception {
-        Long benRegID = getLong(data, "benRegID");
-        if (benRegID == null) throw new Exception("benRegID is required");
+    public List<Map<String, Object>> saveDiagnostics(List<Map<String, Object>> dataList) throws Exception {
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (Map<String, Object> data : dataList) {
+            Long benRegID = getLong(data, "benRegID");
+            if (benRegID == null) throw new Exception("benRegID is required");
 
-        StopTBDiagnostics diag = diagnosticsRepo.findByBenRegID(benRegID);
-        if (diag == null) diag = new StopTBDiagnostics();
+            StopTBDiagnostics diag = diagnosticsRepo.findByBenRegID(benRegID);
+            if (diag == null) diag = new StopTBDiagnostics();
 
-        diag.setBenRegID(benRegID);
-        diag.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
+            diag.setBenRegID(benRegID);
+            diag.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
 
-        // PRD: date is user-provided, not editable once submitted
-        if (diag.getVisitDate() == null) {
-            Timestamp provided = getTimestamp(data, "visitDate");
-            diag.setVisitDate(provided != null ? provided : new Timestamp(System.currentTimeMillis()));
+            // PRD: date is user-provided, not editable once submitted
+            if (diag.getVisitDate() == null) {
+                Timestamp provided = getTimestamp(data, "visitDate");
+                diag.setVisitDate(provided != null ? provided : new Timestamp(System.currentTimeMillis()));
+            }
+
+            diag.setNikshayId(getString(data, "nikshayId"));
+            diag.setIsDigitalChestXrayConducted(getBool(data, "isDigitalChestXrayConducted"));
+            diag.setDigitalChestXrayResult(getString(data, "digitalChestXrayResult"));
+            diag.setIsTruenatConducted(getBool(data, "isTruenatConducted"));
+            diag.setTruenatResult(getString(data, "truenatResult"));
+            diag.setRecommendedForLiquidCulture(getBool(data, "recommendedForLiquidCulture"));
+            // PRD: liquid culture result can be updated after submission (results come after 40-45 days)
+            if (data.containsKey("liquidCultureResult")) {
+                diag.setLiquidCultureResult(getString(data, "liquidCultureResult"));
+            }
+            diag.setCreatedBy(getString(data, "createdBy"));
+            diag.setDeleted(false);
+
+            diagnosticsRepo.save(diag);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("benRegID", benRegID);
+            results.add(result);
         }
-
-        diag.setNikshayId(getString(data, "nikshayId"));
-        diag.setIsDigitalChestXrayConducted(getBool(data, "isDigitalChestXrayConducted"));
-        diag.setDigitalChestXrayResult(getString(data, "digitalChestXrayResult"));
-        diag.setIsTruenatConducted(getBool(data, "isTruenatConducted"));
-        diag.setTruenatResult(getString(data, "truenatResult"));
-        diag.setRecommendedForLiquidCulture(getBool(data, "recommendedForLiquidCulture"));
-        // PRD: liquid culture result can be updated after submission (results come after 40-45 days)
-        if (data.containsKey("liquidCultureResult")) {
-            diag.setLiquidCultureResult(getString(data, "liquidCultureResult"));
-        }
-        diag.setCreatedBy(getString(data, "createdBy"));
-        diag.setDeleted(false);
-
-        diagnosticsRepo.save(diag);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("benRegID", benRegID);
-        return result;
+        return results;
     }
 
     @Override

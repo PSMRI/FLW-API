@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -72,11 +73,11 @@ public class StopTBController {
     // ── Nurse: General Examination ────────────────────────────────────────────
 
     @PostMapping("/nurse/generalExamination/save")
-    @Operation(summary = "Save general examination for Stop TB beneficiary")
-    public String saveGeneralExamination(@RequestBody Map<String, Object> data) {
+    @Operation(summary = "Save general examination for Stop TB beneficiary (array of objects)")
+    public String saveGeneralExamination(@RequestBody List<Map<String, Object>> dataList) {
         OutputResponse response = new OutputResponse();
         try {
-            Map<String, Object> result = stopTBService.saveGeneralExamination(data);
+            List<Map<String, Object>> result = stopTBService.saveGeneralExamination(dataList);
             response.setResponse(new Gson().toJson(result));
         } catch (Exception e) {
             logger.error("Error in saveGeneralExamination: " + e);
@@ -121,11 +122,11 @@ public class StopTBController {
     // ── Nurse: TB Screening ───────────────────────────────────────────────────
 
     @PostMapping("/nurse/tbScreening/save")
-    @Operation(summary = "Save TB screening for Stop TB beneficiary")
-    public String saveNurseTBScreening(@RequestBody Map<String, Object> data) {
+    @Operation(summary = "Save TB screening for Stop TB beneficiary (array of objects)")
+    public String saveNurseTBScreening(@RequestBody List<Map<String, Object>> dataList) {
         OutputResponse response = new OutputResponse();
         try {
-            Map<String, Object> result = stopTBService.saveNurseTBScreening(data);
+            List<Map<String, Object>> result = stopTBService.saveNurseTBScreening(dataList);
             response.setResponse(new Gson().toJson(result));
         } catch (Exception e) {
             logger.error("Error in saveNurseTBScreening: " + e);
@@ -170,11 +171,11 @@ public class StopTBController {
     // ── Nurse: General OPD ────────────────────────────────────────────────────
 
     @PostMapping("/nurse/generalOpd/save")
-    @Operation(summary = "Save general OPD record for Stop TB beneficiary")
-    public String saveGeneralOpd(@RequestBody Map<String, Object> data) {
+    @Operation(summary = "Save general OPD record for Stop TB beneficiary (array of objects)")
+    public String saveGeneralOpd(@RequestBody List<Map<String, Object>> dataList) {
         OutputResponse response = new OutputResponse();
         try {
-            Map<String, Object> result = stopTBService.saveGeneralOpd(data);
+            List<Map<String, Object>> result = stopTBService.saveGeneralOpd(dataList);
             response.setResponse(new Gson().toJson(result));
         } catch (Exception e) {
             logger.error("Error in saveGeneralOpd: " + e);
@@ -219,11 +220,11 @@ public class StopTBController {
     // ── Nurse: Diagnostics ───────────────────────────────────────────────────
 
     @PostMapping("/nurse/diagnostics/save")
-    @Operation(summary = "Save diagnostics for Stop TB beneficiary")
-    public String saveDiagnostics(@RequestBody Map<String, Object> data) {
+    @Operation(summary = "Save diagnostics for Stop TB beneficiary (array of objects)")
+    public String saveDiagnostics(@RequestBody List<Map<String, Object>> dataList) {
         OutputResponse response = new OutputResponse();
         try {
-            Map<String, Object> result = stopTBService.saveDiagnostics(data);
+            List<Map<String, Object>> result = stopTBService.saveDiagnostics(dataList);
             response.setResponse(new Gson().toJson(result));
         } catch (Exception e) {
             logger.error("Error in saveDiagnostics: " + e);
