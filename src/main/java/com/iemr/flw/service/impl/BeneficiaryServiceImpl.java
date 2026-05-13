@@ -476,6 +476,12 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                                 ? benDetailsRMNCH_OBJ.getIsDeactivate()
                                 : false
                         );
+                        resultMap.put("economicStatus",benDetailsOBJ.getEconomicStatus());
+                        resultMap.put("economicStatusId",benDetailsOBJ.getEconomicStatusId());
+                        resultMap.put("residentialAreaId",benDetailsOBJ.getResidentialAreaId());
+                        resultMap.put("residentialArea",benDetailsOBJ.getResidentialArea());
+                        resultMap.put("address",benDetailsOBJ.getAddress());
+
                         resultMap.put("BenRegId", m.getBenRegId());
 
                         // occupation from i_beneficiarydetails
