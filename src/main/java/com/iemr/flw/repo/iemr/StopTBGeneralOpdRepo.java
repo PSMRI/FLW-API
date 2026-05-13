@@ -16,4 +16,9 @@ public interface StopTBGeneralOpdRepo extends JpaRepository<StopTBGeneralOpd, Lo
 
     @Query("SELECT o FROM StopTBGeneralOpd o WHERE o.providerServiceMapID = :psmId AND o.deleted = false ORDER BY o.createdDate DESC")
     List<StopTBGeneralOpd> findAllByProviderServiceMapID(@Param("psmId") Integer psmId);
+
+    @Query("SELECT o FROM StopTBGeneralOpd o WHERE o.benRegID IN " +
+            "(SELECT b.beneficiaryRegID FROM BenFlowStatus b WHERE b.providerServiceMapId = :psmId AND b.villageID = :villageId) " +
+            "AND o.deleted = false ORDER BY o.createdDate DESC")
+    List<StopTBGeneralOpd> findAllByProviderServiceMapIDAndVillageID(@Param("psmId") Integer psmId, @Param("villageId") Integer villageId);
 }
