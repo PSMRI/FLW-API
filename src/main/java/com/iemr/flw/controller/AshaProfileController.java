@@ -3,9 +3,7 @@ package com.iemr.flw.controller;
 import com.iemr.flw.domain.iemr.AshaWorker;
 import com.iemr.flw.service.AshaProfileService;
 import com.iemr.flw.service.EmployeeMasterInter;
-import io.lettuce.core.dynamic.annotation.Param;
 import com.iemr.flw.utils.JwtUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,33 +54,15 @@ public class AshaProfileController {
     }
 
    @RequestMapping(value = "getProfile", method = RequestMethod.GET)
-    public ResponseEntity<Map<String, Object>> getProfile(HttpServletRequest request, @Param("employeeId") Integer employeeId) {
+    public ResponseEntity<Map<String, Object>> getProfile(
+            @RequestHeader(value = "JwtToken") String jwtToken) {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            String jwtFromHeader = request.getHeader("JwtToken");
+            Integer employeeId = jwtUtil.extractUserId(jwtToken);
 
-            // Validate JWT header presence
-//            if (jwtFromHeader == null || jwtFromHeader.trim().isEmpty()) {
-//                response.put("statusCode", 401);
-//                response.put("status", "Unauthorized");
-//                response.put("errorMessage", "JWT token is missing");
-//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-//            }
-
-            // Extract and validate user ID from JWT
-           // int userId = jwtUtil.extractUserId(jwtFromHeader); // Make sure this returns 0 or throws for invalid token
-
-            if (employeeId == 0) {
-                response.put("statusCode", 401);
-                response.put("status", "Unauthorized");
-                response.put("errorMessage", "Invalid JWT token");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
-
-            // Business logic
             AshaWorker ashaWorker = ashaProfileService.getProfileData(employeeId);
-            logger.info("Asha Profile"+ashaWorker);
+            logger.info("Asha Profile" + ashaWorker);
 
             response.put("statusCode", 200);
             response.put("status", "Success");
