@@ -12,12 +12,17 @@ import org.springframework.stereotype.Service;
 public class UserServiceImpl implements UserService {
 
     private final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+
     @Autowired
     private UserServiceRoleRepo userServiceRoleRepo;
+
+    @Autowired
+    private FacilityDataService facilityDataService;
 
     public UserServiceRoleDTO getUserDetail(Integer userId) {
         logger.info("calling getUserRole for userId: " + userId);
         UserServiceRoleDTO userRole = userServiceRoleRepo.getUserRole(userId).get(0);
+        userRole.setFacilityData(facilityDataService.buildFacilityData(userId, userRole.getRoleName()));
         return userRole;
     }
 }

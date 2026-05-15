@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Map;
+
 @Data
 @Getter
 @Setter
@@ -23,6 +25,7 @@ public class UserServiceRoleDTO {
     private String blockName;
     private String villageId;
     private String villageName;
+    private Map<String, Object> facilityData;
 
     public UserServiceRoleDTO(Integer userId, String name, String userName, Integer stateId, String stateName, Integer workingDistrictId, String workingDistrictName, Short serviceProviderId, Integer roleId, String roleName, Integer providerServiceMapId, Integer blockId, String blockName, String villageId, String villageName) {
         this.userId = userId;
