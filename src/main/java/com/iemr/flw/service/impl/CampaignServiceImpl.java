@@ -63,7 +63,7 @@ public class CampaignServiceImpl implements CampaignService {
 
         List<CampaignOrs> campaignOrsRequest = new ArrayList<>();
         Integer userId = jwtUtil.extractUserId(token);
-        String userName = jwtUtil.extractUsername(token);
+        String userName = userServiceRoleRepo.getUserNamedByUserId(userId);
 
         for (OrsCampaignDTO campaignDTO : orsCampaignDTO) {
             if (campaignDTO.getFields() == null) {
@@ -141,7 +141,7 @@ public class CampaignServiceImpl implements CampaignService {
 
         List<PulsePolioCampaign> campaignPolioRequest = new ArrayList<>();
         Integer userId = jwtUtil.extractUserId(token);
-        String userName = jwtUtil.extractUsername(token);
+        String userName = userServiceRoleRepo.getUserNamedByUserId(userId);
 
         for (PolioCampaignDTO campaignDTO : polioCampaignDTOs) {
             if (campaignDTO.getFields() == null) {
@@ -213,7 +213,7 @@ public class CampaignServiceImpl implements CampaignService {
 
         List<FilariasisCampaign> campaignPolioRequest = new ArrayList<>();
         Integer userId = jwtUtil.extractUserId(token);
-        String userName = jwtUtil.extractUsername(token);
+        String userName = userServiceRoleRepo.getUserNamedByUserId(userId);
 
         for (FilariasisCampaignDTO campaignDTO : filariasisCampaignDTOS) {
             if (campaignDTO.getFields() == null) {
