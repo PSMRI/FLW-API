@@ -460,7 +460,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     resultMap.put("residentialAreaId",benDetailsOBJ.getResidentialAreaId());
                     resultMap.put("residentialArea",benDetailsOBJ.getResidentialArea());
                     resultMap.put("address",benDetailsOBJ.getAddress());
-                    resultMap.put("updateDate",benDetailsRMNCH_OBJ.getUpdatedDate());
+                    resultMap.put("updateDate",benDetailsOBJ.getLastModDate());
                     resultMap.put("BenRegId", m.getBenRegId());
 
                     // occupation from i_beneficiarydetails
