@@ -496,8 +496,8 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             entity.setMalpresentation(yesNoToBoolean(fields.getMalpresentation()));
 
             entity.setUserId(jwtUtil.extractUserId(authorization));
-            entity.setCreatedBy(jwtUtil.extractUsername(authorization));
-            entity.setUpdatedBy(jwtUtil.extractUsername(authorization));
+            entity.setCreatedBy(userRepo.getUserNamedByUserId(jwtUtil.extractUserId(authorization)));
+            entity.setUpdatedBy(userRepo.getUserNamedByUserId(jwtUtil.extractUserId(authorization)));
 
             entities.add(entity);
         }

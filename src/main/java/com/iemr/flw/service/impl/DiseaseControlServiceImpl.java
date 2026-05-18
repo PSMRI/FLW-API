@@ -1141,7 +1141,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             entity.setDiagnosisCodes(dto.getDiagnosisCodes());
             entity.setFormDataJson(dto.getFormDataJson());
             entity.setUserID(jwtUtil.extractUserId(token));
-            entity.setCreatedBy(jwtUtil.extractUsername(token));
+            entity.setCreatedBy(userRepo.getUserNamedByUserId(jwtUtil.extractUserId(token)));
             entity.setUpdatedBy(jwtUtil.extractUserId(token));
 
 

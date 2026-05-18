@@ -581,8 +581,13 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     @Override
     public List<EyeCheckupRequestDTO> getEyeCheckUpVisit(GetBenRequestHandler request,String token) {
-
-        List<EyeCheckupVisit> visits = eyeCheckUpVisitRepo.findByCreatedBy(jwtUtil.extractUsername(token));
+        String createdBy = null;
+        try {
+            createdBy = userRepo.getUserNamedByUserId(jwtUtil.extractUserId(token));
+        } catch (Exception e) {
+            logger.error("Error extracting userId from token: " + e.getMessage());
+        }
+        List<EyeCheckupVisit> visits = eyeCheckUpVisitRepo.findByCreatedBy(createdBy);
 
         return visits.stream().map(v -> {
             EyeCheckupRequestDTO dto = new EyeCheckupRequestDTO();
