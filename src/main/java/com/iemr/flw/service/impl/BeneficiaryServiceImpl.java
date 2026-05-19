@@ -397,9 +397,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             if (benDetailsOBJ.getCreatedBy() != null)
                                 benDetailsRMNCH_OBJ.setCreatedBy(benDetailsOBJ.getCreatedBy());
 
-                        resultMap.put("updateDate", benDetailsOBJ.getLastModDate());
-                        resultMap.put("updatedBy", benDetailsOBJ.getModifiedBy());
-
                         // age calculation
                         String ageDetails = "";
                         int age_val = 0;
@@ -484,7 +481,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         resultMap.put("residentialAreaId",benDetailsOBJ.getResidentialAreaId());
                         resultMap.put("residentialArea",benDetailsOBJ.getResidentialArea());
                         resultMap.put("address",benDetailsOBJ.getAddress());
-                        resultMap.put("updateDate",benDetailsOBJ.getLastModDate());
+                        resultMap.put("updateDate", benDetailsOBJ.getLastModDate());
+                        resultMap.put("updatedBy", benDetailsOBJ.getModifiedBy());
                         resultMap.put("BenRegId", m.getBenRegId());
 
                         // occupation from i_beneficiarydetails
