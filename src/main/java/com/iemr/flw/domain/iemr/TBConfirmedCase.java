@@ -2,6 +2,7 @@ package com.iemr.flw.domain.iemr;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -70,4 +71,10 @@ public class TBConfirmedCase {
     @Column(name = "updated_at")
     private LocalDate updatedAt;
 
+    @Column(name = "modified_by")
+    private String modifiedBy;
+
+    @UpdateTimestamp
+    @Column(name = "last_mod_date")
+    private Timestamp lastModDate;
 }

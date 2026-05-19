@@ -311,6 +311,7 @@ public class StopTBServiceImpl implements StopTBService {
             exam.setHivStatusId(getInt(data, "hivStatusId"));
             exam.setHivStatus(getString(data, "hivStatus"));
             exam.setCreatedBy(getString(data, "createdBy"));
+            exam.setModifiedBy(getString(data, "createdBy"));
             exam.setDeleted(false);
             exam.setReferralToHWCNeeded(getBool(data, "referralToHWCNeeded"));
 
@@ -380,6 +381,8 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("referralToHWCNeeded", e.getReferralToHWCNeeded());
         m.put("createdBy", e.getCreatedBy());
         m.put("createdDate", e.getCreatedDate());
+        m.put("updateDate", e.getLastModDate());
+        m.put("updatedBy", e.getModifiedBy());
         return m;
     }
 
@@ -417,6 +420,7 @@ public class StopTBServiceImpl implements StopTBService {
             screening.setRecommendedForLiquidCulture(getBool(data, "recommendedForLiquidCulture"));
             screening.setTestDenialReasons(getString(data, "testDenialReasons"));
             screening.setCreatedBy(getString(data, "createdBy"));
+            screening.setModifiedBy(getString(data, "createdBy"));
             // PRD: date is user-provided, mandatory, not editable once submitted
             if (screening.getVisitDate() == null) {
                 Timestamp provided = getTimestamp(data, "visitDate");
@@ -477,6 +481,8 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("testDenialReasons", s.getTestDenialReasons());
         m.put("createdBy", s.getCreatedBy());
         m.put("visitDate", s.getVisitDate());
+        m.put("updateDate", s.getLastModDate());
+        m.put("updatedBy", s.getModifiedBy());
         return m;
     }
 
@@ -502,6 +508,7 @@ public class StopTBServiceImpl implements StopTBService {
             opd.setDuration(getString(data, "duration"));
             opd.setNotes(getString(data, "notes"));
             opd.setCreatedBy(getString(data, "createdBy"));
+            opd.setModifiedBy(getString(data, "createdBy"));
             opd.setDeleted(false);
 
             generalOpdRepo.save(opd);
@@ -546,6 +553,8 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("notes", o.getNotes());
         m.put("createdBy", o.getCreatedBy());
         m.put("createdDate", o.getCreatedDate());
+        m.put("updateDate", o.getLastModDate());
+        m.put("updatedBy", o.getModifiedBy());
         return m;
     }
 
@@ -582,6 +591,7 @@ public class StopTBServiceImpl implements StopTBService {
                 diag.setLiquidCultureResult(getString(data, "liquidCultureResult"));
             }
             diag.setCreatedBy(getString(data, "createdBy"));
+            diag.setModifiedBy(getString(data, "createdBy"));
             diag.setDeleted(false);
 
             diagnosticsRepo.save(diag);
@@ -628,6 +638,8 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("liquidCultureResult", d.getLiquidCultureResult());
         m.put("createdBy", d.getCreatedBy());
         m.put("createdDate", d.getCreatedDate());
+        m.put("updateDate", d.getLastModDate());
+        m.put("updatedBy", d.getModifiedBy());
         return m;
     }
 

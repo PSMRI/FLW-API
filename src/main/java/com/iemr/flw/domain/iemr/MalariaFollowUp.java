@@ -2,7 +2,9 @@ package com.iemr.flw.domain.iemr;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 @Entity
@@ -47,4 +49,11 @@ public class MalariaFollowUp {
     @Column(name = "referral_date")
     @Temporal(TemporalType.DATE)
     private Date referralDate;
+
+    @Column(name = "modified_by")
+    private String modifiedBy;
+
+    @UpdateTimestamp
+    @Column(name = "last_mod_date")
+    private Timestamp lastModDate;
 }

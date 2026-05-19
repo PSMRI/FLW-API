@@ -51,6 +51,7 @@ public class MalariaFollowUpServiceImpl implements MalariaFollowUpService {
               dto.setUserId(jwtUtil.extractUserId(token));
               MalariaFollowUp entity = new MalariaFollowUp();
               BeanUtils.copyProperties(dto, entity);
+              entity.setModifiedBy(jwtUtil.extractUsername(token));
               repository.save(entity);
               return true;
           }
@@ -67,6 +68,8 @@ public class MalariaFollowUpServiceImpl implements MalariaFollowUpService {
         return repository.findByUserId(userId).stream().map(entity -> {
             MalariaFollowListUpDTO dto = new MalariaFollowListUpDTO();
             BeanUtils.copyProperties(entity, dto);
+            dto.setUpdateDate(entity.getLastModDate());
+            dto.setUpdatedBy(entity.getModifiedBy());
             return dto;
         }).collect(Collectors.toList());
     }

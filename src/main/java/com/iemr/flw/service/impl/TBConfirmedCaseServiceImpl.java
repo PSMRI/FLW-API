@@ -42,10 +42,12 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
             if (request != null) {
                 logger.info("Saving TB confirmed case: " + request);
 
-                TBConfirmedCase entity = new TBConfirmedCase();
                 for(TBConfirmedCaseDTO dto:request){
+                    List<TBConfirmedCase> existing = repository.findByBenId(dto.getBenId());
+                    TBConfirmedCase entity = existing.isEmpty() ? new TBConfirmedCase() : existing.get(0);
                     entity.setBenId(dto.getBenId());
                     entity.setUserId(jwtUtil.extractUserId(authorisation));
+                    entity.setModifiedBy(jwtUtil.extractUsername(authorisation));
                     entity.setRegimenType(dto.getRegimenType());
                     entity.setTreatmentStartDate(dto.getTreatmentStartDate());
                     entity.setExpectedTreatmentCompletionDate(dto.getExpectedTreatmentCompletionDate());
@@ -109,22 +111,24 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
     @Override
     public String getByUserId(String authorisation) throws Exception {
-        TBConfirmedCasesResponseDTO tbConfirmedCasesResponseDTO = new TBConfirmedCasesResponseDTO();
         Integer userId = jwtUtil.extractUserId(authorisation);
         List<TBConfirmedCase> list = repository.findByUserId(userId);
-        tbConfirmedCasesResponseDTO.setUserId(userId);
-        tbConfirmedCasesResponseDTO.setTbConfirmedCases(list);
+        List<TBConfirmedCaseDTO> dtoList = list.stream().map(this::toDTO).collect(Collectors.toList());
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("userId", userId);
+        response.put("tbConfirmedCases", dtoList);
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
+                .setDateFormat("MMM dd, yyyy h:mm:ss a")
                 .create();
-
-        return gson.toJson(tbConfirmedCasesResponseDTO);
+        return gson.toJson(response);
     }
 
     // Utility: convert entity -> DTO
     private TBConfirmedCaseDTO toDTO(TBConfirmedCase entity) {
         TBConfirmedCaseDTO dto = new TBConfirmedCaseDTO();
 
+        dto.setId(entity.getId());
         dto.setBenId(entity.getBenId());
         dto.setUserId(entity.getUserId());
         dto.setRegimenType(entity.getRegimenType());
@@ -141,6 +145,8 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         dto.setPlaceOfDeath(entity.getPlaceOfDeath());
         dto.setReasonForDeath(entity.getReasonForDeath());
         dto.setReasonForNotCompleting(entity.getReasonForNotCompleting());
+        dto.setUpdateDate(entity.getLastModDate());
+        dto.setUpdatedBy(entity.getModifiedBy());
 
         return dto;
     }
