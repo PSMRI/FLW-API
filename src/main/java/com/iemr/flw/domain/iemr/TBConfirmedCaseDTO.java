@@ -3,12 +3,16 @@ package com.iemr.flw.domain.iemr;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 
 @Data
 public class TBConfirmedCaseDTO {
-    
+
+    private Integer id;
     private Long benId;
+    private Timestamp updateDate;
+    private String updatedBy;
     private Integer userId;
     private Integer suspectedTbId;
     private String regimenType;

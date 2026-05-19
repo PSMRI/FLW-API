@@ -69,8 +69,11 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
     public String getByUserId(GetBenRequestHandler request) {
         List<TBSuspectedDTO> dtos = new ArrayList<>();
         List<TBSuspected> tbSuspectedList = tbSuspectedRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
-        tbSuspectedList.forEach(tbSuspected -> {
-            dtos.add(modelMapper.map(tbSuspected, TBSuspectedDTO.class));
+        for (TBSuspected tbSuspected : tbSuspectedList) {
+            TBSuspectedDTO dto = modelMapper.map(tbSuspected, TBSuspectedDTO.class);
+            dto.setUpdateDate(tbSuspected.getLastModDate());
+            dto.setUpdatedBy(tbSuspected.getModifiedBy());
+            dtos.add(dto);
 
             if (tbSuspected != null && Boolean.TRUE.equals(tbSuspected.getIsConfirmed())) {
                 incentiveLogicService.incentiveForTbSuspected(
@@ -80,7 +83,7 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
                         tbSuspected.getUserId()
                 );
             }
-        });
+        }
         TBSuspectedRequestDTO tbSuspectedRequestDTO = new TBSuspectedRequestDTO();
         tbSuspectedRequestDTO.setTbSuspectedList(dtos);
         tbSuspectedRequestDTO.setUserId(request.getAshaId());

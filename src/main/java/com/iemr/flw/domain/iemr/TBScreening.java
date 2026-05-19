@@ -1,6 +1,7 @@
 package com.iemr.flw.domain.iemr;
 
 import lombok.Data;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import jakarta.persistence.*;
 import java.sql.Timestamp;
@@ -119,6 +120,13 @@ public class TBScreening {
 
     @Column(name = "created_by")
     private String createdBy;
+
+    @Column(name = "modified_by")
+    private String modifiedBy;
+
+    @UpdateTimestamp
+    @Column(name = "last_mod_date")
+    private Timestamp lastModDate;
 
     @Column(name = "deleted", insertable = false)
     private Boolean deleted;

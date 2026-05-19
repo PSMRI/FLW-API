@@ -1,6 +1,7 @@
 package com.iemr.flw.domain.iemr;
 
 import lombok.Data;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import jakarta.persistence.*;
 import java.sql.Timestamp;
@@ -73,7 +74,12 @@ public class TBSuspected {
     private Integer providerServiceMapId;
 
     @Column(name = "is_confirmed")
-     private Boolean isConfirmed;
+    private Boolean isConfirmed;
 
+    @Column(name = "modified_by")
+    private String modifiedBy;
 
+    @UpdateTimestamp
+    @Column(name = "last_mod_date")
+    private Timestamp lastModDate;
 }
