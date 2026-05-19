@@ -94,6 +94,7 @@ public class FacilityDataService {
             supervisor.put("userId", sRow[0]);
             supervisor.put("fullName", fullName(sRow[1], sRow[2]));
             supervisor.put("mobile", str(sRow[3]));
+            supervisor.put("employeeId", str(sRow[4]).isEmpty() ? null : str(sRow[4]));
             result.put("supervisor", supervisor);
         } else {
             result.put("supervisor", null);
@@ -107,6 +108,8 @@ public class FacilityDataService {
                 peer.put("userId", pRow[0]);
                 peer.put("fullName", fullName(pRow[1], pRow[2]));
                 peer.put("role", str(pRow[3]));
+                peer.put("employeeId", str(pRow[4]).isEmpty() ? null : str(pRow[4]));
+                peer.put("mobile", str(pRow[5]).isEmpty() ? null : str(pRow[5]));
                 peers.add(peer);
             }
         }
@@ -149,6 +152,7 @@ public class FacilityDataService {
             asha.put("facilityId", row[4]);
             asha.put("facilityName", str(row[5]));
             asha.put("facilityType", str(row[6]));
+            asha.put("mobile", str(row[7]).isEmpty() ? null : str(row[7]));
             list.add(asha);
         }
         return list;
