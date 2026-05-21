@@ -145,13 +145,10 @@ public class IncentiveServiceImpl implements IncentiveService {
                                 ? mapping.getHindiActivityDescription()
                                 : mapping.getDescription());
 
-                    } else {
-                        // default "en"
+                    } else if ("en".equals(langCode)){
                         dto.setDescription(inc.getDescription());
                     }
 
-                } else {
-                    dto.setGroupName(inc.getGroup());
                 }
 
                 return dto;
