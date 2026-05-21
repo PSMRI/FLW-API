@@ -164,9 +164,15 @@ public class IncentiveServiceImpl implements IncentiveService {
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
         try {
-            if (request.getVillageID() != StateCode.CG.getStateCode()) {
+
+            if (request.getVillageID().equals(StateCode.AM.getStateCode())) {
                 checkMonthlyAshaIncentive(request.getAshaId());
             }
+            if(request.getVillageID().equals(StateCode.CG.getStateCode())){
+                checkMonthlyAshaIncentiveForCg(request.getAshaId());
+
+            }
+
         } catch (Exception e) {
             logger.error("Error in checkMonthlyAshaIncentive: ", e);
         }
@@ -601,6 +607,32 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             if (ASHA_MONTHLY_ROUTINE != null) {
                 addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId,userName);
+
+            }
+        } catch (Exception e) {
+            logger.error("Error in addMonthlyAshaIncentiveRecord", e);
+
+        }
+
+    }
+
+    private void checkMonthlyAshaIncentiveForCg(Integer ashaId) {
+        try {
+            String userName = userRepo.getUserNamedByUserId(ashaId);
+
+            IncentiveActivity MONTHLY_HONORARIUM = incentivesRepo.findIncentiveMasterByNameAndGroup("MONTHLY_HONORARIUM", GroupName.ACTIVITY.getDisplayName());
+            IncentiveActivity MITANIN_REGISTER_5_INFO_FILL = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER_5_INFO_FILL", GroupName.ACTIVITY.getDisplayName());
+            IncentiveActivity MITANIN_REGISTER = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER", GroupName.ACTIVITY.getDisplayName());
+            if (MONTHLY_HONORARIUM != null) {
+                addMonthlyAshaIncentiveRecord(MONTHLY_HONORARIUM, ashaId,userName);
+            }
+            if (MITANIN_REGISTER_5_INFO_FILL != null) {
+                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER_5_INFO_FILL, ashaId,userName);
+
+            }
+
+            if (MITANIN_REGISTER != null) {
+                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER, ashaId,userName);
 
             }
         } catch (Exception e) {
