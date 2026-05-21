@@ -7,9 +7,11 @@ import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.ChildCareService;
+import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;
 import org.aspectj.weaver.ast.Or;
@@ -78,6 +80,9 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     @Autowired
     private IncentivePendingActivityRepository incentivePendingActivityRepository;
+
+    @Autowired
+    private UserService userService;
 
 
     @Override
@@ -294,7 +299,7 @@ public class ChildCareServiceImpl implements ChildCareService {
 
 
     @Override
-    public String saveHBNCDetails(List<HbncRequestDTO> hbncRequestDTOs) {
+    public String saveHBNCDetails(List<HbncRequestDTO> hbncRequestDTOs, Integer userId) {
         try {
             List<HbncVisit> hbncList = new ArrayList<>();
 
@@ -324,7 +329,7 @@ public class ChildCareServiceImpl implements ChildCareService {
 
 
             hbncVisitRepo.saveAll(hbncList);
-            checkAndAddHbncIncentives(hbncList);
+            checkAndAddHbncIncentives(hbncList, userId);
 
 
             logger.info("HBNC details saved");
@@ -576,7 +581,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 orsDistribution.setId(orsDistributionDTO.getId());
                 orsDistribution.setBeneficiaryId(orsDistributionDTO.getBeneficiaryId());
                 orsDistribution.setNumOrsPackets(orsDistributionDTO.getFields().getNum_ors_packets().toString());
-                if(orsDistributionDTO.getFields().getNum_under5_children()!=null){
+                if (orsDistributionDTO.getFields().getNum_under5_children() != null) {
                     orsDistribution.setChildCount(orsDistributionDTO.getFields().getNum_under5_children().toString());
 
                 }
@@ -616,11 +621,11 @@ public class ChildCareServiceImpl implements ChildCareService {
             orsDistributionResponseDTO.setId(orsDistribution.getId());
             orsDistributionResponseDTO.setBeneficiaryId(orsDistribution.getBeneficiaryId());
             orsDistributionResponseDTO.setHouseHoldId(orsDistribution.getHouseholdId());
-            if(orsDistribution.getNumOrsPackets()!=null){
+            if (orsDistribution.getNumOrsPackets() != null) {
                 orsDistributionResponseListDTO.setNum_ors_packets(orsDistribution.getNumOrsPackets().toString());
 
             }
-            if(orsDistribution.getChildCount()!=null){
+            if (orsDistribution.getChildCount() != null) {
                 orsDistributionResponseListDTO.setNum_under5_children(orsDistribution.getChildCount().toString());
 
             }
@@ -799,37 +804,43 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     }
 
-    private void checkAndAddHbncIncentives(List<HbncVisit> hbncVisits) {
+    private void checkAndAddHbncIncentives(List<HbncVisit> hbncVisits, Integer userId) {
+        Integer stateCode = userService.getUserDetail(userId).getStateId();
         hbncVisits.forEach(hbncVisit -> {
-            boolean isVisitDone = List.of("1st Day", "3rd Day", "7th Day", "42nd Day")
-                    .stream()
-                    .allMatch(hbncVisits::contains);
-
             GroupName.setIsCh(false);
             Long benId = hbncVisit.getBeneficiaryId();
-            if (hbncVisit.getVisit_day().equals("42nd Day")) {
-                IncentiveActivity visitActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.CHILD_HEALTH.getDisplayName());
-                IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.ACTIVITY.getDisplayName());
+            if (stateCode.equals(StateCode.AM)) {
+                if (hbncVisit.getVisit_day().equals("42nd Day")) {
+                    IncentiveActivity visitActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.CHILD_HEALTH.getDisplayName());
 
-                createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityAM, "HBNC_0_42_DAYS");
-                createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HBNC_0_42_DAYS_CH");
+                    createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityAM, "HBNC_0_42_DAYS");
 
+                }
+                logger.info("getDischarged_from_sncu" + hbncVisit.getDischarged_from_sncu());
+
+                if (hbncVisit.getVisit_day().equals("42nd Day") && hbncVisit.getDischarged_from_sncu() && hbncVisit.getBaby_weight() <= 2.5) {
+                    IncentiveActivity babyDisChargeSNCUAActivity =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("SNCU_LBW_FOLLOWUP", GroupName.CHILD_HEALTH.getDisplayName());
+
+                    createIncentiveRecordforHbncVisit(hbncVisit, benId, babyDisChargeSNCUAActivity, "SNCU_LBW_FOLLOWUP");
+
+                }
+                logger.info("getIs_baby_alive" + hbncVisit.getIs_baby_alive());
+                if (!hbncVisit.getIs_baby_alive()) {
+                    IncentiveActivity isChildDeathActivity =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_DEATH_REPORTING", GroupName.CHILD_HEALTH.getDisplayName());
+
+                    createIncentiveRecordforHbncVisit(hbncVisit, benId, isChildDeathActivity, "CHILD_DEATH_REPORTING");
+                }
             }
-            logger.info("getDischarged_from_sncu" + hbncVisit.getDischarged_from_sncu());
 
-            if (hbncVisit.getVisit_day().equals("42nd Day") && hbncVisit.getDischarged_from_sncu() && hbncVisit.getBaby_weight() <= 2.5) {
-                IncentiveActivity babyDisChargeSNCUAActivity =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("SNCU_LBW_FOLLOWUP", GroupName.CHILD_HEALTH.getDisplayName());
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                if (hbncVisit.getVisit_day().equals("7th Day")) {
+                    IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.ACTIVITY.getDisplayName());
 
-                createIncentiveRecordforHbncVisit(hbncVisit, benId, babyDisChargeSNCUAActivity, "SNCU_LBW_FOLLOWUP");
+                    createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HBNC_0_42_DAYS_CH");
 
-            }
-            logger.info("getIs_baby_alive" + hbncVisit.getIs_baby_alive());
-            if (!hbncVisit.getIs_baby_alive()) {
-                IncentiveActivity isChildDeathActivity =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_DEATH_REPORTING", GroupName.CHILD_HEALTH.getDisplayName());
-
-                createIncentiveRecordforHbncVisit(hbncVisit, benId, isChildDeathActivity, "CHILD_DEATH_REPORTING");
+                }
             }
 
 
@@ -938,13 +949,14 @@ public class ChildCareServiceImpl implements ChildCareService {
                 record.setIsEligible(false);
             } else {
                 record.setIsEligible(false);
-                updatePendingActivity(hbncVisit.getAshaId(),hbncVisit.getId(),record.getActivityId(),immunizationActivity.getId());
+                updatePendingActivity(hbncVisit.getAshaId(), hbncVisit.getId(), record.getActivityId(), immunizationActivity.getId());
 
             }
             record.setAmount(Long.valueOf(immunizationActivity.getRate()));
             recordRepo.save(record);
         }
     }
+
     private void updatePendingActivity(Integer userId, Long recordId, Long activityId, Long mIncentiveId) {
         IncentivePendingActivity incentivePendingActivity = new IncentivePendingActivity();
         incentivePendingActivity.setActivityId(activityId);
@@ -956,7 +968,8 @@ public class ChildCareServiceImpl implements ChildCareService {
         }
 
     }
-    public HbncVisit updateHbncFromFileUpload(MultipartFile[] dischargeSncuImage,Long incentiveRecordId,Long id) throws JsonProcessingException {
+
+    public HbncVisit updateHbncFromFileUpload(MultipartFile[] dischargeSncuImage, Long incentiveRecordId, Long id) throws JsonProcessingException {
         HbncVisit existingHbncVisit = hbncVisitRepo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Meeting not found: " + id));
 
@@ -976,6 +989,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         }
         return hbncVisitRepo.save(existingHbncVisit);
     }
+
     private void updateIncentive(Long id) {
 
         Optional<IncentiveActivityRecord> optionalRecord = recordRepo.findById(id);
@@ -995,6 +1009,7 @@ public class ChildCareServiceImpl implements ChildCareService {
             throw new RuntimeException("Failed to convert image to Base64: " + file.getOriginalFilename(), e);
         }
     }
+
     private void createIncentiveRecordforHbyncVisit(HbycChildVisit data, Long benId, IncentiveActivity immunizationActivity, String createdBy) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 

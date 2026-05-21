@@ -10,11 +10,13 @@ import com.iemr.flw.domain.iemr.SamVisitResponseDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.ChildCareService;
+import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.response.OutputResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 
 import jakarta.mail.Multipart;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,9 @@ public class ChildCareController {
 
     @Autowired
     private ChildCareService childCareService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Operation(summary = "save HBYC details")
     @RequestMapping(value = {"/hbycVisit/saveAll"}, method = {RequestMethod.POST})
@@ -92,19 +97,21 @@ public class ChildCareController {
 
     @PostMapping("/hbncVisit/saveAll")
     public String saveHBNCVisit(@RequestBody List<HbncRequestDTO> hbncRequestDTOs,
-                                @RequestHeader(value = "Authorization") String Authorization) {
+                                @RequestHeader(value = "jwtToken") String jwtToken) {
         OutputResponse response = new OutputResponse();
 
         try {
             if (!hbncRequestDTOs.isEmpty()) {
                 logger.info("Saving HBNC details at: " + new Timestamp(System.currentTimeMillis()));
+                 if(jwtToken!=null){
+                     String result = childCareService.saveHBNCDetails(hbncRequestDTOs,jwtUtil.extractUserId(jwtToken)); // <-- actual save
 
-                String result = childCareService.saveHBNCDetails(hbncRequestDTOs); // <-- actual save
+                     if (result != null)
+                         response.setResponse(result);
+                     else
+                         response.setError(500, "Failed to save HBNC visit data.");
+                 }
 
-                if (result != null)
-                    response.setResponse(result);
-                else
-                    response.setError(500, "Failed to save HBNC visit data.");
             } else {
                 response.setError(400, "Empty request list.");
             }

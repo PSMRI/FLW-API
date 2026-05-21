@@ -9,12 +9,15 @@ import com.iemr.flw.dto.iemr.IFAFormFieldsDTO;
 import com.iemr.flw.dto.iemr.IFAFormSubmissionRequest;
 import com.iemr.flw.dto.iemr.IFAFormSubmissionResponse;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.iemr.IFAFormSubmissionRepository;
 import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
 import com.iemr.flw.repo.iemr.IncentivesRepo;
 import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.IFAFormSubmissionService;
+import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,8 +45,11 @@ public class IFAFormSubmissionServiceImpl implements IFAFormSubmissionService {
     @Autowired
     private IncentiveRecordRepo incentiveRecordRepo;
 
+    @Autowired
+    private UserService userService;
+
     @Override
-    public String saveFormData(List<IFAFormSubmissionRequest> requests) {
+    public String saveFormData(List<IFAFormSubmissionRequest> requests, Integer userId) {
         try {
             List<IFAFormSubmissionData> entities = new ArrayList<>();
             for (IFAFormSubmissionRequest req : requests) {
@@ -60,7 +66,7 @@ public class IFAFormSubmissionServiceImpl implements IFAFormSubmissionService {
                 entities.add(data);
             }
             repository.saveAll(entities);
-            checkIFAIncentive(entities);
+            checkIFAIncentive(entities,userId);
             return "Form data saved successfully";
         } catch (Exception e) {
             e.printStackTrace();
@@ -68,14 +74,30 @@ public class IFAFormSubmissionServiceImpl implements IFAFormSubmissionService {
         }
     }
 
-    private void checkIFAIncentive(List<IFAFormSubmissionData> entities) {
-        IncentiveActivity incentiveActivityAM= incentivesRepo.findIncentiveMasterByNameAndGroup("NIPI_CHILDREN", GroupName.CHILD_HEALTH.getDisplayName());
+    private void checkIFAIncentive(List<IFAFormSubmissionData> entities,Integer userId) {
+        Integer stateCode = userService.getUserDetail(userId).getStateId();
+        if(stateCode.equals(StateCode.AM.getStateCode())){
+            IncentiveActivity incentiveActivityAM= incentivesRepo.findIncentiveMasterByNameAndGroup("NIPI_CHILDREN", GroupName.CHILD_HEALTH.getDisplayName());
 
-        if(incentiveActivityAM!=null){
-            entities.forEach(ifaFormSubmissionData -> {
-                addIFAIncentive(ifaFormSubmissionData,incentiveActivityAM);
+            if(incentiveActivityAM!=null){
+                entities.forEach(ifaFormSubmissionData -> {
+                    addIFAIncentive(ifaFormSubmissionData,incentiveActivityAM);
 
-            });
+                });
+            }
+
+        }
+
+        if(stateCode.equals(StateCode.CG.getStateCode())){
+            IncentiveActivity incentiveActivityCG= incentivesRepo.findIncentiveMasterByNameAndGroup("NIPI_CHILDREN", GroupName.ACTIVITY.getDisplayName());
+
+            if(incentiveActivityCG!=null){
+                entities.forEach(ifaFormSubmissionData -> {
+                    addIFAIncentive(ifaFormSubmissionData,incentiveActivityCG);
+
+                });
+            }
+
         }
 
     }

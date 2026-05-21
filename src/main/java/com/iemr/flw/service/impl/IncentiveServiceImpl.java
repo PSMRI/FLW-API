@@ -15,7 +15,9 @@ import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.IncentiveService;
 import com.iemr.flw.service.MaaMeetingService;
+import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +61,9 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Autowired
     private CbacIemrDetailsRepo cbacIemrDetailsRepo;
+
+    @Autowired
+    private UserService userService;
 
 
     // ================= MASTER SAVE =================
@@ -163,12 +168,13 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
+        Integer stateCode = userService.getUserDetail(request.getAshaId()).getStateId();
         try {
 
-            if (request.getVillageID().equals(StateCode.AM.getStateCode())) {
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
                 checkMonthlyAshaIncentive(request.getAshaId());
             }
-            if(request.getVillageID().equals(StateCode.CG.getStateCode())){
+            if(stateCode.equals(StateCode.CG.getStateCode())){
                 checkMonthlyAshaIncentiveForCg(request.getAshaId());
 
             }
@@ -185,12 +191,7 @@ public class IncentiveServiceImpl implements IncentiveService {
             logger.error("Error in incentiveOfNcdReferal: ", e);
         }
 
-        Integer villageID = request.getVillageID();
-        boolean isCG = villageID != null && villageID.intValue() == StateCode.CG.getStateCode();
-
-        if (!isCG) {
-            checkMonthlyAshaIncentive(request.getAshaId());
-        }
+        boolean isCG = stateCode != null && stateCode.equals(StateCode.CG.getStateCode());
 
         // Step 1: Fetch all records for this ASHA
         List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getAshaId());
