@@ -246,14 +246,12 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                 }
                 if(entry.getAshaId()!=null){
-                    String userName = userRepo.getUserNamedByUserId(entry.getAshaId());
-
                     if (entry.getCreatedBy() == null) {
-                        entry.setCreatedBy(userName);
+                        entry.setCreatedBy(userRepo.getUserNamedByUserId(entry.getAshaId()));
                     }
 
                     if (entry.getUpdatedBy() == null) {
-                        entry.setUpdatedBy(userName);
+                        entry.setUpdatedBy(userRepo.getUserNamedByUserId(entry.getAshaId()));
                     }
 
                     if (entry.getIsEligible() == null) {
