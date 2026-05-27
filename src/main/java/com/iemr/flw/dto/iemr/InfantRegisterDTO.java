@@ -32,4 +32,9 @@ public class InfantRegisterDTO {
     private String createdBy;
     private Timestamp updatedDate;
     private String updatedBy;
+    private String  deliveryDischargeSummary1;
+    private String deliveryDischargeSummary2;
+    private String deliveryDischargeSummary3;
+    private String deliveryDischargeSummary4;
+    private String isSNCU;
 }

@@ -89,7 +89,7 @@ public class JwtUserIdValidationFilter implements Filter {
 
 			if (jwtToken != null) {
 				logger.info("Validating JWT token from cookie");
-				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtFromCookie)) {
+				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtToken)) {
 
 					AuthorizationHeaderRequestWrapper authorizationHeaderRequestWrapper = new AuthorizationHeaderRequestWrapper(
 							request, "");
@@ -116,7 +116,7 @@ public class JwtUserIdValidationFilter implements Filter {
 
 		} catch (Exception e) {
 			logger.error("Authorization error: ", e);
-			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: " + e.getMessage());
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: Authentication failed");
 		}
 	}
 

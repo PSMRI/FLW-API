@@ -20,4 +20,8 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
 
     @Query("select u.userId from UserServiceRole u where u.userName = :userName and u.userServciceRoleDeleted = false")
     Integer getUserIdByName(@Param("userName") String userName);
+
+    @Query("select u.userName from UserServiceRole u where u.userId = :userId and u.userServciceRoleDeleted = false")
+    String  getUserNamedByUserId(@Param("userId") Integer userId);
+
 }

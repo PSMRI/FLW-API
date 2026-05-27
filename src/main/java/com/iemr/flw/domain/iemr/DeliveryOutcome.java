@@ -1,5 +1,6 @@
 package com.iemr.flw.domain.iemr;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import jakarta.persistence.*;
@@ -67,12 +68,13 @@ public class DeliveryOutcome {
     @Column(name = "created_by")
     private String createdBy;
 
+    @Column(name = "updated_by")
+    private String updatedBy;
+
     @Column(name = "created_date")
     private Timestamp createdDate;
 
     @Column(name = "updated_date")
     private Timestamp updatedDate;
 
-    @Column(name = "updated_by")
-    private String updatedBy;
 }

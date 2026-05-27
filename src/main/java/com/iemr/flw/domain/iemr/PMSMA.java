@@ -132,4 +132,13 @@ public class PMSMA {
 
     @Column(name = "updated_by")
     private String updatedBy;
+
+    @Column(name = "visitDate")
+    private Timestamp visitDate;
+
+    @Column(name = "visitNo")
+    private Integer visitNumber;
+
+    @Column(name = "anyOtherHighRiskCondition")
+    private String anyOtherHighRiskCondition;
 }

@@ -1,20 +1,19 @@
 package com.iemr.flw.service;
 
+import com.iemr.flw.domain.iemr.IfaDistribution;
+import com.iemr.flw.domain.iemr.SamVisitResponseDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
-import com.iemr.flw.dto.iemr.ChildVaccinationDTO;
-import com.iemr.flw.dto.iemr.HbncRequestDTO;
-import com.iemr.flw.dto.iemr.HbycDTO;
-import com.iemr.flw.dto.iemr.VaccineDTO;
+import com.iemr.flw.dto.iemr.*;
 
 import java.util.List;
 
 public interface ChildCareService {
 
-    String registerHBYC(List<HbycDTO> hbycDTOs);
+    String registerHBYC(List<HbycRequestDTO> hbycDTOs);
 
-    List<HbycDTO> getHbycRecords(GetBenRequestHandler dto);
+    List<HbycVisitResponseDTO> getHbycRecords(GetBenRequestHandler dto);
 
-    List<HbncRequestDTO> getHBNCDetails(GetBenRequestHandler dto);
+    List<HbncVisitResponseDTO> getHBNCDetails(GetBenRequestHandler dto);
 
     String saveHBNCDetails(List<HbncRequestDTO> hbncRequestDTOs);
 
@@ -23,4 +22,18 @@ public interface ChildCareService {
     String saveChildVaccinationDetails(List<ChildVaccinationDTO> childVaccinationDTOs);
 
     List<VaccineDTO> getAllChildVaccines(String category);
+
+    String saveSamDetails(List<SamDTO> samRequest);
+
+    List<SAMResponseDTO> getSamVisitsByBeneficiary(GetBenRequestHandler dto);
+
+    String saveOrsDistributionDetails(List<OrsDistributionDTO> orsDistributionDTOS);
+
+    List<OrsDistributionResponseDTO> getOrdDistrubtion(GetBenRequestHandler request);
+
+    List<IfaDistribution> saveAllIfa(List<IfaDistributionDTO> dtoList);
+
+    List<IfaDistributionDTO> getByBeneficiaryId(GetBenRequestHandler request);
+
+
 }

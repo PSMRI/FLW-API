@@ -3,6 +3,8 @@ package com.iemr.flw.domain.iemr;
 import lombok.Data;
 
 import jakarta.persistence.*;
+
+import javax.management.MXBean;
 import java.sql.Timestamp;
 
 @Entity
@@ -46,4 +48,43 @@ public class IncentiveActivityRecord {
 
     @Column(name = "updated_by")
     private String updatedBy;
+
+    @Column(name = "is_eligible",columnDefinition = "tinyint(1) default 1")
+    private Boolean isEligible=true;
+
+    @Column(name = "is_default_activity",columnDefinition = "tinyint(1) default 0")
+    private Boolean isDefaultActivity = false;
+
+    @Column(name = "approval_status",columnDefinition = "int default 102")
+     Integer approvalStatus = 102;
+
+    @Column(name = "verifiedBy_userId")
+    private Integer verifiedByUserId;
+
+    @Column(name = "verifiedBy_userName")
+    private String  verifiedByUserName;
+
+    @Column(name = "reason")
+    private String reason;
+
+    @Column(name = "other_reason")
+    private String otherReason;
+
+    @Column(name = "is_claimed",columnDefinition = "tinyint(1) default 0")
+    private Boolean isClaimed = false;
+
+    @Column(name = "approval_date")
+    private Timestamp approvalDate;
+
+    @Column(name = "calimed_date")
+    private Timestamp calimedDate;
+
+    @Transient
+    private String supervisorRole;
+
+    @Transient
+    private String activityDec;
+
+    @Transient
+    private String groupName;
 }

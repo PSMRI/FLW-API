@@ -6,7 +6,7 @@ import lombok.Data;
 public class IncentiveRequestDTO {
 
     private Integer state;
-
+    private String langCode;
     private Integer district;
 
 

@@ -9,7 +9,7 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "i_beneficiarydetails_rmnch")
+@Table(name = "i_beneficiarydetails_rmnch",schema = "db_identity")
 @Data
 public class RMNCHBeneficiaryDetailsRmnch {
 	@Id
@@ -338,6 +338,56 @@ public class RMNCHBeneficiaryDetailsRmnch {
 	@Expose
 	@Transient
 	private String villageName;
+
+
+	@Expose
+	private Boolean isDeath;
+
+	@Expose
+	private String isDeathValue;
+
+	@Expose
+	private String dateOfDeath;
+
+	@Expose
+	private String timeOfDeath;
+
+	@Expose
+	private String reasonOfDeath;
+
+	@Expose
+	private Integer reasonOfDeathId;
+
+	@Expose
+	private String placeOfDeath;
+
+	@Expose
+	private Integer placeOfDeathId;
+
+	@Expose
+	private String  otherPlaceOfDeath;
+
+	@Expose
+	private Boolean isSpouseAdded;
+
+
+	@Expose
+	private Boolean isChildrenAdded;
+
+	@Expose
+	private Boolean isMarried;
+
+	@Expose
+	private Boolean doYouHavechildren;
+
+	@Expose
+	private Integer noOfchildren;
+
+	@Expose
+	private Integer noofAlivechildren;
+
+	@Expose
+	private Boolean isDeactivate;
 
 	@Expose
 	@Transient

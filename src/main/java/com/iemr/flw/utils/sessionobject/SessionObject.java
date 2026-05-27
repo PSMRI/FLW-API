@@ -24,9 +24,12 @@ package com.iemr.flw.utils.sessionobject;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.config.ConfigProperties;
 import com.iemr.flw.utils.redis.RedisSessionException;
 import com.iemr.flw.utils.redis.RedisStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +37,8 @@ import org.springframework.stereotype.Component;
 public class SessionObject {
 	private RedisStorage objectStore;
 
+	@Autowired
+	private  JwtUtil jwtUtil;
 	@Autowired
 	public void setObjectStore(RedisStorage objectStore) {
 		this.objectStore = objectStore;
@@ -46,6 +51,8 @@ public class SessionObject {
 
 	private boolean extendExpirationTime;
 	private int sessionExpiryTime;
+
+	Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
 	public String getSessionObject(String key) throws RedisSessionException {
 		Boolean extendExpirationTime = ConfigProperties.getExtendExpiryTime();
@@ -74,6 +81,7 @@ public class SessionObject {
 			JsonElement jsnElmnt = jsnParser.parse(value);
 			jsnOBJ = jsnElmnt.getAsJsonObject();
 			if (jsnOBJ.has("userName") && jsnOBJ.get("userName") != null) {
+				jwtUtil.setUserNameFromStorage(jsnOBJ.get("userName").getAsString());
 				objectStore.updateObject(jsnOBJ.get("userName").getAsString().trim().toLowerCase(), key,
 						extendExpirationTime, sessionExpiryTime);
 			}

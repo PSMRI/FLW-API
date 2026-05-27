@@ -54,4 +54,13 @@ public class MDSR {
 
     @Column(name = "updated_by")
     private String updatedBy;
+
+    @Column(name = "mdsr1_file")
+    private String mdsr1File;
+
+    @Column(name = "mdsr2_file")
+    private String mdsr2File;
+
+    @Column(name = "mdsr_death_cert_file")
+    private String mdsrDeathCertFile;
 }

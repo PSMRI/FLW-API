@@ -85,4 +85,19 @@ public class InfantRegister {
 
     @Column(name = "updated_by")
     private String updatedBy;
+
+    @Column(name = "delivery_discharge_summary1")
+    private String  deliveryDischargeSummary1;
+
+    @Column(name = "delivery_discharge_summary2")
+    private String deliveryDischargeSummary2;
+
+    @Column(name = "delivery_discharge_summary3")
+    private String deliveryDischargeSummary3;
+
+    @Column(name = "delivery_discharge_summary4")
+    private String deliveryDischargeSummary4;
+
+    @Column(name = "is_sncu")
+    private String isSNCU;
 }

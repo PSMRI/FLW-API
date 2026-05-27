@@ -4,6 +4,7 @@ package com.iemr.flw.utils;
 import java.util.function.Function;
 import javax.crypto.SecretKey;
 
+import com.google.gson.JsonElement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -19,10 +20,10 @@ public class JwtUtil {
 
 	@Value("${jwt.secret}")
 	private String SECRET_KEY;
-	
+	private String userName;
+
 	@Autowired
 	private TokenDenylist tokenDenylist;
-
 	// Generate a key using the secret
 	private SecretKey getSigningKey() {
 		if (SECRET_KEY == null || SECRET_KEY.isEmpty()) {
@@ -39,14 +40,14 @@ public class JwtUtil {
 				.build()
 				.parseSignedClaims(token)
 				.getPayload();
-				
+
 			String jti = claims.getId();
-			
+
 			// Check if token is denylisted (only if jti exists)
 			if (jti != null && tokenDenylist.isTokenDenylisted(jti)) {
 				return null;
 			}
-			
+
 			return claims;
 		} catch (Exception e) {
 			return null; // Handle token parsing/validation errors
@@ -86,5 +87,16 @@ public class JwtUtil {
 				.verifyWith(getSigningKey())
 				.build()
 				.parseSignedClaims(token)
-				.getPayload();	}
+				.getPayload();
+	}
+
+	public String getUserNameFromStorage() {
+		return  userName;
+
+	}
+
+	public void setUserNameFromStorage(String loginUserName) {
+		  this.userName = loginUserName;
+
+	}
 }

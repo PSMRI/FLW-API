@@ -9,7 +9,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface IncentivesRepo extends JpaRepository<IncentiveActivity, Long> {
@@ -17,8 +19,39 @@ public interface IncentivesRepo extends JpaRepository<IncentiveActivity, Long> {
     @Query("select inc from IncentiveActivity inc where inc.name = :name and inc.group = :group and inc.isDeleted = false")
     IncentiveActivity findIncentiveMasterByNameAndGroup(@Param("name") String name, @Param("group") String group);
 
-//    @Query("select record from IncentiveActivityRecord record where record.activityId = :id and record.createdDate = :createdDate and record.benId = :benId")
-//    IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(@Param("id") Long id, @Param("createdDate") Timestamp createdDate, @Param("benId") Long benId);
-//
-//    List<IncentiveActivityRecord> getByUserId(Integer ashaId, Timestamp fromDate, Timestamp toDate);
-}
+    @Query("SELECT a FROM IncentiveActivity a " +
+            "WHERE a.id = :activityId AND " +
+            "((:isActivity = true AND a.group = 'ACTIVITY') OR (:isActivity = false AND a.group <> 'ACTIVITY'))")
+    IncentiveActivity findIncentiveMasterById(
+            @Param("activityId") Long activityId,
+            @Param("isActivity") boolean isActivity
+    );
+
+
+    @Query("select record from IncentiveActivityRecord record where record.activityId = :id and record.createdDate = :createdDate and record.benId = :benId")
+    IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(@Param("id") Long id, @Param("createdDate") Timestamp createdDate, @Param("benId") Long benId);
+
+    @Query(value = "SELECT " +
+            "SUM(CASE WHEN i.approval_status = 101 THEN 1 ELSE 0 END) as pendingCount, " +
+            "SUM(CASE WHEN i.approval_status = 102 THEN 1 ELSE 0 END) as approvalCount, " +
+            "SUM(CASE WHEN i.approval_status = 103 THEN 1 ELSE 0 END) as rejectCount " +
+            "FROM m_incentive_activity i " +
+            "WHERE i.asha_id = :ashaId " +
+            "AND i.is_deleted = false",
+            nativeQuery = true)
+    Object[] getStatusCountByAshaId(@Param("ashaId") Integer ashaId);
+
+    List<IncentiveActivity> findByGroupAndIsDeleted(String group, Boolean isDeleted);
+
+    List<IncentiveActivity> findByGroupNotAndIsDeleted(String group, Boolean isDeleted);
+
+    // IncentivesRepo — replaces N calls to findIncentiveMasterById()
+    @Query("SELECT i.id FROM IncentiveActivity i WHERE i.id IN :ids AND i.isDeleted = false AND " +
+            "(:isCG = true AND i.group = 'ACTIVITY' OR :isCG = false AND i.group != 'ACTIVITY')")
+    Set<Long> findValidActivityIds(@Param("ids") List<Long> ids, @Param("isCG") boolean isCG);
+
+    @Query("SELECT i FROM IncentiveActivity i WHERE i.name IN :names AND i.group = :groupName")
+    List<IncentiveActivity> findIncentiveMasterByNameAndGroup(
+            @Param("names") List<String> names,
+            @Param("groupName") String groupName
+    );}

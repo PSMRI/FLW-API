@@ -24,6 +24,7 @@ public class IncentiveActivityDTO implements Serializable {
     private Integer district;
 
     private String group;
+    private String  groupName;
 
     private String fmrCode;
 

@@ -11,6 +11,9 @@ import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.identity.CbacAdditionalDetailRepo;
 import com.iemr.flw.repo.identity.CbacRepo;
+import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
+import com.iemr.flw.repo.iemr.IncentivesRepo;
+import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.CbacService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -22,10 +25,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class CbacServiceImpl implements CbacService {
@@ -39,6 +39,15 @@ public class CbacServiceImpl implements CbacService {
     private CbacAdditionalDetailRepo cbacAddRepo;
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
+
+    @Autowired
+    private IncentivesRepo incentivesRepo;
+
+    @Autowired
+    private UserServiceRoleRepo userRepo;
+
+    @Autowired
+    private IncentiveRecordRepo recordRepo;
     @Value("10")
     private String cbac_page_size;
 
@@ -125,10 +134,12 @@ public class CbacServiceImpl implements CbacService {
         });
         if (cbacAdditionalDetailsList.size() > 0) {
             cbacAddRepo.saveAll(cbacAdditionalDetailsList);
+
         }
         Gson gson = new GsonBuilder()
                 .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
                 .create();
         return gson.toJson(result);
     }
+
 }

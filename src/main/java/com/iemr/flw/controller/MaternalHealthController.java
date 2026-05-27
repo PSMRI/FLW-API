@@ -8,20 +8,25 @@ import com.iemr.flw.service.ChildService;
 import com.iemr.flw.service.DeliveryOutcomeService;
 import com.iemr.flw.service.InfantService;
 import com.iemr.flw.service.MaternalHealthService;
+import com.iemr.flw.utils.JwtUtil;
+import com.iemr.flw.utils.exception.IEMRException;
 import com.iemr.flw.utils.response.OutputResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/maternalCare", headers = "Authorization", consumes = "application/json", produces = "application/json")
+@RequestMapping(value = "/maternalCare", consumes = "application/json", produces = "application/json")
 public class MaternalHealthController {
 
     private final Logger logger = LoggerFactory.getLogger(CoupleController.class);
@@ -37,6 +42,9 @@ public class MaternalHealthController {
 
     @Autowired
     private ChildService childService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Operation(summary = "save pregnant woman registration details")
     @RequestMapping(value = { "/pregnantWoman/saveAll" }, method = { RequestMethod.POST })
@@ -84,25 +92,31 @@ public class MaternalHealthController {
             response.setError(5000, "Error in pregnant woman get data : " + e);
         }
         return response.toString();
+
     }
 
     @Operation(summary = "save anc visit details")
     @RequestMapping(value = { "/ancVisit/saveAll" }, method = { RequestMethod.POST })
     public String saveANCVisit(@RequestBody List<ANCVisitDTO> ancVisitDTOs,
-            @RequestHeader(value = "Authorization") String Authorization) {
+            @RequestHeader(value = "JwtToken") String token) {
         OutputResponse response = new OutputResponse();
         try {
             if (ancVisitDTOs.size() != 0) {
                 logger.info("Saving ANC visits with timestamp : " + new Timestamp(System.currentTimeMillis()));
-                String s = maternalHealthService.saveANCVisit(ancVisitDTOs);
-                if (s != null)
-                    response.setResponse(s);
-                else
-                    response.setError(5000, "Saving anc data to db failed");
+                if(token!=null){
+                    String s = maternalHealthService.saveANCVisit(ancVisitDTOs,jwtUtil.extractUserId(token));
+
+                    if (s != null)
+                        response.setResponse(s);
+                    else
+                        response.setError(5000, "Saving anc data to db failed");
+                }
+
             } else
                 response.setError(5000, "Invalid/NULL request obj");
         } catch (Exception e) {
-            logger.error("Error in save ANC visit details : " + e);
+            logger.error("Error in save ANC visit details : ",e);
+
             response.setError(5000, "Error in save ANC visit details : " + e);
         }
         return response.toString();
@@ -133,10 +147,73 @@ public class MaternalHealthController {
         return response.toString();
     }
 
+    @Operation(summary = "save anc visit question")
+    @RequestMapping(value = { "/ancVisit/counselling/saveAll" }, method = { RequestMethod.POST })
+    public String saveANCVisitQuestion(@RequestBody List<AncCounsellingCareDTO> ancVisitQuestionsDTOS,
+                               @RequestHeader(value = "JwtToken") String Authorization) {
+        OutputResponse response = new OutputResponse();
+        try {
+            if (ancVisitQuestionsDTOS.size() != 0) {
+
+                logger.info("Saving ANC visits with timestamp : " + new Timestamp(System.currentTimeMillis()));
+                String s = maternalHealthService.saveANCVisitQuestions(ancVisitQuestionsDTOS,Authorization);
+                if (s != null)
+                    response.setResponse(s);
+                else
+                    response.setError(500, "Saving anc data to db failed");
+            } else
+                response.setError(500, "Invalid/NULL request obj");
+        } catch (Exception e) {
+            logger.error("Error in save ANC visit details : ",e);
+
+            response.setError(500, "Error in save ANC visit details : " + e);
+        }
+        return response.toString();
+    }
+
+    @Operation(summary = "get anc visit questions")
+    @RequestMapping(value = { "/ancVisit/counselling/getAll" }, method = { RequestMethod.POST })
+    public ResponseEntity<StandardResponse<List<AncCounsellingCareResponseDTO>>> getANCVisitQuestion(@RequestBody GetBenRequestHandler requestDTO,
+                                     @RequestHeader(value = "JwtToken") String Authorization) {
+        StandardResponse<List<AncCounsellingCareResponseDTO>> response = new StandardResponse<>();
+
+        try {
+            if (requestDTO != null) {
+                logger.info("Request: " + requestDTO);
+
+                List<AncCounsellingCareResponseDTO> result = maternalHealthService.getANCCounselling(requestDTO);
+
+                response.setStatusCode(200);
+                response.setStatus("Success");
+                response.setErrorMessage("Success");
+                response.setData(result);
+
+                return ResponseEntity.ok(response);
+
+            } else {
+                response.setStatusCode(400);
+                response.setStatus("Failed");
+                response.setErrorMessage("Invalid request object");
+                response.setData(null);
+                return ResponseEntity.badRequest().body(response);
+            }
+        } catch (Exception e) {
+            logger.error("Exception in fetching HBNC visits", e);
+
+            response.setStatusCode(500);
+            response.setStatus("Failed");
+            response.setErrorMessage("Internal Server Error: " + e.getMessage());
+            response.setData(null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
     @Operation(summary = "save Delivery Outcome details")
     @RequestMapping(value = { "/deliveryOutcome/saveAll" }, method = { RequestMethod.POST })
     public String saveDeliveryOutcome(@RequestBody List<DeliveryOutcomeDTO> deliveryOutcomeDTOS,
-            @RequestHeader(value = "Authorization") String Authorization) {
+                                      @RequestHeader(value = "Authorization") String Authorization, HttpServletRequest request) throws IEMRException {
+
+
         OutputResponse response = new OutputResponse();
         try {
             if (deliveryOutcomeDTOS.size() != 0) {
@@ -153,6 +230,7 @@ public class MaternalHealthController {
             response.setError(5000, "Error in save delivery outcome details : " + e);
         }
         return response.toString();
+
     }
 
     @Operation(summary = "get Delivery Outcome details")
@@ -167,9 +245,9 @@ public class MaternalHealthController {
                 List<DeliveryOutcomeDTO> result = deliveryOutcomeService.getDeliveryOutcome(requestDTO);
                 Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
                 String s = gson.toJson(result);
-                if (s != null)
-                    response.setResponse(s);
-                else
+                if (result != null && !result.isEmpty()) {
+                    response.setResponse(gson.toJson(result));
+                }else
                     response.setError(5000, "No record found");
             } else
                 response.setError(5000, "Invalid/NULL request obj");

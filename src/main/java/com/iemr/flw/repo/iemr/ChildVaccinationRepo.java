@@ -23,6 +23,8 @@ public interface ChildVaccinationRepo extends JpaRepository<ChildVaccination, Lo
             "v.category = 'CHILD'", nativeQuery = true)
     Integer getFirstYearVaccineCountForBenId(@Param("benRegId") Long benRegId);
 
+
+
     @Query(value = "select count(*) from db_iemr.m_immunizationservicevaccination v where v.Currentimmunizationserviceid in (1,2,3,4,5) " +
             "and v.category = 'CHILD'", nativeQuery = true)
     Integer getFirstYearVaccineCount();

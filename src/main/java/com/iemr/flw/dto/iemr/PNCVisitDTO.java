@@ -29,4 +29,10 @@ public class PNCVisitDTO {
     private String createdBy;
     private Timestamp updatedDate;
     private String updatedBy;
+    private Timestamp sterilisationDate;
+    private String  deliveryDischargeSummary1;
+    private String  deliveryDischargeSummary2;
+    private String  deliveryDischargeSummary3;
+    private String  deliveryDischargeSummary4;
+
 }

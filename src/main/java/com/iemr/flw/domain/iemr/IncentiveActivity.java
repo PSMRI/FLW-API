@@ -4,9 +4,10 @@ import lombok.Data;
 
 import jakarta.persistence.*;
 import java.sql.Timestamp;
+import java.util.Date;
 
 @Entity
-@Table(name = "incentive_activity", schema = "db_iemr")
+@Table(name = "m_incentive_activity", schema = "db_iemr")
 @Data
 public class IncentiveActivity {
 
@@ -55,4 +56,10 @@ public class IncentiveActivity {
 
     @Column(name = "is_deleted")
     private Boolean isDeleted;
+
+
+    @Column(name = "state_activity_code")
+    private Integer stateActivityCode;
+
+
 }

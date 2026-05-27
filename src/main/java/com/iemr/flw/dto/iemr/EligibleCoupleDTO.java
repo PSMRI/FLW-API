@@ -1,9 +1,13 @@
 package com.iemr.flw.dto.iemr;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Lob;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Data
 public class EligibleCoupleDTO implements Serializable {
@@ -105,4 +109,17 @@ public class EligibleCoupleDTO implements Serializable {
     private Timestamp updatedDate;
 
     private String updatedBy;
+
+    private String lmpDate;
+
+    private Boolean isKitHandedOver;
+
+    private String kitHandedOverDate;
+
+    private String kitPhoto1;
+
+    private String kitPhoto2;
+
+
+
 }

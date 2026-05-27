@@ -79,4 +79,19 @@ public class PNCVisit {
 
     @Column(name = "updated_by")
     private String updatedBy;
+
+    @Column(name = "steilisation_date")
+    private Timestamp sterilisationDate;
+
+    @Column(name = "delivery_discharge_summary_image1")
+    private String  deliveryDischargeSummary1;
+
+    @Column(name = "delivery_discharge_summary_image2")
+    private String  deliveryDischargeSummary2;
+
+    @Column(name = "delivery_discharge_summary_image3")
+    private String  deliveryDischargeSummary3;
+
+    @Column(name = "delivery_discharge_summary_image4")
+    private String  deliveryDischargeSummary4;
 }

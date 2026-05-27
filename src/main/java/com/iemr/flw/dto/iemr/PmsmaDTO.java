@@ -47,4 +47,8 @@ public class PmsmaDTO {
     private Timestamp createdDate;
     private Timestamp updatedDate;
     private String updatedBy;
+
+    private Timestamp visitDate;
+    private Integer visitNumber;
+    private String anyOtherHighRiskCondition;
 }

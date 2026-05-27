@@ -1,13 +1,18 @@
 package com.iemr.flw.domain.iemr;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 import jakarta.persistence.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.sql.Timestamp;
+import java.util.List;
 
 @Entity
 @Table(name = "t_eligible_couple_register", schema = "db_iemr")
 @Data
+@JsonInclude(JsonInclude.Include.ALWAYS) // Null values included
 public class EligibleCoupleRegister {
 
     @Id
@@ -157,4 +162,22 @@ public class EligibleCoupleRegister {
 
     @Column(name = "updated_by")
     private String updatedBy;
+
+
+    @Column(name = "lmp_date")
+    private String lmpDate;
+
+    @Column(name = "is_kit_handed_over")
+    private Boolean isKitHandedOver;
+
+    @Column(name = "is_kit_handed_over_date")
+    private String kitHandedOverDate;
+
+    @Lob
+    @Column(name = "kit_photo1", columnDefinition = "LONGTEXT")
+    private String kitPhoto1;
+
+    @Column(name = "kit_photo2", columnDefinition = "LONGTEXT")
+    private String kitPhoto2;
 }
+

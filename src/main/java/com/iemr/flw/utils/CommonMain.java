@@ -23,4 +23,5 @@ public class CommonMain {
 	public RedisStorage redisStorage() {
 		return new RedisStorage();
 	}
+
 }

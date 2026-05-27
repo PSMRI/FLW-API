@@ -3,13 +3,25 @@ package com.iemr.flw.service.impl;
 import java.math.BigInteger;
 import java.sql.Date;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.Period;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import com.iemr.flw.domain.iemr.EyeCheckupVisit;
+import com.iemr.flw.domain.iemr.IncentiveActivity;
+import com.iemr.flw.dto.iemr.EyeCheckupListDTO;
+import com.iemr.flw.dto.iemr.EyeCheckupRequestDTO;
+import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.repo.iemr.*;
+import com.iemr.flw.utils.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +56,7 @@ import com.iemr.flw.repo.identity.HouseHoldRepo;
 import com.iemr.flw.service.BeneficiaryService;
 import com.iemr.flw.utils.config.ConfigProperties;
 import com.iemr.flw.utils.http.HttpUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Qualifier("rmnchServiceImpl")
@@ -53,56 +66,93 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     private final Logger logger = LoggerFactory.getLogger(BeneficiaryServiceImpl.class);
     @Value("${door-to-door-page-size}")
     private String door_to_door_page_size;
+
+    @Value("${fhir-url}")
+    private String fhirUrl;
+
+    @Value("${getHealthID}")
+    private String getHealthID;
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
 
     @Autowired
     private HouseHoldRepo houseHoldRepo;
+    @Autowired
+    private GeneralOpdRepo generalOpdRepo;
+
+    @Autowired
+    IncentivesRepo incentivesRepo;
+
+    @Autowired
+    IncentiveRecordRepo recordRepo;
+
+    @Autowired
+    private EyeCheckUpVisitRepo eyeCheckUpVisitRepo;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private UserServiceRoleRepo userRepo;
+
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
 
 
     @Override
     public String getBenData(GetBenRequestHandler request, String authorisation) throws Exception {
-        String outputResponse = null;
-        int totalPage = 0;
 
-        try {
-            if (request != null && request.getAshaId() != null) {
-                List<RMNCHMBeneficiaryaddress> resultSet;
-                Integer pageSize = Integer.valueOf(door_to_door_page_size);
-                if (request.getPageNo() != null) {
-                    String userName = beneficiaryRepo.getUserName(request.getAshaId());
-                    if (userName == null || userName.isEmpty())
-                        throw new Exception("Asha details not found, please contact administrator");
-
-                    request.setUserName(userName);
-
-                    PageRequest pr = PageRequest.of(request.getPageNo(), pageSize);
-                    if (request.getFromDate() != null && request.getToDate() != null) {
-                        Page<RMNCHMBeneficiaryaddress> p = beneficiaryRepo.getBenDataWithinDates(
-                                request.getUserName(), request.getFromDate(), request.getToDate(), pr);
-                        resultSet = p.getContent();
-                        totalPage = p.getTotalPages();
-                    } else {
-                        Page<RMNCHMBeneficiaryaddress> p = beneficiaryRepo.getBenDataByUser(request.getUserName(),
-                                pr);
-                        resultSet = p.getContent();
-                        totalPage = p.getTotalPages();
-                    }
-                    if (resultSet != null && resultSet.size() > 0) {
-                        outputResponse = getMappingsForAddressIDs(resultSet, totalPage, authorisation);
-                    }
-                } else {
-                    // page no not invalid
-                    throw new Exception("Invalid page no");
-                }
-            } else
-                throw new Exception("Invalid/missing village details");
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
+        if (request == null || request.getAshaId() == null) {
+            throw new Exception("Invalid/missing asha details");
         }
 
-        return outputResponse;
+        if (request.getPageNo() == null || request.getPageNo() < 0) {
+            throw new Exception("Invalid page number");
+        }
+
+        String userName = beneficiaryRepo.getUserName(request.getAshaId());
+
+        if (userName == null || userName.isEmpty()) {
+            throw new Exception("Asha details not found, please contact administrator");
+        }
+
+        request.setUserName(userName);
+
+        int pageSize = Integer.parseInt(door_to_door_page_size);
+        PageRequest pageRequest = PageRequest.of(request.getPageNo(), pageSize);
+
+        Page<RMNCHMBeneficiaryaddress> pageResult;
+
+        // ✅ Date Filter Handling
+        if (request.getFromDate() != null && request.getToDate() != null) {
+
+            if (request.getFromDate().after(request.getToDate())) {
+                throw new Exception("Invalid date range");
+            }
+
+            pageResult = beneficiaryRepo.getBenDataWithinDates(
+                    userName,
+                    request.getFromDate(),
+                    request.getToDate(),
+                    pageRequest
+            );
+
+        } else {
+
+            pageResult = beneficiaryRepo.getBenDataByUser(userName, pageRequest);
+        }
+
+        if (!pageResult.hasContent()) {
+            return null;
+        }
+
+        return getMappingsForAddressIDs(
+                pageResult.getContent(),
+                pageResult.getTotalPages(),
+                authorisation
+        );
     }
+
 
     private String getMappingsForAddressIDs(List<RMNCHMBeneficiaryaddress> addressList, int totalPage,
                                             String authorisation) {
@@ -355,6 +405,21 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     resultMap.put("abhaHealthDetails", healthDetails);
                     resultMap.put("houseoldId", benDetailsRMNCH_OBJ.getHouseoldId());
                     resultMap.put("benficieryid", benDetailsRMNCH_OBJ.getBenficieryid());
+                    resultMap.put("isDeath", benDetailsRMNCH_OBJ.getIsDeath());
+                    resultMap.put("isDeathValue", benDetailsRMNCH_OBJ.getIsDeathValue());
+                    resultMap.put("dateOfDeath",benDetailsRMNCH_OBJ.getDateOfDeath());
+                    resultMap.put("timeOfDeath", benDetailsRMNCH_OBJ.getTimeOfDeath());
+                    resultMap.put("reasonOfDeath", benDetailsRMNCH_OBJ.getReasonOfDeath());
+                    resultMap.put("reasonOfDeathId", benDetailsRMNCH_OBJ.getReasonOfDeathId());
+                    resultMap.put("placeOfDeath", benDetailsRMNCH_OBJ.getPlaceOfDeath());
+                    resultMap.put("placeOfDeathId", benDetailsRMNCH_OBJ.getPlaceOfDeathId());
+                    resultMap.put("isSpouseAdded", benDetailsRMNCH_OBJ.getIsSpouseAdded());
+                    resultMap.put("isChildrenAdded", benDetailsRMNCH_OBJ.getIsChildrenAdded());
+                    resultMap.put("noOfchildren", benDetailsRMNCH_OBJ.getNoOfchildren());
+                    resultMap.put("isMarried", benDetailsRMNCH_OBJ.getIsMarried());
+                    resultMap.put("doYouHavechildren", benDetailsRMNCH_OBJ.getDoYouHavechildren());
+                    resultMap.put("noofAlivechildren",benDetailsRMNCH_OBJ.getNoofAlivechildren());
+                    resultMap.put("isDeactivate",benDetailsRMNCH_OBJ.getIsDeactivate());
                     resultMap.put("BenRegId", m.getBenRegId());
 
                     // adding asha id / created by - user id
@@ -374,7 +439,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     // mapping not available
                 }
             } catch (Exception e) {
-                logger.error("error for addressID :" + a.getId() + " and vanID : " + a.getVanID());
+                logger.error("error for addressID :"+e.getMessage() + a.getId() + " and vanID : " + a.getVanID());
             }
         }
 
@@ -386,35 +451,52 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         return gson.toJson(response);
     }
 
-	private Map<String, Object> getBenHealthDetails(BigInteger benRegId) {
-		Map<String, Object> healthDetails = new HashMap<>();
-		if (null != benRegId) {
-			Object[] benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
-			if (benHealthIdNumber != null && benHealthIdNumber.length > 0) {
-				Object[] healthData = (Object[]) benHealthIdNumber[0];
-				String healthIdNumber = healthData[0] != null ? healthData[0].toString() : null;
-				String healthId = healthData[1] != null ? healthData[1].toString() : null;
 
-				if (null != healthIdNumber) {
-					List<Object[]> health = beneficiaryRepo.getBenHealthDetails(healthIdNumber);
-					if (health != null && !health.isEmpty()) {
-						for (Object[] objects : health) {
-							healthDetails.put("HealthID", objects[0]);
-							healthDetails.put("HealthIdNumber", objects[1]);
-							healthDetails.put("isNewAbha", objects[2]);
-						}
-					} else {
-						healthDetails.put("HealthIdNumber", healthIdNumber);
-						healthDetails.put("HealthID", healthId);
-						healthDetails.put("isNewAbha", null);
-					}
-				}
-			}
-		}
-		return healthDetails;
-	}
+    private Map<String, Object> getBenHealthDetails(BigInteger benRegId) {
+        Map<String, Object> healthDetails = new HashMap<>();
+        if (null != benRegId) {
+            Object[] benHealthIdNumber = beneficiaryRepo.getBenHealthIdNumber(benRegId);
+            if (benHealthIdNumber != null && benHealthIdNumber.length > 0) {
+                Object[] healthData = (Object[]) benHealthIdNumber[0];
+                String healthIdNumber = healthData[0] != null ? healthData[0].toString() : null;
+                String healthId = healthData[1] != null ? healthData[1].toString() : null;
 
-	public void fetchHealthIdByBenRegID(Long benRegID, String authorization, Map<String, Object> resultMap) {
+                if (null != healthIdNumber) {
+                    List<Object[]> health = beneficiaryRepo.getBenHealthDetails(healthIdNumber);
+                    if (health != null && !health.isEmpty()) {
+                        for (Object[] objects : health) {
+                            healthDetails.put("HealthID", objects[0]);
+                            healthDetails.put("HealthIdNumber", objects[1]);
+                            healthDetails.put("isNewAbha", objects[2]);
+                        }
+                    } else {
+                        healthDetails.put("HealthIdNumber", healthIdNumber);
+                        healthDetails.put("HealthID", healthId);
+                        healthDetails.put("isNewAbha", null);
+                    }
+                }
+            }
+        }
+        return healthDetails;
+    }
+
+    private Map<String, Object> getBenBenVisitDetails(BigInteger benRegId) {
+        Map<String, Object> healthDetails = new HashMap<>();
+        if (null != benRegId) {
+            String benHealthIdNumber = String.valueOf(beneficiaryRepo.getBenHealthIdNumber(benRegId));
+            if (null != benHealthIdNumber) {
+                ArrayList<Object[]> health = beneficiaryRepo.getBenHealthDetails(benHealthIdNumber);
+                for (Object[] objects : health) {
+                    healthDetails.put("HealthID", objects[0]);
+                    healthDetails.put("HealthIdNumber", objects[1]);
+                    healthDetails.put("isNewAbha", objects[2]);
+                }
+            }
+        }
+        return healthDetails;
+    }
+
+    public void fetchHealthIdByBenRegID(Long benRegID, String authorization, Map<String, Object> resultMap) {
         Map<String, Long> requestMap = new HashMap<String, Long>();
         requestMap.put("beneficiaryRegID", benRegID);
         requestMap.put("beneficiaryID", null);
@@ -424,8 +506,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         try {
             HashMap<String, Object> header = new HashMap<String, Object>();
             header.put("Authorization", authorization);
-            String responseStr = utils.post(ConfigProperties.getPropertyByName("fhir-url") + "/"
-                    + ConfigProperties.getPropertyByName("getHealthID"), new Gson().toJson(requestMap), header);
+            String responseStr = utils.post(fhirUrl + "/"
+                    + getHealthID, new Gson().toJson(requestMap), header);
             JsonElement jsnElmnt = jsnParser.parse(responseStr);
             JsonObject jsnOBJ = new JsonObject();
             jsnOBJ = jsnElmnt.getAsJsonObject();
@@ -450,4 +532,86 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 //		return result;
 
     }
+
+
+    @Override
+    public String saveEyeCheckupVsit(List<EyeCheckupRequestDTO> eyeCheckupRequestDTOS, String token) {
+
+        try {
+            for (EyeCheckupRequestDTO dto : eyeCheckupRequestDTOS) {
+                EyeCheckupVisit visit = new EyeCheckupVisit();
+
+                visit.setBeneficiaryId(dto.getBeneficiaryId());
+                visit.setHouseholdId(dto.getHouseHoldId());
+                visit.setUserId(jwtUtil.extractUserId(token));
+                visit.setCreatedBy(dto.getUserName());
+
+                EyeCheckupListDTO f = dto.getFields();
+
+                visit.setSymptomsObserved(f.getSymptomsAsString());
+
+                String upload = f.getDischarge_summary_upload();
+                visit.setDischargeSummaryUpload(
+                        (upload != null && !upload.equalsIgnoreCase("null")) ? upload : null
+                );
+
+                visit.setVisitDate(LocalDate.parse(f.getVisit_date(), FORMATTER));
+
+                visit.setDateOfSurgery(f.getDate_of_surgery());
+
+
+                visit.setEyeAffected(f.getEye_affected());
+                visit.setReferredTo(f.getReferred_to());
+                visit.setFollowUpStatus(f.getFollow_up_status());
+
+                eyeCheckUpVisitRepo.save(visit);
+            }
+
+            return "Eye checkup data saved successfully.";
+
+        } catch (DateTimeParseException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Invalid date format. Expected dd-MM-yyyy. " + e.getMessage());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to save eye checkup data: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public List<EyeCheckupRequestDTO> getEyeCheckUpVisit(GetBenRequestHandler request,String token) {
+        String createdBy = null;
+        try {
+            createdBy = userRepo.getUserNamedByUserId(jwtUtil.extractUserId(token));
+        } catch (Exception e) {
+            logger.error("Error extracting userId from token: " + e.getMessage());
+        }
+        List<EyeCheckupVisit> visits = eyeCheckUpVisitRepo.findByCreatedBy(createdBy);
+
+        return visits.stream().map(v -> {
+            EyeCheckupRequestDTO dto = new EyeCheckupRequestDTO();
+            dto.setId(v.getId());
+            dto.setEyeSide(v.getEyeAffected());
+            dto.setBeneficiaryId(v.getBeneficiaryId());
+            dto.setHouseHoldId(v.getHouseholdId());
+            dto.setUserName(v.getCreatedBy());
+            dto.setVisitDate(v.getVisitDate().format(FORMATTER));
+
+            EyeCheckupListDTO fields = new EyeCheckupListDTO();
+            fields.setVisit_date(v.getVisitDate().format(FORMATTER));
+            fields.setSymptoms_observed(v.getSymptomsObserved());
+            fields.setEye_affected(v.getEyeAffected());
+            fields.setReferred_to(v.getReferredTo());
+            fields.setFollow_up_status(v.getFollowUpStatus());
+            fields.setDate_of_surgery(v.getDateOfSurgery());
+            fields.setDischarge_summary_upload(v.getDischargeSummaryUpload());
+
+
+            dto.setFields(fields);
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+
 }

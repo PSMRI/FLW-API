@@ -1,5 +1,6 @@
 package com.iemr.flw.dto.iemr;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.sql.Timestamp;
@@ -8,6 +9,7 @@ import java.sql.Timestamp;
 public class DeliveryOutcomeDTO {
     private Long id;
     private Long benId;
+
     private Timestamp dateOfDelivery;
     private String timeOfDelivery;
     private String placeOfDelivery;
