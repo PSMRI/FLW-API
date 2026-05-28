@@ -1094,7 +1094,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             if (dto.getFields() != null) {
                 dto.getFields().setIs_net_distributed(entity.getIsNetDistributed());
             }
-
+            checkAndAddIncentives(entity);
             return dto;
 
         }).collect(Collectors.toList());
@@ -1122,11 +1122,22 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             mosquitoNetListDTO.setVisit_date(entity.getVisitDate().format(formatter));
 
             dto.setFields(mosquitoNetListDTO);
+            checkAndAddIncentives(entity);
+
 
             return dto;
         }).collect(Collectors.toList());
     }
 
+    private void checkAndAddIncentives(MosquitoNetEntity mosquitoNetEntity) {
+        Integer stateId = userService.getUserDetail(mosquitoNetEntity.getUserId()).getStateId();
+        IncentiveActivity activityMobilizingMosquitoNets = incentivesRepo.findIncentiveMasterByNameAndGroup("MOSQUITO_NET_DISTRIBUTION_MOBILIZATION", GroupName.ACTIVITY.getDisplayName());
+        if(stateId.equals(StateCode.CG.getStateCode())){
+            addIncentive(activityMobilizingMosquitoNets, mosquitoNetEntity);
+
+        }
+
+    }
 
     private void checkAndAddIncentives(ScreeningMalaria diseaseScreening) {
         Integer stateId = userService.getUserDetail(diseaseScreening.getUserId()).getStateId();
@@ -1161,6 +1172,28 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         }
     }
+    private void addIncentive(IncentiveActivity diseaseScreeningActivity, MosquitoNetEntity diseaseScreening) {
+        IncentiveActivityRecord record = recordRepo
+                .findRecordByActivityIdCreatedDateBenId(diseaseScreeningActivity.getId(), Timestamp.valueOf(diseaseScreening.getVisitDate().toString()), diseaseScreening.getBeneficiaryId().longValue());
+        if (record == null) {
+            record = new IncentiveActivityRecord();
+            record.setActivityId(diseaseScreeningActivity.getId());
+            record.setCreatedDate(Timestamp.valueOf(diseaseScreening.getVisitDate().toString()));
+            record.setCreatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
+            record.setStartDate(Timestamp.valueOf(diseaseScreening.getVisitDate().toString()));
+            record.setEndDate(Timestamp.valueOf(diseaseScreening.getVisitDate().toString()));
+            record.setUpdatedDate(Timestamp.valueOf(diseaseScreening.getVisitDate().toString()));
+            record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
+            record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
+            record.setBenId(diseaseScreening.getBeneficiaryId().longValue());
+            record.setAshaId(diseaseScreening.getUserId());
+            record.setAmount(Long.valueOf(diseaseScreeningActivity.getRate()));
+            record.setIsEligible(true);
+            recordRepo.save(record);
+
+        }
+    }
+
 
     private void addIncentive(IncentiveActivity diseaseScreeningActivity, ScreeningMalaria diseaseScreening) {
         IncentiveActivityRecord record = recordRepo
@@ -1173,7 +1206,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             record.setStartDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
             record.setEndDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
             record.setUpdatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-            record.setUpdatedBy(diseaseScreening.getCreatedBy());
+            record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
             record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
             record.setBenId(diseaseScreening.getBenId().longValue());
             record.setAshaId(diseaseScreening.getUserId());
