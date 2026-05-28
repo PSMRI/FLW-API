@@ -25,15 +25,16 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.flw.controller.CoupleController;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.DiseaseType;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.DiseaseControlService;
 import com.iemr.flw.service.IncentiveLogicService;
+import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.exception.IEMRException;
 import jakarta.transaction.Transactional;
@@ -92,6 +93,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     @Autowired
     private IncentiveLogicService incentiveLogicService;
+
+    @Autowired
+    private UserService userService;
 
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
@@ -492,6 +496,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             dto.setReferredTo(disease.getReferredTo());
             dto.setOtherReferredFacility(disease.getOtherReferredFacility());
             dto.setRemarks(disease.getRemarks());
+            dto.setMalariaSlideTestType(disease.getMalariaSlideTestType());
+            dto.setMalariaTestType(disease.getMalariaTestType());
             dto.setDateOfVisitBySupervisor(disease.getDateOfVisitBySupervisor());
             dto.setUserId(disease.getUserId());
             dto.setDiseaseTypeId(disease.getDiseaseTypeId());
@@ -912,6 +918,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         diseaseScreening.setSlideTestPv(requestData.getSlideTestPv());
         diseaseScreening.setDateOfSlideTest(requestData.getDateOfSlideTest());
         diseaseScreening.setSlideNo(requestData.getSlideNo());
+        diseaseScreening.setMalariaTestType(requestData.getMalariaTestType());
+        diseaseScreening.setMalariaSlideTestType(requestData.getMalariaSlideTestType());
         diseaseScreening.setReferredTo(requestData.getReferredTo());
         diseaseScreening.setOtherReferredFacility(requestData.getOtherReferredFacility());
         diseaseScreening.setRemarks(requestData.getRemarks());
@@ -946,6 +954,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             diseaseScreening.setSlideNo(requestData.getSlideNo());
             diseaseScreening.setReferredTo(requestData.getReferredTo());
             diseaseScreening.setOtherReferredFacility(requestData.getOtherReferredFacility());
+            diseaseScreening.setMalariaSlideTestType(requestData.getMalariaSlideTestType());
+            diseaseScreening.setMalariaTestType(requestData.getMalariaTestType());
             diseaseScreening.setRemarks(requestData.getRemarks());
             diseaseScreening.setCreatedDate(Timestamp.valueOf(LocalDateTime.now()));
             diseaseScreening.setDateOfVisitBySupervisor(requestData.getDateOfVisitBySupervisor());
@@ -1069,51 +1079,57 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
 
     private void checkAndAddIncentives(ScreeningMalaria diseaseScreening) {
-        IncentiveActivity diseaseScreeningActivity;
-        if (Objects.equals(diseaseScreening.getCaseStatus(), "Confirmed Case")) {
-            diseaseScreeningActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("MALARIA_1", "DISEASECONTROL");
-
-        } else {
-            diseaseScreeningActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("MALARIA_2", "DISEASECONTROL");
-
-        }
-
+        Integer stateId = userService.getUserDetail(diseaseScreening.getUserId()).getStateId();
+        IncentiveActivity diseaseScreeningActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_MALARIA_TREATMENT", GroupName.UMBRELLA_PROGRAMMES.getDisplayName());
+        IncentiveActivity incentiveActivityForCollectSlideAM = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_SLIDE_COLLECTION", GroupName.UMBRELLA_PROGRAMMES.getDisplayName());
+        IncentiveActivity incentiveActivityForCollectSlideCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_SLIDE_COLLECTION", GroupName.ACTIVITY.getDisplayName());
 
         if (diseaseScreeningActivity != null) {
-            IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(diseaseScreeningActivity.getId(), Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()), diseaseScreening.getBenId().longValue());
-            if (record == null) {
-                if (Objects.equals(diseaseScreening.getCaseStatus(), "Confirmed Case")) {
-                    record = new IncentiveActivityRecord();
-                    record.setActivityId(diseaseScreeningActivity.getId());
-                    record.setCreatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-                    record.setCreatedBy(diseaseScreening.getCreatedBy());
-                    record.setStartDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-                    record.setEndDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-                    record.setUpdatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-                    record.setUpdatedBy(diseaseScreening.getCreatedBy());
-                    record.setBenId(diseaseScreening.getBenId().longValue());
-                    record.setAshaId(diseaseScreening.getUserId());
-                    record.setName(diseaseScreeningActivity.getName());
-                    record.setAmount(Long.valueOf(diseaseScreeningActivity.getRate()));
-                    recordRepo.save(record);
-                } else {
-                    record = new IncentiveActivityRecord();
-                    record.setActivityId(diseaseScreeningActivity.getId());
-                    record.setCreatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-                    record.setCreatedBy(diseaseScreening.getCreatedBy());
-                    record.setStartDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-                    record.setEndDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-                    record.setUpdatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-                    record.setUpdatedBy(diseaseScreening.getCreatedBy());
-                    record.setBenId(diseaseScreening.getBenId().longValue());
-                    record.setName(diseaseScreeningActivity.getName());
-                    record.setAshaId(diseaseScreening.getUserId());
-                    record.setAmount(Long.valueOf(diseaseScreeningActivity.getRate()));
-                    recordRepo.save(record);
-                }
+            if (Objects.equals(diseaseScreening.getCaseStatus(), "Confirmed")) {
+                addIncentive(diseaseScreeningActivity, diseaseScreening);
 
             }
+        }
+        if (diseaseScreening.getCaseStatus().equals("Suspected")) {
+            if (diseaseScreening.getMalariaSlideTestType().equals("Slide Test")) {
+                if (stateId.equals(StateCode.AM.getStateCode())) {
+                    if (incentiveActivityForCollectSlideAM != null) {
+                        addIncentive(incentiveActivityForCollectSlideAM, diseaseScreening);
+
+                    }
+                }
+
+                if (stateId.equals(StateCode.CG.getStateCode())) {
+                    if (incentiveActivityForCollectSlideCG != null) {
+                        addIncentive(incentiveActivityForCollectSlideCG, diseaseScreening);
+
+                    }
+                }
+
+
+            }
+
+        }
+    }
+
+    private void addIncentive(IncentiveActivity diseaseScreeningActivity, ScreeningMalaria diseaseScreening) {
+        IncentiveActivityRecord record = recordRepo
+                .findRecordByActivityIdCreatedDateBenId(diseaseScreeningActivity.getId(), Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()), diseaseScreening.getBenId().longValue());
+        if (record == null) {
+            record = new IncentiveActivityRecord();
+            record.setActivityId(diseaseScreeningActivity.getId());
+            record.setCreatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+            record.setCreatedBy(diseaseScreening.getCreatedBy());
+            record.setStartDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+            record.setEndDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+            record.setUpdatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+            record.setUpdatedBy(diseaseScreening.getCreatedBy());
+            record.setBenId(diseaseScreening.getBenId().longValue());
+            record.setAshaId(diseaseScreening.getUserId());
+            record.setName(diseaseScreeningActivity.getName());
+            record.setAmount(Long.valueOf(diseaseScreeningActivity.getRate()));
+            recordRepo.save(record);
+
         }
     }
 
@@ -1134,7 +1150,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             entity.setVersion(dto.getVersion());
             entity.setVisitNo(dto.getVisitNo());
             entity.setFollowUpNo(dto.getFollowUpNo());
-            if(dto.getFollowUpDate()!=null){
+            if (dto.getFollowUpDate() != null) {
                 entity.setFollowUpDate(dto.getFollowUpDate());
 
             }
@@ -1156,18 +1172,19 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
             dto.setId(savedEntity.getId());
             responseList.add(dto);
-            checkIncentive(savedEntity,savedEntity.getUserID());
+            checkIncentive(savedEntity, savedEntity.getUserID());
 
 
         }
 
         return responseList;
     }
-    private void checkIncentive(ChronicDiseaseVisitEntity chronicDiseaseVisitEntity,Integer ashaId){
+
+    private void checkIncentive(ChronicDiseaseVisitEntity chronicDiseaseVisitEntity, Integer ashaId) {
         String userName = userRepo.getUserNamedByUserId(ashaId);
         IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.NCD.getDisplayName());
-        logger.info("incentiveActivity:"+ incentiveActivity.getId());
-        if(incentiveActivity!=null){
+        logger.info("incentiveActivity:" + incentiveActivity.getId());
+        if (incentiveActivity != null) {
             if (chronicDiseaseVisitEntity.getFollowUpNo() != null
                     && chronicDiseaseVisitEntity.getCreatedDate() != null
                     && chronicDiseaseVisitEntity.getDiagnosisCodes() != null) {
@@ -1203,75 +1220,75 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         }
 
 
-
     }
 
     private void addNCDFolloupIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId,
-                                                                 Long benId, Timestamp createdDate, String userName) {
-       try {
-           IncentiveActivityRecord record = recordRepo
-                   .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), createdDate, benId);
+                                              Long benId, Timestamp createdDate, String userName) {
+        try {
+            IncentiveActivityRecord record = recordRepo
+                    .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), createdDate, benId);
 
-           Timestamp now = Timestamp.valueOf(LocalDateTime.now());
-           if(record==null){
-               record = new IncentiveActivityRecord();
-               record.setActivityId(incentiveActivity.getId());
-               record.setCreatedDate(createdDate);
-               record.setCreatedBy(userName);
-               record.setStartDate(createdDate);
-               record.setEndDate(createdDate);
-               record.setUpdatedDate(now);
-               record.setUpdatedBy(userName);
-               record.setBenId(benId);
-               record.setAshaId(ashaId);
-               record.setAmount(Long.valueOf(incentiveActivity.getRate()));
-               record .setIsEligible(true);
-               recordRepo.save(record);
-           }
-       }catch (Exception e){
-           logger.error("Fail to save IncentiveActivityRecord " + e.getMessage());
-       }
+            Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+            if (record == null) {
+                record = new IncentiveActivityRecord();
+                record.setActivityId(incentiveActivity.getId());
+                record.setCreatedDate(createdDate);
+                record.setCreatedBy(userName);
+                record.setStartDate(createdDate);
+                record.setEndDate(createdDate);
+                record.setUpdatedDate(now);
+                record.setUpdatedBy(userName);
+                record.setBenId(benId);
+                record.setAshaId(ashaId);
+                record.setAmount(Long.valueOf(incentiveActivity.getRate()));
+                record.setIsEligible(true);
+                recordRepo.save(record);
+            }
+        } catch (Exception e) {
+            logger.error("Fail to save IncentiveActivityRecord " + e.getMessage());
+        }
 
 
     }
+
     @Override
     public List<ChronicDiseaseVisitDTO> getCdtfVisits(GetBenRequestHandler getBenRequestHandler) {
         List<ChronicDiseaseVisitDTO> dtoList = new ArrayList<>();
 
         try {
 
-               List<ChronicDiseaseVisitEntity> entityList = chronicDiseaseVisitRepository.findByUserID(getBenRequestHandler.getAshaId());
+            List<ChronicDiseaseVisitEntity> entityList = chronicDiseaseVisitRepository.findByUserID(getBenRequestHandler.getAshaId());
 
 
-               for (ChronicDiseaseVisitEntity entity : entityList) {
+            for (ChronicDiseaseVisitEntity entity : entityList) {
 
-                   ChronicDiseaseVisitDTO dto = new ChronicDiseaseVisitDTO();
+                ChronicDiseaseVisitDTO dto = new ChronicDiseaseVisitDTO();
 
-                   dto.setId(entity.getId());
-                   dto.setBenId(entity.getBenId());
-                   dto.setHhId(entity.getHhId());
-                   dto.setFormId(entity.getFormId());
-                   dto.setVersion(entity.getVersion());
-                   dto.setVisitNo(entity.getVisitNo());
-                   dto.setFollowUpNo(entity.getFollowUpNo());
-                   if(entity.getFollowUpDate()!=null){
-                       dto.setFollowUpDate(entity.getFollowUpDate());
+                dto.setId(entity.getId());
+                dto.setBenId(entity.getBenId());
+                dto.setHhId(entity.getHhId());
+                dto.setFormId(entity.getFormId());
+                dto.setVersion(entity.getVersion());
+                dto.setVisitNo(entity.getVisitNo());
+                dto.setFollowUpNo(entity.getFollowUpNo());
+                if (entity.getFollowUpDate() != null) {
+                    dto.setFollowUpDate(entity.getFollowUpDate());
 
-                   }
-                   dto.setDiagnosisCodes(entity.getDiagnosisCodes());
-                   dto.setFormDataJson(entity.getFormDataJson());
+                }
+                dto.setDiagnosisCodes(entity.getDiagnosisCodes());
+                dto.setFormDataJson(entity.getFormDataJson());
 
-                   if (entity.getTreatmentStartDate() != null) {
-                       dto.setTreatmentStartDate(
-                               entity.getTreatmentStartDate().toString()
-                       );
-                   }
-                   checkIncentive(entity,entity.getUserID());
-                   dtoList.add(dto);
-               }
-           }catch (Exception e){
+                if (entity.getTreatmentStartDate() != null) {
+                    dto.setTreatmentStartDate(
+                            entity.getTreatmentStartDate().toString()
+                    );
+                }
+                checkIncentive(entity, entity.getUserID());
+                dtoList.add(dto);
+            }
+        } catch (Exception e) {
 
-           }
+        }
 
         return dtoList;
     }

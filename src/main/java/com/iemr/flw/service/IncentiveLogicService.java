@@ -19,4 +19,6 @@ public interface IncentiveLogicService {
     IncentiveActivityRecord incentiveForChildBirthGap(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId);
 
     IncentiveActivityRecord incentiveForSecondChildGap(Long benId, Timestamp secondChildDob, Timestamp secondChildDob1, Integer userId);
+
+    IncentiveActivityRecord incentiveForEyeSurgeyRefer(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
 }
