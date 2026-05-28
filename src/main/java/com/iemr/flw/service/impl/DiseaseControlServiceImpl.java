@@ -1173,24 +1173,33 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         }
     }
     private void addIncentive(IncentiveActivity diseaseScreeningActivity, MosquitoNetEntity diseaseScreening) {
+
+        Timestamp visitTimestamp =
+                Timestamp.valueOf(diseaseScreening.getVisitDate().atStartOfDay());
+
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(diseaseScreeningActivity.getId(), Timestamp.valueOf(diseaseScreening.getVisitDate().toString()), diseaseScreening.getBeneficiaryId().longValue());
+                .findRecordByActivityIdCreatedDateBenId(
+                        diseaseScreeningActivity.getId(),
+                        visitTimestamp,
+                        diseaseScreening.getBeneficiaryId().longValue());
+
         if (record == null) {
+
             record = new IncentiveActivityRecord();
+
             record.setActivityId(diseaseScreeningActivity.getId());
-            record.setCreatedDate(Timestamp.valueOf(diseaseScreening.getVisitDate().toString()));
+            record.setCreatedDate(visitTimestamp);
             record.setCreatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
-            record.setStartDate(Timestamp.valueOf(diseaseScreening.getVisitDate().toString()));
-            record.setEndDate(Timestamp.valueOf(diseaseScreening.getVisitDate().toString()));
-            record.setUpdatedDate(Timestamp.valueOf(diseaseScreening.getVisitDate().toString()));
-            record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
+            record.setStartDate(visitTimestamp);
+            record.setEndDate(visitTimestamp);
+            record.setUpdatedDate(visitTimestamp);
             record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
             record.setBenId(diseaseScreening.getBeneficiaryId().longValue());
             record.setAshaId(diseaseScreening.getUserId());
             record.setAmount(Long.valueOf(diseaseScreeningActivity.getRate()));
             record.setIsEligible(true);
-            recordRepo.save(record);
 
+            recordRepo.save(record);
         }
     }
 
