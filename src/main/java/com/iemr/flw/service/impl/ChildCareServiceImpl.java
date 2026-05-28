@@ -11,6 +11,7 @@ import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.ChildCareService;
+import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;
@@ -83,6 +84,9 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
 
 
     @Override
@@ -658,10 +662,24 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     @Override
     public List<IfaDistribution> saveAllIfa(List<IfaDistributionDTO> dtoList) {
-        return dtoList.stream()
+        List<IfaDistribution> savedList = dtoList.stream()
                 .map(this::mapToEntity)
                 .map(ifaDistributionRepository::save)
                 .toList();
+
+        // incentive generate
+        savedList.forEach(data -> {
+            Timestamp visitTimestamp =
+                    Timestamp.valueOf(data.getIfaProvisionDate().atStartOfDay());
+            incentiveLogicService.incentiveForGiveingIFA(
+                    data.getBeneficiaryId(),
+                    visitTimestamp,
+                    visitTimestamp,
+                    data.getUserId()
+            );
+        });
+
+        return savedList;
     }
 
 

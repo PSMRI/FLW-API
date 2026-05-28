@@ -27,4 +27,6 @@ public interface IncentiveLogicService {
     IncentiveActivityRecord incentiveForTbFollowUp(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
 
     IncentiveActivityRecord incentiveForTbFollowUpIsDrTb(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
+
+    IncentiveActivityRecord incentiveForGiveingIFA(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
 }
