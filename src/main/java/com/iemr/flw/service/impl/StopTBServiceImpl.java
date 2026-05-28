@@ -581,10 +581,25 @@ public class StopTBServiceImpl implements StopTBService {
             }
 
             diag.setNikshayId(getString(data, "nikshayId"));
+
+            diag.setIsReferredForDigitalChestXray(getBool(data, "isReferredForDigitalChestXray"));
+            diag.setReasonForDenialChestXray(getString(data, "reasonForDenialChestXray"));
+            diag.setReasonForDenialChestXrayOther(getString(data, "reasonForDenialChestXrayOther"));
             diag.setIsDigitalChestXrayConducted(getBool(data, "isDigitalChestXrayConducted"));
+            diag.setReasonNotConductedChestXray(getString(data, "reasonNotConductedChestXray"));
+            diag.setReasonNotConductedChestXrayOther(getString(data, "reasonNotConductedChestXrayOther"));
             diag.setDigitalChestXrayResult(getString(data, "digitalChestXrayResult"));
+
+            diag.setIsReferredForSputumCollection(getBool(data, "isReferredForSputumCollection"));
+            diag.setReasonForDenialSputum(getString(data, "reasonForDenialSputum"));
+            diag.setReasonForDenialSputumOther(getString(data, "reasonForDenialSputumOther"));
+            diag.setSputumSubmittedAt(getString(data, "sputumSubmittedAt"));
+
             diag.setIsTruenatConducted(getBool(data, "isTruenatConducted"));
+            diag.setReasonNotConductedNaat(getString(data, "reasonNotConductedNaat"));
+            diag.setReasonNotConductedNaatOther(getString(data, "reasonNotConductedNaatOther"));
             diag.setTruenatResult(getString(data, "truenatResult"));
+
             diag.setRecommendedForLiquidCulture(getBool(data, "recommendedForLiquidCulture"));
             // PRD: liquid culture result can be updated after submission (results come after 40-45 days)
             if (data.containsKey("liquidCultureResult")) {
@@ -630,9 +645,20 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("providerServiceMapID", d.getProviderServiceMapID());
         m.put("visitDate", d.getVisitDate());
         m.put("nikshayId", d.getNikshayId());
+        m.put("isReferredForDigitalChestXray", d.getIsReferredForDigitalChestXray());
+        m.put("reasonForDenialChestXray", d.getReasonForDenialChestXray());
+        m.put("reasonForDenialChestXrayOther", d.getReasonForDenialChestXrayOther());
         m.put("isDigitalChestXrayConducted", d.getIsDigitalChestXrayConducted());
+        m.put("reasonNotConductedChestXray", d.getReasonNotConductedChestXray());
+        m.put("reasonNotConductedChestXrayOther", d.getReasonNotConductedChestXrayOther());
         m.put("digitalChestXrayResult", d.getDigitalChestXrayResult());
+        m.put("isReferredForSputumCollection", d.getIsReferredForSputumCollection());
+        m.put("reasonForDenialSputum", d.getReasonForDenialSputum());
+        m.put("reasonForDenialSputumOther", d.getReasonForDenialSputumOther());
+        m.put("sputumSubmittedAt", d.getSputumSubmittedAt());
         m.put("isTruenatConducted", d.getIsTruenatConducted());
+        m.put("reasonNotConductedNaat", d.getReasonNotConductedNaat());
+        m.put("reasonNotConductedNaatOther", d.getReasonNotConductedNaatOther());
         m.put("truenatResult", d.getTruenatResult());
         m.put("recommendedForLiquidCulture", d.getRecommendedForLiquidCulture());
         m.put("liquidCultureResult", d.getLiquidCultureResult());
