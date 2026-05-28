@@ -29,12 +29,27 @@ public class StopTBDiagnostics {
     @Column(name = "nikshay_id", length = 50)
     private String nikshayId;
 
-    // Digital Chest X-ray — auto-populated via cross-device sync
+    // Digital Chest X-ray
+    @Column(name = "is_referred_for_digital_chest_xray")
+    private Boolean isReferredForDigitalChestXray;
+
+    @Column(name = "reason_for_denial_chest_xray", length = 255)
+    private String reasonForDenialChestXray;
+
+    @Column(name = "reason_for_denial_chest_xray_other", length = 255)
+    private String reasonForDenialChestXrayOther;
+
     @Column(name = "is_digital_chest_xray_conducted_id")
     private Integer isDigitalChestXrayConductedId;
 
     @Column(name = "is_digital_chest_xray_conducted")
     private Boolean isDigitalChestXrayConducted;
+
+    @Column(name = "reason_not_conducted_chest_xray", length = 255)
+    private String reasonNotConductedChestXray;
+
+    @Column(name = "reason_not_conducted_chest_xray_other", length = 255)
+    private String reasonNotConductedChestXrayOther;
 
     // Positive | Negative
     @Column(name = "digital_chest_xray_result_id")
@@ -43,12 +58,31 @@ public class StopTBDiagnostics {
     @Column(name = "digital_chest_xray_result", length = 20)
     private String digitalChestXrayResult;
 
-    // Truenat — enabled if pregnant or Key Population = Pregnancy
+    // Sputum Collection
+    @Column(name = "is_referred_for_sputum_collection")
+    private Boolean isReferredForSputumCollection;
+
+    @Column(name = "reason_for_denial_sputum", length = 500)
+    private String reasonForDenialSputum;
+
+    @Column(name = "reason_for_denial_sputum_other", length = 255)
+    private String reasonForDenialSputumOther;
+
+    @Column(name = "sputum_submitted_at", length = 255)
+    private String sputumSubmittedAt;
+
+    // Truenat / NAAT
     @Column(name = "is_truenat_conducted_id")
     private Integer isTruenatConductedId;
 
     @Column(name = "is_truenat_conducted")
     private Boolean isTruenatConducted;
+
+    @Column(name = "reason_not_conducted_naat", length = 255)
+    private String reasonNotConductedNaat;
+
+    @Column(name = "reason_not_conducted_naat_other", length = 255)
+    private String reasonNotConductedNaatOther;
 
     // Positive | Negative
     @Column(name = "truenat_result_id")
