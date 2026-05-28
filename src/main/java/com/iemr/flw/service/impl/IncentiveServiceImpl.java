@@ -258,6 +258,21 @@ public class IncentiveServiceImpl implements IncentiveService {
                     entry.setVerifiedByUserName(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getName());
 
                 }
+                if(entry.getAshaId()!=null){
+                    if (entry.getCreatedBy() == null) {
+                        entry.setCreatedBy(userRepo.getUserNamedByUserId(entry.getAshaId()));
+                    }
+
+                    if (entry.getUpdatedBy() == null) {
+                        entry.setUpdatedBy(userRepo.getUserNamedByUserId(entry.getAshaId()));
+                    }
+
+                    if (entry.getIsEligible() == null) {
+                        entry.setIsEligible(true);
+                    }
+                }
+
+
             }
             return modelMapper.map(entry, IncentiveRecordDTO.class);
         }).collect(Collectors.toList());
