@@ -151,7 +151,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     }
 
     @Override
-    public String saveANCVisit(List<ANCVisitDTO> ancVisitDTOs,Integer userId) {
+    public String saveANCVisit(List<ANCVisitDTO> ancVisitDTOs, Integer userId) {
         try {
 
             logger.info("ANC save process started. Total records: {}", ancVisitDTOs.size());
@@ -260,7 +260,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             logger.info("AncCare saved successfully");
 
             logger.info("ANC visit details saved");
-            checkAndAddIncentives(ancList,userId);
+            checkAndAddIncentives(ancList, userId);
 
             return "no of anc details saved: " + ancList.size();
 
@@ -514,7 +514,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         List<AncCounsellingCare> entities =
                 ancCounsellingCareRepo.findAllByUserId(requestDTO.getAshaId());
 
-     List<AncCounsellingCareResponseDTO> responseDTOList = new ArrayList<>();
+        List<AncCounsellingCareResponseDTO> responseDTOList = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
         for (AncCounsellingCare entity : entities) {
@@ -559,8 +559,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             responseDTOList.add(responseDTO);
 
 
-
-
         }
         return responseDTOList;
 
@@ -569,7 +567,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     private String booleanToYesNo(Boolean value) {
         return Boolean.TRUE.equals(value) ? "Yes" : "No";
     }
-
 
 
     private Boolean yesNoToBoolean(String value) {
@@ -651,6 +648,19 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             if (ppsActivityCH != null) {
                 addIncenticeRecord(recordList, ect, userId, ppsActivityCH);
             }
+        }
+        if (ect.getMotherDangerSign() != null
+                && !ect.getMotherDangerSign().isEmpty()
+                && ect.getPncPeriod() == 7) {
+
+            IncentiveActivity highRiskPostpartumCareActivityCH =
+                    incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
+            if (highRiskPostpartumCareActivityCH != null) {
+                addIncenticeRecord(recordList, ect, userId, highRiskPostpartumCareActivityCH);
+
+            }
+
+
         }
 
     }
@@ -797,6 +807,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         }
 
     }
+
     private void recordAncFirstTRIMIncentive(IncentiveActivity incentiveActivity, ANCVisit ancVisit) {
 
         if (ancVisit.getAncDate() == null || ancVisit.getLmpDate() == null) {

@@ -115,6 +115,7 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                 );
 
             }
+
         }
     }
 
