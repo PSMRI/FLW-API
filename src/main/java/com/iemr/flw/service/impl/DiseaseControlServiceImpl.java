@@ -1119,15 +1119,16 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             record = new IncentiveActivityRecord();
             record.setActivityId(diseaseScreeningActivity.getId());
             record.setCreatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-            record.setCreatedBy(diseaseScreening.getCreatedBy());
+            record.setCreatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
             record.setStartDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
             record.setEndDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
             record.setUpdatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
             record.setUpdatedBy(diseaseScreening.getCreatedBy());
+            record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
             record.setBenId(diseaseScreening.getBenId().longValue());
             record.setAshaId(diseaseScreening.getUserId());
-            record.setName(diseaseScreeningActivity.getName());
             record.setAmount(Long.valueOf(diseaseScreeningActivity.getRate()));
+            record.setIsEligible(true);
             recordRepo.save(record);
 
         }
