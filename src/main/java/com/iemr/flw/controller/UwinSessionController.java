@@ -38,7 +38,7 @@ public class UwinSessionController {
             @RequestPart("participants") String participants,
             @RequestPart("ashaId") String ashaId,
             @RequestPart("createdBy") String createdBy,
-            @RequestPart(value = "meetingImages", required = false) List<MultipartFile> images) throws Exception {
+            @RequestPart(value = "meetingImages", required = false) List<MultipartFile> images,@RequestHeader(value = "jwtToken") String jwtToken) throws Exception {
         Map<String, Object> response = new LinkedHashMap<>();
 
         UwinSessionRequestDTO dto = new UwinSessionRequestDTO();
