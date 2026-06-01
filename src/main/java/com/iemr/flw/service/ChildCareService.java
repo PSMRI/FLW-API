@@ -23,15 +23,15 @@ public interface ChildCareService {
 
     List<VaccineDTO> getAllChildVaccines(String category);
 
-    String saveSamDetails(List<SamDTO> samRequest);
+    String saveSamDetails(List<SamDTO> samRequest,Integer userId,String userName);
 
     List<SAMResponseDTO> getSamVisitsByBeneficiary(GetBenRequestHandler dto);
 
-    String saveOrsDistributionDetails(List<OrsDistributionDTO> orsDistributionDTOS);
+    String saveOrsDistributionDetails(List<OrsDistributionDTO> orsDistributionDTOS,Integer userId);
 
     List<OrsDistributionResponseDTO> getOrdDistrubtion(GetBenRequestHandler request);
 
-    List<IfaDistribution> saveAllIfa(List<IfaDistributionDTO> dtoList);
+    List<IfaDistribution> saveAllIfa(List<IfaDistributionDTO> dtoList,Integer userId);
 
     List<IfaDistributionDTO> getByBeneficiaryId(GetBenRequestHandler request);
 

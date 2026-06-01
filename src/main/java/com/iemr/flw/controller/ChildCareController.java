@@ -235,7 +235,7 @@ public class ChildCareController {
         return response.toString();
     }
     @RequestMapping(value = {"/sam/saveAll"}, method = RequestMethod.POST)
-    public ResponseEntity<?> saveSevereAcuteMalnutrition(@RequestBody List<SamDTO> samRequest) {
+    public ResponseEntity<?> saveSevereAcuteMalnutrition(@RequestBody List<SamDTO> samRequest,@RequestHeader(value = "JwtToken") String token) {
         Map<String, Object> response = new LinkedHashMap<>();
         logger.info("SAM Request: {}", samRequest);
 
@@ -247,17 +247,26 @@ public class ChildCareController {
             }
 
 
-            String responseObject = childCareService.saveSamDetails(samRequest);
+            if(token!=null){
+                Integer userId = jwtUtil.extractUserId(token);
+                String userName = jwtUtil.extractUsername(token);
+                String responseObject = childCareService.saveSamDetails(samRequest,userId,userName);
 
-            if (responseObject != null) {
-                response.put("statusCode", HttpStatus.OK.value());
-                response.put("message", responseObject);
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("statusCode", HttpStatus.BAD_REQUEST.value());
-                response.put("message", "Failed to save SAM details");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                if (responseObject != null) {
+                    response.put("statusCode", HttpStatus.OK.value());
+                    response.put("message", responseObject);
+                    return ResponseEntity.ok(response);
+                } else {
+                    response.put("statusCode", HttpStatus.BAD_REQUEST.value());
+                    response.put("message", "Failed to save SAM details");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                }
+            }else {
+                response.put("statusCode", HttpStatus.UNAUTHORIZED.value());
+                response.put("message", "Invalid token");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
+
 
         } catch (Exception e) {
             logger.error("Error saving SAM details:", e);
@@ -279,9 +288,9 @@ public class ChildCareController {
                 response.put("data", responseObject);
                 return ResponseEntity.ok(response);
             } else {
-                response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+                response.put("statusCode", HttpStatus.OK.value());
                 response.put("message", "No SAM records found");
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
             }
 
         } catch (Exception e) {
@@ -294,7 +303,7 @@ public class ChildCareController {
 
 
     @RequestMapping(value = {"/ors/saveAll"}, method = RequestMethod.POST)
-    public ResponseEntity<?> saveOrsDistribution(@RequestBody List<OrsDistributionDTO> orsDistributionDTOS) {
+    public ResponseEntity<?> saveOrsDistribution(@RequestBody List<OrsDistributionDTO> orsDistributionDTOS,@RequestHeader(value = "JwtToken") String token) {
         Map<String, Object> response = new LinkedHashMap<>();
         logger.info("ORS Request: {}", orsDistributionDTOS);
 
@@ -304,18 +313,26 @@ public class ChildCareController {
                 response.put("message", "Request body cannot be empty");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
+           if(token!=null){
+               Integer userId = jwtUtil.extractUserId(token);
+               String responseObject = childCareService.saveOrsDistributionDetails(orsDistributionDTOS,userId);
 
-            String responseObject = childCareService.saveOrsDistributionDetails(orsDistributionDTOS);
+               if (responseObject != null) {
+                   response.put("statusCode", HttpStatus.OK.value());
+                   response.put("message", responseObject);
+                   return ResponseEntity.ok(response);
+               } else {
+                   response.put("statusCode", HttpStatus.BAD_REQUEST.value());
+                   response.put("message", "Failed to save ORS details");
+                   return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+               }
+           }else {
+               response.put("statusCode", HttpStatus.UNAUTHORIZED.value());
+               response.put("message", "Invalid token");
+               return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
 
-            if (responseObject != null) {
-                response.put("statusCode", HttpStatus.OK.value());
-                response.put("message", responseObject);
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("statusCode", HttpStatus.BAD_REQUEST.value());
-                response.put("message", "Failed to save ORS details");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
+           }
+
 
         } catch (Exception e) {
             logger.error("Error saving ORS:", e);
@@ -353,7 +370,7 @@ public class ChildCareController {
 
 
     @RequestMapping(value = {"/ifa/saveAll"}, method = RequestMethod.POST)
-    public ResponseEntity<?> saveIfDistribution(@RequestBody List<IfaDistributionDTO> ifaDistributionDTOS) {
+    public ResponseEntity<?> saveIfDistribution(@RequestBody List<IfaDistributionDTO> ifaDistributionDTOS,@RequestHeader(value = "JwtToken") String token) {
         Map<String, Object> response = new LinkedHashMap<>();
         logger.info("IFA Request: {}", ifaDistributionDTOS);
 
@@ -363,18 +380,25 @@ public class ChildCareController {
                 response.put("message", "Request body cannot be empty");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
+             if(token!=null){
+                 Integer userId = jwtUtil.extractUserId(token);
+                 List<IfaDistribution> responseObject = childCareService.saveAllIfa(ifaDistributionDTOS,userId);
 
-            List<IfaDistribution> responseObject = childCareService.saveAllIfa(ifaDistributionDTOS);
+                 if (responseObject != null && !responseObject.isEmpty()) {
+                     response.put("statusCode", HttpStatus.OK.value());
+                     response.put("message", "IFA saved successfully");
+                     return ResponseEntity.ok(response);
+                 } else {
+                     response.put("statusCode", HttpStatus.BAD_REQUEST.value());
+                     response.put("message", "Failed to save IFA details");
+                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                 }
+             }else {
+                 response.put("statusCode", HttpStatus.UNAUTHORIZED.value());
+                 response.put("message", "Invalid token");
+                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+             }
 
-            if (responseObject != null && !responseObject.isEmpty()) {
-                response.put("statusCode", HttpStatus.OK.value());
-                response.put("message", "IFA saved successfully");
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("statusCode", HttpStatus.BAD_REQUEST.value());
-                response.put("message", "Failed to save IFA details");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
 
         } catch (Exception e) {
             logger.error("Error saving IFA:", e);

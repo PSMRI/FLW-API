@@ -31,7 +31,7 @@ public class UwinSessionController {
      @Autowired
      private JwtUtil jwtUtil;
 
-    @RequestMapping(value = "saveAll", method = RequestMethod.POST, headers = "Authorization", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequestMapping(value = "saveAll", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> saveSession(
             @RequestPart("meetingDate") String meetingDate,
             @RequestPart("place") String place,
