@@ -2,6 +2,7 @@ package com.iemr.flw.service.impl;
 
 import java.math.BigInteger;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
@@ -21,6 +22,7 @@ import com.iemr.flw.dto.iemr.EyeCheckupListDTO;
 import com.iemr.flw.dto.iemr.EyeCheckupRequestDTO;
 import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.repo.iemr.*;
+import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.utils.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +96,9 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     @Autowired
     private UserServiceRoleRepo userRepo;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
@@ -565,6 +570,12 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                 visit.setFollowUpStatus(f.getFollow_up_status());
 
                 eyeCheckUpVisitRepo.save(visit);
+                if(visit.getReferredTo().equals("Govt Public Facility")){
+                    LocalDate localDate = visit.getVisitDate();
+
+                    Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
+                    incentiveLogicService.incentiveForEyeSurgeyRefer(visit.getBeneficiaryId(),visitDate,visitDate,visit.getUserId());
+                }
             }
 
             return "Eye checkup data saved successfully.";

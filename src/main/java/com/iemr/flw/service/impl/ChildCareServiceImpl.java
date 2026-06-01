@@ -7,9 +7,12 @@ import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.ChildCareService;
+import com.iemr.flw.service.IncentiveLogicService;
+import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;
 import org.aspectj.weaver.ast.Or;
@@ -78,6 +81,12 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     @Autowired
     private IncentivePendingActivityRepository incentivePendingActivityRepository;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
 
 
     @Override
@@ -294,7 +303,7 @@ public class ChildCareServiceImpl implements ChildCareService {
 
 
     @Override
-    public String saveHBNCDetails(List<HbncRequestDTO> hbncRequestDTOs) {
+    public String saveHBNCDetails(List<HbncRequestDTO> hbncRequestDTOs, Integer userId) {
         try {
             List<HbncVisit> hbncList = new ArrayList<>();
 
@@ -324,7 +333,7 @@ public class ChildCareServiceImpl implements ChildCareService {
 
 
             hbncVisitRepo.saveAll(hbncList);
-            checkAndAddHbncIncentives(hbncList);
+            checkAndAddHbncIncentives(hbncList, userId);
 
 
             logger.info("HBNC details saved");
@@ -439,7 +448,7 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     @Override
-    public String saveSamDetails(List<SamDTO> samRequest) {
+    public String saveSamDetails(List<SamDTO> samRequest,Integer userId,String userName) {
         try {
             List<SamVisit> vaccinationList = new ArrayList<>();
 
@@ -460,11 +469,9 @@ public class ChildCareServiceImpl implements ChildCareService {
                 samVisit.setVisitDate(LocalDate.parse(samDTO.getVisitDate()));
 
                 // ✅ Common user details
-                samVisit.setUserId(userRepo.getUserIdByName(jwtUtil.getUserNameFromStorage()));
-                samVisit.setCreatedBy(jwtUtil.getUserNameFromStorage());
-                if (samVisit.getCreatedBy() == null) {
-                    samVisit.setCreatedBy(jwtUtil.getUserNameFromStorage());
-                }
+                samVisit.setUserId(userId);
+                samVisit.setCreatedBy(userName);
+
 
                 // ✅ Field mapping
                 samVisit.setMuac(samDTO.getFields().getMuac());
@@ -494,7 +501,7 @@ public class ChildCareServiceImpl implements ChildCareService {
             samVisitRepository.saveAll(vaccinationList);
 
             // ✅ Handle incentive logic
-            checkAndAddSamVisitNRCReferalIncentive(vaccinationList);
+            checkAndAddSamVisitNRCReferalIncentive(vaccinationList,userId);
 
             return "Saved/Updated " + samRequest.size() + " SAM visit records successfully";
         } catch (Exception e) {
@@ -567,7 +574,7 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     @Override
-    public String saveOrsDistributionDetails(List<OrsDistributionDTO> orsDistributionDTOS) {
+    public String saveOrsDistributionDetails(List<OrsDistributionDTO> orsDistributionDTOS,Integer userId) {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
             List<OrsDistribution> orsDistributionList = new ArrayList<>();
@@ -576,12 +583,12 @@ public class ChildCareServiceImpl implements ChildCareService {
                 orsDistribution.setId(orsDistributionDTO.getId());
                 orsDistribution.setBeneficiaryId(orsDistributionDTO.getBeneficiaryId());
                 orsDistribution.setNumOrsPackets(orsDistributionDTO.getFields().getNum_ors_packets().toString());
-                if(orsDistributionDTO.getFields().getNum_under5_children()!=null){
+                if (orsDistributionDTO.getFields().getNum_under5_children() != null) {
                     orsDistribution.setChildCount(orsDistributionDTO.getFields().getNum_under5_children().toString());
 
                 }
                 orsDistribution.setHouseholdId(orsDistributionDTO.getHouseHoldId());
-                orsDistribution.setUserId(userRepo.getUserIdByName(orsDistributionDTO.getUserName()));
+                orsDistribution.setUserId(userId);
                 orsDistribution.setVisitDate(LocalDate.parse(orsDistributionDTO.getFields().getVisit_date(), formatter));
                 orsDistributionList.add(orsDistribution);
 
@@ -616,11 +623,11 @@ public class ChildCareServiceImpl implements ChildCareService {
             orsDistributionResponseDTO.setId(orsDistribution.getId());
             orsDistributionResponseDTO.setBeneficiaryId(orsDistribution.getBeneficiaryId());
             orsDistributionResponseDTO.setHouseHoldId(orsDistribution.getHouseholdId());
-            if(orsDistribution.getNumOrsPackets()!=null){
+            if (orsDistribution.getNumOrsPackets() != null) {
                 orsDistributionResponseListDTO.setNum_ors_packets(orsDistribution.getNumOrsPackets().toString());
 
             }
-            if(orsDistribution.getChildCount()!=null){
+            if (orsDistribution.getChildCount() != null) {
                 orsDistributionResponseListDTO.setNum_under5_children(orsDistribution.getChildCount().toString());
 
             }
@@ -652,11 +659,25 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     @Override
-    public List<IfaDistribution> saveAllIfa(List<IfaDistributionDTO> dtoList) {
-        return dtoList.stream()
-                .map(this::mapToEntity)
+    public List<IfaDistribution> saveAllIfa(List<IfaDistributionDTO> dtoList,Integer userId) {
+        List<IfaDistribution> savedList = dtoList.stream()
+                .map(dto ->mapToEntity(dto,userId))
                 .map(ifaDistributionRepository::save)
                 .toList();
+
+        // incentive generate
+        savedList.forEach(data -> {
+            Timestamp visitTimestamp =
+                    Timestamp.valueOf(data.getIfaProvisionDate().atStartOfDay());
+            incentiveLogicService.incentiveForGiveingIFA(
+                    data.getBeneficiaryId(),
+                    visitTimestamp,
+                    visitTimestamp,
+                    data.getUserId()
+            );
+        });
+
+        return savedList;
     }
 
 
@@ -691,7 +712,7 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     // 🔄 Helper method to convert DTO → Entity
-    private IfaDistribution mapToEntity(IfaDistributionDTO dto) {
+    private IfaDistribution mapToEntity(IfaDistributionDTO dto,Integer userId) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
         IfaDistribution entity = new IfaDistribution();
@@ -700,7 +721,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         entity.setHouseHoldId(dto.getHouseHoldId());
         entity.setFormId(dto.getFormId());
         entity.setVisitDate(dto.getVisitDate());
-        entity.setUserId(userRepo.getUserIdByName(jwtUtil.getUserNameFromStorage()));
+        entity.setUserId(userId);
 
         if (dto.getFields() != null) {
             if (dto.getFields().getIfa_provision_date() != null) {
@@ -720,22 +741,30 @@ public class ChildCareServiceImpl implements ChildCareService {
         return entity;
     }
 
-    private void checkAndAddSamVisitNRCReferalIncentive(List<SamVisit> samVisits) {
+    private void checkAndAddSamVisitNRCReferalIncentive(List<SamVisit> samVisits,Integer userId) {
         samVisits.forEach(samVisit -> {
             IncentiveActivity samreferralnrcActivityAm =
                     incentivesRepo.findIncentiveMasterByNameAndGroup("SAM_REFERRAL_NRC", GroupName.CHILD_HEALTH.getDisplayName());
             IncentiveActivity samreferralnrcActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("SAM_REFERRAL_NRC", GroupName.ACTIVITY.getDisplayName());
-            if (samreferralnrcActivityAm != null) {
-                if (samVisit.getIsChildReferredNrc().equals("Yes")) {
-                    createIncentiveRecordforSamReferalToNrc(samVisit, samVisit.getBeneficiaryId(), samreferralnrcActivityAm, jwtUtil.getUserNameFromStorage());
+            if(userService.getUserDetail(userId).getStateId().equals(StateCode.AM.getStateCode())) {
+
+                if (samreferralnrcActivityAm != null) {
+                    if (samVisit.getIsChildReferredNrc().equals("Yes")) {
+                        createIncentiveRecordforSamReferalToNrc(samVisit, samVisit.getBeneficiaryId(), samreferralnrcActivityAm, samVisit.getCreatedBy());
+                    }
                 }
             }
 
-            if (samreferralnrcActivityCH != null) {
-                if (samVisit.getIsChildReferredNrc().equals("Yes")) {
-                    createIncentiveRecordforSamReferalToNrc(samVisit, samVisit.getBeneficiaryId(), samreferralnrcActivityCH, jwtUtil.getUserNameFromStorage());
+            if(userService.getUserDetail(userId).getStateId().equals(StateCode.CG.getStateCode())){
+                if (samreferralnrcActivityCH != null) {
+                    if (samVisit.getIsChildReferredNrc().equals("Yes")) {
+                        createIncentiveRecordforSamReferalToNrc(samVisit, samVisit.getBeneficiaryId(), samreferralnrcActivityCH, samVisit.getCreatedBy());
+                    }
                 }
             }
+
+
+
 
 
         });
@@ -799,37 +828,43 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     }
 
-    private void checkAndAddHbncIncentives(List<HbncVisit> hbncVisits) {
+    private void checkAndAddHbncIncentives(List<HbncVisit> hbncVisits, Integer userId) {
+        Integer stateCode = userService.getUserDetail(userId).getStateId();
         hbncVisits.forEach(hbncVisit -> {
-            boolean isVisitDone = List.of("1st Day", "3rd Day", "7th Day", "42nd Day")
-                    .stream()
-                    .allMatch(hbncVisits::contains);
-
             GroupName.setIsCh(false);
             Long benId = hbncVisit.getBeneficiaryId();
-            if (hbncVisit.getVisit_day().equals("42nd Day")) {
-                IncentiveActivity visitActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.CHILD_HEALTH.getDisplayName());
-                IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.ACTIVITY.getDisplayName());
+            if (stateCode.equals(StateCode.AM)) {
+                if (hbncVisit.getVisit_day().equals("42nd Day")) {
+                    IncentiveActivity visitActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.CHILD_HEALTH.getDisplayName());
 
-                createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityAM, "HBNC_0_42_DAYS");
-                createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HBNC_0_42_DAYS_CH");
+                    createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityAM, "HBNC_0_42_DAYS");
 
+                }
+                logger.info("getDischarged_from_sncu" + hbncVisit.getDischarged_from_sncu());
+
+                if (hbncVisit.getVisit_day().equals("42nd Day") && hbncVisit.getDischarged_from_sncu() && hbncVisit.getBaby_weight() <= 2.5) {
+                    IncentiveActivity babyDisChargeSNCUAActivity =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("SNCU_LBW_FOLLOWUP", GroupName.CHILD_HEALTH.getDisplayName());
+
+                    createIncentiveRecordforHbncVisit(hbncVisit, benId, babyDisChargeSNCUAActivity, "SNCU_LBW_FOLLOWUP");
+
+                }
+                logger.info("getIs_baby_alive" + hbncVisit.getIs_baby_alive());
+                if (!hbncVisit.getIs_baby_alive()) {
+                    IncentiveActivity isChildDeathActivity =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_DEATH_REPORTING", GroupName.CHILD_HEALTH.getDisplayName());
+
+                    createIncentiveRecordforHbncVisit(hbncVisit, benId, isChildDeathActivity, "CHILD_DEATH_REPORTING");
+                }
             }
-            logger.info("getDischarged_from_sncu" + hbncVisit.getDischarged_from_sncu());
 
-            if (hbncVisit.getVisit_day().equals("42nd Day") && hbncVisit.getDischarged_from_sncu() && hbncVisit.getBaby_weight() <= 2.5) {
-                IncentiveActivity babyDisChargeSNCUAActivity =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("SNCU_LBW_FOLLOWUP", GroupName.CHILD_HEALTH.getDisplayName());
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                if (hbncVisit.getVisit_day().equals("7th Day")) {
+                    IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
 
-                createIncentiveRecordforHbncVisit(hbncVisit, benId, babyDisChargeSNCUAActivity, "SNCU_LBW_FOLLOWUP");
+                    createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HIGH_RISK_POSTPARTUM_CARE");
 
-            }
-            logger.info("getIs_baby_alive" + hbncVisit.getIs_baby_alive());
-            if (!hbncVisit.getIs_baby_alive()) {
-                IncentiveActivity isChildDeathActivity =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_DEATH_REPORTING", GroupName.CHILD_HEALTH.getDisplayName());
-
-                createIncentiveRecordforHbncVisit(hbncVisit, benId, isChildDeathActivity, "CHILD_DEATH_REPORTING");
+                }
             }
 
 
@@ -938,13 +973,14 @@ public class ChildCareServiceImpl implements ChildCareService {
                 record.setIsEligible(false);
             } else {
                 record.setIsEligible(false);
-                updatePendingActivity(hbncVisit.getAshaId(),hbncVisit.getId(),record.getActivityId(),immunizationActivity.getId());
+                updatePendingActivity(hbncVisit.getAshaId(), hbncVisit.getId(), record.getActivityId(), immunizationActivity.getId());
 
             }
             record.setAmount(Long.valueOf(immunizationActivity.getRate()));
             recordRepo.save(record);
         }
     }
+
     private void updatePendingActivity(Integer userId, Long recordId, Long activityId, Long mIncentiveId) {
         IncentivePendingActivity incentivePendingActivity = new IncentivePendingActivity();
         incentivePendingActivity.setActivityId(activityId);
@@ -956,7 +992,8 @@ public class ChildCareServiceImpl implements ChildCareService {
         }
 
     }
-    public HbncVisit updateHbncFromFileUpload(MultipartFile[] dischargeSncuImage,Long incentiveRecordId,Long id) throws JsonProcessingException {
+
+    public HbncVisit updateHbncFromFileUpload(MultipartFile[] dischargeSncuImage, Long incentiveRecordId, Long id) throws JsonProcessingException {
         HbncVisit existingHbncVisit = hbncVisitRepo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Meeting not found: " + id));
 
@@ -976,6 +1013,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         }
         return hbncVisitRepo.save(existingHbncVisit);
     }
+
     private void updateIncentive(Long id) {
 
         Optional<IncentiveActivityRecord> optionalRecord = recordRepo.findById(id);
@@ -995,6 +1033,7 @@ public class ChildCareServiceImpl implements ChildCareService {
             throw new RuntimeException("Failed to convert image to Base64: " + file.getOriginalFilename(), e);
         }
     }
+
     private void createIncentiveRecordforHbyncVisit(HbycChildVisit data, Long benId, IncentiveActivity immunizationActivity, String createdBy) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
@@ -1018,7 +1057,7 @@ public class ChildCareServiceImpl implements ChildCareService {
             record.setUpdatedDate(visitDate);
             record.setUpdatedBy(createdBy);
             record.setBenId(benId);
-            record.setAshaId(beneficiaryRepo.getUserIDByUserName(createdBy));
+            record.setAshaId(data.getUserId());
             record.setAmount(Long.valueOf(immunizationActivity.getRate()));
             recordRepo.save(record);
         }
@@ -1048,7 +1087,7 @@ public class ChildCareServiceImpl implements ChildCareService {
             record.setUpdatedDate(visitDate);
             record.setUpdatedBy(createdBy);
             record.setBenId(benId);
-            record.setAshaId(beneficiaryRepo.getUserIDByUserName(createdBy));
+            record.setAshaId(data.getUserId());
             record.setAmount(Long.valueOf(immunizationActivity.getRate()));
             recordRepo.save(record);
         }
@@ -1074,7 +1113,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 record.setUpdatedDate(visitDate);
                 record.setUpdatedBy(createdBy);
                 record.setBenId(benId);
-                record.setAshaId(beneficiaryRepo.getUserIDByUserName(createdBy));
+                record.setAshaId(data.getUserId());
                 if (isCH) {
                     record.setAmount((long) rate);
 
@@ -1109,8 +1148,10 @@ public class ChildCareServiceImpl implements ChildCareService {
                 record.setUpdatedDate(visitDate);
                 record.setUpdatedBy(createdBy);
                 record.setBenId(benId);
-                record.setAshaId(beneficiaryRepo.getUserIDByUserName(createdBy));
+                record.setAshaId(data.getUserId());
                 record.setAmount((long) incentiveActivity.getRate());
+                record.setIsEligible(true);
+                record.setIsDefaultActivity(false);
                 recordRepo.save(record);
             }
         } catch (Exception e) {
