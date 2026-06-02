@@ -116,6 +116,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         // 5. Get incentive status per ASHA (verified, rejected, pending, totalAmount)
         long overallVerified = 0, overallRejected = 0, overallPending = 0;
+        long overallUnclaimed = 0;
+
         try {
             logger.info("Month: {}", month);
             logger.info("Year: {}", year);
@@ -142,9 +144,18 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     if (pending > 0) overallPending += 1;
                 }
             }
+            List<Object[]> unclaimedRows = dashboardRepo.getUnclaimedCountByAshaIds(ashaIDs, startDate, endDate);
+            if (unclaimedRows != null) {
+                for (Object[] uRow : unclaimedRows) {
+                    long count = ((Number) uRow[1]).longValue();
+                    if (count > 0) overallUnclaimed += 1;
+                }
+            }
         } catch (Exception e) {
             logger.error("Error fetching incentive status: " + e.getMessage(), e);
         }
+
+
 
         // Overall incentive summary across all ASHAs
         JSONObject overallSummary = new JSONObject();
@@ -152,6 +163,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         overallSummary.put("rejected", overallRejected);
         overallSummary.put("pending", overallPending);
         overallSummary.put("overDue", 0);
+        overallSummary.put("unclaimed", overallUnclaimed);
         result.put("incentiveSummary", overallSummary);
 
         // 7. Build facilities array with nested ASHAs

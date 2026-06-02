@@ -190,18 +190,18 @@ public class CampaignServiceImpl implements CampaignService {
 
         if (!campaignPolioRequest.isEmpty()) {
             List<PulsePolioCampaign> savedCampaigns = pulsePolioCampaignRepo.saveAll(campaignPolioRequest);
-            savedCampaigns.forEach(pulsePolioCampaign -> {
-                checkMonthlyPulsePolioIncentive(pulsePolioCampaign.getUserId(),pulsePolioCampaign.getStartDate(),pulsePolioCampaign.getEndDate());
+            savedCampaigns.forEach(this::checkIncentiveForPulsePolio);
 
-            });{
-
-            }
             return savedCampaigns;
         }
 
         throw new IEMRException("No valid campaign data to save");
     }
 
+    private void  checkIncentiveForPulsePolio(PulsePolioCampaign pulsePolioCampaign){
+        checkMonthlyPulsePolioIncentive(pulsePolioCampaign.getUserId(),pulsePolioCampaign.getStartDate(),pulsePolioCampaign.getEndDate());
+
+    }
 
     @Override
     @Transactional
@@ -307,6 +307,7 @@ public class CampaignServiceImpl implements CampaignService {
             for (PulsePolioCampaign campaignOrs : campaignPolioPage.getContent()) {
                 PolioCampaignResponseDTO dto = convertPolioToDTO(campaignOrs);
                 polioCampaignDTOSResponse.add(dto);
+
             }
             page++;
         } while (campaignPolioPage.hasNext());
