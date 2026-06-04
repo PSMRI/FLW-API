@@ -103,7 +103,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
 
-
     @Override
     public String getBenData(GetBenRequestHandler request, String authorisation) throws Exception {
 
@@ -412,7 +411,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     resultMap.put("benficieryid", benDetailsRMNCH_OBJ.getBenficieryid());
                     resultMap.put("isDeath", benDetailsRMNCH_OBJ.getIsDeath());
                     resultMap.put("isDeathValue", benDetailsRMNCH_OBJ.getIsDeathValue());
-                    resultMap.put("dateOfDeath",benDetailsRMNCH_OBJ.getDateOfDeath());
+                    resultMap.put("dateOfDeath", benDetailsRMNCH_OBJ.getDateOfDeath());
                     resultMap.put("timeOfDeath", benDetailsRMNCH_OBJ.getTimeOfDeath());
                     resultMap.put("reasonOfDeath", benDetailsRMNCH_OBJ.getReasonOfDeath());
                     resultMap.put("reasonOfDeathId", benDetailsRMNCH_OBJ.getReasonOfDeathId());
@@ -423,8 +422,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     resultMap.put("noOfchildren", benDetailsRMNCH_OBJ.getNoOfchildren());
                     resultMap.put("isMarried", benDetailsRMNCH_OBJ.getIsMarried());
                     resultMap.put("doYouHavechildren", benDetailsRMNCH_OBJ.getDoYouHavechildren());
-                    resultMap.put("noofAlivechildren",benDetailsRMNCH_OBJ.getNoofAlivechildren());
-                    resultMap.put("isDeactivate",benDetailsRMNCH_OBJ.getIsDeactivate());
+                    resultMap.put("noofAlivechildren", benDetailsRMNCH_OBJ.getNoofAlivechildren());
+                    resultMap.put("isDeactivate", benDetailsRMNCH_OBJ.getIsDeactivate());
                     resultMap.put("BenRegId", m.getBenRegId());
 
                     // adding asha id / created by - user id
@@ -444,7 +443,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     // mapping not available
                 }
             } catch (Exception e) {
-                logger.error("error for addressID :"+e.getMessage() + a.getId() + " and vanID : " + a.getVanID());
+                logger.error("error for addressID :" + e.getMessage() + a.getId() + " and vanID : " + a.getVanID());
             }
         }
 
@@ -570,19 +569,22 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                 visit.setFollowUpStatus(f.getFollow_up_status());
 
                 eyeCheckUpVisitRepo.save(visit);
-                if(visit.getReferredTo().equals("Govt Public Facility")){
-                    LocalDate localDate = visit.getVisitDate();
+                if (visit.getReferredTo() != null) {
+                    if (visit.getReferredTo().equals("Govt Public Facility")) {
+                        LocalDate localDate = visit.getVisitDate();
 
-                    Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
-                    incentiveLogicService.incentiveForEyeSurgeyReferGovtHospital(visit.getBeneficiaryId(),visitDate,visitDate,visit.getUserId());
+                        Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
+                        incentiveLogicService.incentiveForEyeSurgeyReferGovtHospital(visit.getBeneficiaryId(), visitDate, visitDate, visit.getUserId());
+                    }
+
+                    if (visit.getReferredTo().equals("Private Facility")) {
+                        LocalDate localDate = visit.getVisitDate();
+
+                        Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
+                        incentiveLogicService.incentiveForEyeSurgeyReferPrivateHospital(visit.getBeneficiaryId(), visitDate, visitDate, visit.getUserId());
+                    }
                 }
 
-                if(visit.getReferredTo().equals("Private Facility")){
-                    LocalDate localDate = visit.getVisitDate();
-
-                    Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
-                    incentiveLogicService.incentiveForEyeSurgeyReferPrivateHospital(visit.getBeneficiaryId(),visitDate,visitDate,visit.getUserId());
-                }
             }
 
             return "Eye checkup data saved successfully.";
@@ -598,7 +600,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     }
 
     @Override
-    public List<EyeCheckupRequestDTO> getEyeCheckUpVisit(GetBenRequestHandler request,String token) {
+    public List<EyeCheckupRequestDTO> getEyeCheckUpVisit(GetBenRequestHandler request, String token) {
         String createdBy = null;
         try {
             createdBy = userRepo.getUserNamedByUserId(jwtUtil.extractUserId(token));
@@ -627,20 +629,22 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
 
             dto.setFields(fields);
+            if (v.getReferredTo() != null) {
+                if (v.getReferredTo().equals("Govt Public Facility")) {
+                    LocalDate localDate = v.getVisitDate();
 
-            if(v.getReferredTo().equals("Govt Public Facility")){
-                LocalDate localDate = v.getVisitDate();
+                    Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
+                    incentiveLogicService.incentiveForEyeSurgeyReferGovtHospital(v.getBeneficiaryId(), visitDate, visitDate, v.getUserId());
+                }
 
-                Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
-                incentiveLogicService.incentiveForEyeSurgeyReferGovtHospital(v.getBeneficiaryId(),visitDate,visitDate,v.getUserId());
+                if (v.getReferredTo().equals("Private Facility")) {
+                    LocalDate localDate = v.getVisitDate();
+
+                    Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
+                    incentiveLogicService.incentiveForEyeSurgeyReferPrivateHospital(v.getBeneficiaryId(), visitDate, visitDate, v.getUserId());
+                }
             }
 
-            if(v.getReferredTo().equals("Private Facility")){
-                LocalDate localDate = v.getVisitDate();
-
-                Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
-                incentiveLogicService.incentiveForEyeSurgeyReferPrivateHospital(v.getBeneficiaryId(),visitDate,visitDate,v.getUserId());
-            }
             return dto;
         }).collect(Collectors.toList());
     }
