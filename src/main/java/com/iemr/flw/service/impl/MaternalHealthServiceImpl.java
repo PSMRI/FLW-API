@@ -307,6 +307,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             });
             pmsmaRepo.saveAll(pmsmaList);
             logger.info("PMSMA details saved");
+
             checkAndAddHighRisk(pmsmaList);
 
             return "No. of PMSMA records saved: " + pmsmaList.size();

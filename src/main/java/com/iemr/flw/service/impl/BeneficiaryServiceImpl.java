@@ -576,6 +576,13 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
                     incentiveLogicService.incentiveForEyeSurgeyRefer(visit.getBeneficiaryId(),visitDate,visitDate,visit.getUserId());
                 }
+
+                if(visit.getReferredTo().equals("Private Facility")){
+                    LocalDate localDate = visit.getVisitDate();
+
+                    Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
+                    incentiveLogicService.incentiveForEyeSurgeyRefer(visit.getBeneficiaryId(),visitDate,visitDate,visit.getUserId());
+                }
             }
 
             return "Eye checkup data saved successfully.";
