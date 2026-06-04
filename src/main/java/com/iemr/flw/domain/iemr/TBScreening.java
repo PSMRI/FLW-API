@@ -161,4 +161,23 @@ public class TBScreening {
 
     @Column(name = "test_denial_reasons", columnDefinition = "TEXT")
     private String testDenialReasons;
+
+    // Sync fields — stamped by local laptop on save, used by MMU DataSync for local→central push
+    @Column(name = "vanID")
+    private Integer vanID;
+
+    @Column(name = "parkingPlaceID")
+    private Integer parkingPlaceID;
+
+    @Column(name = "visitCode")
+    private Long visitCode;
+
+    @Column(name = "processed")
+    private String processed = "N";
+
+    @Column(name = "vanSerialNo")
+    private Long vanSerialNo;
+
+    @Column(name = "createdDate")
+    private java.sql.Timestamp createdDate;
 }

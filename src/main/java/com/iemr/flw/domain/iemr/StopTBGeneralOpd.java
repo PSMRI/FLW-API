@@ -59,4 +59,23 @@ public class StopTBGeneralOpd {
 
     @Column(name = "deleted")
     private Boolean deleted = false;
+
+    // Sync fields
+    @Column(name = "vanID")
+    private Integer vanID;
+
+    @Column(name = "parkingPlaceID")
+    private Integer parkingPlaceID;
+
+    @Column(name = "visitCode")
+    private Long visitCode;
+
+    @Column(name = "processed")
+    private String processed = "N";
+
+    @Column(name = "vanSerialNo")
+    private Long vanSerialNo;
+
+    @Column(name = "benVisitID")
+    private Long benVisitID;
 }

@@ -7,6 +7,7 @@ import com.iemr.flw.domain.iemr.TBConfirmedCase;
 import com.iemr.flw.dto.iemr.TBConfirmedCasesResponseDTO;
 import com.iemr.flw.repo.iemr.TBConfirmedTreatmentRepository;
 import com.iemr.flw.service.IncentiveLogicService;
+import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.TBConfirmedCaseService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.LocalDateAdapter;
@@ -36,6 +37,9 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private CampConfigService campConfigService;
     public TBConfirmedCaseServiceImpl(TBConfirmedTreatmentRepository repository) {
         this.repository = repository;
     }
@@ -47,10 +51,13 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         try {
             if (request != null) {
                 logger.info("Saving TB confirmed case: " + request);
+                Integer vanID = campConfigService.getVanID();
+                Integer parkingPlaceID = campConfigService.getParkingPlaceID();
 
                 for(TBConfirmedCaseDTO dto:request){
                     List<TBConfirmedCase> existing = repository.findByBenId(dto.getBenId());
-                    TBConfirmedCase entity = existing.isEmpty() ? new TBConfirmedCase() : existing.get(0);
+                    boolean isNew = existing.isEmpty();
+                    TBConfirmedCase entity = isNew ? new TBConfirmedCase() : existing.get(0);
                     entity.setBenId(dto.getBenId());
                     entity.setUserId(jwtUtil.extractUserId(authorisation));
                     entity.setModifiedBy(jwtUtil.extractUsername(authorisation));
@@ -68,10 +75,12 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     entity.setPlaceOfDeath(dto.getPlaceOfDeath());
                     entity.setReasonForDeath(dto.getReasonForDeath());
                     entity.setReasonForNotCompleting(dto.getReasonForNotCompleting());
+                    if (entity.getVanID() == null) { entity.setVanID(vanID); entity.setParkingPlaceID(parkingPlaceID); }
+                    entity.setProcessed("N");
                     if(entity!=null){
-                        repository.save(entity);
+                        TBConfirmedCase saved = repository.save(entity);
+                        if (isNew) repository.updateVanSerialNo(saved.getId());
                         checkIncentive(entity);
-
                     }
                 }
 
