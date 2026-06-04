@@ -2,9 +2,11 @@ package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.StopTBGeneralOpd;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,4 +23,9 @@ public interface StopTBGeneralOpdRepo extends JpaRepository<StopTBGeneralOpd, Lo
             "(SELECT b.beneficiaryRegID FROM BenFlowStatus b WHERE b.providerServiceMapId = :psmId AND b.villageID = :villageId) " +
             "AND o.deleted = false ORDER BY o.createdDate DESC")
     List<StopTBGeneralOpd> findAllByProviderServiceMapIDAndVillageID(@Param("psmId") Integer psmId, @Param("villageId") Integer villageId);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE StopTBGeneralOpd t SET t.vanSerialNo = t.id WHERE t.id = :id")
+    void updateVanSerialNo(@Param("id") Long id);
 }

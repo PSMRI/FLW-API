@@ -77,4 +77,26 @@ public class TBConfirmedCase {
     @UpdateTimestamp
     @Column(name = "last_mod_date")
     private Timestamp lastModDate;
+
+    // Sync fields
+    @Column(name = "vanID")
+    private Integer vanID;
+
+    @Column(name = "parkingPlaceID")
+    private Integer parkingPlaceID;
+
+    @Column(name = "processed")
+    private String processed = "N";
+
+    @Column(name = "vanSerialNo")
+    private Long vanSerialNo;
+
+    @Column(name = "benRegID")
+    private Long benRegID;
+
+    @Column(name = "providerServiceMapID")
+    private Integer providerServiceMapID;
+
+    @Column(name = "created_by")
+    private String createdBy;
 }

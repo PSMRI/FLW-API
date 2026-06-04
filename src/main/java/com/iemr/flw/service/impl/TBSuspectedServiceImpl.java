@@ -7,6 +7,7 @@ import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.TBSuspectedDTO;
 import com.iemr.flw.dto.iemr.TBSuspectedRequestDTO;
 import com.iemr.flw.repo.iemr.TBSuspectedRepo;
+import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.TBSuspectedService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -24,6 +25,8 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
     private final ModelMapper modelMapper = new ModelMapper();
     @Autowired
     private TBSuspectedRepo tbSuspectedRepo;
+    @Autowired
+    private CampConfigService campConfigService;
 
     @Override
     public String getByBenId(Long benId, String authorisation) throws Exception {
@@ -32,8 +35,9 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
 
     @Override
     public String save(TBSuspectedRequestDTO requestDTO) throws Exception {
-        requestDTO.getTbSuspectedList().forEach(tbSuspectedDTO ->
-        {
+        Integer vanID = campConfigService.getVanID();
+        Integer parkingPlaceID = campConfigService.getParkingPlaceID();
+        for (TBSuspectedDTO tbSuspectedDTO : requestDTO.getTbSuspectedList()) {
             TBSuspected tbSuspected =
                     tbSuspectedRepo.getByUserIdAndBenId(tbSuspectedDTO.getBenId(), requestDTO.getUserId());
 
@@ -48,8 +52,11 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
             }
 
             tbSuspected.setUserId(requestDTO.getUserId());
+            if (tbSuspected.getVanID() == null) { tbSuspected.setVanID(vanID); tbSuspected.setParkingPlaceID(parkingPlaceID); }
+            tbSuspected.setProcessed("N");
             tbSuspectedRepo.save(tbSuspected);
-        });
+            tbSuspectedRepo.updateVanSerialNo(tbSuspected.getId());
+        }
         return "no of tb suspected items saved:" + requestDTO.getTbSuspectedList().size();
     }
 

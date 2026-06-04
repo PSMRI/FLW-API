@@ -17,6 +17,7 @@ import com.iemr.flw.repo.iemr.StopTBDiagnosticsRepo;
 import com.iemr.flw.repo.iemr.StopTBGeneralExaminationRepo;
 import com.iemr.flw.repo.iemr.StopTBGeneralOpdRepo;
 import com.iemr.flw.repo.iemr.TBScreeningRepo;
+import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.StopTBService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,9 @@ import java.util.*;
 public class StopTBServiceImpl implements StopTBService {
 
     private final Logger logger = LoggerFactory.getLogger(StopTBServiceImpl.class);
+
+    @Autowired
+    private CampConfigService campConfigService;
 
     @Autowired
     private BenFlowStatusRepo benFlowStatusRepo;
@@ -281,12 +285,15 @@ public class StopTBServiceImpl implements StopTBService {
     @Transactional
     public List<Map<String, Object>> saveGeneralExamination(List<Map<String, Object>> dataList) throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
+        Integer vanID = campConfigService.getVanID();
+        Integer parkingPlaceID = campConfigService.getParkingPlaceID();
         for (Map<String, Object> data : dataList) {
             Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
             if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
 
             StopTBGeneralExamination exam = generalExaminationRepo.findByBeneficiaryRegID(beneficiaryRegID);
             if (exam == null) exam = new StopTBGeneralExamination();
+            boolean isNew = exam.getId() == null;
 
             exam.setBeneficiaryRegID(beneficiaryRegID);
             exam.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
@@ -314,8 +321,11 @@ public class StopTBServiceImpl implements StopTBService {
             exam.setModifiedBy(getString(data, "createdBy"));
             exam.setDeleted(false);
             exam.setReferralToHWCNeeded(getBool(data, "referralToHWCNeeded"));
+            if (exam.getVanID() == null) { exam.setVanID(vanID); exam.setParkingPlaceID(parkingPlaceID); }
+            exam.setProcessed("N");
 
             generalExaminationRepo.save(exam);
+            if (isNew) generalExaminationRepo.updateVanSerialNo(exam.getId());
 
             Map<String, Object> result = new HashMap<>();
             result.put("beneficiaryRegID", beneficiaryRegID);
@@ -392,12 +402,15 @@ public class StopTBServiceImpl implements StopTBService {
     @Transactional
     public List<Map<String, Object>> saveNurseTBScreening(List<Map<String, Object>> dataList) throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
+        Integer vanID = campConfigService.getVanID();
+        Integer parkingPlaceID = campConfigService.getParkingPlaceID();
         for (Map<String, Object> data : dataList) {
             Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
             if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
 
             TBScreening screening = tbScreeningRepo.findByBenRegID(beneficiaryRegID);
             if (screening == null) screening = new TBScreening();
+            boolean isNew = screening.getId() == null;
 
             screening.setBenRegID(beneficiaryRegID);
             screening.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
@@ -426,8 +439,11 @@ public class StopTBServiceImpl implements StopTBService {
                 Timestamp provided = getTimestamp(data, "visitDate");
                 screening.setVisitDate(provided != null ? provided : new Timestamp(System.currentTimeMillis()));
             }
+            if (screening.getVanID() == null) { screening.setVanID(vanID); screening.setParkingPlaceID(parkingPlaceID); }
+            screening.setProcessed("N");
 
             tbScreeningRepo.save(screening);
+            if (isNew) tbScreeningRepo.updateVanSerialNo(screening.getId());
 
             Map<String, Object> result = new HashMap<>();
             result.put("beneficiaryRegID", beneficiaryRegID);
@@ -492,12 +508,15 @@ public class StopTBServiceImpl implements StopTBService {
     @Transactional
     public List<Map<String, Object>> saveGeneralOpd(List<Map<String, Object>> dataList) throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
+        Integer vanID = campConfigService.getVanID();
+        Integer parkingPlaceID = campConfigService.getParkingPlaceID();
         for (Map<String, Object> data : dataList) {
             Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
             if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
 
             StopTBGeneralOpd opd = generalOpdRepo.findByBenRegID(beneficiaryRegID);
             if (opd == null) opd = new StopTBGeneralOpd();
+            boolean isNew = opd.getId() == null;
 
             opd.setBenRegID(beneficiaryRegID);
             opd.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
@@ -510,8 +529,11 @@ public class StopTBServiceImpl implements StopTBService {
             opd.setCreatedBy(getString(data, "createdBy"));
             opd.setModifiedBy(getString(data, "createdBy"));
             opd.setDeleted(false);
+            if (opd.getVanID() == null) { opd.setVanID(vanID); opd.setParkingPlaceID(parkingPlaceID); }
+            opd.setProcessed("N");
 
             generalOpdRepo.save(opd);
+            if (isNew) generalOpdRepo.updateVanSerialNo(opd.getId());
 
             Map<String, Object> result = new HashMap<>();
             result.put("beneficiaryRegID", beneficiaryRegID);
@@ -564,12 +586,15 @@ public class StopTBServiceImpl implements StopTBService {
     @Transactional
     public List<Map<String, Object>> saveDiagnostics(List<Map<String, Object>> dataList) throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
+        Integer vanID = campConfigService.getVanID();
+        Integer parkingPlaceID = campConfigService.getParkingPlaceID();
         for (Map<String, Object> data : dataList) {
             Long benRegID = getLong(data, "benRegID");
             if (benRegID == null) throw new Exception("benRegID is required");
 
             StopTBDiagnostics diag = diagnosticsRepo.findByBenRegID(benRegID);
             if (diag == null) diag = new StopTBDiagnostics();
+            boolean isNew = diag.getId() == null;
 
             diag.setBenRegID(benRegID);
             diag.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
@@ -608,8 +633,11 @@ public class StopTBServiceImpl implements StopTBService {
             diag.setCreatedBy(getString(data, "createdBy"));
             diag.setModifiedBy(getString(data, "createdBy"));
             diag.setDeleted(false);
+            if (diag.getVanID() == null) { diag.setVanID(vanID); diag.setParkingPlaceID(parkingPlaceID); }
+            diag.setProcessed("N");
 
             diagnosticsRepo.save(diag);
+            if (isNew) diagnosticsRepo.updateVanSerialNo(diag.getId());
 
             Map<String, Object> result = new HashMap<>();
             result.put("benRegID", benRegID);

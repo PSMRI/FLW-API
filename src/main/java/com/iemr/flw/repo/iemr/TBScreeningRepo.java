@@ -2,9 +2,11 @@ package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.TBScreening;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -28,4 +30,9 @@ public interface TBScreeningRepo extends JpaRepository<TBScreening, Long> {
             "(SELECT b.beneficiaryRegID FROM BenFlowStatus b WHERE b.providerServiceMapId = :psmId AND b.villageID = :villageId) " +
             "AND tbs.deleted = false ORDER BY tbs.visitDate DESC")
     List<TBScreening> findAllByProviderServiceMapIDAndVillageID(@Param("psmId") Integer psmId, @Param("villageId") Integer villageId);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE TBScreening t SET t.vanSerialNo = t.id WHERE t.id = :id")
+    void updateVanSerialNo(@Param("id") Long id);
 }
