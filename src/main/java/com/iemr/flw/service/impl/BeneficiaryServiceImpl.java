@@ -574,14 +574,14 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     LocalDate localDate = visit.getVisitDate();
 
                     Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
-                    incentiveLogicService.incentiveForEyeSurgeyRefer(visit.getBeneficiaryId(),visitDate,visitDate,visit.getUserId());
+                    incentiveLogicService.incentiveForEyeSurgeyReferGovtHospital(visit.getBeneficiaryId(),visitDate,visitDate,visit.getUserId());
                 }
 
                 if(visit.getReferredTo().equals("Private Facility")){
                     LocalDate localDate = visit.getVisitDate();
 
                     Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
-                    incentiveLogicService.incentiveForEyeSurgeyRefer(visit.getBeneficiaryId(),visitDate,visitDate,visit.getUserId());
+                    incentiveLogicService.incentiveForEyeSurgeyReferPrivateHospital(visit.getBeneficiaryId(),visitDate,visitDate,visit.getUserId());
                 }
             }
 
@@ -627,6 +627,20 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
 
             dto.setFields(fields);
+
+            if(v.getReferredTo().equals("Govt Public Facility")){
+                LocalDate localDate = v.getVisitDate();
+
+                Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
+                incentiveLogicService.incentiveForEyeSurgeyReferGovtHospital(v.getBeneficiaryId(),visitDate,visitDate,v.getUserId());
+            }
+
+            if(v.getReferredTo().equals("Private Facility")){
+                LocalDate localDate = v.getVisitDate();
+
+                Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
+                incentiveLogicService.incentiveForEyeSurgeyReferPrivateHospital(v.getBeneficiaryId(),visitDate,visitDate,v.getUserId());
+            }
             return dto;
         }).collect(Collectors.toList());
     }

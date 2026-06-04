@@ -293,7 +293,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
     }
 
     @Override
-    public IncentiveActivityRecord incentiveForEyeSurgeyRefer(Long benId, Timestamp secondChildDob, Timestamp secondChildDob1, Integer userId) {
+    public IncentiveActivityRecord incentiveForEyeSurgeyReferGovtHospital(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId) {
         try {
             Integer stateCode = userService.getUserDetail(userId).getStateId();
 
@@ -309,8 +309,8 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
                         activityName,
                         GroupName.ACTIVITY.getDisplayName(),
                         benId,
-                        secondChildDob,
-                        secondChildDob1,
+                        treatmentStartDate,
+                        treatmentEndDate,
                         userId);
             }
 
@@ -319,8 +319,8 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
                         activityName,
                         GroupName.UMBRELLA_PROGRAMMES.getDisplayName(),
                         benId,
-                        secondChildDob,
-                        secondChildDob1,
+                        treatmentStartDate,
+                        treatmentEndDate,
                         userId);
             }
 
@@ -332,8 +332,51 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             logger.error("Check Eye surgery Incentive Exception: ", e);
             return null;
         }
-
     }
+
+    @Override
+    public IncentiveActivityRecord incentiveForEyeSurgeyReferPrivateHospital(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "NPCB_PRIVATE_CATARACT";
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.UMBRELLA_PROGRAMMES.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check Eye surgery Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+
 
     @Override
     public IncentiveActivityRecord incentiveForGiveingIFA(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId) {
