@@ -188,6 +188,7 @@ public class CoupleServiceImpl implements CoupleService {
 
                     }
                 }
+
                 ecrList.add(existingECR);
             });
             eligibleCoupleRegisterRepo.saveAll(ecrList);
