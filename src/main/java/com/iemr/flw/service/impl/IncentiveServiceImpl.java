@@ -191,7 +191,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
         try {
 
-            incentiveOfNcdReferal(request.getAshaId(), request.getVillageID());
+            incentiveOfNcdReferal(request.getAshaId(), stateCode);
 
         } catch (Exception e) {
             logger.error("Error in incentiveOfNcdReferal: ", e);
