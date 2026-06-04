@@ -69,7 +69,18 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
     public String getByUserId(GetBenRequestHandler request) {
         List<TBSuspectedDTO> dtos = new ArrayList<>();
         List<TBSuspected> tbSuspectedList = tbSuspectedRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
-        tbSuspectedList.forEach(tbSuspected -> dtos.add(modelMapper.map(tbSuspected, TBSuspectedDTO.class)));
+        tbSuspectedList.forEach(tbSuspected -> {
+            dtos.add(modelMapper.map(tbSuspected, TBSuspectedDTO.class));
+
+            if (tbSuspected != null && Boolean.TRUE.equals(tbSuspected.getIsConfirmed())) {
+                incentiveLogicService.incentiveForTbSuspected(
+                        tbSuspected.getBenId(),
+                        tbSuspected.getVisitDate(),
+                        tbSuspected.getVisitDate(),
+                        tbSuspected.getUserId()
+                );
+            }
+        });
         TBSuspectedRequestDTO tbSuspectedRequestDTO = new TBSuspectedRequestDTO();
         tbSuspectedRequestDTO.setTbSuspectedList(dtos);
         tbSuspectedRequestDTO.setUserId(request.getAshaId());
