@@ -321,7 +321,7 @@ public class StopTBServiceImpl implements StopTBService {
             exam.setModifiedBy(getString(data, "createdBy"));
             exam.setDeleted(false);
             exam.setReferralToHWCNeeded(getBool(data, "referralToHWCNeeded"));
-            if (exam.getVanID() == null) { exam.setVanID(vanID); exam.setParkingPlaceID(parkingPlaceID); }
+            if (exam.getVanID() == null && vanID != null) { exam.setVanID(vanID); exam.setParkingPlaceID(parkingPlaceID); }
             exam.setProcessed("N");
 
             generalExaminationRepo.save(exam);
@@ -439,7 +439,7 @@ public class StopTBServiceImpl implements StopTBService {
                 Timestamp provided = getTimestamp(data, "visitDate");
                 screening.setVisitDate(provided != null ? provided : new Timestamp(System.currentTimeMillis()));
             }
-            if (screening.getVanID() == null) { screening.setVanID(vanID); screening.setParkingPlaceID(parkingPlaceID); }
+            if (screening.getVanID() == null && vanID != null) { screening.setVanID(vanID); screening.setParkingPlaceID(parkingPlaceID); }
             screening.setProcessed("N");
 
             tbScreeningRepo.save(screening);
@@ -529,7 +529,7 @@ public class StopTBServiceImpl implements StopTBService {
             opd.setCreatedBy(getString(data, "createdBy"));
             opd.setModifiedBy(getString(data, "createdBy"));
             opd.setDeleted(false);
-            if (opd.getVanID() == null) { opd.setVanID(vanID); opd.setParkingPlaceID(parkingPlaceID); }
+            if (opd.getVanID() == null && vanID != null) { opd.setVanID(vanID); opd.setParkingPlaceID(parkingPlaceID); }
             opd.setProcessed("N");
 
             generalOpdRepo.save(opd);
@@ -633,7 +633,7 @@ public class StopTBServiceImpl implements StopTBService {
             diag.setCreatedBy(getString(data, "createdBy"));
             diag.setModifiedBy(getString(data, "createdBy"));
             diag.setDeleted(false);
-            if (diag.getVanID() == null) { diag.setVanID(vanID); diag.setParkingPlaceID(parkingPlaceID); }
+            if (diag.getVanID() == null && vanID != null) { diag.setVanID(vanID); diag.setParkingPlaceID(parkingPlaceID); }
             diag.setProcessed("N");
 
             diagnosticsRepo.save(diag);

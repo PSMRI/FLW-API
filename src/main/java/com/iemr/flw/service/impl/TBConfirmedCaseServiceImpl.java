@@ -71,7 +71,7 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     entity.setPlaceOfDeath(dto.getPlaceOfDeath());
                     entity.setReasonForDeath(dto.getReasonForDeath());
                     entity.setReasonForNotCompleting(dto.getReasonForNotCompleting());
-                    if (entity.getVanID() == null) { entity.setVanID(vanID); entity.setParkingPlaceID(parkingPlaceID); }
+                    if (entity.getVanID() == null && vanID != null) { entity.setVanID(vanID); entity.setParkingPlaceID(parkingPlaceID); }
                     entity.setProcessed("N");
                     if(entity!=null){
                         TBConfirmedCase saved = repository.save(entity);

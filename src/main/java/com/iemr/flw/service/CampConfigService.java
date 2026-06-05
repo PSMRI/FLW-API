@@ -19,10 +19,7 @@ public class CampConfigService {
 
     public Integer getVanID() {
         String val = read(VAN_ID_KEY);
-        if (val == null || val.isBlank()) {
-            throw new IllegalStateException(
-                "Camp not configured: MMU user must log in before Stop TB data sync can proceed.");
-        }
+        if (val == null || val.isBlank()) return null;
         return Integer.parseInt(val);
     }
 
