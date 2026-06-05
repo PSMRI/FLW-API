@@ -56,7 +56,7 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
             }
 
             tbSuspected.setUserId(requestDTO.getUserId());
-            if (tbSuspected.getVanID() == null) { tbSuspected.setVanID(vanID); tbSuspected.setParkingPlaceID(parkingPlaceID); }
+            if (tbSuspected.getVanID() == null && vanID != null) { tbSuspected.setVanID(vanID); tbSuspected.setParkingPlaceID(parkingPlaceID); }
             tbSuspected.setProcessed("N");
             tbSuspectedRepo.save(tbSuspected);
             tbSuspectedRepo.updateVanSerialNo(tbSuspected.getId());
