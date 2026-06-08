@@ -1142,6 +1142,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     private void checkAndAddIncentives(ScreeningMalaria diseaseScreening) {
         Integer stateId = userService.getUserDetail(diseaseScreening.getUserId()).getStateId();
         IncentiveActivity diseaseScreeningActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_MALARIA_TREATMENT", GroupName.UMBRELLA_PROGRAMMES.getDisplayName());
+        IncentiveActivity diseaseScreeningActivityCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_MALARIA_TREATMENT", GroupName.ACTIVITY.getDisplayName());
         IncentiveActivity incentiveActivityForCollectSlideAM = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_SLIDE_COLLECTION", GroupName.UMBRELLA_PROGRAMMES.getDisplayName());
         IncentiveActivity incentiveActivityForCollectSlideCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_SLIDE_COLLECTION", GroupName.ACTIVITY.getDisplayName());
 
@@ -1149,6 +1150,12 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             if(stateId.equals(StateCode.AM.getStateCode())){
                 if (Objects.equals(diseaseScreening.getCaseStatus(), "Confirmed")) {
                     addIncentive(diseaseScreeningActivity, diseaseScreening);
+
+                }
+            }
+            if(stateId.equals(StateCode.CG.getStateCode())){
+                if (Objects.equals(diseaseScreening.getCaseStatus(), "Confirmed")) {
+                    addIncentive(diseaseScreeningActivityCG, diseaseScreening);
 
                 }
             }
@@ -1185,7 +1192,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 .findRecordByActivityIdCreatedDateBenId(
                         diseaseScreeningActivity.getId(),
                         visitTimestamp,
-                        diseaseScreening.getBeneficiaryId().longValue());
+                        diseaseScreening.getHouseHoldId().longValue());
 
         if (record == null) {
 
@@ -1198,7 +1205,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             record.setEndDate(visitTimestamp);
             record.setUpdatedDate(visitTimestamp);
             record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
-            record.setBenId(diseaseScreening.getBeneficiaryId().longValue());
+            record.setBenId(diseaseScreening.getHouseHoldId().longValue());
             record.setAshaId(diseaseScreening.getUserId());
             record.setAmount(Long.valueOf(diseaseScreeningActivity.getRate()));
             record.setIsEligible(true);

@@ -63,7 +63,8 @@ public class MalariaFollowUpServiceImpl implements MalariaFollowUpService {
                           new Timestamp(entity.getTreatmentStartDate().getTime()),
                           new Timestamp(entity.getTreatmentCompletionDate().getTime()),
                           entity.getUserId()
-                  );              }
+                  );
+              }
 
               return true;
           }

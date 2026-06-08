@@ -513,7 +513,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
                 return null;
             }
 
-            String activityName = "NPCB_GOVT_CATARACT";
+            String activityName = "NVBDCP_MALARIA_TREATMENT";
 
             if (stateCode.equals(StateCode.CG.getStateCode())) {
                 return processIncentive(
