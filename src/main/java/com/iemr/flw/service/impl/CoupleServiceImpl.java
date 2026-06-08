@@ -633,6 +633,12 @@ public class CoupleServiceImpl implements CoupleService {
 
             List<EligibleCoupleTracking> eligibleCoupleTrackingList =
                     eligibleCoupleTrackingRepo.getECTrackRecords(user, dto.getFromDate(), dto.getToDate());
+            eligibleCoupleTrackingList.forEach(eligibleCoupleTracking -> {
+                checkAndAddAntaraIncentive(recordList, eligibleCoupleTracking);
+
+            });
+
+            recordRepo.saveAll(recordList);
 
             recordRepo.saveAll(recordList);
 
