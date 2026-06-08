@@ -684,7 +684,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             if (ect.getPncPeriod() == 1 || ect.getPncPeriod() == 3 || ect.getPncPeriod() == 7) {
 
                 if ((ect.getContraceptionMethod().equals("POST PARTUM STERILIZATION (PPS)")
-                        || ect.getContraceptionMethod().equals("Minilap"))
+                        || ect.getContraceptionMethod().equals("MiniLap"))
                         && ect.getSterilisationDate() != null) {
                     IncentiveActivity ppsActivityCH =
                             incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPS", GroupName.ACTIVITY.getDisplayName());
