@@ -1146,11 +1146,15 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         IncentiveActivity incentiveActivityForCollectSlideCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_SLIDE_COLLECTION", GroupName.ACTIVITY.getDisplayName());
 
         if (diseaseScreeningActivity != null) {
-            if (Objects.equals(diseaseScreening.getCaseStatus(), "Confirmed")) {
-                addIncentive(diseaseScreeningActivity, diseaseScreening);
+            if(stateId.equals(StateCode.AM.getStateCode())){
+                if (Objects.equals(diseaseScreening.getCaseStatus(), "Confirmed")) {
+                    addIncentive(diseaseScreeningActivity, diseaseScreening);
 
+                }
             }
+
         }
+
         if (diseaseScreening.getCaseStatus().equals("Suspected")) {
             if (diseaseScreening.getMalariaSlideTestType().equals("Slide Test") || diseaseScreening.getMalariaSlideTestType().equals("2")) {
                 if (stateId.equals(StateCode.AM.getStateCode())) {

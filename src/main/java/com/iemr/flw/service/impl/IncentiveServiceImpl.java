@@ -539,6 +539,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                     ).stream().collect(Collectors.toMap(IncentiveActivity::getName, Function.identity()));
 
             IncentiveActivity ncdPopEnumeration   = activityMap.get("NCD_POP_ENUMERATION");
+//            IncentiveActivity ncdFollowUpEnumeration   = activityMap.get("NCD_FOLLOWUP_TREATMENT");
 
             CompletableFuture<List<BenReferDetails>> benReferFuture =
                     CompletableFuture.supplyAsync(() -> benReferDetailsRepo.findByCreatedBy(userName));
@@ -546,6 +547,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                     CompletableFuture.supplyAsync(() -> cbacIemrDetailsRepo.findByCreatedBy(userName));
 
             List<CbacDetailsImer> cbacDetailsImer = cbacFuture.get();
+            List<BenReferDetails> benReferDetailsIemr = benReferFuture.get();
 
             List<IncentiveActivityRecord> recordsToSave = new ArrayList<>();
 
@@ -575,6 +577,28 @@ public class IncentiveServiceImpl implements IncentiveService {
                         });
             }
 
+//            if(benReferDetailsIemr!=null){
+//                List<Long> referalBenIds = benReferDetailsIemr.stream()
+//                        .filter(c -> c != null && c.getBeneficiaryRegID() != null && c.getref)
+//                        .map(BenReferDetails::getBenReferID)
+//                        .collect(Collectors.toList());
+//
+//                Set<String> existingKeys = recordRepo
+//                        .findExistingRecords(ncdFollowUpEnumeration.getId(), referalBenIds, ashaId)
+//                        .stream()
+//                        .map(r -> r.getActivityId() + "_" + r.getBenId() + "_" + r.getCreatedDate())
+//                        .collect(Collectors.toSet());
+//
+//                final IncentiveActivity activity = ncdFollowUpEnumeration;
+//                benReferDetailsIemr.stream()
+//                        .filter(c -> c != null && c.getBenReferID() != null)
+//                        .forEach(c -> {
+//                            String key = activity.getId() + "_" + c.getBenReferID() + "_" + c.getCreatedDate();
+//                            if (!existingKeys.contains(key)) {
+//                                recordsToSave.add(addNCDandCBACIncentiveRecord(activity, ashaId, c.getBenReferID(), c.getCreatedDate(), userName));
+//                            }
+//                        });
+//            }
             // ---- Single batch insert instead of N individual saves ----
             if (!recordsToSave.isEmpty()) {
                 recordRepo.saveAll(recordsToSave);
