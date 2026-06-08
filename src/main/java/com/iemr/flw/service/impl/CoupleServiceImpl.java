@@ -410,6 +410,7 @@ public class CoupleServiceImpl implements CoupleService {
             Gson gson = new GsonBuilder()
                     .serializeNulls()
                     .setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+
             return gson.toJson(list);
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -419,16 +420,24 @@ public class CoupleServiceImpl implements CoupleService {
 
     @Override
     public List<EligibleCoupleTrackingDTO> getEligibleCoupleTracking(GetBenRequestHandler dto) {
+        List<IncentiveActivityRecord> recordList = new ArrayList<>();
 
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
 
             List<EligibleCoupleTracking> eligibleCoupleTrackingList =
                     eligibleCoupleTrackingRepo.getECTrackRecords(user, dto.getFromDate(), dto.getToDate());
+            eligibleCoupleTrackingList.forEach(eligibleCoupleTracking -> {
+                checkAndAddAntaraIncentive(recordList, eligibleCoupleTracking);
+
+            });
+
+            recordRepo.saveAll(recordList);
 
             return eligibleCoupleTrackingList.stream()
                     .map(ect -> mapper.convertValue(ect, EligibleCoupleTrackingDTO.class))
                     .collect(Collectors.toList());
+
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
