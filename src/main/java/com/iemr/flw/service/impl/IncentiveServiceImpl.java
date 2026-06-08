@@ -539,7 +539,6 @@ public class IncentiveServiceImpl implements IncentiveService {
                     ).stream().collect(Collectors.toMap(IncentiveActivity::getName, Function.identity()));
 
             IncentiveActivity ncdPopEnumeration   = activityMap.get("NCD_POP_ENUMERATION");
-//            IncentiveActivity ncdFollowUpEnumeration   = activityMap.get("NCD_FOLLOWUP_TREATMENT");
 
             CompletableFuture<List<BenReferDetails>> benReferFuture =
                     CompletableFuture.supplyAsync(() -> benReferDetailsRepo.findByCreatedBy(userName));
@@ -547,7 +546,6 @@ public class IncentiveServiceImpl implements IncentiveService {
                     CompletableFuture.supplyAsync(() -> cbacIemrDetailsRepo.findByCreatedBy(userName));
 
             List<CbacDetailsImer> cbacDetailsImer = cbacFuture.get();
-            List<BenReferDetails> benReferDetailsIemr = benReferFuture.get();
 
             List<IncentiveActivityRecord> recordsToSave = new ArrayList<>();
 

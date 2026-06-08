@@ -1286,7 +1286,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     private void checkIncentive(ChronicDiseaseVisitEntity chronicDiseaseVisitEntity, Integer ashaId) {
         String userName = userRepo.getUserNamedByUserId(ashaId);
+        Integer stateId = userService.getUserDetail(ashaId).getStateId();
         IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.NCD.getDisplayName());
+        IncentiveActivity incentiveActivityCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.ACTIVITY.getDisplayName());
         logger.info("incentiveActivity:" + incentiveActivity.getId());
         if (incentiveActivity != null) {
             if (chronicDiseaseVisitEntity.getFollowUpNo() != null
@@ -1311,14 +1313,25 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     LocalDateTime localDateTime = chronicDiseaseVisitEntity.getCreatedDate();
 
                     Timestamp followUpTimestamp = Timestamp.valueOf(localDateTime);
+                    if(stateId.equals(StateCode.AM.getStateCode())){
+                        addNCDFolloupIncentiveRecord(
+                                incentiveActivity,
+                                ashaId,
+                                chronicDiseaseVisitEntity.getBenId(),
+                                followUpTimestamp,
+                                userName
+                        );
+                    }
+                    if(stateId.equals(StateCode.CG.getStateCode())){
+                        addNCDFolloupIncentiveRecord(
+                                incentiveActivityCG,
+                                ashaId,
+                                chronicDiseaseVisitEntity.getBenId(),
+                                followUpTimestamp,
+                                userName
+                        );
+                    }
 
-                    addNCDFolloupIncentiveRecord(
-                            incentiveActivity,
-                            ashaId,
-                            chronicDiseaseVisitEntity.getBenId(),
-                            followUpTimestamp,
-                            userName
-                    );
                 }
             }
         }
