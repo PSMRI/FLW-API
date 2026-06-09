@@ -76,17 +76,17 @@ public class IFAFormSubmissionServiceImpl implements IFAFormSubmissionService {
 
     private void checkIFAIncentive(List<IFAFormSubmissionData> entities,Integer userId) {
         Integer stateCode = userService.getUserDetail(userId).getStateId();
-//        if(stateCode.equals(StateCode.AM.getStateCode())){
-//            IncentiveActivity incentiveActivityAM= incentivesRepo.findIncentiveMasterByNameAndGroup("NIPI_CHILDREN", GroupName.CHILD_HEALTH.getDisplayName());
-//
-//            if(incentiveActivityAM!=null){
-//                entities.forEach(ifaFormSubmissionData -> {
-//                    addIFAIncentive(ifaFormSubmissionData,incentiveActivityAM);
-//
-//                });
-//            }
-//
-//        }
+        if(stateCode.equals(StateCode.AM.getStateCode())){
+            IncentiveActivity incentiveActivityAM= incentivesRepo.findIncentiveMasterByNameAndGroup("NIPI_CHILDREN", GroupName.CHILD_HEALTH.getDisplayName());
+
+            if(incentiveActivityAM!=null){
+                entities.forEach(ifaFormSubmissionData -> {
+                    addIFAIncentive(ifaFormSubmissionData,incentiveActivityAM);
+
+                });
+            }
+
+        }
         if(stateCode.equals(StateCode.CG.getStateCode())){
             IncentiveActivity incentiveActivityCG= incentivesRepo.findIncentiveMasterByNameAndGroup("NIPI_CHILDREN", GroupName.ACTIVITY.getDisplayName());
 

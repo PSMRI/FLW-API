@@ -670,12 +670,15 @@ public class ChildCareServiceImpl implements ChildCareService {
         savedList.forEach(data -> {
             Timestamp visitTimestamp =
                     Timestamp.valueOf(data.getIfaProvisionDate().atStartOfDay());
-            incentiveLogicService.incentiveForGiveingIFA(
-                    data.getBeneficiaryId(),
-                    visitTimestamp,
-                    visitTimestamp,
-                    data.getUserId()
-            );
+            if(data.getIfaBottleCount().equals("10.0")){
+                incentiveLogicService.incentiveForGiveingIFA(
+                        data.getBeneficiaryId(),
+                        visitTimestamp,
+                        visitTimestamp,
+                        data.getUserId()
+                );
+            }
+
         });
 
         return savedList;
@@ -684,6 +687,7 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     @Override
     public List<IfaDistributionDTO> getByBeneficiaryId(GetBenRequestHandler requestHandler) {
+
         return ifaDistributionRepository.findByUserId(requestHandler.getAshaId()).stream()
                 .map(this::mapToDTO)
                 .toList();
@@ -834,7 +838,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         hbncVisits.forEach(hbncVisit -> {
             GroupName.setIsCh(false);
             Long benId = hbncVisit.getBeneficiaryId();
-            if (stateCode.equals(StateCode.AM)) {
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
                 if (hbncVisit.getVisit_day().equals("42nd Day")) {
                     IncentiveActivity visitActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.CHILD_HEALTH.getDisplayName());
 
@@ -860,7 +864,7 @@ public class ChildCareServiceImpl implements ChildCareService {
             }
 
             if (stateCode.equals(StateCode.CG.getStateCode())) {
-                if (hbncVisit.getVisit_day().equals("7th Day")) {
+                if (hbncVisit.getVisit_day().equals("42nd Day")) {
                     IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
 
                     createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HIGH_RISK_POSTPARTUM_CARE");

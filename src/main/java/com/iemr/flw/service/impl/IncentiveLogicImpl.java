@@ -388,7 +388,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
                 return null;
             }
 
-            String activityName = "LACTATING_MOTHERS_HOME_VISIT";
+            String activityName = "NIPI_CHILDREN";
 
             if (stateCode.equals(StateCode.CG.getStateCode())) {
                 return processIncentive(
