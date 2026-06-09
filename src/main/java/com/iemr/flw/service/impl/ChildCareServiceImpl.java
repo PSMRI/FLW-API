@@ -692,14 +692,24 @@ public class ChildCareServiceImpl implements ChildCareService {
                 .stream()
                 .map(data -> {
 
-                    if ("10.0".equals(data.getIfaBottleCount())) {
-                        Timestamp visitTimestamp =
-                                Timestamp.valueOf(data.getIfaProvisionDate().atStartOfDay());
-                        incentiveLogicService.incentiveForGiveingIFA(
+                    try {
+                        if ("10.0".equals(data.getIfaBottleCount())) {
+
+                            Timestamp visitTimestamp =
+                                    Timestamp.valueOf(data.getIfaProvisionDate().atStartOfDay());
+
+                            incentiveLogicService.incentiveForGiveingIFA(
+                                    data.getBeneficiaryId(),
+                                    visitTimestamp,
+                                    visitTimestamp,
+                                    data.getUserId()
+                            );
+                        }
+                    } catch (Exception e) {
+                        logger.error(
+                                "Error while processing IFA incentive for beneficiaryId: {}",
                                 data.getBeneficiaryId(),
-                                visitTimestamp,
-                                visitTimestamp,
-                                data.getUserId()
+                                e
                         );
                     }
 
