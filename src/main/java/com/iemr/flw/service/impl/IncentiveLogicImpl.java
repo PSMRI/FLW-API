@@ -403,7 +403,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             if (stateCode.equals(StateCode.AM.getStateCode())) {
                 return processIncentive(
                         activityName,
-                        GroupName.UMBRELLA_PROGRAMMES.getDisplayName(),
+                        GroupName.CHILD_HEALTH.getDisplayName(),
                         benId,
                         treatmentStartDate,
                         treatmentEndDate,
@@ -444,7 +444,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             if (stateCode.equals(StateCode.AM.getStateCode())) {
                 return processIncentive(
                         activityName,
-                        GroupName.CHILD_HEALTH.getDisplayName(),
+                        GroupName.UMBRELLA_PROGRAMMES.getDisplayName(),
                         benId,
                         treatmentStartDate,
                         treatmentEndDate,
