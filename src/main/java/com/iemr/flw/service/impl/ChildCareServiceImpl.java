@@ -688,8 +688,23 @@ public class ChildCareServiceImpl implements ChildCareService {
     @Override
     public List<IfaDistributionDTO> getByBeneficiaryId(GetBenRequestHandler requestHandler) {
 
-        return ifaDistributionRepository.findByUserId(requestHandler.getAshaId()).stream()
-                .map(this::mapToDTO)
+        return ifaDistributionRepository.findByUserId(requestHandler.getAshaId())
+                .stream()
+                .map(data -> {
+
+                    if ("10.0".equals(data.getIfaBottleCount())) {
+                        Timestamp visitTimestamp =
+                                Timestamp.valueOf(data.getIfaProvisionDate().atStartOfDay());
+                        incentiveLogicService.incentiveForGiveingIFA(
+                                data.getBeneficiaryId(),
+                                visitTimestamp,
+                                visitTimestamp,
+                                data.getUserId()
+                        );
+                    }
+
+                    return mapToDTO(data);
+                })
                 .toList();
     }
 
