@@ -398,6 +398,7 @@ public class IncentiveServiceImpl implements IncentiveService {
         return new Gson().toJson(result);
     }
 
+
     @Override
     public String getAllIncentivesGroupedActivity(GetBenRequestHandler request) {
         try {
