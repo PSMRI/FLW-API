@@ -93,7 +93,7 @@ public class IFAFormSubmissionServiceImpl implements IFAFormSubmissionService {
                 if(percentage>=70){
                     Integer stateCode = userService.getUserDetail(userId).getStateId();
                     if(stateCode.equals(StateCode.CG.getStateCode())){
-                        IncentiveActivity incentiveActivityCG= incentivesRepo.findIncentiveMasterByNameAndGroup("NIPI_CHILDREN", GroupName.ACTIVITY.getDisplayName());
+                        IncentiveActivity incentiveActivityCG= incentivesRepo.findIncentiveMasterByNameAndGroup("NATIONAL_IRON_PLUS", GroupName.ACTIVITY.getDisplayName());
 
                         if(incentiveActivityCG!=null){
                             entities.forEach(ifaFormSubmissionData -> {
