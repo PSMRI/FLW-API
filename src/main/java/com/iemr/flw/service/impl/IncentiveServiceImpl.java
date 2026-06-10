@@ -540,8 +540,6 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             IncentiveActivity ncdPopEnumeration   = activityMap.get("NCD_POP_ENUMERATION");
 
-            CompletableFuture<List<BenReferDetails>> benReferFuture =
-                    CompletableFuture.supplyAsync(() -> benReferDetailsRepo.findByCreatedBy(userName));
             CompletableFuture<List<CbacDetailsImer>> cbacFuture =
                     CompletableFuture.supplyAsync(() -> cbacIemrDetailsRepo.findByCreatedBy(userName));
 

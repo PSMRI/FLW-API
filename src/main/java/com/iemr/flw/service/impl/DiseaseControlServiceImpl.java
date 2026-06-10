@@ -1310,7 +1310,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                         .anyMatch(targetDiseases::contains);
 
                 if (matchFound && Integer.valueOf(6).equals(chronicDiseaseVisitEntity.getFollowUpNo())) {
-                    LocalDateTime localDateTime = chronicDiseaseVisitEntity.getCreatedDate();
+                    LocalDateTime localDateTime = chronicDiseaseVisitEntity.getFollowUpDate().atStartOfDay();
 
                     Timestamp followUpTimestamp = Timestamp.valueOf(localDateTime);
                     if(stateId.equals(StateCode.AM.getStateCode())){
