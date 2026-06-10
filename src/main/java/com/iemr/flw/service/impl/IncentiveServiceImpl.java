@@ -588,8 +588,6 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             IncentiveActivity hwcReferralEnumeration = activityMap.get("HWC_REFERRAL_10_CASES");
 
-            CompletableFuture<List<BenReferDetails>> benReferFuture =
-                    CompletableFuture.supplyAsync(() -> benReferDetailsRepo.findByCreatedBy(userName));
             CompletableFuture<List<CbacDetailsImer>> cbacFuture =
                     CompletableFuture.supplyAsync(() -> cbacIemrDetailsRepo.findByCreatedBy(userName));
 
