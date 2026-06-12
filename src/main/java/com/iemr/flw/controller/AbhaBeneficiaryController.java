@@ -26,14 +26,15 @@ public class AbhaBeneficiaryController {
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(AbhaBeneficiaryController.class);
 
 
-    @RequestMapping(value = "/getBeneficiary",method = RequestMethod.POST, headers = "Authorization")
+
+    @RequestMapping(value = "/getBeneficiary",method = RequestMethod.POST)
     public ResponseEntity<Map<String,Object>> getAllAdolescentHealth(@RequestBody AbhaRequestDTO request ) {
         Map<String,Object> response = new HashMap<>();
         try {
-            if(request.getRequestId()!=null){
-                List<AbhaBeneficiaryDTO> abhaBeneficiaryDTOList = abhaBeneficiaryService.getBeneficiaryByAbha(request);
+            if(request.getCardNo()!=null){
+                Object abhaBeneficiaryDTOList = abhaBeneficiaryService.getBeneficiaryByAbha(request);
 
-                if (abhaBeneficiaryDTOList != null && !abhaBeneficiaryDTOList.isEmpty()) {
+                if (abhaBeneficiaryDTOList != null ) {
                     response.put("statusCode",200);
                     response.put("data", abhaBeneficiaryDTOList);
                 } else {

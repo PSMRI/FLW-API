@@ -1,24 +1,65 @@
 package com.iemr.flw.dto.abhaBeneficiary;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
 public class AbhaBeneficiaryDTO {
-    private String name;
+    @JsonProperty("personName")
+    private String personName;
+
+    private String firstName;
+
+    private String lastName;
+
+    @JsonProperty("age")
     private String age;
-    private String abhaId;
+
+    @JsonProperty("address")
     private String address;
-    private String block;
-    private String blockCode;
-    private String cardno;
+
+    @JsonProperty("district")
     private String district;
-    private String districtCode;
-    private String familyId;
-    private String gender;
+
+    @JsonProperty("mobileNo")
     private String mobileNo;
-    private String ruralUrban;
+
+    @JsonProperty("block")
+    private String block;
+
+    @JsonProperty("cardNo")
+    private String cardNo;
+
+    @JsonProperty("villagename")
+    private String villagename;
+
+    @JsonProperty("gender")
+    private String gender;
+
+    @JsonProperty("district_Code")
+    private String districtCode;
+
+    @JsonProperty("block_Code")
+    private String blockCode;
+
+    @JsonProperty("village_Code")
     private String villageCode;
-    private String vws;
-    private String ward;
+
+    @JsonProperty("rural_Urban")
+    private String ruralUrban;
+
+    @JsonProperty("abhaId")
+    private String abhaId;
+
+    @JsonProperty("vvs")
+    private String vvs;
+
+    @JsonProperty("familyid")
+    private String familyid;
+
+    @JsonProperty("dob")
+    @JsonAlias("dob_secc")
+    private String dob;
 
 }

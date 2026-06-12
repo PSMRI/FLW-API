@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class AbhaRequestDTO {
-    private String requestId;
+    private String cardNo;
 
 }

@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface AbhaBeneficiaryService {
 
-    List<AbhaBeneficiaryDTO> getBeneficiaryByAbha(AbhaRequestDTO request);
+    Object getBeneficiaryByAbha(AbhaRequestDTO request);
 }
