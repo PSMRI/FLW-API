@@ -419,7 +419,12 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     resultMap.put("isMarried", benDetailsRMNCH_OBJ.getIsMarried());
                     resultMap.put("doYouHavechildren", benDetailsRMNCH_OBJ.getDoYouHavechildren());
                     resultMap.put("noofAlivechildren",benDetailsRMNCH_OBJ.getNoofAlivechildren());
-                    resultMap.put("isDeactivate",benDetailsRMNCH_OBJ.getIsDeactivate());
+                    resultMap.put(
+                            "isDeactivate",
+                            benDetailsRMNCH_OBJ.getIsDeactivate() != null
+                                    ? benDetailsRMNCH_OBJ.getIsDeactivate()
+                                    : false
+                    );
                     resultMap.put("BenRegId", m.getBenRegId());
 
                     // adding asha id / created by - user id
