@@ -24,6 +24,7 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     String getUserName(@Param("userId") Integer userId);
 
     Optional<RMNCHBeneficiaryDetailsRmnch> findById(Long benID);
+    Optional<RMNCHBeneficiaryDetailsRmnch> findByBenficieryid(Long benID);
 
     @Query(value = "SELECT beneficiaryRegID FROM db_identity.i_beneficiarydetails_rmnch WHERE BeneficiaryId = :benId", nativeQuery = true)
     Long getBenRegIdFromBenId(@Param("benId") Long benId);

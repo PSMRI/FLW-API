@@ -50,6 +50,9 @@ public class ChildServiceImpl implements ChildService {
 //                ChildRegisterDTO childDTO = modelMapper.map(childRegister, ChildRegisterDTO.class);
 //                result.add(childDTO);
 //            });
+            for (ChildRegister childRegister : childRegisterList) {
+                processFirstChildIncentive(childRegister);
+            }
             List<ChildRegisterDTO> result = childRegisterList.stream()
                     .map(childRegister -> modelMapper.map(childRegister, ChildRegisterDTO.class))
                     .collect(Collectors.toList());
@@ -94,7 +97,9 @@ public class ChildServiceImpl implements ChildService {
         Long benId = childRegister.getBenId();
 
         RMNCHBeneficiaryDetailsRmnch beneficiary =
-                beneficiaryRepo.findById(benId).orElse(null);
+                beneficiaryRepo.findByBenficieryid(benId).orElse(null);
+
+      logger.info("Child ben Id:" + beneficiary.getBenficieryid());
 
         if (beneficiary == null || beneficiary.getDateMarriage() == null) {
             return;

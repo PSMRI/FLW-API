@@ -493,6 +493,16 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
                         userId);
             }
 
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.FAMILY_PLANNING.getDisplayName(),
+                        benId,
+                        secondChildDob,
+                        secondChildDob1,
+                        userId);
+            }
+
             // state not supported
             logger.info("No incentive mapping for stateCode: {}", stateCode);
             return null;
