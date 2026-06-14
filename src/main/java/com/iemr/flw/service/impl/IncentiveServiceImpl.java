@@ -730,7 +730,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                 logger.info("Eligible Couple Count : {}", eligibleCoupleRegisters.size());
                 logger.info("Percentage : {}", percentage);
 
-                if (percentage >= 70) {
+                if (percentage >= 50) {
 
                     if (stateId.equals(StateCode.AM.getStateCode())) {
                         addIFAIncentive(
