@@ -721,18 +721,31 @@ public class IncentiveServiceImpl implements IncentiveService {
             logger.info("eligibleCoupleRegisters :"+eligibleCoupleRegisters.size());
             logger.info("ifaFormSubmissionData :"+ifaFormSubmissionData.size());
 
-            if(!eligibleCoupleRegisters.isEmpty() && !ifaFormSubmissionData.isEmpty()){
-                int percentage = (ifaFormSubmissionData.size()/eligibleCoupleRegisters.size())*100;
-                logger.info("percentage :"+percentage);
+            if (!eligibleCoupleRegisters.isEmpty() && !ifaFormSubmissionData.isEmpty()) {
 
-                if(percentage>=70){
-                    if(stateId.equals(StateCode.AM.getStateCode())){
-                        addIFAIncentive(ifaFormSubmissionData.get(ifaFormSubmissionData.size()-1),incentiveActivityAM,userId,userName);
+                int percentage = (int) (((double) ifaFormSubmissionData.size()
+                        / eligibleCoupleRegisters.size()) * 100);
 
+                logger.info("IFA Count : {}", ifaFormSubmissionData.size());
+                logger.info("Eligible Couple Count : {}", eligibleCoupleRegisters.size());
+                logger.info("Percentage : {}", percentage);
+
+                if (percentage >= 70) {
+
+                    if (stateId.equals(StateCode.AM.getStateCode())) {
+                        addIFAIncentive(
+                                ifaFormSubmissionData.get(ifaFormSubmissionData.size() - 1),
+                                incentiveActivityAM,
+                                userId,
+                                userName);
                     }
-                    if(stateId.equals(StateCode.CG.getStateCode())){
-                        addIFAIncentive(ifaFormSubmissionData.get(ifaFormSubmissionData.size()-1),incentiveActivityCG,userId,userName);
 
+                    if (stateId.equals(StateCode.CG.getStateCode())) {
+                        addIFAIncentive(
+                                ifaFormSubmissionData.get(ifaFormSubmissionData.size() - 1),
+                                incentiveActivityCG,
+                                userId,
+                                userName);
                     }
                 }
             }
