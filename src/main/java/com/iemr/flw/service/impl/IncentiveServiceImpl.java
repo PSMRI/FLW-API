@@ -718,6 +718,8 @@ public class IncentiveServiceImpl implements IncentiveService {
         if(userName!=null){
             List<EligibleCoupleRegister>  eligibleCoupleRegisters = eligibleCoupleRegisterRepo.findByCreatedBy(userName);
             List<IFAFormSubmissionData> ifaFormSubmissionData = ifaFormSubmissionRepository.findByUserId(userId);
+            logger.info("eligibleCoupleRegisters :"+eligibleCoupleRegisters.size());
+            logger.info("ifaFormSubmissionData :"+ifaFormSubmissionData.size());
 
             if(!eligibleCoupleRegisters.isEmpty() && !ifaFormSubmissionData.isEmpty()){
                 Integer percentage = (ifaFormSubmissionData.size()/eligibleCoupleRegisters.size())*100;
