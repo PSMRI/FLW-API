@@ -722,7 +722,9 @@ public class IncentiveServiceImpl implements IncentiveService {
             logger.info("ifaFormSubmissionData :"+ifaFormSubmissionData.size());
 
             if(!eligibleCoupleRegisters.isEmpty() && !ifaFormSubmissionData.isEmpty()){
-                Integer percentage = (ifaFormSubmissionData.size()/eligibleCoupleRegisters.size())*100;
+                int percentage = (ifaFormSubmissionData.size()/eligibleCoupleRegisters.size())*100;
+                logger.info("percentage :"+percentage);
+
                 if(percentage>=70){
                     if(stateId.equals(StateCode.AM.getStateCode())){
                         addIFAIncentive(ifaFormSubmissionData.get(ifaFormSubmissionData.size()-1),incentiveActivityAM,userId,userName);
@@ -746,6 +748,7 @@ public class IncentiveServiceImpl implements IncentiveService {
         LocalDate ifaVisitDate = LocalDate.parse(ifaFormSubmissionData.getVisitDate(), formatter);
 
         Timestamp ifaVisitDateTimestamp = Timestamp.valueOf(ifaVisitDate.atStartOfDay());
+        logger.info("IFA incentive");
 
         IncentiveActivityRecord incentiveActivityRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(incentiveActivityAM.getId(),ifaVisitDateTimestamp,ifaFormSubmissionData.getBeneficiaryId());
         if(incentiveActivityRecord==null){
@@ -761,6 +764,8 @@ public class IncentiveServiceImpl implements IncentiveService {
             incentiveActivityRecord.setAshaId(userId);
             incentiveActivityRecord.setAmount(Long.valueOf(incentiveActivityAM.getRate()));
             recordRepo.save(incentiveActivityRecord);
+            logger.info("saved IFA incentive");
+
         }
     }
 
