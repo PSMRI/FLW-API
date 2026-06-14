@@ -29,6 +29,7 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -64,6 +65,12 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private EligibleCoupleRegisterRepo eligibleCoupleRegisterRepo;
+
+    @Autowired
+    private IFAFormSubmissionRepository ifaFormSubmissionRepository;
 
 
     // ================= MASTER SAVE =================
@@ -190,7 +197,7 @@ public class IncentiveServiceImpl implements IncentiveService {
         }
 
         try {
-
+            addIncentiveForIronTablets(request.getAshaId());
             incentiveOfNcdReferal(request.getAshaId(), request.getVillageID());
 
         } catch (Exception e) {
@@ -702,4 +709,57 @@ public class IncentiveServiceImpl implements IncentiveService {
         }
 
     }
+    private void  addIncentiveForIronTablets(Integer userId){
+        IncentiveActivity incentiveActivityAM= incentivesRepo.findIncentiveMasterByNameAndGroup("NATIONAL_IRON_PLUS", GroupName.CHILD_HEALTH.getDisplayName());
+        IncentiveActivity incentiveActivityCG =  incentivesRepo.findIncentiveMasterByNameAndGroup("NATIONAL_IRON_PLUS", GroupName.ACTIVITY.getDisplayName());
+
+        String  userName = userService.getUserDetail(userId).getUserName();
+        Integer  stateId = userService.getUserDetail(userId).getStateId();
+        if(userName!=null){
+            List<EligibleCoupleRegister>  eligibleCoupleRegisters = eligibleCoupleRegisterRepo.findByCreatedBy(userName);
+            List<IFAFormSubmissionData> ifaFormSubmissionData = ifaFormSubmissionRepository.findByUserId(userId);
+
+            if(!eligibleCoupleRegisters.isEmpty() && !ifaFormSubmissionData.isEmpty()){
+                Integer percentage = (ifaFormSubmissionData.size()/eligibleCoupleRegisters.size())*100;
+                if(percentage>70){
+                    if(stateId.equals(StateCode.AM.getStateCode())){
+                        addIFAIncentive(ifaFormSubmissionData.get(ifaFormSubmissionData.size()-1),incentiveActivityAM,userId,userName);
+
+                    }
+                    if(stateId.equals(StateCode.CG.getStateCode())){
+                        addIFAIncentive(ifaFormSubmissionData.get(ifaFormSubmissionData.size()-1),incentiveActivityCG,userId,userName);
+
+                    }
+                }
+            }
+
+        }
+
+
+    }
+
+    private void addIFAIncentive(IFAFormSubmissionData ifaFormSubmissionData, IncentiveActivity incentiveActivityAM,Integer userId,String userName) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        LocalDate ifaVisitDate = LocalDate.parse(ifaFormSubmissionData.getVisitDate(), formatter);
+
+        Timestamp ifaVisitDateTimestamp = Timestamp.valueOf(ifaVisitDate.atStartOfDay());
+
+        IncentiveActivityRecord incentiveActivityRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(incentiveActivityAM.getId(),ifaVisitDateTimestamp,ifaFormSubmissionData.getBeneficiaryId());
+        if(incentiveActivityRecord==null){
+            incentiveActivityRecord = new IncentiveActivityRecord();
+            incentiveActivityRecord.setActivityId(ifaFormSubmissionData.getId());
+            incentiveActivityRecord.setCreatedDate(ifaVisitDateTimestamp);
+            incentiveActivityRecord.setStartDate(ifaVisitDateTimestamp);
+            incentiveActivityRecord.setEndDate(ifaVisitDateTimestamp);
+            incentiveActivityRecord.setUpdatedDate(ifaVisitDateTimestamp);
+            incentiveActivityRecord.setUpdatedBy(ifaFormSubmissionData.getUserName());
+            incentiveActivityRecord.setCreatedBy(ifaFormSubmissionData.getUserName());
+            incentiveActivityRecord.setBenId(ifaFormSubmissionData.getBeneficiaryId());
+            incentiveActivityRecord.setAshaId(userId);
+            incentiveActivityRecord.setAmount(Long.valueOf(incentiveActivityAM.getRate()));
+            recordRepo.save(incentiveActivityRecord);
+        }
+    }
+
 }
