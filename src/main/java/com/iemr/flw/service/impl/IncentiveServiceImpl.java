@@ -750,7 +750,7 @@ public class IncentiveServiceImpl implements IncentiveService {
         IncentiveActivityRecord incentiveActivityRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(incentiveActivityAM.getId(),ifaVisitDateTimestamp,ifaFormSubmissionData.getBeneficiaryId());
         if(incentiveActivityRecord==null){
             incentiveActivityRecord = new IncentiveActivityRecord();
-            incentiveActivityRecord.setActivityId(ifaFormSubmissionData.getId());
+            incentiveActivityRecord.setActivityId(incentiveActivityAM.getId());
             incentiveActivityRecord.setCreatedDate(ifaVisitDateTimestamp);
             incentiveActivityRecord.setStartDate(ifaVisitDateTimestamp);
             incentiveActivityRecord.setEndDate(ifaVisitDateTimestamp);
