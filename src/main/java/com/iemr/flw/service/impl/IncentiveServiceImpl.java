@@ -716,8 +716,17 @@ public class IncentiveServiceImpl implements IncentiveService {
         String  userName = userService.getUserDetail(userId).getUserName();
         Integer  stateId = userService.getUserDetail(userId).getStateId();
         if(userName!=null){
-            List<EligibleCoupleRegister>  eligibleCoupleRegisters = eligibleCoupleRegisterRepo.findByCreatedBy(userName);
-            List<IFAFormSubmissionData> ifaFormSubmissionData = ifaFormSubmissionRepository.findByUserId(userId);
+            LocalDate today = LocalDate.now();
+            String todayDate = LocalDate.now()
+                    .format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+            Timestamp startDate = Timestamp.valueOf(today.atStartOfDay());
+            Timestamp endDate = Timestamp.valueOf(today.plusDays(1).atStartOfDay());
+
+            List<EligibleCoupleRegister> eligibleCoupleRegisters =
+                    eligibleCoupleRegisterRepo.getECRegRecords(
+                            userName, startDate, endDate);
+            List<IFAFormSubmissionData> ifaFormSubmissionData = ifaFormSubmissionRepository.findTodayData(userId,todayDate);
 
             if(!eligibleCoupleRegisters.isEmpty() && !ifaFormSubmissionData.isEmpty()){
                 Integer percentage = (ifaFormSubmissionData.size()/eligibleCoupleRegisters.size())*100;
