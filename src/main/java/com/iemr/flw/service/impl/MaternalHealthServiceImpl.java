@@ -607,10 +607,10 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                 }
 
             }
-            if (ect.getContraceptionMethod() != null && ect.getContraceptionMethod().equals("MiniLap")) {
+            if (ect.getContraceptionMethod() != null && (ect.getContraceptionMethod().equals("MiniLap") || ect.getContraceptionMethod().equals("POST PARTUM STERILIZATION (PPS)"))) {
 
                 IncentiveActivity miniLapActivity =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("FP_MINILAP", GroupName.FAMILY_PLANNING.getDisplayName());
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPS", GroupName.FAMILY_PLANNING.getDisplayName());
                 if (miniLapActivity != null) {
                     addIncenticeRecord(ect, userId, miniLapActivity);
                 }
@@ -633,18 +633,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                 }
 
             }
-            if (ect.getContraceptionMethod() != null && ect.getContraceptionMethod().equals("POST PARTUM STERILIZATION (PPS)")) {
-                if(stateId.equals(StateCode.AM.getStateCode())){
-                    IncentiveActivity ppsActivityAM =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPS", GroupName.FAMILY_PLANNING.getDisplayName());
 
-                    if (ppsActivityAM != null) {
-                        addIncenticeRecord(ect, userId, ppsActivityAM);
-                    }
-                }
-
-
-            }
         }
         // logic for cg
         if(stateId.equals(StateCode.CG.getStateCode())){

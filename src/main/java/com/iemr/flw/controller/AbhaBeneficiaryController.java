@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/abha")
+@RequestMapping("/UserRegistration")
 public class AbhaBeneficiaryController {
     @Autowired
     private AbhaBeneficiaryService abhaBeneficiaryService;
@@ -27,7 +27,7 @@ public class AbhaBeneficiaryController {
 
 
 
-    @RequestMapping(value = "/getBeneficiary",method = RequestMethod.POST)
+    @RequestMapping(value = "/GetUserDetailsByAyushmanCardNo",method = RequestMethod.POST)
     public ResponseEntity<Map<String,Object>> getAllAdolescentHealth(@RequestBody AbhaRequestDTO request ) {
         Map<String,Object> response = new HashMap<>();
         try {

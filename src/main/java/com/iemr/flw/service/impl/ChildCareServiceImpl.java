@@ -456,7 +456,7 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     @Override
-    public String saveSamDetails(List<SamDTO> samRequest,Integer userId,String userName) {
+    public String saveSamDetails(List<SamDTO> samRequest, Integer userId, String userName) {
         try {
             List<SamVisit> vaccinationList = new ArrayList<>();
 
@@ -509,7 +509,7 @@ public class ChildCareServiceImpl implements ChildCareService {
             samVisitRepository.saveAll(vaccinationList);
 
             // ✅ Handle incentive logic
-            checkAndAddSamVisitNRCReferalIncentive(vaccinationList,userId);
+            checkAndAddSamVisitNRCReferalIncentive(vaccinationList, userId);
 
             return "Saved/Updated " + samRequest.size() + " SAM visit records successfully";
         } catch (Exception e) {
@@ -582,7 +582,7 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     @Override
-    public String saveOrsDistributionDetails(List<OrsDistributionDTO> orsDistributionDTOS,Integer userId) {
+    public String saveOrsDistributionDetails(List<OrsDistributionDTO> orsDistributionDTOS, Integer userId) {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
             List<OrsDistribution> orsDistributionList = new ArrayList<>();
@@ -667,9 +667,9 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     @Override
-    public List<IfaDistribution> saveAllIfa(List<IfaDistributionDTO> dtoList,Integer userId) {
+    public List<IfaDistribution> saveAllIfa(List<IfaDistributionDTO> dtoList, Integer userId) {
         List<IfaDistribution> savedList = dtoList.stream()
-                .map(dto ->mapToEntity(dto,userId))
+                .map(dto -> mapToEntity(dto, userId))
                 .map(ifaDistributionRepository::save)
                 .toList();
 
@@ -749,7 +749,7 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     // 🔄 Helper method to convert DTO → Entity
-    private IfaDistribution mapToEntity(IfaDistributionDTO dto,Integer userId) {
+    private IfaDistribution mapToEntity(IfaDistributionDTO dto, Integer userId) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
         IfaDistribution entity = new IfaDistribution();
@@ -778,12 +778,12 @@ public class ChildCareServiceImpl implements ChildCareService {
         return entity;
     }
 
-    private void checkAndAddSamVisitNRCReferalIncentive(List<SamVisit> samVisits,Integer userId) {
+    private void checkAndAddSamVisitNRCReferalIncentive(List<SamVisit> samVisits, Integer userId) {
         samVisits.forEach(samVisit -> {
             IncentiveActivity samreferralnrcActivityAm =
                     incentivesRepo.findIncentiveMasterByNameAndGroup("SAM_REFERRAL_NRC", GroupName.CHILD_HEALTH.getDisplayName());
             IncentiveActivity samreferralnrcActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("SAM_REFERRAL_NRC", GroupName.ACTIVITY.getDisplayName());
-            if(userService.getUserDetail(userId).getStateId().equals(StateCode.AM.getStateCode())) {
+            if (userService.getUserDetail(userId).getStateId().equals(StateCode.AM.getStateCode())) {
 
                 if (samreferralnrcActivityAm != null) {
                     if (samVisit.getIsChildReferredNrc().equals("Yes")) {
@@ -792,16 +792,13 @@ public class ChildCareServiceImpl implements ChildCareService {
                 }
             }
 
-            if(userService.getUserDetail(userId).getStateId().equals(StateCode.CG.getStateCode())){
+            if (userService.getUserDetail(userId).getStateId().equals(StateCode.CG.getStateCode())) {
                 if (samreferralnrcActivityCH != null) {
                     if (samVisit.getIsChildReferredNrc().equals("Yes")) {
                         createIncentiveRecordforSamReferalToNrc(samVisit, samVisit.getBeneficiaryId(), samreferralnrcActivityCH, samVisit.getCreatedBy());
                     }
                 }
             }
-
-
-
 
 
         });
@@ -877,16 +874,16 @@ public class ChildCareServiceImpl implements ChildCareService {
 
                 }
                 if (hbncVisit.getVisit_day().equals("42th Day")) {
-                    if(!ancVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).isEmpty()){
-                        if(ancVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).get(0).getIsHrpConfirmed()){
+                    if (!ancVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).isEmpty()) {
+                        if (ancVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).get(0).getIsHrpConfirmed()) {
                             IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_HEALTH_CHECK", GroupName.ACTIVITY.getDisplayName());
 
                             createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HIGH_RISK_POSTPARTUM_HEALTH_CHECK");
 
                         }
                     }
-                    if(!pncVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).isEmpty()){
-                        if(!pncVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).get(0).getMotherDangerSign().isEmpty()){
+                    if (!pncVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).isEmpty()) {
+                        if (!pncVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).get(0).getMotherDangerSign().isEmpty()) {
                             IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
 
                             createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HIGH_RISK_POSTPARTUM_CARE");
@@ -915,22 +912,24 @@ public class ChildCareServiceImpl implements ChildCareService {
 
             if (stateCode.equals(StateCode.CG.getStateCode())) {
                 if (hbncVisit.getVisit_day().equals("42th Day")) {
-                    if(!ancVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).isEmpty()){
-                        if(ancVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).get(0).getIsHrpConfirmed()){
+                    if (!ancVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).isEmpty()) {
+                        if (ancVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).get(0).getIsHrpConfirmed() && pncVisitRepo.findByBenId(hbncVisit
+                                .getBeneficiaryId()).get(0).getPncPeriod().toString().equals("42")) {
                             IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_HEALTH_CHECK", GroupName.ACTIVITY.getDisplayName());
 
                             createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HIGH_RISK_POSTPARTUM_HEALTH_CHECK");
 
                         }
                     }
-                     if(!pncVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).isEmpty()){
-                         if(!pncVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).get(0).getMotherDangerSign().isEmpty()){
-                             IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
+                    if (!pncVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).isEmpty()) {
+                        if (!pncVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).get(0).getMotherDangerSign().isEmpty() && pncVisitRepo.findByBenId(hbncVisit
+                                .getBeneficiaryId()).get(0).getPncPeriod().toString().equals("42")) {
+                            IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
 
-                             createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HIGH_RISK_POSTPARTUM_CARE");
+                            createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HIGH_RISK_POSTPARTUM_CARE");
 
-                         }
-                     }
+                        }
+                    }
 
                 }
             }

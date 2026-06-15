@@ -6,6 +6,7 @@ import com.iemr.flw.dto.iemr.AbhaRequestDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.service.AbhaBeneficiaryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -18,12 +19,17 @@ import java.util.Map;
 @Service
 public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
 
-
-
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
 
-    String url = "https://govthealth.cg.gov.in/sna/dkbssyapipool/api/UserRgistration/GetUserDetailsByAyushmanCardNo";
+    @Value("${govthealth.user.details.url}")
+     private String getUserDetailsUrl;
+
+    @Value("${govthealth.user.id}")
+    private String govthealthUserId;
+
+    @Value("${govthealth.password}")
+    private String govthealthPassword;
 
     @Override
     public Object getBeneficiaryByAbha(AbhaRequestDTO request) {
@@ -76,8 +82,8 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
         RestTemplate restTemplate = new RestTemplate();
 
         Map<String, Object> body = new HashMap<>();
-        body.put("userId", "*");
-        body.put("password", "*");
+        body.put("userId",govthealthUserId);
+        body.put("password", govthealthPassword);
         body.put("cardNo", requestId);
 
         HttpHeaders headers = new HttpHeaders();
@@ -86,7 +92,7 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
         HttpEntity<?> request = new HttpEntity<>(body, headers);
 
         ResponseEntity<AbhaApiResponse> response = restTemplate.exchange(
-                url,
+                getUserDetailsUrl,
                 HttpMethod.POST,
                 request,
                 AbhaApiResponse.class

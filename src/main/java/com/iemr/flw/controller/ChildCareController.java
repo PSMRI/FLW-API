@@ -10,6 +10,7 @@ import com.iemr.flw.domain.iemr.SamVisitResponseDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.ChildCareService;
+import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.response.OutputResponse;
 
@@ -38,6 +39,9 @@ public class ChildCareController {
 
     @Autowired
     private ChildCareService childCareService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -249,7 +253,7 @@ public class ChildCareController {
 
             if(token!=null){
                 Integer userId = jwtUtil.extractUserId(token);
-                String userName = jwtUtil.extractUsername(token);
+                String userName = userService.getUserDetail(userId).getUserName();
                 String responseObject = childCareService.saveSamDetails(samRequest,userId,userName);
 
                 if (responseObject != null) {
