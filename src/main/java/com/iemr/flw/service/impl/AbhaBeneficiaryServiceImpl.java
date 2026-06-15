@@ -29,14 +29,14 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
 
-    @Value("${govthealth.user.details.url}")
-     private String getUserDetailsUrl;
-
-    @Value("${govthealth.user.id}")
-    private String govthealthUserId;
-
-    @Value("${govthealth.password}")
-    private String govthealthPassword;
+//    @Value("${govthealth.user.details.url}")
+//     private String getUserDetailsUrl;
+//
+//    @Value("${govthealth.user.id}")
+//    private String govthealthUserId;
+//
+//    @Value("${govthealth.password}")
+//    private String govthealthPassword;
 
     @Override
     public Object getBeneficiaryByAbha(AbhaRequestDTO request) {
@@ -124,8 +124,8 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
         RestTemplate restTemplate = new RestTemplate();
 
         Map<String, Object> body = new HashMap<>();
-        body.put("userId",govthealthUserId);
-        body.put("password", govthealthPassword);
+        body.put("userId","govthealthUserId");
+        body.put("password", "govthealthPassword");
         body.put("cardNo", requestId);
 
         HttpHeaders headers = new HttpHeaders();
@@ -134,7 +134,7 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
         HttpEntity<?> request = new HttpEntity<>(body, headers);
 
         ResponseEntity<AbhaApiResponse> response = restTemplate.exchange(
-                getUserDetailsUrl,
+                "getUserDetailsUrl",
                 HttpMethod.POST,
                 request,
                 AbhaApiResponse.class
