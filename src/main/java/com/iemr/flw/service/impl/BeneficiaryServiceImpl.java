@@ -23,6 +23,7 @@ import com.iemr.flw.dto.iemr.EyeCheckupRequestDTO;
 import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.IncentiveLogicService;
+import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +96,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     private JwtUtil jwtUtil;
 
     @Autowired
-    private UserServiceRoleRepo userRepo;
+    private UserService userService;
 
     @Autowired
     private IncentiveLogicService incentiveLogicService;
@@ -606,7 +607,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     public List<EyeCheckupRequestDTO> getEyeCheckUpVisit(GetBenRequestHandler request,String token) {
         String createdBy = null;
         try {
-            createdBy = userRepo.getUserNamedByUserId(jwtUtil.extractUserId(token));
+            createdBy = userService.getUserDetail(jwtUtil.extractUserId(token)).getUserName();
         } catch (Exception e) {
             logger.error("Error extracting userId from token: " + e.getMessage());
         }

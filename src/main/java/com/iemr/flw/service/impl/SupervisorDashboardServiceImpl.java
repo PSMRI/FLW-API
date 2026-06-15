@@ -15,6 +15,7 @@ import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
 import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
 import com.iemr.flw.masterEnum.IncentiveApprovalStatus;
 import com.iemr.flw.repo.iemr.*;
+import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -47,7 +48,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
     private JwtUtil jwtUtil;
 
     @Autowired
-    private UserServiceRoleRepo userServiceRoleRepo;
+    private UserService userService;
 
     @Override
     public String getSupervisorDashboard(Integer supervisorUserID, Integer month, Integer year) {
@@ -261,8 +262,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             List<Object[]> countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
             Long totalAmount = null;
-            if (userServiceRoleRepo.getUserNamedByUserId(ashaId) != null) {
-                Integer stateCode = userServiceRoleRepo.getUserRole(ashaId).get(0).getStateId();
+            if (userService.getUserDetail(ashaId) != null) {
+                Integer stateCode = userService.getUserDetail(ashaId).getStateId();
                 totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
                         ashaId, startDate, endDate, approvalStatusID, stateCode);
 
@@ -283,15 +284,15 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 activity.put("approvalDate", record.getApprovalDate());
                 activity.put("approvalStatus", record.getApprovalStatus());
                 if(record.getVerifiedByUserId()!=null){
-                    activity.put("verifiedByUserName", userServiceRoleRepo.getUserRole(record.getVerifiedByUserId()).get(0).getName());
+                    activity.put("verifiedByUserName", userService.getUserDetail(record.getVerifiedByUserId()).getName());
 
                 }
                 activity.put("verifiedByUserId", record.getVerifiedByUserId());
                 activity.put("isClaimed", record.getIsClaimed());
                 activity.put("claimedDate", record.getCalimedDate());
 
-                List<UserServiceRoleDTO> roles = userServiceRoleRepo.getUserRole(record.getVerifiedByUserId());
-                activity.put("role", (roles != null && !roles.isEmpty()) ? roles.get(0).getRoleName() : null);
+                UserServiceRoleDTO roles = userService.getUserDetail(record.getVerifiedByUserId());
+                activity.put("role", (roles != null ) ? roles.getRoleName() : null);
 
                 activityList.add(activity);
             }
@@ -383,7 +384,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             Integer ashaSupervisorUserId = jwtUtil.extractUserId(token);
             logger.info("Asha Supervisor User Id : {}", ashaSupervisorUserId);
-            String ashaSupervisorUsername = userServiceRoleRepo.getUserNamedByUserId(ashaSupervisorUserId);
+            String ashaSupervisorUsername = userService.getUserDetail(ashaSupervisorUserId).getUserName();
 
             if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
                 int totalUpdated = 0;
