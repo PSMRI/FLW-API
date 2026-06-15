@@ -19,7 +19,7 @@ public interface ANCVisitRepo extends JpaRepository<ANCVisit, Long> {
 
 
     @Query
-    ANCVisit findANCVisitByBenIdAndAncVisitAndIsActive(Long benId, Integer ancVisit, boolean b);
+    List<ANCVisit> findANCVisitByBenIdAndAncVisitAndIsActive(Long benId, Integer ancVisit, boolean b);
 
     List<ANCVisit> findByBenId(Long benId);
 

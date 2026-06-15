@@ -163,9 +163,12 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
                 logger.info("Processing Beneficiary Id: {} ANC Visit: {}", it.getBenId(), it.getAncVisit());
 
-                ANCVisit ancVisit =
+                List<ANCVisit> ancVisitList =
                         ancVisitRepo.findANCVisitByBenIdAndAncVisitAndIsActive(it.getBenId(), it.getAncVisit(), true);
-
+                ANCVisit ancVisit = new ANCVisit();
+                if(!ancVisitList.isEmpty()){
+                    ancVisit = ancVisitList.get(0);
+                }
                 logger.info("ANC visit fetch completed");
 
                 if (ancVisit != null) {
