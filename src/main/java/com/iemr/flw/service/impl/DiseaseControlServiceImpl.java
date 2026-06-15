@@ -1142,15 +1142,26 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     private void checkAndAddIncentives(ScreeningMalaria diseaseScreening) {
         Integer stateId = userService.getUserDetail(diseaseScreening.getUserId()).getStateId();
         IncentiveActivity diseaseScreeningActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_MALARIA_TREATMENT", GroupName.UMBRELLA_PROGRAMMES.getDisplayName());
+        IncentiveActivity diseaseScreeningActivityCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_MALARIA_TREATMENT", GroupName.ACTIVITY.getDisplayName());
         IncentiveActivity incentiveActivityForCollectSlideAM = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_SLIDE_COLLECTION", GroupName.UMBRELLA_PROGRAMMES.getDisplayName());
         IncentiveActivity incentiveActivityForCollectSlideCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_SLIDE_COLLECTION", GroupName.ACTIVITY.getDisplayName());
 
         if (diseaseScreeningActivity != null) {
-            if (Objects.equals(diseaseScreening.getCaseStatus(), "Confirmed")) {
-                addIncentive(diseaseScreeningActivity, diseaseScreening);
+            if(stateId.equals(StateCode.AM.getStateCode())){
+                if (Objects.equals(diseaseScreening.getCaseStatus(), "Confirmed")) {
+                    addIncentive(diseaseScreeningActivity, diseaseScreening);
 
+                }
             }
+            if(stateId.equals(StateCode.CG.getStateCode())){
+                if (Objects.equals(diseaseScreening.getCaseStatus(), "Confirmed")) {
+                    addIncentive(diseaseScreeningActivityCG, diseaseScreening);
+
+                }
+            }
+
         }
+
         if (diseaseScreening.getCaseStatus().equals("Suspected")) {
             if (diseaseScreening.getMalariaSlideTestType().equals("Slide Test") || diseaseScreening.getMalariaSlideTestType().equals("2")) {
                 if (stateId.equals(StateCode.AM.getStateCode())) {
@@ -1181,7 +1192,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 .findRecordByActivityIdCreatedDateBenId(
                         diseaseScreeningActivity.getId(),
                         visitTimestamp,
-                        diseaseScreening.getBeneficiaryId().longValue());
+                        diseaseScreening.getHouseHoldId().longValue());
 
         if (record == null) {
 
@@ -1194,7 +1205,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             record.setEndDate(visitTimestamp);
             record.setUpdatedDate(visitTimestamp);
             record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
-            record.setBenId(diseaseScreening.getBeneficiaryId().longValue());
+            record.setBenId(diseaseScreening.getHouseHoldId().longValue());
             record.setAshaId(diseaseScreening.getUserId());
             record.setAmount(Long.valueOf(diseaseScreeningActivity.getRate()));
             record.setIsEligible(true);
@@ -1275,7 +1286,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     private void checkIncentive(ChronicDiseaseVisitEntity chronicDiseaseVisitEntity, Integer ashaId) {
         String userName = userRepo.getUserNamedByUserId(ashaId);
+        Integer stateId = userService.getUserDetail(ashaId).getStateId();
         IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.NCD.getDisplayName());
+        IncentiveActivity incentiveActivityCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.ACTIVITY.getDisplayName());
         logger.info("incentiveActivity:" + incentiveActivity.getId());
         if (incentiveActivity != null) {
             if (chronicDiseaseVisitEntity.getFollowUpNo() != null
@@ -1297,17 +1310,28 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                         .anyMatch(targetDiseases::contains);
 
                 if (matchFound && Integer.valueOf(6).equals(chronicDiseaseVisitEntity.getFollowUpNo())) {
-                    LocalDateTime localDateTime = chronicDiseaseVisitEntity.getCreatedDate();
+                    LocalDateTime localDateTime = chronicDiseaseVisitEntity.getFollowUpDate().atStartOfDay();
 
                     Timestamp followUpTimestamp = Timestamp.valueOf(localDateTime);
+                    if(stateId.equals(StateCode.AM.getStateCode())){
+                        addNCDFolloupIncentiveRecord(
+                                incentiveActivity,
+                                ashaId,
+                                chronicDiseaseVisitEntity.getBenId(),
+                                followUpTimestamp,
+                                userName
+                        );
+                    }
+                    if(stateId.equals(StateCode.CG.getStateCode())){
+                        addNCDFolloupIncentiveRecord(
+                                incentiveActivityCG,
+                                ashaId,
+                                chronicDiseaseVisitEntity.getBenId(),
+                                followUpTimestamp,
+                                userName
+                        );
+                    }
 
-                    addNCDFolloupIncentiveRecord(
-                            incentiveActivity,
-                            ashaId,
-                            chronicDiseaseVisitEntity.getBenId(),
-                            followUpTimestamp,
-                            userName
-                    );
                 }
             }
         }

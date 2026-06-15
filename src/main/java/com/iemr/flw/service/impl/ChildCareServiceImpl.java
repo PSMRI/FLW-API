@@ -677,12 +677,15 @@ public class ChildCareServiceImpl implements ChildCareService {
         savedList.forEach(data -> {
             Timestamp visitTimestamp =
                     Timestamp.valueOf(data.getIfaProvisionDate().atStartOfDay());
-            incentiveLogicService.incentiveForGiveingIFA(
-                    data.getBeneficiaryId(),
-                    visitTimestamp,
-                    visitTimestamp,
-                    data.getUserId()
-            );
+            if(data.getIfaBottleCount().equals("10.0")){
+                incentiveLogicService.incentiveForGiveingIFA(
+                        data.getBeneficiaryId(),
+                        visitTimestamp,
+                        visitTimestamp,
+                        data.getUserId()
+                );
+            }
+
         });
 
         return savedList;
@@ -691,8 +694,34 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     @Override
     public List<IfaDistributionDTO> getByBeneficiaryId(GetBenRequestHandler requestHandler) {
-        return ifaDistributionRepository.findByUserId(requestHandler.getAshaId()).stream()
-                .map(this::mapToDTO)
+
+        return ifaDistributionRepository.findByUserId(requestHandler.getAshaId())
+                .stream()
+                .map(data -> {
+
+                    try {
+                        if ("10.0".equals(data.getIfaBottleCount())) {
+
+                            Timestamp visitTimestamp =
+                                    Timestamp.valueOf(data.getIfaProvisionDate().atStartOfDay());
+
+                            incentiveLogicService.incentiveForGiveingIFA(
+                                    data.getBeneficiaryId(),
+                                    visitTimestamp,
+                                    visitTimestamp,
+                                    data.getUserId()
+                            );
+                        }
+                    } catch (Exception e) {
+                        logger.error(
+                                "Error while processing IFA incentive for beneficiaryId: {}",
+                                data.getBeneficiaryId(),
+                                e
+                        );
+                    }
+
+                    return mapToDTO(data);
+                })
                 .toList();
     }
 
