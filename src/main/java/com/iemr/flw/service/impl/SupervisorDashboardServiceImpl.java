@@ -382,6 +382,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
 
             Integer ashaSupervisorUserId = jwtUtil.extractUserId(token);
+            logger.info("Asha Supervisor User Id : {}", ashaSupervisorUserId);
             String ashaSupervisorUsername = userServiceRoleRepo.getUserNamedByUserId(ashaSupervisorUserId);
 
             if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
