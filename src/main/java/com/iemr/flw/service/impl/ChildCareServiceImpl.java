@@ -88,6 +88,11 @@ public class ChildCareServiceImpl implements ChildCareService {
     @Autowired
     private IncentiveLogicService incentiveLogicService;
 
+    @Autowired
+    private ANCVisitRepo ancVisitRepo;
+    @Autowired
+    private PNCVisitRepo pncVisitRepo;
+
 
     @Override
     public String registerHBYC(List<HbycRequestDTO> hbycDTOs) {
@@ -261,7 +266,10 @@ public class ChildCareServiceImpl implements ChildCareService {
 
                 responseDTO.setFields(fields);
                 result.add(responseDTO);
+
             }
+            checkAndAddHbncIncentives(hbncVisits, dto.getAshaId());
+
 
         } catch (Exception e) {
             logger.error("Error in getHBNCDetails: ", e);
@@ -831,13 +839,31 @@ public class ChildCareServiceImpl implements ChildCareService {
     private void checkAndAddHbncIncentives(List<HbncVisit> hbncVisits, Integer userId) {
         Integer stateCode = userService.getUserDetail(userId).getStateId();
         hbncVisits.forEach(hbncVisit -> {
-            GroupName.setIsCh(false);
             Long benId = hbncVisit.getBeneficiaryId();
-            if (stateCode.equals(StateCode.AM)) {
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
                 if (hbncVisit.getVisit_day().equals("42nd Day")) {
                     IncentiveActivity visitActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.CHILD_HEALTH.getDisplayName());
 
                     createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityAM, "HBNC_0_42_DAYS");
+
+                }
+                if (hbncVisit.getVisit_day().equals("42th Day")) {
+                    if(!ancVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).isEmpty()){
+                        if(ancVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).get(0).getIsHrpConfirmed()){
+                            IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_HEALTH_CHECK", GroupName.ACTIVITY.getDisplayName());
+
+                            createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HIGH_RISK_POSTPARTUM_HEALTH_CHECK");
+
+                        }
+                    }
+                    if(!pncVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).isEmpty()){
+                        if(!pncVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).get(0).getMotherDangerSign().isEmpty()){
+                            IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
+
+                            createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HIGH_RISK_POSTPARTUM_CARE");
+
+                        }
+                    }
 
                 }
                 logger.info("getDischarged_from_sncu" + hbncVisit.getDischarged_from_sncu());
@@ -859,10 +885,23 @@ public class ChildCareServiceImpl implements ChildCareService {
             }
 
             if (stateCode.equals(StateCode.CG.getStateCode())) {
-                if (hbncVisit.getVisit_day().equals("7th Day")) {
-                    IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
+                if (hbncVisit.getVisit_day().equals("42th Day")) {
+                    if(!ancVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).isEmpty()){
+                        if(ancVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).get(0).getIsHrpConfirmed()){
+                            IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_HEALTH_CHECK", GroupName.ACTIVITY.getDisplayName());
 
-                    createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HIGH_RISK_POSTPARTUM_CARE");
+                            createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HIGH_RISK_POSTPARTUM_HEALTH_CHECK");
+
+                        }
+                    }
+                     if(!pncVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).isEmpty()){
+                         if(!pncVisitRepo.findByBenId(hbncVisit.getBeneficiaryId()).get(0).getMotherDangerSign().isEmpty()){
+                             IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
+
+                             createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HIGH_RISK_POSTPARTUM_CARE");
+
+                         }
+                     }
 
                 }
             }
