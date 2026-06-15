@@ -16,6 +16,6 @@ public interface PregnantWomanRegisterRepo extends JpaRepository<PregnantWomanRe
     List<PregnantWomanRegister> getPWRWithBen(@Param("userId") String userId,
                                               @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
-    List<PregnantWomanRegister> findPregnantWomanRegisterByBenIdAndIsActive(Long benId, Boolean isActive);
+    PregnantWomanRegister findPregnantWomanRegisterByBenIdAndIsActive(Long benId, Boolean isActive);
 
 }

@@ -96,19 +96,19 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         try {
             List<PregnantWomanRegister> pwrList = new ArrayList<>();
             pregnantWomanDTOs.forEach(it -> {
-                List<PregnantWomanRegister> pwr =
+                PregnantWomanRegister pwr =
                         pregnantWomanRegisterRepo.findPregnantWomanRegisterByBenIdAndIsActive(it.getBenId(), true);
 
-                if (pwr != null && !pwr.isEmpty()) {
-                    Long id = pwr.get(0).getId();
+                if (pwr != null) {
+                    Long id = pwr.getId();
                     modelMapper.map(it, pwr);
-                    pwr.get(0).setId(id);
+                    pwr.setId(id);
                 } else {
-                    pwr = new ArrayList<>();
+                    pwr = new PregnantWomanRegister();
                     modelMapper.map(it, pwr);
-                    pwr.get(0).setId(null);
+                    pwr.setId(null);
                 }
-                pwrList.add(pwr.get(0));
+                pwrList.add(pwr);
             });
             pregnantWomanRegisterRepo.saveAll(pwrList);
 
@@ -192,7 +192,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     logger.info("Beneficiary Reg Id fetched: {}", benRegId);
 
                     // Saving data in BenVisitDetails table
-                    List<PregnantWomanRegister> pwr = pregnantWomanRegisterRepo
+                    PregnantWomanRegister pwr = pregnantWomanRegisterRepo
                             .findPregnantWomanRegisterByBenIdAndIsActive(it.getBenId(), true);
 
                     logger.info("PregnantWomanRegister fetched");
@@ -222,14 +222,14 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     ancCare.setBenVisitId(benVisitDetail.getBenVisitId());
                     ancCare.setBeneficiaryRegId(benRegId);
 
-                    if (pwr != null && !pwr.isEmpty()) {
+                    if (pwr != null) {
 
                         logger.info("LMP found calculating EDD");
 
-                        ancCare.setLastMenstrualPeriodLmp(pwr.get(0).getLmpDate());
+                        ancCare.setLastMenstrualPeriodLmp(pwr.getLmpDate());
 
                         Calendar cal = Calendar.getInstance();
-                        cal.setTime(pwr.get(0).getLmpDate());
+                        cal.setTime(pwr.getLmpDate());
                         cal.add(Calendar.DAY_OF_WEEK, 280);
 
                         ancCare.setExpectedDateofDelivery(new Timestamp(cal.getTime().getTime()));
