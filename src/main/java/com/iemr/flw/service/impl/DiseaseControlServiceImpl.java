@@ -1163,7 +1163,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         }
 
         if (diseaseScreening.getCaseStatus().equals("Suspected")) {
-            if (diseaseScreening.getMalariaSlideTestType().equals("Slide Test") || diseaseScreening.getMalariaSlideTestType().equals("2")) {
+            if (!diseaseScreening.getMalariaSlideTestType().isEmpty()) {
                 if (stateId.equals(StateCode.AM.getStateCode())) {
                     if (incentiveActivityForCollectSlideAM != null) {
                         addIncentive(incentiveActivityForCollectSlideAM, diseaseScreening);
