@@ -1163,7 +1163,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         }
 
         if (diseaseScreening.getCaseStatus().equals("Suspected")) {
-            if (!diseaseScreening.getMalariaSlideTestType().isEmpty()) {
+            if (!diseaseScreening.getMalariaTestType().isEmpty()) {
                 if (stateId.equals(StateCode.AM.getStateCode())) {
                     if (incentiveActivityForCollectSlideAM != null) {
                         addIncentive(incentiveActivityForCollectSlideAM, diseaseScreening);
@@ -1216,25 +1216,32 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
 
     private void addIncentive(IncentiveActivity diseaseScreeningActivity, ScreeningMalaria diseaseScreening) {
-        IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(diseaseScreeningActivity.getId(), Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()), diseaseScreening.getBenId().longValue());
-        if (record == null) {
-            record = new IncentiveActivityRecord();
-            record.setActivityId(diseaseScreeningActivity.getId());
-            record.setCreatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-            record.setCreatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
-            record.setStartDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-            record.setEndDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-            record.setUpdatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-            record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
-            record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
-            record.setBenId(diseaseScreening.getBenId().longValue());
-            record.setAshaId(diseaseScreening.getUserId());
-            record.setAmount(Long.valueOf(diseaseScreeningActivity.getRate()));
-            record.setIsEligible(true);
-            recordRepo.save(record);
+        try {
+            IncentiveActivityRecord record = recordRepo
+                    .findRecordByActivityIdCreatedDateBenId(diseaseScreeningActivity.getId(), Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()), diseaseScreening.getBenId().longValue());
+            if (record == null) {
+                record = new IncentiveActivityRecord();
+                record.setActivityId(diseaseScreeningActivity.getId());
+                record.setCreatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+                record.setCreatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
+                record.setStartDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+                record.setEndDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+                record.setUpdatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+                record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
+                record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
+                record.setBenId(diseaseScreening.getBenId().longValue());
+                record.setAshaId(diseaseScreening.getUserId());
+                record.setAmount(Long.valueOf(diseaseScreeningActivity.getRate()));
+                record.setIsEligible(true);
+                recordRepo.save(record);
+                logger.info("Incentive for {}"+diseaseScreeningActivity.getDescription());
+
+            }
+        }catch (Exception e){
+            logger.info("Fail to generate Incentive for {}"+diseaseScreeningActivity.getDescription()+ "Exception"+e.getMessage());
 
         }
+
     }
 
 
