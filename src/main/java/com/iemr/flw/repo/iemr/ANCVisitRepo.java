@@ -26,4 +26,6 @@ public interface ANCVisitRepo extends JpaRepository<ANCVisit, Long> {
 
     List<ANCVisit> findByBenId(Long benId);
 
+    List<ANCVisit> findByBenId(Long benId);
+
 }
