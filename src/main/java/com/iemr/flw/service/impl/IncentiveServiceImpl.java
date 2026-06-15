@@ -181,7 +181,9 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
+
         Integer stateCode = userService.getUserDetail(request.getAshaId()).getStateId();
+        String userName = userService.getUserDetail(request.getAshaId()).getUserName();
         try {
 
             if (stateCode.equals(StateCode.AM.getStateCode())) {
@@ -267,11 +269,11 @@ public class IncentiveServiceImpl implements IncentiveService {
                 }
                 if(entry.getAshaId()!=null){
                     if (entry.getCreatedBy() == null) {
-                        entry.setCreatedBy(userRepo.getUserNamedByUserId(entry.getAshaId()));
+                        entry.setCreatedBy(userName);
                     }
 
                     if (entry.getUpdatedBy() == null) {
-                        entry.setUpdatedBy(userRepo.getUserNamedByUserId(entry.getAshaId()));
+                        entry.setUpdatedBy(userName);
                     }
 
                     if (entry.getIsEligible() == null) {
@@ -537,7 +539,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     private void incentiveOfNcdReferal(Integer ashaId, Integer stateId) {
         try {
-            String userName = userRepo.getUserNamedByUserId(ashaId);
+            String userName = userRepo.getUserNamedByUserId(ashaId).get(0).getUserName();
             String groupName = resolveGroupName(stateId);
 
             Map<String, IncentiveActivity> activityMap =
@@ -621,7 +623,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     private void checkMonthlyAshaIncentive(Integer ashaId) {
         try {
-            String userName = userRepo.getUserNamedByUserId(ashaId);
+            String userName = userRepo.getUserNamedByUserId(ashaId).get(0).getUserName();
 
             IncentiveActivity MOBILEBILLREIMB_ACTIVITY = incentivesRepo.findIncentiveMasterByNameAndGroup("MOBILE_BILL_REIMB", GroupName.OTHER_INCENTIVES.getDisplayName());
             IncentiveActivity ADDITIONAL_ASHA_INCENTIVE = incentivesRepo.findIncentiveMasterByNameAndGroup("ADDITIONAL_ASHA_INCENTIVE", GroupName.ADDITIONAL_INCENTIVE.getDisplayName());
@@ -647,7 +649,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     private void checkMonthlyAshaIncentiveForCg(Integer ashaId) {
         try {
-            String userName = userRepo.getUserNamedByUserId(ashaId);
+            String userName = userRepo.getUserNamedByUserId(ashaId).get(0).getUserName();
 
             IncentiveActivity MONTHLY_HONORARIUM = incentivesRepo.findIncentiveMasterByNameAndGroup("MONTHLY_HONORARIUM", GroupName.ACTIVITY.getDisplayName());
             IncentiveActivity MITANIN_REGISTER_5_INFO_FILL = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER_5_INFO_FILL", GroupName.ACTIVITY.getDisplayName());

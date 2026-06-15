@@ -63,7 +63,7 @@ public class CampaignServiceImpl implements CampaignService {
 
         List<CampaignOrs> campaignOrsRequest = new ArrayList<>();
         Integer userId = jwtUtil.extractUserId(token);
-        String userName = userServiceRoleRepo.getUserNamedByUserId(userId);
+        String userName = userServiceRoleRepo.getUserNamedByUserId(userId).get(0).getUserName();
 
         for (OrsCampaignDTO campaignDTO : orsCampaignDTO) {
             if (campaignDTO.getFields() == null) {
@@ -141,7 +141,7 @@ public class CampaignServiceImpl implements CampaignService {
 
         List<PulsePolioCampaign> campaignPolioRequest = new ArrayList<>();
         Integer userId = jwtUtil.extractUserId(token);
-        String userName = userServiceRoleRepo.getUserNamedByUserId(userId);
+        String userName = userServiceRoleRepo.getUserNamedByUserId(userId).get(0).getUserName();
 
         for (PolioCampaignDTO campaignDTO : polioCampaignDTOs) {
             if (campaignDTO.getFields() == null) {
@@ -213,7 +213,7 @@ public class CampaignServiceImpl implements CampaignService {
 
         List<FilariasisCampaign> campaignPolioRequest = new ArrayList<>();
         Integer userId = jwtUtil.extractUserId(token);
-        String userName = userServiceRoleRepo.getUserNamedByUserId(userId);
+        String userName = userServiceRoleRepo.getUserNamedByUserId(userId).get(0).getUserName();
 
         for (FilariasisCampaignDTO campaignDTO : filariasisCampaignDTOS) {
             if (campaignDTO.getFields() == null) {
@@ -491,11 +491,11 @@ public class CampaignServiceImpl implements CampaignService {
             record = new IncentiveActivityRecord();
             record.setActivityId(incentiveActivity.getId());
             record.setCreatedDate(timestamp);
-            record.setCreatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId));
+            record.setCreatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId).get(0).getName());
             record.setStartDate(timestamp);
             record.setEndDate(timestamp);
             record.setUpdatedDate(timestamp);
-            record.setUpdatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId));
+            record.setUpdatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId).get(0).getUserName());
             record.setBenId(0L);
             record.setAshaId(ashaId);
             record.setAmount(Long.valueOf(incentiveActivity.getRate()));

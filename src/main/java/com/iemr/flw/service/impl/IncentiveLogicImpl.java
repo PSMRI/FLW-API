@@ -658,6 +658,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             Integer userId) {
 
         try {
+            String userName = userServiceRoleRepo.getUserNamedByUserId(userId).get(0).getUserName();
 
             if (activity == null || benId == null || startDate == null || endDate == null) {
                 logger.warn("Invalid input for saving incentive");
@@ -686,8 +687,8 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             record.setUpdatedDate(startTimestamp);
             record.setStartDate(startTimestamp);
             record.setEndDate(endTimestamp);
-            record.setCreatedBy(userServiceRoleRepo.getUserNamedByUserId(userId));
-            record.setUpdatedBy(userServiceRoleRepo.getUserNamedByUserId(userId));
+            record.setCreatedBy(userName);
+            record.setUpdatedBy(userName);
             record.setBenId(benId);
             record.setAshaId(userId);
             record.setAmount(Long.valueOf(activity.getRate()));

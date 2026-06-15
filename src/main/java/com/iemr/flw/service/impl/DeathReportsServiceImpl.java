@@ -182,7 +182,7 @@ public class DeathReportsServiceImpl implements DeathReportsService {
     @Override
     public List<CdrDTO> getCdrRecords(GetBenRequestHandler dto) {
         try {
-            String user = userRepo.getUserNamedByUserId(dto.getAshaId());
+            String user = userRepo.getUserNamedByUserId(dto.getAshaId()).get(0).getUserName();
             List<CDR> cdrlist =
                     cdrRepo.findByCreatedBy(user);
             return cdrlist.stream()
@@ -200,7 +200,7 @@ public class DeathReportsServiceImpl implements DeathReportsService {
     public List<MdsrDTO> getMdsrRecords(GetBenRequestHandler dto) {
 
         try {
-            String user = userRepo.getUserNamedByUserId(dto.getAshaId());
+            String user = userRepo.getUserNamedByUserId(dto.getAshaId()).get(0).getUserName();
 
             List<MDSR> mdsrList =
                     mdsrRepo.findByCreatedBy(user);

@@ -441,6 +441,8 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     @Override
     @Transactional
     public String saveANCVisitQuestions(List<AncCounsellingCareDTO> dtos, String authorization) throws IEMRException {
+       Integer userId =  jwtUtil.extractUserId(authorization);
+        String userName = userRepo.getUserNamedByUserId(userId).get(0).getUserName();
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         List<AncCounsellingCare> entities = new ArrayList<>();
@@ -501,9 +503,9 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             entity.setProlongedLabor(yesNoToBoolean(fields.getProlongedLabor()));
             entity.setMalpresentation(yesNoToBoolean(fields.getMalpresentation()));
 
-            entity.setUserId(jwtUtil.extractUserId(authorization));
-            entity.setCreatedBy(userRepo.getUserNamedByUserId(jwtUtil.extractUserId(authorization)));
-            entity.setUpdatedBy(userRepo.getUserNamedByUserId(jwtUtil.extractUserId(authorization)));
+            entity.setUserId(userId);
+            entity.setCreatedBy(userName);
+            entity.setUpdatedBy(userName);
 
             entities.add(entity);
         }

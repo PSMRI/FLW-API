@@ -812,13 +812,13 @@ public class ChildCareServiceImpl implements ChildCareService {
             IncentiveActivity orsPacketActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
             if (orsPacketActivityAM != null) {
                 if (orsDistribution.getNumOrsPackets() != null) {
-                    createIncentiveRecordforOrsDistribution(orsDistribution, orsDistribution.getBeneficiaryId(), orsPacketActivityAM, userRepo.getUserNamedByUserId(orsDistribution.getUserId()), false);
+                    createIncentiveRecordforOrsDistribution(orsDistribution, orsDistribution.getBeneficiaryId(), orsPacketActivityAM, userRepo.getUserNamedByUserId(orsDistribution.getUserId()).get(0).getUserName(), false);
                 }
             }
 
             if (orsPacketActivityCH != null) {
                 if (orsDistribution.getNumOrsPackets() != null) {
-                    createIncentiveRecordforOrsDistribution(orsDistribution, orsDistribution.getBeneficiaryId(), orsPacketActivityCH, userRepo.getUserNamedByUserId(orsDistribution.getUserId()), true);
+                    createIncentiveRecordforOrsDistribution(orsDistribution, orsDistribution.getBeneficiaryId(), orsPacketActivityCH, userRepo.getUserNamedByUserId(orsDistribution.getUserId()).get(0).getUserName(), true);
                 }
             }
 

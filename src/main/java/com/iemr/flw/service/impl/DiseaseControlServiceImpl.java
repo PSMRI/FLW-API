@@ -1241,6 +1241,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     @Override
     public List<ChronicDiseaseVisitDTO> saveChronicDiseaseVisit(
             List<ChronicDiseaseVisitDTO> requestList, String token) throws IEMRException {
+        Integer userId =  jwtUtil.extractUserId(token);
+       String  userName= userRepo.getUserNamedByUserId(userId).get(0).getUserName();
 
         List<ChronicDiseaseVisitDTO> responseList = new ArrayList<>();
 
@@ -1260,9 +1262,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             }
             entity.setDiagnosisCodes(dto.getDiagnosisCodes());
             entity.setFormDataJson(dto.getFormDataJson());
-            entity.setUserID(jwtUtil.extractUserId(token));
-            entity.setCreatedBy(userRepo.getUserNamedByUserId(jwtUtil.extractUserId(token)));
-            entity.setUpdatedBy(jwtUtil.extractUserId(token));
+            entity.setUserID(userId);
+            entity.setCreatedBy(userName);
+            entity.setUpdatedBy(userId);
 
 
             if (dto.getTreatmentStartDate() != null) {
@@ -1285,7 +1287,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     }
 
     private void checkIncentive(ChronicDiseaseVisitEntity chronicDiseaseVisitEntity, Integer ashaId) {
-        String userName = userRepo.getUserNamedByUserId(ashaId);
+        String userName = userRepo.getUserNamedByUserId(ashaId).get(0).getUserName();
         Integer stateId = userService.getUserDetail(ashaId).getStateId();
         IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.NCD.getDisplayName());
         IncentiveActivity incentiveActivityCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.ACTIVITY.getDisplayName());

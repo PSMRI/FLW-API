@@ -289,6 +289,8 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
 
     private void checkAndAddIncentives(String date, Integer userID, String formType, String createdBY) {
+        String userName = userRepo.getUserNamedByUserId(userID).get(0).getUserName();
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
         // Parse to LocalDate
@@ -310,11 +312,11 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
                 record = new IncentiveActivityRecord();
                 record.setActivityId(villageFormEntryActivityAM.getId());
                 record.setCreatedDate(timestamp);
-                record.setCreatedBy(userRepo.getUserNamedByUserId(userID));
+                record.setCreatedBy(userName);
                 record.setStartDate(timestamp);
                 record.setEndDate(timestamp);
                 record.setUpdatedDate(timestamp);
-                record.setUpdatedBy(userRepo.getUserNamedByUserId(userID));
+                record.setUpdatedBy(userName);
                 record.setAshaId(userID);
                 record.setBenId(0L);
                 record.setAmount(Long.valueOf(villageFormEntryActivityAM.getRate()));
@@ -322,7 +324,6 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
             }
         }
-
         if (villageFormEntryActivityCH != null) {
             IncentiveActivityRecord record = recordRepo
                     .findRecordByActivityIdCreatedDateBenId(villageFormEntryActivityCH.getId(), timestamp, 0L,userID);
@@ -330,12 +331,12 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
                 record = new IncentiveActivityRecord();
                 record.setActivityId(villageFormEntryActivityCH.getId());
                 record.setCreatedDate(timestamp);
-                record.setCreatedBy(userRepo.getUserNamedByUserId(userID));
+                record.setCreatedBy(userName);
                 record.setStartDate(timestamp);
                 record.setEndDate(timestamp);
                 record.setBenId(0L);
                 record.setUpdatedDate(timestamp);
-                record.setUpdatedBy(userRepo.getUserNamedByUserId(userID));
+                record.setUpdatedBy(userName);
                 record.setAshaId(userID);
                 record.setAmount(Long.valueOf(villageFormEntryActivityCH.getRate()));
                 recordRepo.save(record);
