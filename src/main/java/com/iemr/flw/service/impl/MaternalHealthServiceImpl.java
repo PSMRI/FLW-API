@@ -164,6 +164,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             ancVisitDTOs.forEach(it -> {
 
                 logger.info("Processing Beneficiary Id: {} ANC Visit: {}", it.getBenId(), it.getAncVisit());
+                logger.info("Processing Beneficiary Id: {} ANC Visit: {}", it.getBenId(), it.getIsPaiucdId());
 
                 List<ANCVisit> ancVisitList =
                         ancVisitRepo.findANCVisitByBenIdAndAncVisitAndIsActive(it.getBenId(), it.getAncVisit(), true);
@@ -721,100 +722,98 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
         Integer stateId = userRepo.getUserRole(userId).get(0).getStateId();
 
-        IncentiveActivity anc1Activity = null;
-        IncentiveActivity ancFullActivityAM = null;
-        IncentiveActivity identifiedHrpActivityAM = null;
-        IncentiveActivity comprehensiveAbortionActivityAM = null;
-        IncentiveActivity paiucdActivityAM = null;
-
-        IncentiveActivity ancFullActivityCH = null;
-        IncentiveActivity comprehensiveAbortionActivityCH = null;
-        IncentiveActivity identifiedHrpActivityCH = null;
-        IncentiveActivity paiucdActivityCH = null;
 
         // ✅ State 5 — Assam
         if (stateId.equals(5)) {
-            anc1Activity = incentivesRepo.findIncentiveMasterByNameAndGroup(
+            IncentiveActivity anc1Activity = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "ANC_REGISTRATION_1ST_TRIM", GroupName.MATERNAL_HEALTH.getDisplayName());
-            ancFullActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
+            IncentiveActivity ancFullActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "FULL_ANC", GroupName.MATERNAL_HEALTH.getDisplayName());
-            identifiedHrpActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
-                    "EPMSMA_HRP_IDENTIFIED", GroupName.MATERNAL_HEALTH.getDisplayName());
-            comprehensiveAbortionActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
+            IncentiveActivity identifiedHrpActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("EPMSMA_HRP_IDENTIFIED", GroupName.MATERNAL_HEALTH.getDisplayName());
+            IncentiveActivity  comprehensiveAbortionActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "COMPREHENSIVE_ABORTION_CARE", GroupName.MATERNAL_HEALTH.getDisplayName());
-            paiucdActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
+            IncentiveActivity paiucdActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "FP_PAIUCD", GroupName.FAMILY_PLANNING.getDisplayName());
+
+            ancList.forEach(ancVisit -> {
+
+                if (paiucdActivityAM != null && ancVisit.getIsPaiucdId() != null
+                        && ancVisit.getIsPaiucdId().toString().equals("1")) {
+                    recordAncRelatedIncentive(paiucdActivityAM, ancVisit);
+                }
+
+
+
+                if (anc1Activity != null && ancVisit.getAncVisit() != null
+                        && ancVisit.getAncVisit() == 1) {
+                    recordAncFirstTRIMIncentive(anc1Activity, ancVisit);
+                }
+
+                if (ancFullActivityAM != null && ancVisit.getAncVisit() != null
+                        && ancVisit.getAncVisit() == 4) {
+                    recordFullAncIncentive(ancFullActivityAM, ancVisit);
+                }
+
+
+                if (comprehensiveAbortionActivityAM != null && ancVisit.getIsAborted() != null
+                        && ancVisit.getIsAborted()) {
+                    recordAncRelatedIncentive(comprehensiveAbortionActivityAM, ancVisit);
+                }
+
+
+                if (identifiedHrpActivityAM != null && ancVisit.getIsHrpConfirmed() != null
+                        && ancVisit.getIsHrpConfirmed()) {
+                    recordAncRelatedIncentive(identifiedHrpActivityAM, ancVisit);
+                }
+
+
+            });
         }
 
         // ✅ State 8
         if (stateId.equals(8)) {
-            ancFullActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
+
+            IncentiveActivity ancFullActivityCH  = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "ANC_FOUR_CHECKUPS_SUPPORT", GroupName.ACTIVITY.getDisplayName());
-            comprehensiveAbortionActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
+            IncentiveActivity comprehensiveAbortionActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "COMPREHENSIVE_ABORTION_CARE", GroupName.ACTIVITY.getDisplayName());
-            identifiedHrpActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
+            IncentiveActivity identifiedHrpActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "EPMSMA_HRP_IDENTIFIED", GroupName.ACTIVITY.getDisplayName());
-            paiucdActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
+            IncentiveActivity paiucdActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "FP_PAIUCD", GroupName.ACTIVITY.getDisplayName());
+
+            ancList.forEach(ancVisit -> {
+
+
+                if (paiucdActivityCH != null && ancVisit.getIsPaiucdId() != null
+                        && ancVisit.getIsPaiucdId().toString().equals("1")) {
+                    recordAncRelatedIncentive(paiucdActivityCH, ancVisit);
+                }
+
+
+
+                if (ancFullActivityCH != null && ancVisit.getAncVisit() != null
+                        && ancVisit.getAncVisit() == 4) {
+                    recordAncRelatedIncentive(ancFullActivityCH, ancVisit);
+                }
+
+
+
+                if (comprehensiveAbortionActivityCH != null && ancVisit.getIsAborted() != null
+                        && ancVisit.getIsAborted()) {
+                    recordAncRelatedIncentive(comprehensiveAbortionActivityCH, ancVisit);
+                }
+
+
+                if (identifiedHrpActivityCH != null && ancVisit.getIsHrpConfirmed() != null
+                        && ancVisit.getIsHrpConfirmed()) {
+                    recordAncRelatedIncentive(identifiedHrpActivityCH, ancVisit);
+                }
+            });
         }
 
-        final IncentiveActivity finalAnc1Activity = anc1Activity;
-        final IncentiveActivity finalAncFullActivityAM = ancFullActivityAM;
-        final IncentiveActivity finalIdentifiedHrpActivityAM = identifiedHrpActivityAM;
-        final IncentiveActivity finalComprehensiveAbortionActivityAM = comprehensiveAbortionActivityAM;
-        final IncentiveActivity finalPaiucdActivityAM = paiucdActivityAM;
-        final IncentiveActivity finalAncFullActivityCH = ancFullActivityCH;
-        final IncentiveActivity finalComprehensiveAbortionActivityCH = comprehensiveAbortionActivityCH;
-        final IncentiveActivity finalIdentifiedHrpActivityCH = identifiedHrpActivityCH;
-        final IncentiveActivity finalPaiucdActivityCH = paiucdActivityCH;
 
-        ancList.forEach(ancVisit -> {
 
-            if (finalPaiucdActivityAM != null && ancVisit.getIsPaiucdId() != null
-                    && ancVisit.getIsPaiucdId().toString().equals("1")) {
-                recordAncRelatedIncentive(finalPaiucdActivityAM, ancVisit);
-            }
-
-            if (finalPaiucdActivityCH != null && ancVisit.getIsPaiucdId() != null
-                    && ancVisit.getIsPaiucdId().toString().equals("1")) {
-                recordAncRelatedIncentive(finalPaiucdActivityCH, ancVisit);
-            }
-
-            if (finalAnc1Activity != null && ancVisit.getAncVisit() != null
-                    && ancVisit.getAncVisit() == 1) {
-                recordAncFirstTRIMIncentive(finalAnc1Activity, ancVisit);
-            }
-
-            if (finalAncFullActivityAM != null && ancVisit.getAncVisit() != null
-                    && ancVisit.getAncVisit() == 4) {
-                recordFullAncIncentive(finalAncFullActivityAM, ancVisit);
-            }
-
-            if (finalAncFullActivityCH != null && ancVisit.getAncVisit() != null
-                    && ancVisit.getAncVisit() == 4) {
-                recordAncRelatedIncentive(finalAncFullActivityCH, ancVisit);
-            }
-
-            if (finalComprehensiveAbortionActivityAM != null && ancVisit.getIsAborted() != null
-                    && ancVisit.getIsAborted()) {
-                recordAncRelatedIncentive(finalComprehensiveAbortionActivityAM, ancVisit);
-            }
-
-            if (finalComprehensiveAbortionActivityCH != null && ancVisit.getIsAborted() != null
-                    && ancVisit.getIsAborted()) {
-                recordAncRelatedIncentive(finalComprehensiveAbortionActivityCH, ancVisit);
-            }
-
-            if (finalIdentifiedHrpActivityAM != null && ancVisit.getIsHrpConfirmed() != null
-                    && ancVisit.getIsHrpConfirmed()) {
-                recordAncRelatedIncentive(finalIdentifiedHrpActivityAM, ancVisit);
-            }
-
-            if (finalIdentifiedHrpActivityCH != null && ancVisit.getIsHrpConfirmed() != null
-                    && ancVisit.getIsHrpConfirmed()) {
-                recordAncRelatedIncentive(finalIdentifiedHrpActivityCH, ancVisit);
-            }
-        });
     }
 
     private void recordAncRelatedIncentive(IncentiveActivity incentiveActivity, ANCVisit ancVisit) {
