@@ -25,12 +25,14 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iemr.flw.domain.identity.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.DiseaseType;
 import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.masterEnum.StateCode;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.DiseaseControlService;
 import com.iemr.flw.service.IncentiveLogicService;
@@ -96,6 +98,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
 
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
@@ -1044,8 +1049,10 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         List<MosquitoNetEntity> entityList = mosquitoNetDTOList.stream().map(dto -> {
 
             MosquitoNetEntity entity = new MosquitoNetEntity();
+            if(!beneficiaryRepo.findByHouseoldId(dto.getHouseHoldId()).isEmpty()){
+                entity.setBeneficiaryId(beneficiaryRepo.findByHouseoldId(dto.getHouseHoldId()).get(0).getBenficieryid());
 
-            entity.setBeneficiaryId(dto.getBeneficiaryId());
+            }
             entity.setHouseHoldId(dto.getHouseHoldId());
 
             // ✅ String → LocalDate conversion
@@ -1192,7 +1199,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 .findRecordByActivityIdCreatedDateBenId(
                         diseaseScreeningActivity.getId(),
                         visitTimestamp,
-                        diseaseScreening.getHouseHoldId().longValue());
+                        diseaseScreening.getBeneficiaryId().longValue());
 
         if (record == null) {
 
@@ -1205,7 +1212,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             record.setEndDate(visitTimestamp);
             record.setUpdatedDate(visitTimestamp);
             record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
-            record.setBenId(diseaseScreening.getHouseHoldId().longValue());
+            record.setBenId(diseaseScreening.getBeneficiaryId().longValue());
             record.setAshaId(diseaseScreening.getUserId());
             record.setAmount(Long.valueOf(diseaseScreeningActivity.getRate()));
             record.setIsEligible(true);

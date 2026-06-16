@@ -134,7 +134,7 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
         HttpEntity<?> request = new HttpEntity<>(body, headers);
 
         ResponseEntity<AbhaApiResponse> response = restTemplate.exchange(
-                "getUserDetailsUrl",
+                getUserDetailsUrl,
                 HttpMethod.POST,
                 request,
                 AbhaApiResponse.class
