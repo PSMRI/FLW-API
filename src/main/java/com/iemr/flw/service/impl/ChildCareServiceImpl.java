@@ -582,8 +582,9 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     @Override
-    public String saveOrsDistributionDetails(List<OrsDistributionDTO> orsDistributionDTOS, Integer userId) {
+    public String saveOrsDistributionDetails(List<OrsDistributionDTO> orsDistributionDTOS) {
         try {
+
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
             List<OrsDistribution> orsDistributionList = new ArrayList<>();
             orsDistributionDTOS.forEach(orsDistributionDTO -> {
@@ -596,7 +597,7 @@ public class ChildCareServiceImpl implements ChildCareService {
 
                 }
                 orsDistribution.setHouseholdId(orsDistributionDTO.getHouseHoldId());
-                orsDistribution.setUserId(userId);
+                orsDistribution.setUserId(userRepo.getUserIdByName(orsDistributionDTO.getUserName()));
                 orsDistribution.setVisitDate(LocalDate.parse(orsDistributionDTO.getFields().getVisit_date(), formatter));
                 orsDistributionList.add(orsDistribution);
 

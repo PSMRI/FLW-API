@@ -7,8 +7,10 @@ import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.HbncVisit;
 import com.iemr.flw.domain.iemr.IfaDistribution;
 import com.iemr.flw.domain.iemr.SamVisitResponseDTO;
+import com.iemr.flw.domain.iemr.UserServiceRole;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
+import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.ChildCareService;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
@@ -46,6 +48,8 @@ public class ChildCareController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private UserServiceRoleRepo userServiceRoleRepo;
     @Operation(summary = "save HBYC details")
     @RequestMapping(value = {"/hbycVisit/saveAll"}, method = {RequestMethod.POST})
     public String saveHbycRecords(@RequestBody List<HbycRequestDTO> hbycDTOs,
@@ -317,9 +321,8 @@ public class ChildCareController {
                 response.put("message", "Request body cannot be empty");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
-           if(token!=null){
-               Integer userId = jwtUtil.extractUserId(token);
-               String responseObject = childCareService.saveOrsDistributionDetails(orsDistributionDTOS,userId);
+           if(!orsDistributionDTOS.isEmpty()){
+               String responseObject = childCareService.saveOrsDistributionDetails(orsDistributionDTOS);
 
                if (responseObject != null) {
                    response.put("statusCode", HttpStatus.OK.value());
