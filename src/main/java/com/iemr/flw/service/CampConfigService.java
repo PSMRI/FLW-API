@@ -3,6 +3,7 @@ package com.iemr.flw.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.stereotype.Service;
@@ -17,9 +18,19 @@ public class CampConfigService {
     @Autowired
     private LettuceConnectionFactory connectionFactory;
 
+    // When true, saves fail loudly if camp is not configured instead of silently storing vanID=NULL
+    @Value("${stoptb.enforce.vanid:false}")
+    private boolean enforceVanID;
+
     public Integer getVanID() {
         String val = read(VAN_ID_KEY);
-        if (val == null || val.isBlank()) return null;
+        if (val == null || val.isBlank()) {
+            if (enforceVanID) {
+                throw new IllegalStateException(
+                    "Camp not configured: vanID missing. Please select van/service point in MMU before saving Stop TB data.");
+            }
+            return null;
+        }
         return Integer.parseInt(val);
     }
 
