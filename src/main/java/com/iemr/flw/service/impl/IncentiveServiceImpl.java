@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -40,18 +41,23 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     private final Logger logger = LoggerFactory.getLogger(IncentiveServiceImpl.class);
 
-    @Autowired private BeneficiaryRepo beneficiaryRepo;
-    @Autowired private IncentiveActivityLangMappingRepo incentiveActivityLangMappingRepo;
-    @Autowired private IncentivesRepo incentivesRepo;
-    @Autowired private IncentiveRecordRepo recordRepo;
-    @Autowired private IncentivePendingActivityRepository incentivePendingActivityRepository;
-    @Autowired private UserServiceRoleRepo userRepo;
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
+    @Autowired
+    private IncentiveActivityLangMappingRepo incentiveActivityLangMappingRepo;
+    @Autowired
+    private IncentivesRepo incentivesRepo;
+    @Autowired
+    private IncentiveRecordRepo recordRepo;
+    @Autowired
+    private IncentivePendingActivityRepository incentivePendingActivityRepository;
+    @Autowired
+    private UserServiceRoleRepo userRepo;
     ;
     ModelMapper modelMapper = new ModelMapper();
 
     @Autowired
     private JwtUtil jwtUtil;
-
 
 
     @Autowired
@@ -158,10 +164,10 @@ public class IncentiveServiceImpl implements IncentiveService {
                     }
 
                 } else {
-                    if(isCG){
+                    if (isCG) {
                         dto.setGroupName("");
 
-                    }else {
+                    } else {
                         dto.setGroupName(inc.getGroup());
 
                     }
@@ -189,7 +195,7 @@ public class IncentiveServiceImpl implements IncentiveService {
             if (stateCode.equals(StateCode.AM.getStateCode())) {
                 checkMonthlyAshaIncentive(request.getAshaId());
             }
-            if(stateCode.equals(StateCode.CG.getStateCode())){
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
                 checkMonthlyAshaIncentiveForCg(request.getAshaId());
 
             }
@@ -262,12 +268,12 @@ public class IncentiveServiceImpl implements IncentiveService {
                 } else {
                     entry.setName("");
                 }
-                if(entry.getVerifiedByUserId()!=null){
+                if (entry.getVerifiedByUserId() != null) {
                     entry.setSupervisorRole(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getRoleName());
                     entry.setVerifiedByUserName(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getName());
 
                 }
-                if(entry.getAshaId()!=null){
+                if (entry.getAshaId() != null) {
                     if (entry.getCreatedBy() == null) {
                         entry.setCreatedBy(userName);
                     }
@@ -438,6 +444,7 @@ public class IncentiveServiceImpl implements IncentiveService {
             return null;
         }
     }
+
     @Override
     public String updateIncentive(PendingActivityDTO pendingActivityDTO) {
         try {
@@ -513,7 +520,6 @@ public class IncentiveServiceImpl implements IncentiveService {
     }
 
 
-
     // ================= UPDATE CLAIM =================
     @Transactional
     public String updateClaimStatus(Integer ashaId, Integer month, Integer year, Boolean isClaimed, String token) {
@@ -547,7 +553,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                             List.of("NCD_POP_ENUMERATION", "NCD_FOLLOWUP_TREATMENT"), groupName
                     ).stream().collect(Collectors.toMap(IncentiveActivity::getName, Function.identity()));
 
-            IncentiveActivity ncdPopEnumeration   = activityMap.get("NCD_POP_ENUMERATION");
+            IncentiveActivity ncdPopEnumeration = activityMap.get("NCD_POP_ENUMERATION");
 
             CompletableFuture<List<BenReferDetails>> benReferFuture =
                     CompletableFuture.supplyAsync(() -> benReferDetailsRepo.findByCreatedBy(userName));
@@ -557,7 +563,6 @@ public class IncentiveServiceImpl implements IncentiveService {
             List<CbacDetailsImer> cbacDetailsImer = cbacFuture.get();
 
             List<IncentiveActivityRecord> recordsToSave = new ArrayList<>();
-
 
 
             if (ncdPopEnumeration != null && !cbacDetailsImer.isEmpty()) {
@@ -629,15 +634,15 @@ public class IncentiveServiceImpl implements IncentiveService {
             IncentiveActivity ADDITIONAL_ASHA_INCENTIVE = incentivesRepo.findIncentiveMasterByNameAndGroup("ADDITIONAL_ASHA_INCENTIVE", GroupName.ADDITIONAL_INCENTIVE.getDisplayName());
             IncentiveActivity ASHA_MONTHLY_ROUTINE = incentivesRepo.findIncentiveMasterByNameAndGroup("ASHA_MONTHLY_ROUTINE", GroupName.ASHA_MONTHLY_ROUTINE.getDisplayName());
             if (MOBILEBILLREIMB_ACTIVITY != null) {
-                addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY, ashaId,userName);
+                addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY, ashaId, userName);
             }
             if (ADDITIONAL_ASHA_INCENTIVE != null) {
-                addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE, ashaId,userName);
+                addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE, ashaId, userName);
 
             }
 
             if (ASHA_MONTHLY_ROUTINE != null) {
-                addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId,userName);
+                addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId, userName);
 
             }
         } catch (Exception e) {
@@ -655,15 +660,15 @@ public class IncentiveServiceImpl implements IncentiveService {
             IncentiveActivity MITANIN_REGISTER_5_INFO_FILL = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER_5_INFO_FILL", GroupName.ACTIVITY.getDisplayName());
             IncentiveActivity MITANIN_REGISTER = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER", GroupName.ACTIVITY.getDisplayName());
             if (MONTHLY_HONORARIUM != null) {
-                addMonthlyAshaIncentiveRecord(MONTHLY_HONORARIUM, ashaId,userName);
+                addMonthlyAshaIncentiveRecord(MONTHLY_HONORARIUM, ashaId, userName);
             }
             if (MITANIN_REGISTER_5_INFO_FILL != null) {
-                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER_5_INFO_FILL, ashaId,userName);
+                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER_5_INFO_FILL, ashaId, userName);
 
             }
 
             if (MITANIN_REGISTER != null) {
-                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER, ashaId,userName);
+                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER, ashaId, userName);
 
             }
         } catch (Exception e) {
@@ -673,7 +678,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     }
 
-    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId,String userName) {
+    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId, String userName) {
         try {
             Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
 
@@ -711,17 +716,18 @@ public class IncentiveServiceImpl implements IncentiveService {
         }
 
     }
-    private void  addIncentiveForIronTablets(Integer userId){
-        IncentiveActivity incentiveActivityAM= incentivesRepo.findIncentiveMasterByNameAndGroup("NATIONAL_IRON_PLUS", GroupName.CHILD_HEALTH.getDisplayName());
-        IncentiveActivity incentiveActivityCG =  incentivesRepo.findIncentiveMasterByNameAndGroup("NATIONAL_IRON_PLUS", GroupName.ACTIVITY.getDisplayName());
 
-        String  userName = userService.getUserDetail(userId).getUserName();
-        Integer  stateId = userService.getUserDetail(userId).getStateId();
-        if(userName!=null){
-            List<EligibleCoupleRegister>  eligibleCoupleRegisters = eligibleCoupleRegisterRepo.findByCreatedBy(userName);
+    private void addIncentiveForIronTablets(Integer userId) {
+        IncentiveActivity incentiveActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("NATIONAL_IRON_PLUS", GroupName.CHILD_HEALTH.getDisplayName());
+        IncentiveActivity incentiveActivityCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NATIONAL_IRON_PLUS", GroupName.ACTIVITY.getDisplayName());
+
+        String userName = userService.getUserDetail(userId).getUserName();
+        Integer stateId = userService.getUserDetail(userId).getStateId();
+        if (userName != null) {
+            List<EligibleCoupleRegister> eligibleCoupleRegisters = eligibleCoupleRegisterRepo.findByCreatedBy(userName);
             List<IFAFormSubmissionData> ifaFormSubmissionData = ifaFormSubmissionRepository.findByUserId(userId);
-            logger.info("eligibleCoupleRegisters :"+eligibleCoupleRegisters.size());
-            logger.info("ifaFormSubmissionData :"+ifaFormSubmissionData.size());
+            logger.info("eligibleCoupleRegisters :" + eligibleCoupleRegisters.size());
+            logger.info("ifaFormSubmissionData :" + ifaFormSubmissionData.size());
 
             if (!eligibleCoupleRegisters.isEmpty() && !ifaFormSubmissionData.isEmpty()) {
 
@@ -757,25 +763,30 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     }
 
-    private void addIFAIncentive(IFAFormSubmissionData ifaFormSubmissionData, IncentiveActivity incentiveActivityAM,Integer userId,String userName) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private void addIFAIncentive(IFAFormSubmissionData ifaFormSubmissionData, IncentiveActivity incentiveActivityAM, Integer userId, String userName) {
+        Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
 
-        LocalDate ifaVisitDate = LocalDate.parse(ifaFormSubmissionData.getVisitDate(), formatter);
+        Timestamp startOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(1).atStartOfDay());
+        Timestamp endOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth()).atTime(23, 59, 59));
 
-        Timestamp ifaVisitDateTimestamp = Timestamp.valueOf(ifaVisitDate.atStartOfDay());
         logger.info("IFA incentive");
-
-        IncentiveActivityRecord incentiveActivityRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(incentiveActivityAM.getId(),ifaVisitDateTimestamp,ifaFormSubmissionData.getBeneficiaryId());
-        if(incentiveActivityRecord==null){
+        IncentiveActivityRecord incentiveActivityRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                incentiveActivityAM.getId(),
+                startOfMonth,
+                endOfMonth,
+                0L,
+                userId
+        );
+        if (incentiveActivityRecord == null) {
             incentiveActivityRecord = new IncentiveActivityRecord();
             incentiveActivityRecord.setActivityId(incentiveActivityAM.getId());
-            incentiveActivityRecord.setCreatedDate(ifaVisitDateTimestamp);
-            incentiveActivityRecord.setStartDate(ifaVisitDateTimestamp);
-            incentiveActivityRecord.setEndDate(ifaVisitDateTimestamp);
-            incentiveActivityRecord.setUpdatedDate(ifaVisitDateTimestamp);
+            incentiveActivityRecord.setCreatedDate(timestamp);
+            incentiveActivityRecord.setStartDate(timestamp);
+            incentiveActivityRecord.setEndDate(timestamp);
+            incentiveActivityRecord.setUpdatedDate(timestamp);
             incentiveActivityRecord.setUpdatedBy(ifaFormSubmissionData.getUserName());
             incentiveActivityRecord.setCreatedBy(ifaFormSubmissionData.getUserName());
-            incentiveActivityRecord.setBenId(ifaFormSubmissionData.getBeneficiaryId());
+            incentiveActivityRecord.setBenId(0L);
             incentiveActivityRecord.setAshaId(userId);
             incentiveActivityRecord.setAmount(Long.valueOf(incentiveActivityAM.getRate()));
             recordRepo.save(incentiveActivityRecord);
