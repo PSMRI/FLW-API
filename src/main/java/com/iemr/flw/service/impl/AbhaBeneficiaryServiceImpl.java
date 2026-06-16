@@ -49,7 +49,7 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
             if (abhaApiResponse == null || abhaApiResponse.getData() == null) {
 
                 Map<String, Object> response = new HashMap<>();
-                response.put("statusCode", 5000);
+                response.put("statusCode", 5001);
                 response.put("message", "No data found");
 
                 return response;
@@ -113,7 +113,7 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
             logger.error("Error while fetching beneficiary by ABHA", e);
 
             Map<String, Object> response = new HashMap<>();
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
             response.put("message", "Internal Server Error");
 
             return response;
