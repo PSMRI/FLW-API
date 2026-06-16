@@ -205,13 +205,22 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         benID = beneficiaryRepo.getBenIdFromRegID(m.getBenRegId().longValue());
 
                     if (m.getBenRegId() != null) {
-                        benDetailsRMNCH_OBJ = beneficiaryRepo
-                                .getDetailsByRegID((m.getBenRegId()).longValue());
+                        if(!beneficiaryRepo
+                                .getDetailsByRegID((m.getBenRegId()).longValue()).isEmpty()){
+                            benDetailsRMNCH_OBJ = beneficiaryRepo
+                                    .getDetailsByRegID((m.getBenRegId()).longValue()).get(0);
+
+                        }
+
                         benBotnBirthRMNCH_ROBJ = beneficiaryRepo.getBornBirthByRegID((m.getBenRegId()).longValue());
 
                         if (benDetailsRMNCH_OBJ != null && benDetailsRMNCH_OBJ.getHouseoldId() != null)
-                            benHouseHoldRMNCH_ROBJ = houseHoldRepo
-                                    .getByHouseHoldID(benDetailsRMNCH_OBJ.getHouseoldId());
+                            if(!houseHoldRepo
+                                    .getByHouseHoldID(benDetailsRMNCH_OBJ.getHouseoldId()).isEmpty()){
+                                benHouseHoldRMNCH_ROBJ = houseHoldRepo
+                                        .getByHouseHoldID(benDetailsRMNCH_OBJ.getHouseoldId()).get(0);
+                            }
+
 
                     }
                     if (benDetailsRMNCH_OBJ == null)
