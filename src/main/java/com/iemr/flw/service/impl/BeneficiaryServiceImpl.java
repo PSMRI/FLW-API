@@ -456,6 +456,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     // mapping not available
                 }
             } catch (Exception e) {
+                logger.info("Error for ben :"+e.getMessage());
+                logger.info("Error for ben :"+e);
                 logger.error("error for addressID :" + e.getMessage() + a.getId() + " and vanID : " + a.getVanID());
             }
         }
