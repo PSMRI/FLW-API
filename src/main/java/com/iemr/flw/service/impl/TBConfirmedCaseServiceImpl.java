@@ -4,10 +4,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.TBConfirmedCaseDTO;
 import com.iemr.flw.domain.iemr.TBConfirmedCase;
+import com.iemr.flw.domain.iemr.TBStopVisit;
 import com.iemr.flw.dto.iemr.TBConfirmedCasesResponseDTO;
 import com.iemr.flw.repo.iemr.TBConfirmedTreatmentRepository;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.TBConfirmedCaseService;
+import com.iemr.flw.service.TBStopVisitService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.iemr.flw.utils.JwtUtil;
@@ -36,6 +38,9 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
     @Autowired
     private CampConfigService campConfigService;
+
+    @Autowired
+    private TBStopVisitService tbStopVisitService;
     public TBConfirmedCaseServiceImpl(TBConfirmedTreatmentRepository repository) {
         this.repository = repository;
     }
@@ -51,12 +56,17 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                 Integer parkingPlaceID = campConfigService.getParkingPlaceID();
 
                 for(TBConfirmedCaseDTO dto:request){
-                    List<TBConfirmedCase> existing = repository.findByBenId(dto.getBenId());
+                    String modifiedBy = jwtUtil.extractUsername(authorisation);
+                    TBStopVisit visit = tbStopVisitService.getOrCreateVisitForToday(dto.getBenId(), null,
+                            modifiedBy, vanID, parkingPlaceID);
+
+                    List<TBConfirmedCase> existing = repository.findByBenIdAndVisitCode(dto.getBenId(), visit.getId());
                     boolean isNew = existing.isEmpty();
                     TBConfirmedCase entity = isNew ? new TBConfirmedCase() : existing.get(0);
                     entity.setBenId(dto.getBenId());
+                    entity.setVisitCode(visit.getId());
                     entity.setUserId(jwtUtil.extractUserId(authorisation));
-                    entity.setModifiedBy(jwtUtil.extractUsername(authorisation));
+                    entity.setModifiedBy(modifiedBy);
                     entity.setRegimenType(dto.getRegimenType());
                     entity.setTreatmentStartDate(dto.getTreatmentStartDate());
                     entity.setExpectedTreatmentCompletionDate(dto.getExpectedTreatmentCompletionDate());
