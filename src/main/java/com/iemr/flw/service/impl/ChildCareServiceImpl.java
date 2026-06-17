@@ -949,8 +949,12 @@ public class ChildCareServiceImpl implements ChildCareService {
 
 
         vaccinationList.forEach(vaccination -> {
+            Long benId= null;
             if(vaccination.getBeneficiaryRegId()!=null){
-                Long benId = beneficiaryRepo.getBenIdFromRegID(vaccination.getBeneficiaryRegId()).longValue();
+                BigInteger benIdObj = beneficiaryRepo.getBenIdFromRegID(vaccination.getBeneficiaryRegId());
+                if (benIdObj != null) {
+                     benId = benIdObj.longValue();
+                }
 
                 Integer userId = userRepo.getUserIdByName(vaccination.getCreatedBy());
                 Integer immunizationServiceId = getImmunizationServiceIdForVaccine(vaccination.getVaccineId().shortValue());
