@@ -317,38 +317,41 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     }
                 }
                 if (screeningLeprosy.getIsConfirmed()) {
-                    if (screeningLeprosy.getTypeOfLeprosy().equals("PB (Paucibacillary)")) {
-                        IncentiveActivityRecord incentiveActivityRecord =
-                                incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
-                                        screeningLeprosy.getBenId(),
-                                        screeningLeprosy.getTreatmentStartDate(),
-                                        screeningLeprosy.getTreatmentEndDate(),
-                                        diseaseControlDTO.getUserId());
+                    if(screeningLeprosy.getTypeOfLeprosy()!=null){
+                        if (screeningLeprosy.getTypeOfLeprosy().equals("PB (Paucibacillary)")) {
+                            IncentiveActivityRecord incentiveActivityRecord =
+                                    incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
+                                            screeningLeprosy.getBenId(),
+                                            screeningLeprosy.getTreatmentStartDate(),
+                                            screeningLeprosy.getTreatmentEndDate(),
+                                            diseaseControlDTO.getUserId());
 
-                        if (incentiveActivityRecord != null) {
-                            logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                                    incentiveActivityRecord.getId());
-                        } else {
-                            logger.info("Incentive not created");
+                            if (incentiveActivityRecord != null) {
+                                logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                        incentiveActivityRecord.getId());
+                            } else {
+                                logger.info("Incentive not created");
+                            }
+
                         }
+                        if (screeningLeprosy.getTypeOfLeprosy().equals("MB (Multibacillary)")) {
+                            IncentiveActivityRecord incentiveActivityRecord =
+                                    incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
+                                            screeningLeprosy.getBenId(),
+                                            screeningLeprosy.getTreatmentStartDate(),
+                                            screeningLeprosy.getTreatmentEndDate(),
+                                            diseaseControlDTO.getUserId());
 
-                    }
-                    if (screeningLeprosy.getTypeOfLeprosy().equals("MB (Multibacillary)")) {
-                        IncentiveActivityRecord incentiveActivityRecord =
-                                incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
-                                        screeningLeprosy.getBenId(),
-                                        screeningLeprosy.getTreatmentStartDate(),
-                                        screeningLeprosy.getTreatmentEndDate(),
-                                        diseaseControlDTO.getUserId());
+                            if (incentiveActivityRecord != null) {
+                                logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                        incentiveActivityRecord.getId());
+                            } else {
+                                logger.info("Incentive not created");
+                            }
 
-                        if (incentiveActivityRecord != null) {
-                            logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                                    incentiveActivityRecord.getId());
-                        } else {
-                            logger.info("Incentive not created");
                         }
-
                     }
+
 
                 }
 
@@ -462,38 +465,42 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             }
         }
         if (screeningLeprosy.getIsConfirmed()) {
-            if (screeningLeprosy.getTypeOfLeprosy().equals("PB (Paucibacillary)")) {
-                IncentiveActivityRecord incentiveActivityRecord =
-                        incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
-                                screeningLeprosy.getBenId(),
-                                screeningLeprosy.getTreatmentStartDate(),
-                                screeningLeprosy.getTreatmentEndDate(),
-                                userId);
+            if(screeningLeprosy.getTypeOfLeprosy()!=null){
+                if (screeningLeprosy.getTypeOfLeprosy().equals("PB (Paucibacillary)")) {
+                    IncentiveActivityRecord incentiveActivityRecord =
+                            incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
+                                    screeningLeprosy.getBenId(),
+                                    screeningLeprosy.getTreatmentStartDate(),
+                                    screeningLeprosy.getTreatmentEndDate(),
+                                    userId);
 
-                if (incentiveActivityRecord != null) {
-                    logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                            incentiveActivityRecord.getId());
-                } else {
-                    logger.info("Incentive not created");
+                    if (incentiveActivityRecord != null) {
+                        logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                incentiveActivityRecord.getId());
+                    } else {
+                        logger.info("Incentive not created");
+                    }
+
                 }
+                if (screeningLeprosy.getTypeOfLeprosy().equals("MB (Multibacillary)")) {
+                    IncentiveActivityRecord incentiveActivityRecord =
+                            incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
+                                    screeningLeprosy.getBenId(),
+                                    screeningLeprosy.getTreatmentStartDate(),
+                                    screeningLeprosy.getTreatmentEndDate(),
+                                    userId);
 
-            }
-            if (screeningLeprosy.getTypeOfLeprosy().equals("MB (Multibacillary)")) {
-                IncentiveActivityRecord incentiveActivityRecord =
-                        incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
-                                screeningLeprosy.getBenId(),
-                                screeningLeprosy.getTreatmentStartDate(),
-                                screeningLeprosy.getTreatmentEndDate(),
-                                userId);
+                    if (incentiveActivityRecord != null) {
+                        logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                incentiveActivityRecord.getId());
+                    } else {
+                        logger.info("Incentive not created");
+                    }
 
-                if (incentiveActivityRecord != null) {
-                    logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                            incentiveActivityRecord.getId());
-                } else {
-                    logger.info("Incentive not created");
                 }
-
             }
+
+
 
         }
     }
@@ -842,7 +849,10 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         diseaseLeprosy.setDiseaseTypeId(diseaseControlData.getDiseaseTypeId());
         diseaseLeprosy.setOtherReferredTo(diseaseControlData.getOtherReferredTo());
         diseaseLeprosy.setLeprosyStatusDate(diseaseControlData.getLeprosyStatusDate());
-        diseaseLeprosy.setTypeOfLeprosy(diseaseControlData.getTypeOfLeprosy());
+        if(diseaseControlData.getTypeOfLeprosy()!=null){
+            diseaseLeprosy.setTypeOfLeprosy(diseaseControlData.getTypeOfLeprosy());
+
+        }
         diseaseLeprosy.setFollowUpDate(diseaseControlData.getFollowUpDate());
         diseaseLeprosy.setBeneficiaryStatus(diseaseControlData.getBeneficiaryStatus());
         diseaseLeprosy.setBeneficiaryStatusId(diseaseControlData.getBeneficiaryStatusId());
