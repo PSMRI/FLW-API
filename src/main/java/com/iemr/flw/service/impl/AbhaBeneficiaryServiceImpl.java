@@ -29,6 +29,8 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
 
+
+
     @Value("${govthealth.user.details.url}")
      private String getUserDetailsUrl;
 
@@ -42,6 +44,23 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
     public Object getBeneficiaryByAbha(AbhaRequestDTO request) {
 
         try {
+            Object[] benHealthIdNumber = beneficiaryRepo.getHealthIdNumber(request.getCardNo());
+            if (benHealthIdNumber != null && benHealthIdNumber.length > 0) {
+                Object[] healthData = (Object[]) benHealthIdNumber[0];
+                String healthIdNumber = healthData[0] != null ? healthData[0].toString() : null;
+                String healthId = healthData[1] != null ? healthData[1].toString() : null;
+                logger.info("healthIdNumber:"+healthIdNumber);
+                logger.info("healthId:"+healthId);
+                if (request.getCardNo().equals(healthIdNumber)) {
+
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("statusCode", 5000);
+                    response.put("message",
+                            "This ABHA No already exists");
+
+                    return response;
+                }
+            }
 
             AbhaApiResponse abhaApiResponse =
                     getAbhaResponse(request.getCardNo()).getBody();
@@ -58,28 +77,24 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
             for (AbhaBeneficiaryDTO dto : abhaApiResponse.getData()) {
 
                 // Check if ABHA already exists in system
-                List<Object[]> health =
-                        beneficiaryRepo.getBenHealthDetails(dto.getAbhaId());
+                benHealthIdNumber = beneficiaryRepo.getHealthIdNumber(dto.getAbhaId());
+                if (benHealthIdNumber != null && benHealthIdNumber.length > 0) {
+                    Object[] healthData = (Object[]) benHealthIdNumber[0];
+                    String healthIdNumber = healthData[0] != null ? healthData[0].toString() : null;
+                    String healthId = healthData[1] != null ? healthData[1].toString() : null;
+                 logger.info("healthIdNumber:"+healthIdNumber);
+                 logger.info("healthId:"+healthId);
+                    if (dto.getAbhaId().equals(healthIdNumber)) {
 
-                if (health != null && !health.isEmpty()) {
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("statusCode", 5000);
+                        response.put("message",
+                                "This ABHA No already exists");
 
-                    for (Object[] objects : health) {
-
-                        if (objects != null
-                                && objects.length > 1
-                                && dto.getAbhaId() != null
-                                && dto.getAbhaId()
-                                .equals(String.valueOf(objects[1]))) {
-
-                            Map<String, Object> response = new HashMap<>();
-                            response.put("statusCode", 5000);
-                            response.put("message",
-                                    "This ABHA No already exists");
-
-                            return response;
-                        }
+                        return response;
                     }
                 }
+
 
                 // Split name into firstName and lastName
                 String personName = dto.getPersonName();
