@@ -31,3 +31,4 @@ mvnw
 mvnw.cmd
 .mvn
 /logs/
+node_modules
