@@ -256,7 +256,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             }
                             benBotnBirthRMNCH_ROBJ = beneficiaryRepo.getBornBirthByRegID((m.getBenRegId()).longValue());
 
-
                             if (benDetailsRMNCH_OBJ != null && benDetailsRMNCH_OBJ.getHouseoldId() != null)
                                 if(!houseHoldRepo
                                         .getByHouseHoldID(benDetailsRMNCH_OBJ.getHouseoldId()).isEmpty()){
