@@ -45,7 +45,7 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     Page<RMNCHMBeneficiaryaddress> getBenDataByUser(@Param("userName") String userName, Pageable pageable);
 
     @Query(value = " SELECT t FROM RMNCHMBeneficiarymapping t WHERE t.benAddressId = :addressID")
-    RMNCHMBeneficiarymapping getByAddressID(@Param("addressID") BigInteger addressID);
+    List<RMNCHMBeneficiarymapping> getByAddressID(@Param("addressID") BigInteger addressID);
 
     @Query(value = " SELECT t FROM RMNCHMBeneficiarymapping t WHERE t.benRegId = :BenRegId")
     RMNCHMBeneficiarymapping getById(@Param("BenRegId") BigInteger BenRegId);
