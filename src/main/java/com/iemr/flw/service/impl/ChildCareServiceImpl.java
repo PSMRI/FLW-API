@@ -348,7 +348,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 vaccinationDTO.setBeneficiaryId(benId.longValue());
 
                 result.add(vaccinationDTO);
-                checkAndAddIncentives(vaccinationDetails);
+               // checkAndAddIncentives(vaccinationDetails);
             });
             return result;
         } catch (Exception e) {
@@ -840,53 +840,59 @@ public class ChildCareServiceImpl implements ChildCareService {
 
 
     private void checkAndAddIncentives(List<ChildVaccination> vaccinationList) {
-
-
         vaccinationList.forEach(vaccination -> {
-            Long benId = beneficiaryRepo.getBenIdFromRegID(vaccination.getBeneficiaryRegId()).longValue();
-            Integer userId = userRepo.getUserIdByName(vaccination.getCreatedBy());
-            Integer immunizationServiceId = getImmunizationServiceIdForVaccine(vaccination.getVaccineId().shortValue());
-            if (immunizationServiceId < 6) {
-                IncentiveActivity immunizationActivityAM =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("FULL_IMMUNIZATION_0_1", GroupName.IMMUNIZATION.getDisplayName());
-                IncentiveActivity immunizationActivityCH =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("FULL_IMMUNIZATION_0_1", GroupName.ACTIVITY.getDisplayName());
+            if(vaccination.getBeneficiaryRegId()!=null){
+                BigInteger benIdObj = beneficiaryRepo.getBenIdFromRegID(vaccination.getBeneficiaryRegId());
+                if(benIdObj!=null){
+                   Long benId = benIdObj.longValue();
+
+                    Integer userId = userRepo.getUserIdByName(vaccination.getCreatedBy());
+                    Integer immunizationServiceId = getImmunizationServiceIdForVaccine(vaccination.getVaccineId().shortValue());
+                    if (immunizationServiceId < 6) {
+                        IncentiveActivity immunizationActivityAM =
+                                incentivesRepo.findIncentiveMasterByNameAndGroup("FULL_IMMUNIZATION_0_1", GroupName.IMMUNIZATION.getDisplayName());
+                        IncentiveActivity immunizationActivityCH =
+                                incentivesRepo.findIncentiveMasterByNameAndGroup("FULL_IMMUNIZATION_0_1", GroupName.ACTIVITY.getDisplayName());
 
 
-                if (immunizationActivityAM != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
-                        .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
-                    createIncentiveRecord(vaccination, benId, userId, immunizationActivityAM);
-                }
+                        if (immunizationActivityAM != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
+                                .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
+                            createIncentiveRecord(vaccination, benId, userId, immunizationActivityAM);
+                        }
 
-                if (immunizationActivityCH != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
-                        .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
-                    createIncentiveRecord(vaccination, benId, userId, immunizationActivityCH);
-                }
-            } else if (immunizationServiceId == 7) {
-                IncentiveActivity immunizationActivity2AM =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("COMPLETE_IMMUNIZATION_1_2", GroupName.IMMUNIZATION.getDisplayName());
-                IncentiveActivity immunizationActivity2CH =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("COMPLETE_IMMUNIZATION_1_2", GroupName.ACTIVITY.getDisplayName());
-                if (immunizationActivity2AM != null && childVaccinationRepo.getSecondYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
-                        .equals(childVaccinationRepo.getSecondYearVaccineCount())) {
-                    createIncentiveRecord(vaccination, benId, userId, immunizationActivity2AM);
-                }
-                if (immunizationActivity2CH != null && childVaccinationRepo.getSecondYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
-                        .equals(childVaccinationRepo.getSecondYearVaccineCount())) {
-                    createIncentiveRecord(vaccination, benId, userId, immunizationActivity2CH);
+                        if (immunizationActivityCH != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
+                                .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
+                            createIncentiveRecord(vaccination, benId, userId, immunizationActivityCH);
+                        }
+                    } else if (immunizationServiceId == 7) {
+                        IncentiveActivity immunizationActivity2AM =
+                                incentivesRepo.findIncentiveMasterByNameAndGroup("COMPLETE_IMMUNIZATION_1_2", GroupName.IMMUNIZATION.getDisplayName());
+                        IncentiveActivity immunizationActivity2CH =
+                                incentivesRepo.findIncentiveMasterByNameAndGroup("COMPLETE_IMMUNIZATION_1_2", GroupName.ACTIVITY.getDisplayName());
+                        if (immunizationActivity2AM != null && childVaccinationRepo.getSecondYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
+                                .equals(childVaccinationRepo.getSecondYearVaccineCount())) {
+                            createIncentiveRecord(vaccination, benId, userId, immunizationActivity2AM);
+                        }
+                        if (immunizationActivity2CH != null && childVaccinationRepo.getSecondYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
+                                .equals(childVaccinationRepo.getSecondYearVaccineCount())) {
+                            createIncentiveRecord(vaccination, benId, userId, immunizationActivity2CH);
+                        }
+                    }
+                    IncentiveActivity immunizationActivity5AM =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("DPT_IMMUNIZATION_5_YEARS", GroupName.IMMUNIZATION.getDisplayName());
+                    if (immunizationActivity5AM != null && childVaccinationRepo.checkDptVaccinatedUser(vaccination.getBeneficiaryRegId()) == 1) {
+                        createIncentiveRecord(vaccination, benId, userId, immunizationActivity5AM);
+                    }
+
+                    IncentiveActivity immunizationActivity5CH =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("DPT_IMMUNIZATION_5_YEARS", GroupName.ACTIVITY.getDisplayName());
+                    if (immunizationActivity5CH != null && childVaccinationRepo.checkDptVaccinatedUser(vaccination.getBeneficiaryRegId()) == 1) {
+                        createIncentiveRecord(vaccination, benId, userId, immunizationActivity5CH);
+                    }
                 }
             }
-            IncentiveActivity immunizationActivity5AM =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("DPT_IMMUNIZATION_5_YEARS", GroupName.IMMUNIZATION.getDisplayName());
-            if (immunizationActivity5AM != null && childVaccinationRepo.checkDptVaccinatedUser(vaccination.getBeneficiaryRegId()) == 1) {
-                createIncentiveRecord(vaccination, benId, userId, immunizationActivity5AM);
-            }
 
-            IncentiveActivity immunizationActivity5CH =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("DPT_IMMUNIZATION_5_YEARS", GroupName.ACTIVITY.getDisplayName());
-            if (immunizationActivity5CH != null && childVaccinationRepo.checkDptVaccinatedUser(vaccination.getBeneficiaryRegId()) == 1) {
-                createIncentiveRecord(vaccination, benId, userId, immunizationActivity5CH);
-            }
+
         });
     }
 
