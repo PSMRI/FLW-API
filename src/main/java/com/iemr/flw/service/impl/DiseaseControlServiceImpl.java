@@ -535,39 +535,92 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Map to DTOs
         List<DiseaseMalariaDTO> dtoList = filteredList.stream().map(disease -> {
+
             DiseaseMalariaDTO dto = new DiseaseMalariaDTO();
 
-            // Map fields from DiseaseMalaria to DTO
-            dto.setId(disease.getId());
-            dto.setBenId(disease.getBenId());
-            dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
-            dto.setScreeningDate(disease.getScreeningDate());
-            dto.setBeneficiaryStatus(disease.getBeneficiaryStatus());
-            dto.setDateOfDeath(disease.getDateOfDeath());
-            dto.setPlaceOfDeath(disease.getPlaceOfDeath());
-            dto.setOtherPlaceOfDeath(disease.getOtherPlaceOfDeath());
-            dto.setReasonForDeath(disease.getReasonForDeath());
-            dto.setOtherReasonForDeath(disease.getOtherReasonForDeath());
-            dto.setCaseStatus(disease.getCaseStatus());
-            dto.setRapidDiagnosticTest(disease.getRapidDiagnosticTest());
-            dto.setDateOfRdt(disease.getDateOfRdt());
-            dto.setSlideTestPf(disease.getSlideTestPf());
-            dto.setSlideTestPv(disease.getSlideTestPv());
-            dto.setDateOfSlideTest(disease.getDateOfSlideTest());
-            dto.setSlideNo(disease.getSlideNo());
-            dto.setReferredTo(disease.getReferredTo());
-            dto.setOtherReferredFacility(disease.getOtherReferredFacility());
-            dto.setRemarks(disease.getRemarks());
-            dto.setMalariaSlideTestType(disease.getMalariaSlideTestType());
-            dto.setMalariaTestType(disease.getMalariaTestType());
-            dto.setDateOfVisitBySupervisor(disease.getDateOfVisitBySupervisor());
-            dto.setUserId(disease.getUserId());
-            dto.setDiseaseTypeId(disease.getDiseaseTypeId());
+            if (disease.getId() != null)
+                dto.setId(disease.getId());
 
-            // Parse symptoms (if present)
+            if (disease.getBenId() != null)
+                dto.setBenId(disease.getBenId());
+
+            if (disease.getHouseHoldDetailsId() != null)
+                dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
+
+            if (disease.getScreeningDate() != null)
+                dto.setScreeningDate(disease.getScreeningDate());
+
+            if (disease.getBeneficiaryStatus() != null && !disease.getBeneficiaryStatus().trim().isEmpty())
+                dto.setBeneficiaryStatus(disease.getBeneficiaryStatus());
+
+            if (disease.getDateOfDeath() != null)
+                dto.setDateOfDeath(disease.getDateOfDeath());
+
+            if (disease.getPlaceOfDeath() != null && !disease.getPlaceOfDeath().trim().isEmpty())
+                dto.setPlaceOfDeath(disease.getPlaceOfDeath());
+
+            if (disease.getOtherPlaceOfDeath() != null && !disease.getOtherPlaceOfDeath().trim().isEmpty())
+                dto.setOtherPlaceOfDeath(disease.getOtherPlaceOfDeath());
+
+            if (disease.getReasonForDeath() != null && !disease.getReasonForDeath().trim().isEmpty())
+                dto.setReasonForDeath(disease.getReasonForDeath());
+
+            if (disease.getOtherReasonForDeath() != null && !disease.getOtherReasonForDeath().trim().isEmpty())
+                dto.setOtherReasonForDeath(disease.getOtherReasonForDeath());
+
+            if (disease.getCaseStatus() != null && !disease.getCaseStatus().trim().isEmpty())
+                dto.setCaseStatus(disease.getCaseStatus());
+
+            if (disease.getRapidDiagnosticTest() != null)
+                dto.setRapidDiagnosticTest(disease.getRapidDiagnosticTest());
+
+            if (disease.getDateOfRdt() != null)
+                dto.setDateOfRdt(disease.getDateOfRdt());
+
+            if (disease.getSlideTestPf() != null)
+                dto.setSlideTestPf(disease.getSlideTestPf());
+
+            if (disease.getSlideTestPv() != null)
+                dto.setSlideTestPv(disease.getSlideTestPv());
+
+            if (disease.getDateOfSlideTest() != null)
+                dto.setDateOfSlideTest(disease.getDateOfSlideTest());
+
+            if (disease.getSlideNo() != null && !disease.getSlideNo().trim().isEmpty())
+                dto.setSlideNo(disease.getSlideNo());
+
+            if (disease.getReferredTo() != null)
+                dto.setReferredTo(disease.getReferredTo());
+
+            if (disease.getOtherReferredFacility() != null && !disease.getOtherReferredFacility().trim().isEmpty())
+                dto.setOtherReferredFacility(disease.getOtherReferredFacility());
+
+            if (disease.getRemarks() != null && !disease.getRemarks().trim().isEmpty())
+                dto.setRemarks(disease.getRemarks());
+
+            if (disease.getMalariaSlideTestType() != null && !disease.getMalariaSlideTestType().trim().isEmpty())
+                dto.setMalariaSlideTestType(disease.getMalariaSlideTestType());
+
+            if (disease.getMalariaTestType() != null && !disease.getMalariaTestType().trim().isEmpty())
+                dto.setMalariaTestType(disease.getMalariaTestType());
+
+            if (disease.getDateOfVisitBySupervisor() != null)
+                dto.setDateOfVisitBySupervisor(disease.getDateOfVisitBySupervisor());
+
+            if (disease.getUserId() != null)
+                dto.setUserId(disease.getUserId());
+
+            if (disease.getDiseaseTypeId() != null)
+                dto.setDiseaseTypeId(disease.getDiseaseTypeId());
+
+            // Symptoms JSON
             try {
-                if (disease.getSymptoms() != null && !disease.getSymptoms().isEmpty()) {
-                    MalariaSymptomsDTO symptomsDTO = objectMapper.readValue(disease.getSymptoms(), MalariaSymptomsDTO.class);
+                if (disease.getSymptoms() != null &&
+                        !disease.getSymptoms().trim().isEmpty()) {
+
+                    MalariaSymptomsDTO symptomsDTO =
+                            objectMapper.readValue(disease.getSymptoms(), MalariaSymptomsDTO.class);
+
                     dto.setFeverMoreThanTwoWeeks(symptomsDTO.isFeverMoreThanTwoWeeks());
                     dto.setFluLikeIllness(symptomsDTO.isFluLikeIllness());
                     dto.setShakingChills(symptomsDTO.isShakingChills());
@@ -579,7 +632,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     dto.setDiarrhea(symptomsDTO.isDiarrhea());
                 }
             } catch (Exception e) {
-                throw new RuntimeException("Error parsing symptoms JSON for Malaria Disease ID: " + disease.getId(), e);
+                logger.error("Error parsing symptoms for diseaseId={}",
+                        disease.getId(), e);
             }
 
             return dto;
@@ -625,30 +679,77 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Map to DTOs
         List<DiseaseKalaAzarDTO> dtoList = filteredList.stream().map(disease -> {
+
             DiseaseKalaAzarDTO dto = new DiseaseKalaAzarDTO();
-            dto.setId(disease.getId());
-            dto.setBenId(disease.getBenId());
-            dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
-            dto.setVisitDate(disease.getVisitDate());
-            dto.setBeneficiaryStatus(disease.getBeneficiaryStatus());
-            dto.setDateOfDeath(disease.getDateOfDeath());
-            dto.setPlaceOfDeath(disease.getPlaceOfDeath());
-            dto.setOtherPlaceOfDeath(disease.getOtherPlaceOfDeath());
-            dto.setReasonForDeath(disease.getReasonForDeath());
-            dto.setOtherReasonForDeath(disease.getOtherReasonForDeath());
-            dto.setKalaAzarCaseStatus(disease.getKalaAzarCaseStatus());
-            dto.setKalaAzarCaseCount(disease.getKalaAzarCaseCount());
-            dto.setRapidDiagnosticTest(disease.getRapidDiagnosticTest());
-            dto.setDateOfRdt(disease.getDateOfRdt());
-            dto.setFollowUpPoint(disease.getFollowUpPoint());
-            dto.setReferredTo(disease.getReferredTo());
-            dto.setOtherReferredFacility(disease.getOtherReferredFacility());
-            dto.setCreatedDate(disease.getCreatedDate());
-            dto.setCreatedBy(disease.getCreatedBy());
-            dto.setBeneficiaryStatusId(disease.getBeneficiaryStatusId());
-            dto.setReferToName(disease.getReferToName());
-            dto.setUserId(disease.getUserId());
-            dto.setDiseaseTypeId(disease.getDiseaseTypeId());
+
+            if (disease.getId() != null)
+                dto.setId(disease.getId());
+
+            if (disease.getBenId() != null)
+                dto.setBenId(disease.getBenId());
+
+            if (disease.getHouseHoldDetailsId() != null)
+                dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
+
+            if (disease.getVisitDate() != null)
+                dto.setVisitDate(disease.getVisitDate());
+
+            if (disease.getBeneficiaryStatus() != null && !disease.getBeneficiaryStatus().trim().isEmpty())
+                dto.setBeneficiaryStatus(disease.getBeneficiaryStatus());
+
+            if (disease.getDateOfDeath() != null)
+                dto.setDateOfDeath(disease.getDateOfDeath());
+
+            if (disease.getPlaceOfDeath() != null && !disease.getPlaceOfDeath().trim().isEmpty())
+                dto.setPlaceOfDeath(disease.getPlaceOfDeath());
+
+            if (disease.getOtherPlaceOfDeath() != null && !disease.getOtherPlaceOfDeath().trim().isEmpty())
+                dto.setOtherPlaceOfDeath(disease.getOtherPlaceOfDeath());
+
+            if (disease.getReasonForDeath() != null && !disease.getReasonForDeath().trim().isEmpty())
+                dto.setReasonForDeath(disease.getReasonForDeath());
+
+            if (disease.getOtherReasonForDeath() != null && !disease.getOtherReasonForDeath().trim().isEmpty())
+                dto.setOtherReasonForDeath(disease.getOtherReasonForDeath());
+
+            if (disease.getKalaAzarCaseStatus() != null && !disease.getKalaAzarCaseStatus().trim().isEmpty())
+                dto.setKalaAzarCaseStatus(disease.getKalaAzarCaseStatus());
+
+            if (disease.getKalaAzarCaseCount() != null)
+                dto.setKalaAzarCaseCount(disease.getKalaAzarCaseCount());
+
+            if (disease.getRapidDiagnosticTest() != null)
+                dto.setRapidDiagnosticTest(disease.getRapidDiagnosticTest());
+
+            if (disease.getDateOfRdt() != null)
+                dto.setDateOfRdt(disease.getDateOfRdt());
+
+            if (disease.getFollowUpPoint() != null)
+                dto.setFollowUpPoint(disease.getFollowUpPoint());
+
+            if (disease.getReferredTo() != null && !disease.getReferredTo().trim().isEmpty())
+                dto.setReferredTo(disease.getReferredTo());
+
+            if (disease.getOtherReferredFacility() != null && !disease.getOtherReferredFacility().trim().isEmpty())
+                dto.setOtherReferredFacility(disease.getOtherReferredFacility());
+
+            if (disease.getCreatedDate() != null)
+                dto.setCreatedDate(disease.getCreatedDate());
+
+            if (disease.getCreatedBy() != null && !disease.getCreatedBy().trim().isEmpty())
+                dto.setCreatedBy(disease.getCreatedBy());
+
+            if (disease.getBeneficiaryStatusId() != null)
+                dto.setBeneficiaryStatusId(disease.getBeneficiaryStatusId());
+
+            if (disease.getReferToName() != null && !disease.getReferToName().trim().isEmpty())
+                dto.setReferToName(disease.getReferToName());
+
+            if (disease.getUserId() != null)
+                dto.setUserId(disease.getUserId());
+
+            if (disease.getDiseaseTypeId() != null)
+                dto.setDiseaseTypeId(disease.getDiseaseTypeId());
 
             return dto;
         }).collect(Collectors.toList());
@@ -678,23 +779,58 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Map to DTOs
         List<DiseaseFilariasisDTO> dtoList = filteredList.stream().map(disease -> {
+
             DiseaseFilariasisDTO dto = new DiseaseFilariasisDTO();
-            dto.setId(disease.getId());
-            dto.setBenId(disease.getBenId());
-            dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
-            dto.setSufferingFromFilariasis(disease.getSufferingFromFilariasis());
-            dto.setAffectedBodyPart(disease.getAffectedBodyPart());
-            dto.setMdaHomeVisitDate(disease.getMdaHomeVisitDate());
-            dto.setDoseStatus(disease.getDoseStatus());
-            dto.setFilariasisCaseCount(disease.getFilariasisCaseCount());
-            dto.setOtherDoseStatusDetails(disease.getOtherDoseStatusDetails());
-            dto.setMedicineSideEffect(disease.getMedicineSideEffect());
-            dto.setOtherSideEffectDetails(disease.getOtherSideEffectDetails());
-            dto.setCreatedDate(disease.getCreatedDate());
-            dto.setCreatedBy(disease.getCreatedBy());
-            dto.setUserId(disease.getUserId());
+
+            if (disease.getId() != null)
+                dto.setId(disease.getId());
+
+            if (disease.getBenId() != null)
+                dto.setBenId(disease.getBenId());
+
+            if (disease.getHouseHoldDetailsId() != null)
+                dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
+
+            if (disease.getSufferingFromFilariasis() != null)
+                dto.setSufferingFromFilariasis(disease.getSufferingFromFilariasis());
+
+            if (disease.getAffectedBodyPart() != null &&
+                    !disease.getAffectedBodyPart().trim().isEmpty())
+                dto.setAffectedBodyPart(disease.getAffectedBodyPart());
+
+            if (disease.getMdaHomeVisitDate() != null)
+                dto.setMdaHomeVisitDate(disease.getMdaHomeVisitDate());
+
+            if (disease.getDoseStatus() != null &&
+                    !disease.getDoseStatus().trim().isEmpty())
+                dto.setDoseStatus(disease.getDoseStatus());
+
+            if (disease.getFilariasisCaseCount() != null)
+                dto.setFilariasisCaseCount(disease.getFilariasisCaseCount());
+
+            if (disease.getOtherDoseStatusDetails() != null &&
+                    !disease.getOtherDoseStatusDetails().trim().isEmpty())
+                dto.setOtherDoseStatusDetails(disease.getOtherDoseStatusDetails());
+
+            if (disease.getMedicineSideEffect() != null)
+                dto.setMedicineSideEffect(disease.getMedicineSideEffect());
+
+            if (disease.getOtherSideEffectDetails() != null &&
+                    !disease.getOtherSideEffectDetails().trim().isEmpty())
+                dto.setOtherSideEffectDetails(disease.getOtherSideEffectDetails());
+
+            if (disease.getCreatedDate() != null)
+                dto.setCreatedDate(disease.getCreatedDate());
+
+            if (disease.getCreatedBy() != null &&
+                    !disease.getCreatedBy().trim().isEmpty())
+                dto.setCreatedBy(disease.getCreatedBy());
+
+            if (disease.getUserId() != null)
+                dto.setUserId(disease.getUserId());
 
             return dto;
+
         }).collect(Collectors.toList());
 
         return dtoList;
