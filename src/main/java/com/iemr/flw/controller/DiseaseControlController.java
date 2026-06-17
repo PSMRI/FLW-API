@@ -210,6 +210,8 @@ public class DiseaseControlController {
                 response.put("statusCode", 5000);
             }
         } catch (Exception e) {
+            logger.info("Fail leprosy: "+e.getMessage());
+            logger.info("Fail leprosy full error: "+e);
             response.put("status", "Error: " + e.getMessage());
             response.put("statusCode", 5000);
         }
@@ -240,6 +242,8 @@ public class DiseaseControlController {
                 response.put("statusCode", 5000);
             }
         } catch (Exception e) {
+            logger.info("Fail leprosy followUp: "+e.getMessage());
+            logger.info("Fail leprosy  full error: "+e);
             response.put("status", "Error: " + e.getMessage());
             response.put("statusCode", 5000);
         }
@@ -256,6 +260,8 @@ public class DiseaseControlController {
             response.put("data", diseaseControlService.getAllScreeningData(getDiseaseRequestHandler));
 
         } catch (Exception e) {
+            logger.info("getAllDisease "+e.getMessage());
+            logger.info("Fail getAllDisease  full error: "+e);
             response.put("status", "Error" + e.getMessage());
             response.put("statusCode", 5000);
         }
