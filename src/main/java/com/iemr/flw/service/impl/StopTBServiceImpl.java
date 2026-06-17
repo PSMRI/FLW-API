@@ -10,6 +10,7 @@ import com.iemr.flw.domain.iemr.StopTBDiagnostics;
 import com.iemr.flw.domain.iemr.StopTBGeneralExamination;
 import com.iemr.flw.domain.iemr.StopTBGeneralOpd;
 import com.iemr.flw.domain.iemr.TBScreening;
+import com.iemr.flw.domain.iemr.TBStopVisit;
 import com.iemr.flw.dto.iemr.StopTBRegistrationDto;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.BenFlowStatusRepo;
@@ -19,10 +20,12 @@ import com.iemr.flw.repo.iemr.StopTBGeneralOpdRepo;
 import com.iemr.flw.repo.iemr.TBScreeningRepo;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.StopTBService;
+import com.iemr.flw.service.TBStopVisitService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +60,9 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Autowired
     private StopTBDiagnosticsRepo diagnosticsRepo;
+
+    @Autowired
+    private TBStopVisitService tbStopVisitService;
 
     @Value("${tm-url}")
     private String tmUrl;
@@ -188,14 +194,14 @@ public class StopTBServiceImpl implements StopTBService {
             Map<String, Object> item = buildWorklistItem(flow);
             Long benRegID = flow.getBeneficiaryRegID();
 
-            StopTBGeneralExamination exam = generalExaminationRepo.findByBeneficiaryRegID(benRegID);
-            item.put("generalExamination", exam != null ? examToMap(exam) : null);
+            List<StopTBGeneralExamination> examList = generalExaminationRepo.findLatestByBeneficiaryRegID(benRegID, PageRequest.of(0, 1));
+            item.put("generalExamination", !examList.isEmpty() ? examToMap(examList.get(0)) : null);
 
-            TBScreening screening = tbScreeningRepo.findByBenRegID(benRegID);
-            item.put("tbScreening", screening != null ? screeningToMap(screening) : null);
+            List<TBScreening> screeningList = tbScreeningRepo.findLatestByBenRegID(benRegID, PageRequest.of(0, 1));
+            item.put("tbScreening", !screeningList.isEmpty() ? screeningToMap(screeningList.get(0)) : null);
 
-            StopTBGeneralOpd opd = generalOpdRepo.findByBenRegID(benRegID);
-            item.put("generalOpd", opd != null ? opdToMap(opd) : null);
+            List<StopTBGeneralOpd> opdList = generalOpdRepo.findLatestByBenRegID(benRegID, PageRequest.of(0, 1));
+            item.put("generalOpd", !opdList.isEmpty() ? opdToMap(opdList.get(0)) : null);
 
             worklist.add(item);
         }
@@ -291,12 +297,18 @@ public class StopTBServiceImpl implements StopTBService {
             Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
             if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
 
-            StopTBGeneralExamination exam = generalExaminationRepo.findByBeneficiaryRegID(beneficiaryRegID);
+            Integer providerServiceMapID = getInt(data, "providerServiceMapID");
+            String createdBy = getString(data, "createdBy");
+            TBStopVisit visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
+                    createdBy, vanID, parkingPlaceID);
+
+            StopTBGeneralExamination exam = generalExaminationRepo.findByBeneficiaryRegIDAndVisitCode(beneficiaryRegID, visit.getId());
             if (exam == null) exam = new StopTBGeneralExamination();
             boolean isNew = exam.getId() == null;
 
             exam.setBeneficiaryRegID(beneficiaryRegID);
-            exam.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
+            exam.setVisitCode(visit.getId());
+            exam.setProviderServiceMapID(providerServiceMapID);
             exam.setPulseRate(getInt(data, "pulseRate"));
             exam.setSystolicBP(getInt(data, "systolicBP"));
             exam.setDiastolicBP(getInt(data, "diastolicBP"));
@@ -345,9 +357,9 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Override
     public Map<String, Object> getGeneralExamination(Long beneficiaryRegID) throws Exception {
-        StopTBGeneralExamination exam = generalExaminationRepo.findByBeneficiaryRegID(beneficiaryRegID);
-        if (exam == null) throw new Exception("No general examination found for beneficiaryRegID: " + beneficiaryRegID);
-        return examToMap(exam);
+        List<StopTBGeneralExamination> examList = generalExaminationRepo.findLatestByBeneficiaryRegID(beneficiaryRegID, PageRequest.of(0, 1));
+        if (examList.isEmpty()) throw new Exception("No general examination found for beneficiaryRegID: " + beneficiaryRegID);
+        return examToMap(examList.get(0));
     }
 
     @Override
@@ -408,12 +420,18 @@ public class StopTBServiceImpl implements StopTBService {
             Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
             if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
 
-            TBScreening screening = tbScreeningRepo.findByBenRegID(beneficiaryRegID);
+            Integer providerServiceMapID = getInt(data, "providerServiceMapID");
+            String createdBy = getString(data, "createdBy");
+            TBStopVisit visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
+                    createdBy, vanID, parkingPlaceID);
+
+            TBScreening screening = tbScreeningRepo.findByBenRegIDAndVisitCode(beneficiaryRegID, visit.getId());
             if (screening == null) screening = new TBScreening();
             boolean isNew = screening.getId() == null;
 
             screening.setBenRegID(beneficiaryRegID);
-            screening.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
+            screening.setVisitCode(visit.getId());
+            screening.setProviderServiceMapID(providerServiceMapID);
             screening.setCoughMoreThan2Weeks(getBool(data, "coughMoreThan2Weeks"));
             screening.setBloodInSputum(getBool(data, "bloodInSputum"));
             screening.setFeverMoreThan2Weeks(getBool(data, "feverMoreThan2Weeks"));
@@ -464,9 +482,9 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Override
     public Map<String, Object> getNurseTBScreening(Long beneficiaryRegID) throws Exception {
-        TBScreening screening = tbScreeningRepo.findByBenRegID(beneficiaryRegID);
-        if (screening == null) throw new Exception("No TB screening found for beneficiaryRegID: " + beneficiaryRegID);
-        return screeningToMap(screening);
+        List<TBScreening> screeningList = tbScreeningRepo.findLatestByBenRegID(beneficiaryRegID, PageRequest.of(0, 1));
+        if (screeningList.isEmpty()) throw new Exception("No TB screening found for beneficiaryRegID: " + beneficiaryRegID);
+        return screeningToMap(screeningList.get(0));
     }
 
     @Override
@@ -530,12 +548,18 @@ public class StopTBServiceImpl implements StopTBService {
             Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
             if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
 
-            StopTBGeneralOpd opd = generalOpdRepo.findByBenRegID(beneficiaryRegID);
+            Integer providerServiceMapID = getInt(data, "providerServiceMapID");
+            String createdBy = getString(data, "createdBy");
+            TBStopVisit visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
+                    createdBy, vanID, parkingPlaceID);
+
+            StopTBGeneralOpd opd = generalOpdRepo.findByBenRegIDAndVisitCode(beneficiaryRegID, visit.getId());
             if (opd == null) opd = new StopTBGeneralOpd();
             boolean isNew = opd.getId() == null;
 
             opd.setBenRegID(beneficiaryRegID);
-            opd.setProviderServiceMapID(getInt(data, "providerServiceMapID"));
+            opd.setVisitCode(visit.getId());
+            opd.setProviderServiceMapID(providerServiceMapID);
             opd.setChiefComplaint(toJsonString(data.get("chiefComplaint")));
             opd.setMedication(getString(data, "medication"));
             opd.setDosage(getString(data, "dosage"));
@@ -560,9 +584,9 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Override
     public Map<String, Object> getGeneralOpd(Long beneficiaryRegID) throws Exception {
-        StopTBGeneralOpd opd = generalOpdRepo.findByBenRegID(beneficiaryRegID);
-        if (opd == null) throw new Exception("No general OPD record found for beneficiaryRegID: " + beneficiaryRegID);
-        return opdToMap(opd);
+        List<StopTBGeneralOpd> opdList = generalOpdRepo.findLatestByBenRegID(beneficiaryRegID, PageRequest.of(0, 1));
+        if (opdList.isEmpty()) throw new Exception("No general OPD record found for beneficiaryRegID: " + beneficiaryRegID);
+        return opdToMap(opdList.get(0));
     }
 
     @Override

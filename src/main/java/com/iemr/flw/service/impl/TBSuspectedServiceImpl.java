@@ -2,13 +2,16 @@ package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.iemr.flw.domain.iemr.TBStopVisit;
 import com.iemr.flw.domain.iemr.TBSuspected;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.TBSuspectedDTO;
 import com.iemr.flw.dto.iemr.TBSuspectedRequestDTO;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.TBSuspectedRepo;
 import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.CampConfigService;
+import com.iemr.flw.service.TBStopVisitService;
 import com.iemr.flw.service.TBSuspectedService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -28,6 +31,10 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
     private TBSuspectedRepo tbSuspectedRepo;
     @Autowired
     private CampConfigService campConfigService;
+    @Autowired
+    private TBStopVisitService tbStopVisitService;
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
 
     @Autowired
     private IncentiveLogicService incentiveLogicService;
@@ -42,8 +49,12 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
         Integer vanID = campConfigService.getVanID();
         Integer parkingPlaceID = campConfigService.getParkingPlaceID();
         for (TBSuspectedDTO tbSuspectedDTO : requestDTO.getTbSuspectedList()) {
+            Long beneficiaryRegID = beneficiaryRepo.getRegIDFromBenId(tbSuspectedDTO.getBenId());
+            TBStopVisit visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, null,
+                    requestDTO.getUserId() != null ? requestDTO.getUserId().toString() : null, vanID, parkingPlaceID);
+
             TBSuspected tbSuspected =
-                    tbSuspectedRepo.getByUserIdAndBenId(tbSuspectedDTO.getBenId(), requestDTO.getUserId());
+                    tbSuspectedRepo.getByUserIdAndBenIdAndVisitCode(tbSuspectedDTO.getBenId(), requestDTO.getUserId(), visit.getId());
 
             if (tbSuspected == null) {
                 tbSuspected = new TBSuspected();
@@ -56,6 +67,7 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
             }
 
             tbSuspected.setUserId(requestDTO.getUserId());
+            tbSuspected.setVisitCode(visit.getId());
             if (tbSuspected.getVanID() == null && vanID != null) { tbSuspected.setVanID(vanID); tbSuspected.setParkingPlaceID(parkingPlaceID); }
             tbSuspected.setProcessed("N");
             tbSuspectedRepo.save(tbSuspected);
