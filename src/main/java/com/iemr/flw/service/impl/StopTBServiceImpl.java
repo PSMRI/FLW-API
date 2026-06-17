@@ -425,7 +425,17 @@ public class StopTBServiceImpl implements StopTBService {
             screening.setRiseOfFever(getBool(data, "riseOfFever"));
             screening.setLossOfAppetite(getBool(data, "lossOfAppetite"));
             screening.setContactWithTBPatient(getBool(data, "contactWithTBPatient"));
-            screening.setSympotomatic(getString(data, "symptomatic"));
+            String symptomaticInput = getString(data, "symptomatic");
+            if ("Yes".equalsIgnoreCase(symptomaticInput)) {
+                screening.setSympotomatic(null);
+                screening.setAsymptomatic("Yes");
+            } else if ("No".equalsIgnoreCase(symptomaticInput)) {
+                screening.setSympotomatic("Yes");
+                screening.setAsymptomatic(null);
+            } else {
+                screening.setSympotomatic(null);
+                screening.setAsymptomatic(null);
+            }
             screening.setReferredForDigitalChestXray(getBool(data, "referredForDigitalChestXray"));
             screening.setReferredForSputumCollection(getBool(data, "referredForSputumCollection"));
             screening.setSputumSampleSubmittedAt(getString(data, "sputumSampleSubmittedAt"));
@@ -488,7 +498,13 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("riseOfFever", s.getRiseOfFever());
         m.put("lossOfAppetite", s.getLossOfAppetite());
         m.put("contactWithTBPatient", s.getContactWithTBPatient());
-        m.put("symptomatic", s.getSympotomatic());
+        if ("Yes".equalsIgnoreCase(s.getAsymptomatic())) {
+            m.put("symptomatic", "Yes");
+        } else if ("Yes".equalsIgnoreCase(s.getSympotomatic())) {
+            m.put("symptomatic", "No");
+        } else {
+            m.put("symptomatic", null);
+        }
         m.put("referredForDigitalChestXray", s.getReferredForDigitalChestXray());
         m.put("referredForSputumCollection", s.getReferredForSputumCollection());
         m.put("sputumSampleSubmittedAt", s.getSputumSampleSubmittedAt());
