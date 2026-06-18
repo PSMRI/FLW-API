@@ -422,12 +422,12 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     }
 
     @Override
-    public List<FormResponseDTO> submitBulk(List<FormResponseRequest> requests, String authorization) {
+    public List<FormResponseDTO> submitBulk(List<FormResponseRequest> requests, String jwtToken) {
         if (requests == null || requests.isEmpty()) return List.of();
         List<FormResponseDTO> results = new ArrayList<>();
         for (FormResponseRequest req : requests) {
             try {
-                results.add(itemSaver.saveForBulk(req, authorization));
+                results.add(itemSaver.saveForBulk(req, jwtToken));
             } catch (Exception ex) {
                 log.warn("submitBulk: item skipped for beneficiaryId={} — {}",
                         req.getBeneficiaryId(), ex.getMessage());

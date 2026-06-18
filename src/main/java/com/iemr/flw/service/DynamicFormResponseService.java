@@ -50,7 +50,7 @@ public interface DynamicFormResponseService {
      * All FormResponse rows are batch-inserted via saveAll() so responseIds are available
      * before section/question processing begins. All-or-nothing: any failure rolls back all.
      */
-    List<FormResponseDTO> submitBulk(List<FormResponseRequest> requests, String authorization);
+    List<FormResponseDTO> submitBulk(List<FormResponseRequest> requests, String jwtToken);
 
     /**
      * Returns SUBMITTED responses for the given form IDs whose {@code lastFollowUpAt}

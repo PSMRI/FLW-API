@@ -74,8 +74,8 @@ public class DynamicFormResponseController {
     @RequestMapping(value = "/submitBulk", method = RequestMethod.POST)
     public ResponseEntity<ApiResponse> submitBulk(
             @Valid @RequestBody List<FormResponseRequest> requests,
-            @RequestHeader("Authorization") String authorization) {
-        List<FormResponseDTO> saved = responseService.submitBulk(requests, authorization);
+            @RequestHeader("JwtToken") String jwtToken) {
+        List<FormResponseDTO> saved = responseService.submitBulk(requests, jwtToken);
         return ResponseEntity.ok(
                 new ApiResponse(true, "Bulk submit complete: " + saved.size() + " saved", saved));
     }

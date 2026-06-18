@@ -43,6 +43,7 @@ import com.iemr.flw.repo.iemr.SectionQuestionRepo;
 import com.iemr.flw.repo.iemr.SectionResponseRepo;
 import com.iemr.flw.masterEnum.QuestionType;
 import com.iemr.flw.utils.JwtUtil;
+import com.iemr.flw.utils.exception.IEMRException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -89,8 +90,8 @@ public class FormResponseItemSaver {
      * restoring the deleted rows automatically.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public FormResponseDTO saveForBulk(FormResponseRequest req, String authorization) {
-        String actor = jwtUtil.extractUsername(authorization);
+    public FormResponseDTO saveForBulk(FormResponseRequest req, String jwtToken) throws IEMRException {
+        String actor = jwtUtil.extractUserId(jwtToken).toString();
         FormVersion version = resolveLatestVersion(req.getFormUuid());
         Timestamp now = new Timestamp(System.currentTimeMillis());
         Long formId = version.getDynamicForm().getFormId();
