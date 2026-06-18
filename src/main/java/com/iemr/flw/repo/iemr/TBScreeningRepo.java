@@ -1,6 +1,7 @@
 package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.TBScreening;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -22,6 +23,16 @@ public interface TBScreeningRepo extends JpaRepository<TBScreening, Long> {
 
     @Query("SELECT tbs FROM TBScreening tbs WHERE tbs.benRegID = :benRegID AND tbs.deleted = false")
     TBScreening findByBenRegID(@Param("benRegID") Long benRegID);
+
+    // Read-side fix: same NonUniqueResultException risk as StopTBGeneralExaminationRepo once a
+    // beneficiary has more than one visit. Pass PageRequest.of(0, 1) for the latest only.
+    @Query("SELECT tbs FROM TBScreening tbs WHERE tbs.benRegID = :benRegID " +
+            "AND tbs.deleted = false ORDER BY tbs.visitDate DESC")
+    List<TBScreening> findLatestByBenRegID(@Param("benRegID") Long benRegID, Pageable pageable);
+
+    @Query("SELECT tbs FROM TBScreening tbs WHERE tbs.benRegID = :benRegID " +
+            "AND tbs.visitCode = :visitCode AND tbs.deleted = false")
+    TBScreening findByBenRegIDAndVisitCode(@Param("benRegID") Long benRegID, @Param("visitCode") Long visitCode);
 
     @Query("SELECT tbs FROM TBScreening tbs WHERE tbs.providerServiceMapID = :psmId AND tbs.deleted = false ORDER BY tbs.visitDate DESC")
     List<TBScreening> findAllByProviderServiceMapID(@Param("psmId") Integer psmId);

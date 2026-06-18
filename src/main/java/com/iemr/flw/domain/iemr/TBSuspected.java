@@ -104,4 +104,7 @@ public class TBSuspected {
 
     @Column(name = "created_date")
     private Timestamp createdDate;
+
+    @Column(name = "visitCode")
+    private Long visitCode;
 }

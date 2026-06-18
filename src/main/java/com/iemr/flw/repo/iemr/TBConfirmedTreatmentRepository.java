@@ -17,6 +17,7 @@ public interface TBConfirmedTreatmentRepository
 
     List<TBConfirmedCase> findByBenId(Long benId);
     List<TBConfirmedCase> findByUserId(Integer benId);
+    List<TBConfirmedCase> findByBenIdAndVisitCode(Long benId, Long visitCode);
 
     @Transactional
     @Modifying

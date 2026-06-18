@@ -99,4 +99,7 @@ public class TBConfirmedCase {
 
     @Column(name = "created_by")
     private String createdBy;
+
+    @Column(name = "visitCode")
+    private Long visitCode;
 }
