@@ -59,3 +59,8 @@ This microservice is built on Java, Spring boot framework and MySQL DB.
 * Maven (if not pre-installed with the editor)
 * Redis-x64-3.0.504
 * MySQL Workbench 8.0
+* Node.js and npm (required for git hooks via npx/commitlint)
+
+## Setting Up Commit Hooks
+Enable git hooks (run once after cloning):
+   - Run the command `git config core.hooksPath .git-hooks`.
