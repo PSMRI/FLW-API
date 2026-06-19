@@ -40,10 +40,13 @@ public class BeneficiaryController {
     @Autowired
     private MdaFormSubmissionService mdaFormSubmissionService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @RequestMapping(value = "/getBeneficiaryData", method = RequestMethod.POST)
     @Operation(summary = "get beneficiary data for given user ")
     public String getBeneficiaryDataByAsha(@RequestBody GetBenRequestHandler requestDTO,
-            @RequestHeader(value = "Authorization") String authorization) {
+                                           @RequestHeader(value = "Authorization") String authorization) {
         OutputResponse response = new OutputResponse();
 
         try {
@@ -65,8 +68,9 @@ public class BeneficiaryController {
         return response.toString();
 
     }
+
     @RequestMapping(value = {"/eye_surgery/saveAll"}, method = RequestMethod.POST)
-    public ResponseEntity<?> saveEyeSurgery(@RequestBody List<EyeCheckupRequestDTO> eyeCheckupRequestDTOS,@RequestHeader(value = "JwtToken") String token) {
+    public ResponseEntity<?> saveEyeSurgery(@RequestBody List<EyeCheckupRequestDTO> eyeCheckupRequestDTOS, @RequestHeader(value = "JwtToken") String token) {
         Map<String, Object> response = new LinkedHashMap<>();
         logger.info("Eye Checkup Save Request: {}", eyeCheckupRequestDTOS);
 
@@ -77,7 +81,7 @@ public class BeneficiaryController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
-            String responseObject = beneficiaryService.saveEyeCheckupVsit(eyeCheckupRequestDTOS,token);
+            String responseObject = beneficiaryService.saveEyeCheckupVsit(eyeCheckupRequestDTOS, token);
 
             if (responseObject != null) {
                 response.put("statusCode", HttpStatus.OK.value());
@@ -98,14 +102,13 @@ public class BeneficiaryController {
     }
 
 
-
     @RequestMapping(value = {"/eye_surgery/getAll"}, method = RequestMethod.POST)
-    public ResponseEntity<?> getAllEyeSurgery(@RequestBody GetBenRequestHandler request,@RequestHeader(value = "JwtToken") String token) {
+    public ResponseEntity<?> getAllEyeSurgery(@RequestBody GetBenRequestHandler request, @RequestHeader(value = "JwtToken") String token) {
         Map<String, Object> response = new LinkedHashMap<>();
         logger.info("Eye Checkup Get Request: {}", request);
 
         try {
-            List<EyeCheckupRequestDTO> responseObject = beneficiaryService.getEyeCheckUpVisit(request,token);
+            List<EyeCheckupRequestDTO> responseObject = beneficiaryService.getEyeCheckUpVisit(request, token);
 
             if (responseObject != null && !responseObject.isEmpty()) {
                 response.put("statusCode", HttpStatus.OK.value());
@@ -125,13 +128,70 @@ public class BeneficiaryController {
         }
     }
 
-    @RequestMapping(value = "/ifa/saveAll",method = RequestMethod.POST)
-    public ResponseEntity<?> saveFormData(@RequestBody List<IFAFormSubmissionRequest> requests) {
-        String message = ifaFormSubmissionService.saveFormData(requests);
-        return ResponseEntity.ok(Map.of("success", true, "message", message));
+    @RequestMapping(value = "/ifa/saveAll", method = RequestMethod.POST)
+    public ResponseEntity<?> saveIfaFormData(
+            @RequestBody List<IFAFormSubmissionRequest> requests,
+            @RequestHeader(value = "JwtToken") String token) {
+
+        Map<String, Object> response = new LinkedHashMap<>();
+
+        logger.info("IFA Save Request: {}", requests);
+
+        try {
+
+            if (requests == null || requests.isEmpty()) {
+
+                response.put("statusCode", HttpStatus.BAD_REQUEST.value());
+                response.put("message", "Request body cannot be empty");
+
+                return ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body(response);
+            }
+            if (token != null) {
+                String message =
+                        ifaFormSubmissionService.saveFormData(requests, jwtUtil.extractUserId(token));
+
+                if (message != null) {
+
+                    response.put("statusCode", HttpStatus.OK.value());
+                    response.put("message", message);
+
+                    return ResponseEntity.ok(response);
+
+                } else {
+
+                    response.put("statusCode", HttpStatus.BAD_REQUEST.value());
+                    response.put("message", "Failed to save records");
+
+                    return ResponseEntity
+                            .status(HttpStatus.BAD_REQUEST)
+                            .body(response);
+                }
+            } else {
+                response.put("statusCode", HttpStatus.UNAUTHORIZED.value());
+                response.put("message", "UNAUTHORIZED");
+
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(response);
+            }
+
+
+        } catch (Exception e) {
+
+            logger.error("Error saving IFA records:", e);
+
+            response.put("statusCode", 5000);
+            response.put("errorMessage", e.getMessage());
+
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(response);
+        }
     }
 
-    @RequestMapping(value = "ifa/getAll",method = RequestMethod.POST)
+    @RequestMapping(value = "ifa/getAll", method = RequestMethod.POST)
     public ResponseEntity<?> getFormData(@RequestBody GetBenRequestHandler getBenRequestHandler) {
         var data = ifaFormSubmissionService.getFormData(getBenRequestHandler);
         return ResponseEntity.ok(Map.of("success", true, "message", "Data fetched successfully", "data", data));
@@ -139,15 +199,15 @@ public class BeneficiaryController {
 
     @RequestMapping(value = "/mda/saveAll", method = RequestMethod.POST)
     public ResponseEntity<?> saveFormData(@RequestBody List<MdaFormSubmissionRequest> requests,
-            @RequestHeader(value = "Authorization") String authorization) {
+                                          @RequestHeader(value = "Authorization") String authorization) {
         String message = mdaFormSubmissionService.saveFormData(requests);
         return ResponseEntity.ok(Map.of("success", true, "message", message));
     }
 
     @RequestMapping(value = "/mda/getAll", method = RequestMethod.POST)
     public ResponseEntity<?> getFormDataByCreatedBy(@RequestBody Map<String, String> request,
-            @RequestHeader(value = "Authorization") String authorization) {
-        String userName = request.get("userName") ;
+                                                    @RequestHeader(value = "Authorization") String authorization) {
+        String userName = request.get("userName");
         var data = mdaFormSubmissionService.getFormDataByUserName(userName);
         return ResponseEntity.ok(Map.of("success", true, "message", "Data fetched successfully", "data", data));
     }

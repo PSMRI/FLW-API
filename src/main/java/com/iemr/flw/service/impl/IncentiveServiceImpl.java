@@ -15,7 +15,9 @@ import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.IncentiveService;
 import com.iemr.flw.service.MaaMeetingService;
+import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +61,9 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Autowired
     private CbacIemrDetailsRepo cbacIemrDetailsRepo;
+
+    @Autowired
+    private UserService userService;
 
 
     // ================= MASTER SAVE =================
@@ -146,7 +151,13 @@ public class IncentiveServiceImpl implements IncentiveService {
                     }
 
                 } else {
-                    dto.setGroupName(inc.getGroup());
+                    if(isCG){
+                        dto.setGroupName("");
+
+                    }else {
+                        dto.setGroupName(inc.getGroup());
+
+                    }
                 }
 
                 return dto;
@@ -163,10 +174,17 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
+        Integer stateCode = userService.getUserDetail(request.getAshaId()).getStateId();
         try {
-            if (request.getVillageID() != StateCode.CG.getStateCode()) {
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
                 checkMonthlyAshaIncentive(request.getAshaId());
             }
+            if(stateCode.equals(StateCode.CG.getStateCode())){
+                checkMonthlyAshaIncentiveForCg(request.getAshaId());
+
+            }
+
         } catch (Exception e) {
             logger.error("Error in checkMonthlyAshaIncentive: ", e);
         }
@@ -179,12 +197,7 @@ public class IncentiveServiceImpl implements IncentiveService {
             logger.error("Error in incentiveOfNcdReferal: ", e);
         }
 
-        Integer villageID = request.getVillageID();
-        boolean isCG = villageID != null && villageID.intValue() == StateCode.CG.getStateCode();
-
-        if (!isCG) {
-            checkMonthlyAshaIncentive(request.getAshaId());
-        }
+        boolean isCG = stateCode != null && stateCode.equals(StateCode.CG.getStateCode());
 
         // Step 1: Fetch all records for this ASHA
         List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getAshaId());
@@ -616,6 +629,32 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             if (ASHA_MONTHLY_ROUTINE != null) {
                 addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId,userName);
+
+            }
+        } catch (Exception e) {
+            logger.error("Error in addMonthlyAshaIncentiveRecord", e);
+
+        }
+
+    }
+
+    private void checkMonthlyAshaIncentiveForCg(Integer ashaId) {
+        try {
+            String userName = userRepo.getUserNamedByUserId(ashaId);
+
+            IncentiveActivity MONTHLY_HONORARIUM = incentivesRepo.findIncentiveMasterByNameAndGroup("MONTHLY_HONORARIUM", GroupName.ACTIVITY.getDisplayName());
+            IncentiveActivity MITANIN_REGISTER_5_INFO_FILL = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER_5_INFO_FILL", GroupName.ACTIVITY.getDisplayName());
+            IncentiveActivity MITANIN_REGISTER = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER", GroupName.ACTIVITY.getDisplayName());
+            if (MONTHLY_HONORARIUM != null) {
+                addMonthlyAshaIncentiveRecord(MONTHLY_HONORARIUM, ashaId,userName);
+            }
+            if (MITANIN_REGISTER_5_INFO_FILL != null) {
+                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER_5_INFO_FILL, ashaId,userName);
+
+            }
+
+            if (MITANIN_REGISTER != null) {
+                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER, ashaId,userName);
 
             }
         } catch (Exception e) {

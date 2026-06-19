@@ -94,6 +94,7 @@ public class MaaMeetingController {
             @RequestPart("meetingDate") String meetingDate,
             @RequestPart("place") String place,
             @RequestPart("participants") String participants,
+            @RequestPart("id") Long meetingId,
             @RequestPart("ashaId") String ashaId,
             @RequestPart("createdBy") String createdBy,
             @RequestPart(value = "meetingImages", required = false) List<MultipartFile> meetingImages) {
@@ -122,6 +123,9 @@ public class MaaMeetingController {
             if (meetingImages != null) {
                 dto.setMeetingImages(meetingImages != null ? meetingImages.toArray(new MultipartFile[0]) : null);
 
+            }
+            if(meetingId!=null){
+                dto.setId(meetingId);
             }
             if (dto != null) {
                 service.updateMeeting(dto);

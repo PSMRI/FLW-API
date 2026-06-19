@@ -6,9 +6,8 @@ import com.iemr.flw.domain.iemr.TBConfirmedCaseDTO;
 import com.iemr.flw.domain.iemr.TBConfirmedCase;
 import com.iemr.flw.dto.iemr.TBConfirmedCasesResponseDTO;
 import com.iemr.flw.repo.iemr.TBConfirmedTreatmentRepository;
+import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.TBConfirmedCaseService;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.LocalDateAdapter;
 import com.iemr.flw.utils.response.OutputResponse;
@@ -17,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +27,10 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
     private static final Logger logger = LoggerFactory.getLogger(TBConfirmedCaseServiceImpl.class);
 
     private final TBConfirmedTreatmentRepository repository;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
+
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -63,6 +67,8 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     if(entity!=null){
                         repository.save(entity);
 
+                        checkIncentive(entity);
+
                     }
                 }
 
@@ -82,6 +88,37 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         return response.toString();
     }
 
+    private void  checkIncentive(TBConfirmedCase entity){
+        String regimen = entity.getRegimenType();
+
+        boolean isDrTb =
+                "Shorter Regimen (9–12 Months)".equalsIgnoreCase(regimen)
+                        || "Longer Regimen (18–24 Months)".equalsIgnoreCase(regimen);
+
+        if (Boolean.TRUE.equals(entity.getTreatmentCompleted())
+                && entity.getActualTreatmentCompletionDate() != null) {
+
+
+            if (isDrTb) {
+                incentiveLogicService.incentiveForTbFollowUpIsDrTb(
+                        entity.getBenId(),
+                        Timestamp.valueOf(entity.getTreatmentStartDate().atStartOfDay()),
+                        Timestamp.valueOf(entity.getActualTreatmentCompletionDate().atStartOfDay()),
+                        entity.getUserId()
+                );
+            } else {
+                incentiveLogicService.incentiveForTbFollowUp(
+                        entity.getBenId(),
+                        Timestamp.valueOf(entity.getTreatmentStartDate().atStartOfDay()),
+                        Timestamp.valueOf(entity.getActualTreatmentCompletionDate().atStartOfDay()),
+                        entity.getUserId()
+                );
+
+            }
+
+        }
+    }
+
     @Override
     public String getByBenId(Long benId, String authorisation) throws Exception {
         OutputResponse response = new OutputResponse();
@@ -95,6 +132,8 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                         .collect(Collectors.toList());
 
                 response.setResponse(dtoList.toString());
+                list.forEach(this::checkIncentive);
+
             } else {
                 response.setError(404, "No record found for benId: " + benId);
             }

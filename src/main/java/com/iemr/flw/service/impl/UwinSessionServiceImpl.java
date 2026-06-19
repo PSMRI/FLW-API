@@ -190,18 +190,22 @@ public class UwinSessionServiceImpl implements UwinSessionService {
                  record.setBenId(0L);
                  record.setAshaId(session.getAshaId());
                  record.setAmount(Long.valueOf(incentiveActivityAM.getRate()));
-                 if(session.getAttachmentsJson()!=null){
-                     record.setIsEligible(true);
-                     recordRepo.save(record);
+                 record.setIsEligible(true);
+                 recordRepo.save(record);
 
-                 }else {
-                     record.setIsEligible(false);
-                   IncentiveActivityRecord incentiveActivityRecord =   recordRepo.save(record);
-                     if(incentiveActivityRecord!=null){
-                         updateIncentivePendindDocService.updatePendingActivity(session.getAshaId(),session.getId(),incentiveActivityRecord.getId(),incentiveActivityAM.getId());
 
-                     }
-                 }
+//                 if(session.getAttachmentsJson()!=null){
+//                     record.setIsEligible(true);
+//                     recordRepo.save(record);
+//
+//                 }else {
+//                     record.setIsEligible(false);
+//                   IncentiveActivityRecord incentiveActivityRecord =   recordRepo.save(record);
+//                     if(incentiveActivityRecord!=null){
+//                         updateIncentivePendindDocService.updatePendingActivity(session.getAshaId(),session.getId(),incentiveActivityRecord.getId(),incentiveActivityAM.getId());
+//
+//                     }
+//                 }
 
              }
          }
@@ -221,12 +225,14 @@ public class UwinSessionServiceImpl implements UwinSessionService {
                 record.setBenId(0L);
                 record.setAshaId(session.getAshaId());
                 record.setAmount(Long.valueOf(incentiveActivityCH.getRate()));
-                if(session.getAttachmentsJson()!=null){
-                    record.setIsEligible(true);
-                }else {
-                    record.setIsEligible(false);
-                    updateIncentivePendindDocService.updatePendingActivity(session.getAshaId(),session.getId(),record.getId(),incentiveActivityCH.getId());
-                }
+                record.setIsEligible(true);
+
+//                if(session.getAttachmentsJson()!=null){
+//                    record.setIsEligible(true);
+//                }else {
+//                    record.setIsEligible(false);
+//                    updateIncentivePendindDocService.updatePendingActivity(session.getAshaId(),session.getId(),record.getId(),incentiveActivityCH.getId());
+//                }
                 recordRepo.save(record);
             }
         }
