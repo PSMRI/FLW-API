@@ -100,6 +100,8 @@ public class ChildCareServiceImpl implements ChildCareService {
         try {
 
             List<HbycChildVisit> hbycList = new ArrayList<>();
+            logger.info("Saving HBYC Data : {}", new Gson().toJson(hbycDTOs));
+
             hbycDTOs.forEach(it -> {
                 HbycDTO hbycDTO = it.getFields();
                 hbycDTO.setVisit_date(it.getVisitDate());
@@ -293,17 +295,11 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     private Boolean convertBollen(String value) {
-        if(value!=null || !value.isEmpty()){
-            if (value.equals("Yes")) {
-                return true;
-            } else {
-                return false;
-            }
-        }else {
-            return  false;
-
+        if (value != null && !value.isEmpty()) {
+            return value.equalsIgnoreCase("Yes");
+        } else {
+            return false;
         }
-
     }
 
     private String convert(Object value) {
