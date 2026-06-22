@@ -100,7 +100,6 @@ public class ChildCareServiceImpl implements ChildCareService {
         try {
 
             List<HbycChildVisit> hbycList = new ArrayList<>();
-            logger.info("Saving HBYC Data : {}", new Gson().toJson(hbycDTOs));
 
             hbycDTOs.forEach(it -> {
                 HbycDTO hbycDTO = it.getFields();
