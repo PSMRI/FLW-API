@@ -293,11 +293,17 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     private Boolean convertBollen(String value) {
-        if (value.equals("Yes")) {
-            return true;
-        } else {
-            return false;
+        if(value!=null || !value.isEmpty()){
+            if (value.equals("Yes")) {
+                return true;
+            } else {
+                return false;
+            }
+        }else {
+            return  false;
+
         }
+
     }
 
     private String convert(Object value) {
