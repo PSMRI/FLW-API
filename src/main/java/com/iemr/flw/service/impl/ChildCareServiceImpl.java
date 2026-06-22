@@ -150,7 +150,6 @@ public class ChildCareServiceImpl implements ChildCareService {
                     hbyc.setMcp_card_images(hbycDTO.getMcp_card_images());
 
                 }
-                logger.info("Saving HBYC Data : {}", new Gson().toJson(hbyc));
 
                 hbycList.add(hbyc);
             });
