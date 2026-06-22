@@ -3,6 +3,7 @@ package com.iemr.flw.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
@@ -107,14 +108,11 @@ public class ChildCareServiceImpl implements ChildCareService {
 
                 if (hbyc != null) {
                     Long id = hbyc.getId();
-                    modelMapper.map(it, hbycDTO);
                     hbyc.setId(id);
                     hbyc.setUserId(userRepo.getUserIdByName(it.getUserName()));
                     hbyc.setCreated_by(it.getUserName());
                 } else {
                     hbyc = new HbycChildVisit();
-                    modelMapper.map(it, hbycDTO);
-                    hbyc.setId(null);
                     hbyc.setUserId(userRepo.getUserIdByName(it.getUserName()));
                     hbyc.setCreated_by(it.getUserName());
                     hbyc.setBeneficiaryId(it.getBeneficiaryId());
@@ -151,14 +149,18 @@ public class ChildCareServiceImpl implements ChildCareService {
                     hbyc.setMcp_card_images(hbycDTO.getMcp_card_images());
 
                 }
+                logger.info("Saving HBYC Data : {}", new Gson().toJson(hbyc));
+
                 hbycList.add(hbyc);
             });
             hbycRepo.saveAll(hbycList);
+            logger.info("Total records to save : {}", hbycList.size());
             checkAndAddHbyncIncentives(hbycList);
 
             return "no of hbyc details saved: " + hbycDTOs.size();
         } catch (Exception e) {
-            logger.info("error while saving hbyc details: " + e.getMessage());
+            logger.error("error while saving hbyc details", e);
+
         }
         return null;
     }
