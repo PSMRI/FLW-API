@@ -6,6 +6,7 @@ import com.iemr.flw.domain.iemr.AbhaApiResponse;
 import com.iemr.flw.dto.abhaBeneficiary.AbhaBeneficiaryDTO;
 import com.iemr.flw.dto.iemr.AbhaRequestDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
+import com.iemr.flw.repo.identity.HouseHoldRepo;
 import com.iemr.flw.service.AbhaBeneficiaryService;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -40,10 +42,22 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
     @Value("${govthealth.password}")
     private String govthealthPassword;
 
+    @Autowired
+    private HouseHoldRepo houseHoldRepo;
+
     @Override
     public Object getBeneficiaryByAbha(AbhaRequestDTO request) {
 
         try {
+            Long benRedId = null;
+            BigInteger benDetailsdId = null;
+            String familyId =null;
+            if(request.getHouseHoldId()!=null){
+                benRedId = houseHoldRepo.getByHouseHoldID(request.getHouseHoldId()).get(0).getBenRegId();
+                benDetailsdId = beneficiaryRepo.findByBenRegIdFromMapping(BigInteger.valueOf(benRedId)).getBenDetailsId();
+                familyId = beneficiaryRepo.findByBeneficiaryDetailsId(benDetailsdId).getFamilyId();
+            }
+
             Object[] benHealthIdNumber = beneficiaryRepo.getHealthIdNumber(request.getCardNo());
             if (benHealthIdNumber != null && benHealthIdNumber.length > 0) {
                 Object[] healthData = (Object[]) benHealthIdNumber[0];
@@ -74,6 +88,7 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
                 return response;
             }
 
+
             for (AbhaBeneficiaryDTO dto : abhaApiResponse.getData()) {
 
                 // Check if ABHA already exists in system
@@ -89,11 +104,23 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
                         Map<String, Object> response = new HashMap<>();
                         response.put("statusCode", 5000);
                         response.put("message",
-                                "This ABHA No already exists");
+                                "Beneficiary is already exists");
 
                         return response;
                     }
                 }
+                if(familyId!=null){
+                    if(!dto.getFamilyid().toString().equals(familyId)){
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("statusCode", 5000);
+                        response.put("message",
+                                "Beneficiary is not associated with this family.");
+
+                        return response;
+                    }
+                }
+
+
 
 
                 // Split name into firstName and lastName
@@ -114,6 +141,7 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
                     }
                 }
             }
+
 
             logger.info("ABHA Response Status : {}",
                     abhaApiResponse.getStatusCode());
