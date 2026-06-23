@@ -443,7 +443,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     @Transactional
     public String saveANCVisitQuestions(List<AncCounsellingCareDTO> dtos, String authorization) throws IEMRException {
        Integer userId =  jwtUtil.extractUserId(authorization);
-        String userName = userRepo.getUserNamedByUserId(userId).get(0).getUserName();
+        String userName = userRepo.getUserNamedByUserId(userId);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         List<AncCounsellingCare> entities = new ArrayList<>();

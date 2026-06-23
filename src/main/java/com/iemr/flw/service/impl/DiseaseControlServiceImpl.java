@@ -1427,7 +1427,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     public List<ChronicDiseaseVisitDTO> saveChronicDiseaseVisit(
             List<ChronicDiseaseVisitDTO> requestList, String token) throws IEMRException {
         Integer userId =  jwtUtil.extractUserId(token);
-       String  userName= userRepo.getUserNamedByUserId(userId).get(0).getUserName();
+       String  userName= userRepo.getUserNamedByUserId(userId);
 
         List<ChronicDiseaseVisitDTO> responseList = new ArrayList<>();
 
@@ -1472,7 +1472,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     }
 
     private void checkIncentive(ChronicDiseaseVisitEntity chronicDiseaseVisitEntity, Integer ashaId) {
-        String userName = userRepo.getUserNamedByUserId(ashaId).get(0).getUserName();
+        String userName = userRepo.getUserNamedByUserId(ashaId);
         Integer stateId = userService.getUserDetail(ashaId).getStateId();
         IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.NCD.getDisplayName());
         IncentiveActivity incentiveActivityCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.ACTIVITY.getDisplayName());

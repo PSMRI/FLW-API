@@ -108,7 +108,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
     @Override
     public List<DeliveryOutcomeDTO> getDeliveryOutcome(GetBenRequestHandler dto) {
         try {
-            String user = userRepo.getUserNamedByUserId(dto.getAshaId()).get(0).getUserName();
+            String user = userRepo.getUserNamedByUserId(dto.getAshaId());
             List<DeliveryOutcome> deliveryOutcomeList = deliveryOutcomeRepo.getDeliveryOutcomeByAshaId(user,dto.getFromDate(),dto.getToDate());
             logger.info("DeliveryOutcome Response{}",deliveryOutcomeList);
             return deliveryOutcomeList.stream()

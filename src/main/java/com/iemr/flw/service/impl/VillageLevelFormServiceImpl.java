@@ -289,7 +289,7 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
 
     private void checkAndAddIncentives(String date, Integer userID, String formType, String createdBY) {
-        String userName = userRepo.getUserNamedByUserId(userID).get(0).getUserName();
+        String userName = userRepo.getUserNamedByUserId(userID);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 

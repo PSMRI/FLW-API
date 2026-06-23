@@ -121,7 +121,7 @@ public class SammelanServiceImpl implements SammelanService {
     }
 
     private void addSammelanIncentive(IncentiveActivity incentiveActivity, SammelanRecord record) {
-        String userName = userRepo.getUserNamedByUserId(record.getAshaId()).get(0).getUserName();
+        String userName = userRepo.getUserNamedByUserId(record.getAshaId());
         IncentiveActivityRecord incentiveActivityRecord = incentiveRecordRepo.findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), record.getMeetingDate(), 0L, record.getAshaId());
         try {
             if (incentiveActivityRecord == null) {
