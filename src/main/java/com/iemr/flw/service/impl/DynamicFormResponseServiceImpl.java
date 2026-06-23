@@ -43,6 +43,8 @@ import com.iemr.flw.repo.iemr.SectionQuestionRepo;
 import com.iemr.flw.repo.iemr.SectionResponseRepo;
 import com.iemr.flw.masterEnum.QuestionType;
 import com.iemr.flw.service.DynamicFormResponseService;
+import com.iemr.flw.utils.JwtUtil;
+import com.iemr.flw.utils.exception.IEMRException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -83,6 +85,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     private final SectionQuestionRepo sectionQuestionRepo;
     private final QuestionOptionRepo questionOptionRepo;
     private final FormResponseItemSaver itemSaver;
+    private final JwtUtil jwtUtil;
 
     @Override
     @Transactional
@@ -107,18 +110,20 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         } else {
             formResponse = createFormResponse(request, version, STATUS_SUBMITTED, now);
         }
-        return processSections(formResponse, request, version);
+        return processSections(formResponse, request, version, null);
     }
 
     @Override
     @Transactional
-    public FormResponseDTO completeForm(Long responseId, FormResponseRequest request) {
+    public FormResponseDTO completeForm(Long responseId, FormResponseRequest request, String jwtToken) throws IEMRException {
+        String actor = jwtUtil.extractUserId(jwtToken).toString();
         FormResponse formResponse = formResponseRepo.findById(responseId)
                 .orElseThrow(() -> new NoSuchElementException("FormResponse not found: " + responseId));
         if (!STATUS_SUBMITTED.equals(formResponse.getStatus())) {
             throw new IllegalStateException(
                     "Cannot complete a response in status: " + formResponse.getStatus());
         }
+        formResponse.setUpdatedBy(actor);
         formResponse.setStatus(STATUS_COMPLETE);
         formResponse.setCompletedAt(new Timestamp(System.currentTimeMillis()));
         formResponse = formResponseRepo.save(formResponse);
@@ -127,7 +132,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         FormVersion version = formVersionRepo.findById(formResponse.getVersionId())
                 .orElseThrow(() -> new NoSuchElementException(
                         "FormVersion not found: " + finalFormResponse.getVersionId()));
-        return processSections(formResponse, request, version);
+        return processSections(formResponse, request, version, actor);
     }
 
     @Override
@@ -187,7 +192,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     private FormResponseDTO processSections(
             FormResponse formResponse,
             FormResponseRequest request,
-            FormVersion version) {
+            FormVersion version,
+            String actor) {
 
         List<FormSection> allSections =
                 formSectionRepo.findByFormVersion_VersionIdOrderByDisplayOrderAsc(version.getVersionId());
@@ -231,7 +237,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             }
 
             SectionResponse sectionResponse = upsertSectionResponse(
-                    formResponse.getResponseId(), section.getSectionId());
+                    formResponse.getResponseId(), section.getSectionId(), actor);
 
             if ("POST_SUBMIT".equals(section.getSectionPhase())) {
                 formResponse.setLastFollowUpAt(sectionResponse.getSavedAt());
@@ -245,7 +251,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                     sectionResponse.getSectionResponseId(),
                     sectionReq.getAnswers(),
                     questionMap,
-                    optionsByQuestion);
+                    optionsByQuestion,
+                    actor);
 
             questionResponseRepo.saveAll(questionResponses);
 
@@ -255,13 +262,14 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         return buildFormResponseDTO(formResponse, sectionDTOs);
     }
 
-    private SectionResponse upsertSectionResponse(Long responseId, Long sectionId) {
+    private SectionResponse upsertSectionResponse(Long responseId, Long sectionId, String actor) {
         Optional<SectionResponse> existing =
                 sectionResponseRepo.findByResponseIdAndSectionId(responseId, sectionId);
         if (existing.isPresent()) {
             SectionResponse sr = existing.get();
             sr.setStatus(SECTION_STATUS_DONE);
             sr.setSavedAt(new Timestamp(System.currentTimeMillis()));
+            sr.setUpdatedBy(actor);
             return sectionResponseRepo.save(sr);
         }
         SectionResponse sr = SectionResponse.builder()
@@ -269,9 +277,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 .sectionId(sectionId)
                 .status(SECTION_STATUS_DONE)
                 .savedAt(new Timestamp(System.currentTimeMillis()))
-                // TODO: set audit fields when auth is re-enabled for /dynamicForm/response endpoints
-                // .createdBy(jwtUtil.extractUsername(authorization))
-                // .updatedBy(jwtUtil.extractUsername(authorization))
+                .createdBy(actor)
+                .updatedBy(actor)
                 .build();
         return sectionResponseRepo.save(sr);
     }
@@ -280,7 +287,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             Long sectionResponseId,
             List<QuestionAnswerRequest> answers,
             Map<String, SectionQuestion> questionMap,
-            Map<Long, Map<String, QuestionOption>> optionsByQuestion) {
+            Map<Long, Map<String, QuestionOption>> optionsByQuestion,
+            String actor) {
 
         List<QuestionResponse> results = new ArrayList<>();
 
@@ -305,10 +313,6 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             // Delete any existing answers for this question in this section (handles re-saves)
             questionResponseRepo.deleteByQuestionIdAndSectionResponseId(questionId, sectionResponseId);
 
-            // TODO: set .createdBy / .updatedBy on all QuestionResponse builders below
-            //       when auth is re-enabled for /dynamicForm/response endpoints:
-            //       .createdBy(jwtUtil.extractUsername(authorization))
-            //       .updatedBy(jwtUtil.extractUsername(authorization))
             if (type == QuestionType.RADIO) {
                 if (answer.getOptionValue() != null) {
                     QuestionOption opt = resolveOption(
@@ -317,6 +321,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                             .sectionResponseId(sectionResponseId)
                             .questionId(questionId)
                             .optionId(opt != null ? opt.getOptionId() : null)
+                            .createdBy(actor)
+                            .updatedBy(actor)
                             .build());
                 }
             } else if (type == QuestionType.MCQ) {
@@ -328,6 +334,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                                 .sectionResponseId(sectionResponseId)
                                 .questionId(questionId)
                                 .optionId(opt != null ? opt.getOptionId() : null)
+                                .createdBy(actor)
+                                .updatedBy(actor)
                                 .build());
                     }
                 }
@@ -340,6 +348,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                         .sectionResponseId(sectionResponseId)
                         .questionId(questionId)
                         .answerText(value)
+                        .createdBy(actor)
+                        .updatedBy(actor)
                         .build());
             }
         }

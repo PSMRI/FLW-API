@@ -42,6 +42,14 @@ public interface FormResponseRepo extends JpaRepository<FormResponse, Long> {
 
     List<FormResponse> findByBeneficiaryId(Long beneficiaryId);
 
+    @Query("SELECT r.beneficiaryId FROM FormResponse r " +
+           "WHERE r.beneficiaryId IN :benIds " +
+           "AND r.formId = :formId " +
+           "AND r.status = :status")
+    List<Long> findCounselledBenIds(@Param("benIds") List<Long> benIds,
+                                    @Param("formId") Long formId,
+                                    @Param("status") String status);
+
     @Query("SELECT r FROM FormResponse r "
          + "WHERE r.formId IN :formIds "
          + "AND r.status = 'SUBMITTED' "

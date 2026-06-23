@@ -29,5 +29,6 @@ public class TBConfirmedCaseDTO {
     private String placeOfDeath;
     private String reasonForDeath ;
     private String reasonForNotCompleting;
+    private Boolean counselled;
 
 }
