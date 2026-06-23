@@ -185,7 +185,7 @@ public class TbCounsellingFormSeeder {
         qs.add(statusQ);
 
         // Reason for refusal — hidden by default, max 300 chars
-        qs.add(textQuestion("TB_E_REFUSAL", "Reason for refusal", 2, false, 300, false));
+        qs.add(textQuestion("TB_E_REFUSAL", "Reason for refusal", 2, true, 300, false));
 
         // Counsellor remarks — optional, max 500 chars
         qs.add(textQuestion("TB_E_REMARKS", "Counsellor remarks", 3, false, 500, true));

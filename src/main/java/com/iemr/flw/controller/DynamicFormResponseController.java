@@ -25,6 +25,7 @@ import com.iemr.flw.dto.iemr.FormResponseDTO;
 import com.iemr.flw.dto.iemr.FormResponseRequest;
 import com.iemr.flw.service.DynamicFormResponseService;
 import com.iemr.flw.utils.ApiResponse;
+import com.iemr.flw.utils.exception.IEMRException;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -64,8 +65,9 @@ public class DynamicFormResponseController {
     @RequestMapping(value = "/complete", method = RequestMethod.POST)
     public ResponseEntity<ApiResponse> completeForm(
             @RequestParam Long responseId,
-            @Valid @RequestBody FormResponseRequest request) {
-        FormResponseDTO dto = responseService.completeForm(responseId, request);
+            @Valid @RequestBody FormResponseRequest request,
+            @RequestHeader("JwtToken") String jwtToken) throws IEMRException {
+        FormResponseDTO dto = responseService.completeForm(responseId, request, jwtToken);
         return ResponseEntity.ok(new ApiResponse(true, "Form completed successfully", dto));
     }
 

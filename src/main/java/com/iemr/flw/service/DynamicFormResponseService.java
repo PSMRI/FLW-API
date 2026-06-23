@@ -23,6 +23,7 @@ package com.iemr.flw.service;
 
 import com.iemr.flw.dto.iemr.FormResponseDTO;
 import com.iemr.flw.dto.iemr.FormResponseRequest;
+import com.iemr.flw.utils.exception.IEMRException;
 
 import java.util.List;
 
@@ -37,7 +38,7 @@ public interface DynamicFormResponseService {
     FormResponseDTO submitForm(FormResponseRequest request);
 
     /** Save POST_SUBMIT section answers and advance status to COMPLETE. */
-    FormResponseDTO completeForm(Long responseId, FormResponseRequest request);
+    FormResponseDTO completeForm(Long responseId, FormResponseRequest request, String jwtToken) throws IEMRException;
 
     /** All responses for a beneficiary filtered by form UUID. */
     List<FormResponseDTO> getResponsesByBeneficiary(Long beneficiaryId, String formUuid);

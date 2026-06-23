@@ -2,12 +2,16 @@ package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.iemr.flw.domain.iemr.DynamicForm;
 import com.iemr.flw.domain.iemr.TBConfirmedCaseDTO;
 import com.iemr.flw.domain.iemr.TBConfirmedCase;
 import com.iemr.flw.domain.iemr.TBStopVisit;
 import com.iemr.flw.dto.iemr.TBConfirmedCasesResponseDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
+import com.iemr.flw.repo.iemr.DynamicFormRepo;
+import com.iemr.flw.repo.iemr.FormResponseRepo;
 import com.iemr.flw.repo.iemr.TBConfirmedTreatmentRepository;
+import com.iemr.flw.seeder.TbCounsellingFormSeeder;
 import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.TBConfirmedCaseService;
@@ -22,9 +26,12 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +40,8 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
     private static final Logger logger = LoggerFactory.getLogger(TBConfirmedCaseServiceImpl.class);
 
     private final TBConfirmedTreatmentRepository repository;
+    private final FormResponseRepo formResponseRepo;
+    private final DynamicFormRepo dynamicFormRepo;
 
     @Autowired
     private IncentiveLogicService incentiveLogicService;
@@ -49,8 +58,13 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
-    public TBConfirmedCaseServiceImpl(TBConfirmedTreatmentRepository repository) {
+
+    public TBConfirmedCaseServiceImpl(TBConfirmedTreatmentRepository repository,
+                                      FormResponseRepo formResponseRepo,
+                                      DynamicFormRepo dynamicFormRepo) {
         this.repository = repository;
+        this.formResponseRepo = formResponseRepo;
+        this.dynamicFormRepo = dynamicFormRepo;
     }
 
     @Override
@@ -175,6 +189,18 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         Integer userId = jwtUtil.extractUserId(authorisation);
         List<TBConfirmedCase> list = repository.findByUserId(userId);
         List<TBConfirmedCaseDTO> dtoList = list.stream().map(this::toDTO).collect(Collectors.toList());
+
+        List<Long> benIds = dtoList.stream().map(TBConfirmedCaseDTO::getBenId).collect(Collectors.toList());
+        Set<Long> counselledBenIds = Collections.emptySet();
+        if (!benIds.isEmpty()) {
+            Optional<DynamicForm> counsellingForm = dynamicFormRepo.findByFormUuid(TbCounsellingFormSeeder.FORM_UUID);
+            if (counsellingForm.isPresent()) {
+                counselledBenIds = new HashSet<>(formResponseRepo.findCounselledBenIds(benIds, counsellingForm.get().getFormId(), "COMPLETE"));
+            }
+        }
+        final Set<Long> counselled = counselledBenIds;
+        dtoList.forEach(dto -> dto.setCounselled(counselled.contains(dto.getBenId())));
+
         Map<String, Object> response = new java.util.HashMap<>();
         response.put("userId", userId);
         response.put("tbConfirmedCases", dtoList);

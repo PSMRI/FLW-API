@@ -108,17 +108,7 @@ public class FormResponseItemSaver {
             formResponse = existing.get(0);
             Long responseId = formResponse.getResponseId();
 
-            // Step 3: Delete old answers — children first, then parents
-            List<SectionResponse> oldSections = sectionResponseRepo.findByResponseId(responseId);
-            if (!oldSections.isEmpty()) {
-                Set<Long> oldSrIds = oldSections.stream()
-                        .map(SectionResponse::getSectionResponseId)
-                        .collect(Collectors.toSet());
-                questionResponseRepo.deleteBySectionResponseIdIn(oldSrIds);
-                sectionResponseRepo.deleteByResponseId(responseId);
-            }
-
-            // Step 4: Update FormResponse header
+            // Step 3: Update FormResponse header
             formResponse.setStatus(STATUS_SUBMITTED);
             formResponse.setSubmittedAt(now);
             formResponse.setUpdatedBy(actor);
@@ -233,6 +223,14 @@ public class FormResponseItemSaver {
                         "Section '" + sectionReq.getSectionUuid() +
                         "' not found in form '" + req.getFormUuid() + "'");
             }
+
+            // Delete existing SectionResponse (and its QuestionResponses) for this section only
+            sectionResponseRepo.findByResponseIdAndSectionId(
+        formResponse.getResponseId(), section.getSectionId())
+                .ifPresent(sr -> {
+                    questionResponseRepo.deleteBySectionResponseIdIn(Set.of(sr.getSectionResponseId()));
+                    sectionResponseRepo.deleteById(sr.getSectionResponseId());
+                });
 
             SectionResponse sectionResponse = upsertSectionResponse(
                     formResponse.getResponseId(), section.getSectionId(), actor);
