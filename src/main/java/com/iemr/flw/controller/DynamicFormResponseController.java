@@ -66,7 +66,7 @@ public class DynamicFormResponseController {
     public ResponseEntity<ApiResponse> completeForm(
             @Valid @RequestBody FormResponseRequest request,
             @RequestHeader("JwtToken") String jwtToken) throws IEMRException {
-        FormResponseDTO dto = responseService.completeForm(request, jwtToken);
+        FormResponseDTO dto = responseService.completeForm(request, jwtToken);        
         return ResponseEntity.ok(new ApiResponse(true, "Form completed successfully", dto));
     }
 

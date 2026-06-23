@@ -134,7 +134,6 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         formResponse.setStatus(STATUS_COMPLETE);
         formResponse.setCompletedAt(new Timestamp(System.currentTimeMillis()));
         formResponse = formResponseRepo.save(formResponse);
-
         return processSections(formResponse, request, version, actor);
     }
 
