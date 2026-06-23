@@ -64,10 +64,9 @@ public class DynamicFormResponseController {
     @Operation(summary = "Save POST_SUBMIT section answers, status → COMPLETE")
     @RequestMapping(value = "/complete", method = RequestMethod.POST)
     public ResponseEntity<ApiResponse> completeForm(
-            @RequestParam Long responseId,
             @Valid @RequestBody FormResponseRequest request,
             @RequestHeader("JwtToken") String jwtToken) throws IEMRException {
-        FormResponseDTO dto = responseService.completeForm(responseId, request, jwtToken);
+        FormResponseDTO dto = responseService.completeForm(request, jwtToken);        
         return ResponseEntity.ok(new ApiResponse(true, "Form completed successfully", dto));
     }
 
