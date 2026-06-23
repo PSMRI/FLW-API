@@ -38,7 +38,7 @@ public interface DynamicFormResponseService {
     FormResponseDTO submitForm(FormResponseRequest request);
 
     /** Save POST_SUBMIT section answers and advance status to COMPLETE. */
-    FormResponseDTO completeForm(Long responseId, FormResponseRequest request, String jwtToken) throws IEMRException;
+    FormResponseDTO completeForm(FormResponseRequest request, String jwtToken) throws IEMRException;
 
     /** All responses for a beneficiary filtered by form UUID. */
     List<FormResponseDTO> getResponsesByBeneficiary(Long beneficiaryId, String formUuid);
