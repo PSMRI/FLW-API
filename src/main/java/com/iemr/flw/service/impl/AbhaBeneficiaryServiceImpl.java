@@ -54,8 +54,14 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
             String familyId =null;
             if(request.getHouseHoldId()!=null){
                 benRedId = houseHoldRepo.getByHouseHoldID(request.getHouseHoldId()).get(0).getBenRegId();
-                benDetailsdId = beneficiaryRepo.findByBenRegIdFromMapping(BigInteger.valueOf(benRedId)).getBenDetailsId();
-                familyId = beneficiaryRepo.findByBeneficiaryDetailsId(benDetailsdId).getFamilyId();
+                if(benRedId!=null){
+                    benDetailsdId = beneficiaryRepo.findByBenRegIdFromMapping(BigInteger.valueOf(benRedId)).getBenDetailsId();
+
+                }
+                if(benDetailsdId!=null){
+                    familyId = beneficiaryRepo.findByBeneficiaryDetailsId(benDetailsdId).getFamilyId();
+
+                }
             }
 
             Object[] benHealthIdNumber = beneficiaryRepo.getHealthIdNumber(request.getCardNo());
