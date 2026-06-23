@@ -115,23 +115,26 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
     @Override
     @Transactional
-    public FormResponseDTO completeForm(Long responseId, FormResponseRequest request, String jwtToken) throws IEMRException {
+    public FormResponseDTO completeForm(FormResponseRequest request, String jwtToken) throws IEMRException {
         String actor = jwtUtil.extractUserId(jwtToken).toString();
-        FormResponse formResponse = formResponseRepo.findById(responseId)
-                .orElseThrow(() -> new NoSuchElementException("FormResponse not found: " + responseId));
-        if (!STATUS_SUBMITTED.equals(formResponse.getStatus())) {
-            throw new IllegalStateException(
-                    "Cannot complete a response in status: " + formResponse.getStatus());
+
+        FormVersion version = resolveLatestVersion(request.getFormUuid());
+        Long formId = version.getDynamicForm().getFormId();
+
+        List<FormResponse> existing =
+                formResponseRepo.findByBeneficiaryIdAndFormId(request.getBeneficiaryId(), formId);
+        if (existing.isEmpty()) {
+            throw new NoSuchElementException(
+                    "FormResponse not found for beneficiaryId=" + request.getBeneficiaryId()
+                    + " formUuid=" + request.getFormUuid());
         }
+        FormResponse formResponse = existing.get(0);
+
         formResponse.setUpdatedBy(actor);
         formResponse.setStatus(STATUS_COMPLETE);
         formResponse.setCompletedAt(new Timestamp(System.currentTimeMillis()));
         formResponse = formResponseRepo.save(formResponse);
 
-        FormResponse finalFormResponse = formResponse;
-        FormVersion version = formVersionRepo.findById(formResponse.getVersionId())
-                .orElseThrow(() -> new NoSuchElementException(
-                        "FormVersion not found: " + finalFormResponse.getVersionId()));
         return processSections(formResponse, request, version, actor);
     }
 
