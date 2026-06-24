@@ -92,46 +92,26 @@ public class ChildServiceImpl implements ChildService {
 
     public void processFirstChildIncentive(ChildRegister childRegister) {
         Long benId = childRegister.getBenId();
-        logger.info("BenId:"+benId);
-
-        RMNCHBeneficiaryDetailsRmnch beneficiary =
-                beneficiaryRepo.findByBenficieryid(benId).orElse(null);
-
-      logger.info("Child ben Id:" + beneficiary.getBenficieryid());
-
-        if (beneficiary == null || beneficiary.getDateMarriage() == null) {
-            return;
-        }
 
       // First child validation
-        Long childCount = childRepo.countByBenId(benId);
+        List<ChildRegister> childCount = childRepo.findByBenId(benId);
 
-        if (childCount != 1) {
-            return;
-        }
+         if(!childCount.isEmpty()){
+             if(childCount.size()==1){
+                 Integer userId =
+                         userServiceRoleRepo.getUserIdByName(childRegister.getCreatedBy());
 
-        Timestamp marriageDate = beneficiary.getDateMarriage();
+                 incentiveLogicService.incentiveForChildBirthGap(
+                         benId,
+                         childRegister.getCreatedDate(),
+                         childRegister.getCreatedDate(),
+                         userId
+                 );
+             }
+         }
 
-       // Temporary: using createdDate as child DOB
-        Timestamp childBirthDate = childRegister.getCreatedDate();
 
-        long diffMillis = childBirthDate.getTime() - marriageDate.getTime();
 
-        long days = diffMillis / (1000 * 60 * 60 * 24);
-
-       // >= 2 years
-        if (days >= 730) {
-
-            Integer userId =
-                    userServiceRoleRepo.getUserIdByName(childRegister.getCreatedBy());
-
-            incentiveLogicService.incentiveForChildBirthGap(
-                    benId,
-                    childBirthDate,
-                    childBirthDate,
-                    userId
-            );
-        }
     }
 
     private void processSecondChildGapIncentive(ChildRegister currentChild) {
@@ -139,48 +119,26 @@ public class ChildServiceImpl implements ChildService {
         Long benId = currentChild.getBenId();
 
         // Total children count
-        Long childCount = childRepo.countByBenId(benId);
+        List<ChildRegister> childCount = childRepo.findByBenId(benId);
 
         // Applicable only for second child
-        if (childCount != 2) {
-            return;
-        }
 
-        List<ChildRegister> children =
-                childRepo.findByBenIdOrderByCreatedDateAsc(benId);
+         if(!childCount.isEmpty()){
+             if(childCount.size()==2){
+                 Integer userId =
+                         userServiceRoleRepo.getUserIdByName(
+                                 currentChild.getCreatedBy());
 
-        if (children.size() < 2) {
-            return;
-        }
+                 incentiveLogicService.incentiveForSecondChildGap(
+                         benId,
+                         currentChild.getCreatedDate(),
+                         currentChild.getCreatedDate(),
+                         userId
+                 );
+             }
+         }
 
-        // First child
-        ChildRegister firstChild = children.get(0);
 
-        // Second child
-        ChildRegister secondChild = children.get(1);
 
-        Timestamp firstChildDob = firstChild.getCreatedDate();
-
-        Timestamp secondChildDob = secondChild.getCreatedDate();
-
-        long diffMillis =
-                secondChildDob.getTime() - firstChildDob.getTime();
-
-        long days = diffMillis / (1000 * 60 * 60 * 24);
-
-        // >= 3 years
-        if (days >= 1095) {
-
-            Integer userId =
-                    userServiceRoleRepo.getUserIdByName(
-                            currentChild.getCreatedBy());
-
-            incentiveLogicService.incentiveForSecondChildGap(
-                    benId,
-                    secondChildDob,
-                    secondChildDob,
-                    userId
-            );
-        }
     }
 }

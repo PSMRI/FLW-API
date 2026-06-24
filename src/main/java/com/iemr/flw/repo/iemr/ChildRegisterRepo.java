@@ -21,5 +21,5 @@ public interface ChildRegisterRepo extends JpaRepository<ChildRegister, Long> {
 
     Long countByBenId(Long benId);
 
-    List<ChildRegister> findByBenIdOrderByCreatedDateAsc(Long benId);
+    List<ChildRegister> findByBenId(Long benId);
 }
