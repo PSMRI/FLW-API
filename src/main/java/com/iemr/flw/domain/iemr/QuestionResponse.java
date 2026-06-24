@@ -33,6 +33,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
+
 /**
  * Stores one answer to a single question within a section response.
  * MCQ questions produce multiple rows (one per selected option) — no unique constraint on (sectionResponseId, questionId).
@@ -76,4 +78,25 @@ public class QuestionResponse {
 
     @Column(name = "updated_by", length = 100)
     private String updatedBy;
+
+    @Column(name = "vanID")
+    private Integer vanID;
+
+    @Column(name = "parkingPlaceID")
+    private Integer parkingPlaceID;
+
+    @Column(name = "processed")
+    private String processed = "N";
+
+    @Column(name = "vanSerialNo")
+    private Long vanSerialNo;
+
+    @Column(name = "SyncedDate")
+    private Timestamp syncedDate;
+
+    @Column(name = "Syncedby", length = 50)
+    private String syncedBy;
+
+    @Column(name = "SyncFailureReason", length = 255)
+    private String syncFailureReason;
 }
