@@ -1300,7 +1300,6 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             mosquitoNetListDTO.setVisit_date(entity.getVisitDate().format(formatter));
 
             dto.setFields(mosquitoNetListDTO);
-            checkAndAddIncentives(entity);
 
 
             return dto;
@@ -1365,12 +1364,11 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         Timestamp visitTimestamp =
                 Timestamp.valueOf(diseaseScreening.getVisitDate().atStartOfDay());
-
         IncentiveActivityRecord record = recordRepo
                 .findRecordByActivityIdCreatedDateBenId(
                         diseaseScreeningActivity.getId(),
                         visitTimestamp,
-                        diseaseScreening.getBeneficiaryId().longValue());
+                        diseaseScreening.getBeneficiaryId());
 
         if (record == null) {
 
@@ -1390,6 +1388,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
             recordRepo.save(record);
         }
+
     }
 
 
