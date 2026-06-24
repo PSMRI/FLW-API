@@ -92,12 +92,16 @@ public class ChildServiceImpl implements ChildService {
 
     public void processFirstChildIncentive(ChildRegister childRegister) {
         Long benId = childRegister.getBenId();
+        logger.info("Child register {}"+childRegister.getBenId());
 
       // First child validation
         List<ChildRegister> childCount = childRepo.findByBenId(benId);
 
-         if(!childCount.isEmpty()){
-             if(childCount.size()==1){
+
+        if(!childCount.isEmpty()){
+            logger.info("Child register {}"+childCount.size());
+
+            if(childCount.size()==1){
                  Integer userId =
                          userServiceRoleRepo.getUserIdByName(childRegister.getCreatedBy());
 
