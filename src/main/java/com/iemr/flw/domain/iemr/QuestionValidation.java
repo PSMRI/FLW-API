@@ -38,6 +38,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.sql.Timestamp;
+
 /**
  * Server-side validation rule for a question.
  * validationType: MAX_LENGTH | MIN_DATE | MAX_DATE | REGEX | MANDATORY_IF
@@ -75,4 +77,25 @@ public class QuestionValidation {
 
     @Column(name = "updated_by", length = 100)
     private String updatedBy;
+
+    @Column(name = "vanID")
+    private Integer vanID;
+
+    @Column(name = "parkingPlaceID")
+    private Integer parkingPlaceID;
+
+    @Column(name = "processed")
+    private String processed = "N";
+
+    @Column(name = "vanSerialNo")
+    private Long vanSerialNo;
+
+    @Column(name = "SyncedDate")
+    private Timestamp syncedDate;
+
+    @Column(name = "Syncedby", length = 50)
+    private String syncedBy;
+
+    @Column(name = "SyncFailureReason", length = 255)
+    private String syncFailureReason;
 }

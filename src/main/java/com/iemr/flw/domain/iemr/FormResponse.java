@@ -99,6 +99,27 @@ public class FormResponse {
     @Column(name = "updatedAt", nullable = false)
     private Timestamp updatedAt;
 
+    @Column(name = "vanID")
+    private Integer vanID;
+
+    @Column(name = "parkingPlaceID")
+    private Integer parkingPlaceID;
+
+    @Column(name = "processed")
+    private String processed = "N";
+
+    @Column(name = "vanSerialNo")
+    private Long vanSerialNo;
+
+    @Column(name = "SyncedDate")
+    private Timestamp syncedDate;
+
+    @Column(name = "Syncedby", length = 50)
+    private String syncedBy;
+
+    @Column(name = "SyncFailureReason", length = 255)
+    private String syncFailureReason;
+
     @PrePersist
     protected void onCreate() {
         createdAt = new Timestamp(System.currentTimeMillis());
