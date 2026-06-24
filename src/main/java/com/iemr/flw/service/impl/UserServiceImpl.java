@@ -24,10 +24,13 @@ public class UserServiceImpl implements UserService {
         UserServiceRoleDTO userRole = userServiceRoleRepo.getUserRole(userId).get(0);
         userRole.setFacilityData(facilityDataService.buildFacilityData(userId, userRole.getRoleName()));
         if (userRole.getWorkingDistrictId() == null && userRole.getBlockId() != null) {
-            Object[] district = userServiceRoleRepo.getDistrictByBlockId(userRole.getBlockId());
-            if (district != null && district.length == 2) {
-                userRole.setWorkingDistrictId(((Number) district[0]).intValue());
-                userRole.setWorkingDistrictName((String) district[1]);
+            java.util.List<Object[]> districtResults = userServiceRoleRepo.getDistrictByBlockId(userRole.getBlockId());
+            if (districtResults != null && !districtResults.isEmpty()) {
+                Object[] district = districtResults.get(0);
+                if (district != null && district.length == 2) {
+                    userRole.setWorkingDistrictId(((Number) district[0]).intValue());
+                    userRole.setWorkingDistrictName((String) district[1]);
+                }
             }
         }
         return userRole;
