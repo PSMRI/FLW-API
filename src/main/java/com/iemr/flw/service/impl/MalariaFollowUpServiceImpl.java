@@ -47,11 +47,6 @@ public class MalariaFollowUpServiceImpl implements MalariaFollowUpService {
                   return false;
               }
 
-              if (dto.getReferralDate() != null &&
-                      dto.getReferralDate().before(dto.getTreatmentStartDate())) {
-                  return false;
-              }
-
 
               dto.setUserId(jwtUtil.extractUserId(token));
               MalariaFollowUp entity = new MalariaFollowUp();
