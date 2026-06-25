@@ -47,13 +47,13 @@ public interface BenReferDetailsRepo extends JpaRepository<BenReferDetails, Long
 
 	List<BenReferDetails> findByCreatedBy(String userName);
 
-	@Query("""
-       SELECT COUNT(b)
-       FROM BenReferDetails b
-       WHERE b.createdBy = :userName
-       AND FUNCTION('MONTH', b.createdDate) = :month
-       AND FUNCTION('YEAR', b.createdDate) = :year
-       """)
+	@Query(value = """
+        SELECT COUNT(*)
+        FROM db_iemr.t_benreferdetails
+        WHERE CreatedBy = :userName
+        AND MONTH(CreatedDate) = :month
+        AND YEAR(CreatedDate) = :year
+        """, nativeQuery = true)
 	Long countMonthlyReferrals(
 			@Param("userName") String userName,
 			@Param("month") Integer month,
