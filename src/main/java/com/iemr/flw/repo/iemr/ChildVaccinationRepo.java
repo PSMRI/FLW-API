@@ -29,6 +29,23 @@ public interface ChildVaccinationRepo extends JpaRepository<ChildVaccination, Lo
     """, nativeQuery = true)
     Integer getFirstYearVaccineCountForBenId(@Param("benRegId") Long benRegId);
 
+    @Query(value = """
+    SELECT COUNT(DISTINCT cv.VaccineName)
+    FROM db_iemr.t_childvaccinedetail1 cv
+    WHERE cv.BeneficiaryRegID = :benRegId
+    AND cv.VaccineName IN (
+        'BCG Vaccine',
+        'OPV-1',
+        'OPV-2',
+        'OPV-3',
+        'Pentavalent-1',
+        'Pentavalent-2',
+        'Pentavalent-3',
+        'Measles & Rubella (MR)-1'
+    )
+    """, nativeQuery = true)
+    Integer getEligibleFirstYearVaccines(@Param("benRegId") Long benRegId);
+
 
 
     @Query(value = "select count(*) from db_iemr.m_immunizationservicevaccination v where v.Currentimmunizationserviceid in (1,2,3,4,5) " +

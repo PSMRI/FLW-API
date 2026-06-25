@@ -974,23 +974,73 @@ public class ChildCareServiceImpl implements ChildCareService {
 
                 Integer immunizationServiceId = getImmunizationServiceIdForVaccine(vaccination.getVaccineId().shortValue());
                 if (immunizationServiceId < 6) {
+
+                    Integer completedVaccines =
+                            childVaccinationRepo.getEligibleFirstYearVaccines(
+                                    vaccination.getBeneficiaryRegId());
+
+
+                    logger.info(
+                            "FULL_IMMUNIZATION_0_1 :: BeneficiaryRegId={}, Vaccine={}, VaccineId={}, CompletedVaccines={}, StateId={}",
+                            vaccination.getBeneficiaryRegId(),
+                            vaccination.getVaccineName(),
+                            vaccination.getVaccineId(),
+                            completedVaccines,
+                            stateId
+                    );
+
                     IncentiveActivity immunizationActivityAM =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup("FULL_IMMUNIZATION_0_1", GroupName.IMMUNIZATION.getDisplayName());
+                            incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                    "FULL_IMMUNIZATION_0_1",
+                                    GroupName.IMMUNIZATION.getDisplayName());
+
                     IncentiveActivity immunizationActivityCH =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup("FULL_IMMUNIZATION_0_1", GroupName.ACTIVITY.getDisplayName());
+                            incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                    "FULL_IMMUNIZATION_0_1",
+                                    GroupName.ACTIVITY.getDisplayName());
 
-                     if(userService.getUserDetail(userId).getStateId().equals(StateCode.AM.getStateCode())){
-                         if (immunizationActivityAM != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
-                                 .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
-                             createIncentiveRecord(vaccination, benId, userId, immunizationActivityAM);
-                         }
-                     }
+// Required vaccines = 8
+                    if (completedVaccines != null && completedVaccines == 8) {
 
-                    if(userService.getUserDetail(userId).getStateId().equals(StateCode.CG.getStateCode())){
-                        if (immunizationActivityCH != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
-                                .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
-                            createIncentiveRecord(vaccination, benId, userId, immunizationActivityCH);
+                        logger.info(
+                                "Beneficiary {} completed all required first year vaccines.",
+                                vaccination.getBeneficiaryRegId());
+
+                        if (stateId.equals(StateCode.AM.getStateCode())
+                                && immunizationActivityAM != null) {
+
+                            logger.info(
+                                    "Creating Assam FULL_IMMUNIZATION_0_1 incentive for BeneficiaryRegId={}",
+                                    vaccination.getBeneficiaryRegId());
+
+                            createIncentiveRecord(
+                                    vaccination,
+                                    benId,
+                                    userId,
+                                    immunizationActivityAM);
                         }
+
+                        if (stateId.equals(StateCode.CG.getStateCode())
+                                && immunizationActivityCH != null) {
+
+                            logger.info(
+                                    "Creating Chhattisgarh FULL_IMMUNIZATION_0_1 incentive for BeneficiaryRegId={}",
+                                    vaccination.getBeneficiaryRegId());
+
+                            createIncentiveRecord(
+                                    vaccination,
+                                    benId,
+                                    userId,
+                                    immunizationActivityCH);
+                        }
+
+                    } else {
+
+                        logger.info(
+                                "BeneficiaryRegId={} not eligible for FULL_IMMUNIZATION_0_1. CompletedVaccines={}/8",
+                                vaccination.getBeneficiaryRegId(),
+                                completedVaccines
+                        );
                     }
 
                 } else if (immunizationServiceId == 7) {
