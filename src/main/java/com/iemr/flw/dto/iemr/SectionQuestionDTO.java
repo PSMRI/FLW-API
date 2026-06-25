@@ -49,6 +49,8 @@ public class SectionQuestionDTO {
     @NotBlank(message = "questionText is required")
     private String questionText;
 
+    private String questionTextHindi;
+
     @NotNull(message = "questionType is required")
     private QuestionType questionType;
 

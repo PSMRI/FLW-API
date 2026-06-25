@@ -33,6 +33,7 @@ import com.iemr.flw.masterEnum.ValidationType;
 import com.iemr.flw.repo.iemr.DynamicFormRepo;
 import com.iemr.flw.service.DynamicFormDefinitionService;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -47,6 +48,7 @@ import java.util.List;
  * @author Piramal Swasthya
  */
 @Component
+@RequiredArgsConstructor
 public class TbCounsellingFormSeeder {
 
     private static final Logger log = LoggerFactory.getLogger(TbCounsellingFormSeeder.class);
@@ -55,12 +57,6 @@ public class TbCounsellingFormSeeder {
 
     private final DynamicFormDefinitionService formService;
     private final DynamicFormRepo formRepo;
-
-    public TbCounsellingFormSeeder(DynamicFormDefinitionService formService,
-                                   DynamicFormRepo formRepo) {
-        this.formService = formService;
-        this.formRepo = formRepo;
-    }
 
     @PostConstruct
     public void seed() {
@@ -97,13 +93,13 @@ public class TbCounsellingFormSeeder {
     // ── Section A: Disease Awareness ─────────────────────────────────────────────
 
     private FormSectionDTO buildSectionA() {
-        FormSectionDTO s = section("TB_SEC_A", "Disease Awareness", "PRE_SUBMIT", 1, true, false);
+        FormSectionDTO s = section("TB_SEC_A", "Disease Awareness", "बीमारी के बारे में जागरूकता", "PRE_SUBMIT", 1, true, false);
         List<SectionQuestionDTO> qs = new ArrayList<>();
-        qs.add(yesNoRadio("TB_A_Q1", "TB disease explained to patient", 1, true));
-        qs.add(yesNoRadio("TB_A_Q2", "Transmission route explained", 2, true));
-        qs.add(yesNoRadio("TB_A_Q3", "Symptoms explained", 3, true));
-        qs.add(yesNoRadio("TB_A_Q4", "Treatment duration explained", 4, true));
-        qs.add(textQuestion("TB_A_REMARKS", "Disease awareness notes", 5, false, 500, true));
+        qs.add(yesNoRadio("TB_A_Q1", "TB disease explained to patient", "मरीज़ को टीबी बीमारी के बारे में समझाया गया।", 1, true));
+        qs.add(yesNoRadio("TB_A_Q2", "Transmission route explained", "ट्रांसमिशन के तरीके के बारे में जानकारी", 2, true));
+        qs.add(yesNoRadio("TB_A_Q3", "Symptoms explained", "लक्षणों की जानकारी", 3, true));
+        qs.add(yesNoRadio("TB_A_Q4", "Treatment duration explained", "इलाज की अवधि के बारे में जानकारी", 4, true));
+        qs.add(textQuestion("TB_A_REMARKS", "Disease awareness notes", "बीमारी के बारे में जानकारी देने वाले नोट्स", 5, false, 500, true));
         s.setQuestions(qs);
         return s;
     }
@@ -111,15 +107,15 @@ public class TbCounsellingFormSeeder {
     // ── Section B: Do's and Don'ts ───────────────────────────────────────────────
 
     private FormSectionDTO buildSectionB() {
-        FormSectionDTO s = section("TB_SEC_B", "Do's and Don'ts", "PRE_SUBMIT", 2, true, false);
+        FormSectionDTO s = section("TB_SEC_B", "Do's and Don'ts", "करो और ना करो", "PRE_SUBMIT", 2, true, false);
         List<SectionQuestionDTO> qs = new ArrayList<>();
-        qs.add(yesNoRadio("TB_B_Q1", "Cover mouth while coughing — advised", 1, true));
-        qs.add(yesNoRadio("TB_B_Q2", "Complete full treatment course — advised", 2, true));
-        qs.add(yesNoRadio("TB_B_Q3", "Regular follow-up attendance — advised", 3, true));
-        qs.add(yesNoRadio("TB_B_Q4", "Nutritional guidance provided", 4, true));
-        qs.add(yesNoRadio("TB_B_Q5", "No smoking / alcohol — advised", 5, true));
-        qs.add(yesNoRadio("TB_B_Q6", "Isolation precautions explained", 6, true));
-        qs.add(textQuestion("TB_B_REMARKS", "Do's & Don'ts notes", 7, false, 500, true));
+        qs.add(yesNoRadio("TB_B_Q1", "Cover mouth while coughing — advised", "खांसते समय मुंह ढकने की सलाह दी जाती है।", 1, true));
+        qs.add(yesNoRadio("TB_B_Q2", "Complete full treatment course — advised", "इलाज का पूरा कोर्स पूरा करने की सलाह दी जाती है।", 2, true));
+        qs.add(yesNoRadio("TB_B_Q3", "Regular follow-up attendance — advised", "इलाज का पूरा कोर्स पूरा करने की सलाह दी जाती है।", 3, true));
+        qs.add(yesNoRadio("TB_B_Q4", "Nutritional guidance provided", "पोषण संबंधी मार्गदर्शन प्रदान किया गया", 4, true));
+        qs.add(yesNoRadio("TB_B_Q5", "No smoking / alcohol — advised", "धूम्रपान / शराब न लेने की सलाह दी जाती है।", 5, true));
+        qs.add(yesNoRadio("TB_B_Q6", "Isolation precautions explained", "अलगाव सावधानियों के बारे में बताया गया", 6, true));
+        qs.add(textQuestion("TB_B_REMARKS", "Do's & Don'ts notes", "क्या करें और क्या न करें - नोट्स", 7, false, 500, true));
         s.setQuestions(qs);
         return s;
     }
@@ -127,11 +123,11 @@ public class TbCounsellingFormSeeder {
     // ── Section C: Government Schemes ────────────────────────────────────────────
 
     private FormSectionDTO buildSectionC() {
-        FormSectionDTO s = section("TB_SEC_C", "Government Schemes", "PRE_SUBMIT", 3, false, false);
+        FormSectionDTO s = section("TB_SEC_C", "Government Schemes", "सरकारी योजनाएं", "PRE_SUBMIT", 3, false, false);
         List<SectionQuestionDTO> qs = new ArrayList<>();
-        qs.add(yesNoRadio("TB_C_Q1", "Nikshay Poshan Yojana (NPY) eligibility explained", 1, false));
-        qs.add(yesNoRadio("TB_C_Q2", "DOTS free treatment explained", 2, false));
-        qs.add(textQuestion("TB_C_REMARKS", "Schemes notes", 3, false, 300, true));
+        qs.add(yesNoRadio("TB_C_Q1", "Nikshay Poshan Yojana (NPY) eligibility explained", "निक्षय पोषण योजना (एनपीवाई) पात्रता के बारे में बताया गया", 1, false));
+        qs.add(yesNoRadio("TB_C_Q2", "DOTS free treatment explained", "DOTS मुफ़्त इलाज के बारे में जानकारी", 2, false));
+        qs.add(textQuestion("TB_C_REMARKS", "Schemes notes", "योजनाओं के नोट्स", 3, false, 300, true));
         s.setQuestions(qs);
         return s;
     }
@@ -139,13 +135,13 @@ public class TbCounsellingFormSeeder {
     // ── Section D: Treatment Regimen ─────────────────────────────────────────────
 
     private FormSectionDTO buildSectionD() {
-        FormSectionDTO s = section("TB_SEC_D", "Treatment Regimen", "PRE_SUBMIT", 4, true, false);
+        FormSectionDTO s = section("TB_SEC_D", "Treatment Regimen", "इलाज का तरीका", "PRE_SUBMIT", 4, true, false);
         List<SectionQuestionDTO> qs = new ArrayList<>();
-        qs.add(yesNoRadio("TB_D_Q1", "Regimen explained to patient", 1, true));
-        qs.add(yesNoRadio("TB_D_Q2", "Medication names explained", 2, true));
-        qs.add(yesNoRadio("TB_D_Q3", "Side effects explained", 3, true));
-        qs.add(yesNoRadio("TB_D_Q4", "Importance of adherence explained", 4, true));
-        qs.add(textQuestion("TB_D_REMARKS", "Treatment regimen notes", 5, false, 300, true));
+        qs.add(yesNoRadio("TB_D_Q1", "Regimen explained to patient", "मरीज़ को इलाज का तरीका समझाया गया।", 1, true));
+        qs.add(yesNoRadio("TB_D_Q2", "Medication names explained", "दवाओं के नामों की जानकारी", 2, true));
+        qs.add(yesNoRadio("TB_D_Q3", "Side effects explained", "साइड इफ़ेक्ट्स के बारे में जानकारी", 3, true));
+        qs.add(yesNoRadio("TB_D_Q4", "Importance of adherence explained", "निर्देशों का पालन करने का महत्व समझाया गया", 4, true));
+        qs.add(textQuestion("TB_D_REMARKS", "Treatment regimen notes", "इलाज के तरीके से जुड़े नोट्स", 5, false, 300, true));
         s.setQuestions(qs);
         return s;
     }
@@ -153,20 +149,21 @@ public class TbCounsellingFormSeeder {
     // ── Section E: Counselling Completion ────────────────────────────────────────
 
     private FormSectionDTO buildSectionE() {
-        FormSectionDTO s = section("TB_SEC_E", "Counselling Completion", "PRE_SUBMIT", 5, true, true);
+        FormSectionDTO s = section("TB_SEC_E", "Counselling Completion", "काउंसलिंग पूरी होना", "PRE_SUBMIT", 5, true, true);
         List<SectionQuestionDTO> qs = new ArrayList<>();
 
         // Counselling completion status — RADIO: Complete | Refused
         SectionQuestionDTO statusQ = new SectionQuestionDTO();
         statusQ.setQuestionUuid("TB_E_Q1");
         statusQ.setQuestionText("Counselling completion status");
+        statusQ.setQuestionTextHindi("काउंसलिंग पूरी होने की स्थिति");
         statusQ.setQuestionType(QuestionType.RADIO);
         statusQ.setIsMandatory(true);
         statusQ.setDisplayOrder(1);
         statusQ.setVisibleByDefault(true);
 
         // "Complete" option — no conditions
-        QuestionOptionDTO completeOpt = option("Complete", "COMPLETE", 1, List.of());
+        QuestionOptionDTO completeOpt = option("Complete", "सम्पूर्ण","COMPLETE", "सम्पूर्ण", 1, List.of());
 
         // "Refused" option — 5 conditions: disable sections A-D + show refusal text box
         List<OptionConditionDTO> refusedConditions = new ArrayList<>();
@@ -175,7 +172,7 @@ public class TbCounsellingFormSeeder {
         refusedConditions.add(disableSectionValidation("TB_SEC_C"));
         refusedConditions.add(disableSectionValidation("TB_SEC_D"));
         refusedConditions.add(showQuestion("TB_E_REFUSAL"));
-        QuestionOptionDTO refusedOpt = option("Refused", "REFUSED", 2, refusedConditions);
+        QuestionOptionDTO refusedOpt = option("Refused", "अस्वीकार करना", "REFUSED", "अस्वीकार करना", 2, refusedConditions);
 
         List<QuestionOptionDTO> statusOptions = new ArrayList<>();
         statusOptions.add(completeOpt);
@@ -185,10 +182,10 @@ public class TbCounsellingFormSeeder {
         qs.add(statusQ);
 
         // Reason for refusal — hidden by default, max 300 chars
-        qs.add(textQuestion("TB_E_REFUSAL", "Reason for refusal", 2, true, 300, false));
+        qs.add(textQuestion("TB_E_REFUSAL", "Reason for refusal", "इनकार का कारण",2, true, 300, false));
 
         // Counsellor remarks — optional, max 500 chars
-        qs.add(textQuestion("TB_E_REMARKS", "Counsellor remarks", 3, false, 500, true));
+        qs.add(textQuestion("TB_E_REMARKS", "Counsellor remarks", "काउंसलर की टिप्पणी", 3, false, 500, true));
 
         s.setQuestions(qs);
         return s;
@@ -197,23 +194,24 @@ public class TbCounsellingFormSeeder {
     // ── Section F: Follow Up to TU ───────────────────────────────────────────────
 
     private FormSectionDTO buildSectionF() {
-        FormSectionDTO s = section("TB_SEC_F", "Follow Up to TU", "POST_SUBMIT", 6, true, true);
+        FormSectionDTO s = section("TB_SEC_F", "Follow Up to TU", "TU के बाद की कार्रवाई", "POST_SUBMIT", 6, true, true);
         List<SectionQuestionDTO> qs = new ArrayList<>();
 
         // "Has the patient started TB treatment?" — RADIO: Yes | No
         SectionQuestionDTO startedQ = new SectionQuestionDTO();
         startedQ.setQuestionUuid("TB_F_Q1");
         startedQ.setQuestionText("Has the patient started the prescribed TB treatment regimen?");
+        startedQ.setQuestionTextHindi("क्या मरीज़ ने टीबी के लिए बताया गया इलाज शुरू कर दिया है?");
         startedQ.setQuestionType(QuestionType.RADIO);
         startedQ.setIsMandatory(true);
         startedQ.setDisplayOrder(1);
         startedQ.setVisibleByDefault(true);
 
-        QuestionOptionDTO yesOpt = option("Yes", "YES", 1, List.of());
+        QuestionOptionDTO yesOpt = option("Yes", "हाँ", "YES", "हाँ", 1, List.of());
 
         List<OptionConditionDTO> noConditions = new ArrayList<>();
         noConditions.add(showQuestion("TB_F_NO_REASON"));
-        QuestionOptionDTO noOpt = option("No", "NO", 2, noConditions);
+        QuestionOptionDTO noOpt = option("No", "नहीं", "NO", "नहीं", 2, noConditions);
 
         List<QuestionOptionDTO> startedOptions = new ArrayList<>();
         startedOptions.add(yesOpt);
@@ -225,16 +223,19 @@ public class TbCounsellingFormSeeder {
         // Reason for not starting — hidden by default, max 500 chars
         qs.add(textQuestion("TB_F_NO_REASON",
                 "Reason for not starting the prescribed TB treatment regimen",
+                "टीबी के लिए तय इलाज का तरीका शुरू न करने का कारण",
                 2, false, 500, false));
 
         // DOTS centre visit
         qs.add(yesNoRadio("TB_F_Q2",
                 "Has the patient visited the DOTS centre / referred health facility for treatment collection?",
+                "क्या मरीज़ इलाज लेने के लिए DOTS सेंटर या रेफर किए गए स्वास्थ्य केंद्र गया है?",
                 3, true));
 
         // Side effects reported
         qs.add(yesNoRadio("TB_F_Q3",
                 "Has the patient reported side effects to the treating doctor or DOTS centre?",
+                "क्या मरीज़ ने इलाज करने वाले डॉक्टर या DOTS सेंटर को साइड इफ़ेक्ट्स के बारे में बताया है?",
                 4, true));
 
         s.setQuestions(qs);
@@ -243,11 +244,12 @@ public class TbCounsellingFormSeeder {
 
     // ── Builder Helpers ───────────────────────────────────────────────────────────
 
-    private FormSectionDTO section(String uuid, String name, String phase,
+    private FormSectionDTO section(String uuid, String name, String nameHindi, String phase,
                                    int order, boolean required, boolean hasSubmitButton) {
         FormSectionDTO s = new FormSectionDTO();
         s.setSectionUuid(uuid);
         s.setSectionName(name);
+        s.setSectionNameHindi(nameHindi);
         s.setSectionPhase(phase);
         s.setDisplayOrder(order);
         s.setIsRequired(required);
@@ -256,28 +258,30 @@ public class TbCounsellingFormSeeder {
         return s;
     }
 
-    private SectionQuestionDTO yesNoRadio(String uuid, String text, int order, boolean mandatory) {
+    private SectionQuestionDTO yesNoRadio(String uuid, String text, String textHindi, int order, boolean mandatory) {
         SectionQuestionDTO q = new SectionQuestionDTO();
         q.setQuestionUuid(uuid);
         q.setQuestionText(text);
+        q.setQuestionTextHindi(textHindi);
         q.setQuestionType(QuestionType.RADIO);
         q.setIsMandatory(mandatory);
         q.setDisplayOrder(order);
         q.setVisibleByDefault(true);
 
         List<QuestionOptionDTO> opts = new ArrayList<>();
-        opts.add(option("Yes", "YES", 1, List.of()));
-        opts.add(option("No", "NO", 2, List.of()));
+        opts.add(option("Yes", "हाँ","YES","हाँ", 1, List.of()));
+        opts.add(option("No", "नहीं","NO", "नहीं", 2, List.of()));
         q.setOptions(opts);
         q.setValidations(List.of());
         return q;
     }
 
-    private SectionQuestionDTO textQuestion(String uuid, String text, int order,
+    private SectionQuestionDTO textQuestion(String uuid, String text, String textHindi, int order,
                                             boolean mandatory, int maxLength, boolean visible) {
         SectionQuestionDTO q = new SectionQuestionDTO();
         q.setQuestionUuid(uuid);
         q.setQuestionText(text);
+        q.setQuestionTextHindi(textHindi);
         q.setQuestionType(QuestionType.TEXT);
         q.setIsMandatory(mandatory);
         q.setDisplayOrder(order);
@@ -293,11 +297,13 @@ public class TbCounsellingFormSeeder {
         return q;
     }
 
-    private QuestionOptionDTO option(String label, String value, int order,
+    private QuestionOptionDTO option(String label, String labelHindi, String value, String valueHindi, int order,
                                      List<OptionConditionDTO> conditions) {
         QuestionOptionDTO o = new QuestionOptionDTO();
         o.setOptionLabel(label);
+        o.setOptionLabelHindi(labelHindi);
         o.setOptionValue(value);
+        o.setOptionValueHindi(valueHindi);
         o.setDisplayOrder(order);
         o.setConditions(conditions);
         return o;

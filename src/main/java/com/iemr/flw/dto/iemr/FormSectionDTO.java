@@ -47,6 +47,8 @@ public class FormSectionDTO {
     @NotBlank(message = "sectionName is required")
     private String sectionName;
 
+    private String sectionNameHindi;
+
     @NotBlank(message = "sectionPhase is required (PRE_SUBMIT or POST_SUBMIT)")
     private String sectionPhase;
 
