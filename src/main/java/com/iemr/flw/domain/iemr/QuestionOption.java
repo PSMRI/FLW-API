@@ -64,8 +64,14 @@ public class QuestionOption {
     @Column(name = "optionLabel", nullable = false, length = 255)
     private String optionLabel;
 
+    @Column(name = "optionLabel_hindi", length = 100)
+    private String optionLabelHindi;
+
     @Column(name = "optionValue", nullable = false, length = 100)
     private String optionValue;
+
+    @Column(name = "optionValue_hindi", length = 100)
+    private String optionValueHindi;
 
     @Column(name = "displayOrder", nullable = false)
     private Integer displayOrder;
@@ -98,6 +104,6 @@ public class QuestionOption {
     @Column(name = "Syncedby", length = 50)
     private String syncedBy;
 
-    @Column(name = "SyncFailureReason", length = 255)
+    @Column(name = "SyncFailureReason")
     private String syncFailureReason;
 }

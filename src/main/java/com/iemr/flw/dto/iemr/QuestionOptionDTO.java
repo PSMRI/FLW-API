@@ -44,8 +44,12 @@ public class QuestionOptionDTO {
     @NotBlank(message = "optionLabel is required")
     private String optionLabel;
 
+    private String optionLabelHindi;
+
     @NotBlank(message = "optionValue is required")
     private String optionValue;
+
+    private String optionValueHindi;
 
     @NotNull(message = "displayOrder is required")
     private Integer displayOrder;

@@ -23,6 +23,7 @@ package com.iemr.flw.controller;
 
 import com.iemr.flw.dto.iemr.FormResponseDTO;
 import com.iemr.flw.dto.iemr.FormResponseRequest;
+import com.iemr.flw.masterEnum.FormType;
 import com.iemr.flw.service.DynamicFormResponseService;
 import com.iemr.flw.utils.ApiResponse;
 import com.iemr.flw.utils.exception.IEMRException;
@@ -96,5 +97,11 @@ public class DynamicFormResponseController {
     public ResponseEntity<ApiResponse> getById(@RequestParam Long responseId) {
         FormResponseDTO dto = responseService.getResponseById(responseId);
         return ResponseEntity.ok(new ApiResponse(true, "Response fetched successfully", dto));
+    }
+    @Operation(summary = "Get beneficiary IDs that have a COMPLETE form response for the given form type")
+    @RequestMapping(value = "/getCompletedBeneficiaries", method = RequestMethod.GET)
+    public ResponseEntity<ApiResponse> getCompletedBeneficiaries(@RequestParam FormType formType) {
+        List<Long> beneficiaryIds = responseService.getCompletedBeneficiaries(formType);
+        return ResponseEntity.ok(new ApiResponse(true, "Completed beneficiaries fetched successfully", beneficiaryIds));
     }
 }

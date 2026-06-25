@@ -68,6 +68,9 @@ public class FormSection {
     @Column(name = "sectionName", nullable = false, length = 255)
     private String sectionName;
 
+    @Column(name = "sectionName_hindi", length = 255)
+    private String sectionNameHindi;
+
     /** PRE_SUBMIT sections are shown before the form's main submit. POST_SUBMIT after. */
     @Column(name = "sectionPhase", nullable = false, length = 20)
     private String sectionPhase;
@@ -110,6 +113,6 @@ public class FormSection {
     @Column(name = "Syncedby", length = 50)
     private String syncedBy;
 
-    @Column(name = "SyncFailureReason", length = 255)
+    @Column(name = "SyncFailureReason")
     private String syncFailureReason;
 }

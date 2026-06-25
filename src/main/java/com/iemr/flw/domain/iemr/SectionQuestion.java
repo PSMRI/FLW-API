@@ -73,6 +73,9 @@ public class SectionQuestion {
     @Column(name = "questionText", nullable = false)
     private String questionText;
 
+    @Column(name = "questionText_hindi", columnDefinition = "TEXT")
+    private String questionTextHindi;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "questionType", nullable = false, length = 20)
     private QuestionType questionType;
@@ -127,6 +130,6 @@ public class SectionQuestion {
     @Column(name = "Syncedby", length = 50)
     private String syncedBy;
 
-    @Column(name = "SyncFailureReason", length = 255)
+    @Column(name = "SyncFailureReason")
     private String syncFailureReason;
 }
