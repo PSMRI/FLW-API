@@ -105,7 +105,7 @@ public class FormVersion {
     @Column(name = "Syncedby", length = 50)
     private String syncedBy;
 
-    @Column(name = "SyncFailureReason", length = 255)
+    @Column(name = "SyncFailureReason")
     private String syncFailureReason;
 
     @PrePersist
