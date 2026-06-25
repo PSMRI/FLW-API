@@ -985,11 +985,11 @@ public class ChildCareServiceImpl implements ChildCareService {
                             incentivesRepo.findIncentiveMasterByNameAndGroup("COMPLETE_IMMUNIZATION_1_2", GroupName.IMMUNIZATION.getDisplayName());
                     IncentiveActivity immunizationActivity2CH =
                             incentivesRepo.findIncentiveMasterByNameAndGroup("COMPLETE_IMMUNIZATION_1_2", GroupName.ACTIVITY.getDisplayName());
-                    if (immunizationActivity2AM != null && childVaccinationRepo.getSecondYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
+                    if (immunizationActivity2AM != null && childVaccinationRepo.getEligibleSecondYearVaccines(vaccination.getBeneficiaryRegId())
                             .equals(childVaccinationRepo.getSecondYearVaccineCount())) {
                         createIncentiveRecord(vaccination, benId, userId, immunizationActivity2AM);
                     }
-                    if (immunizationActivity2CH != null && childVaccinationRepo.getSecondYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
+                    if (immunizationActivity2CH != null && childVaccinationRepo.getEligibleSecondYearVaccines(vaccination.getBeneficiaryRegId())
                             .equals(childVaccinationRepo.getSecondYearVaccineCount())) {
                         createIncentiveRecord(vaccination, benId, userId, immunizationActivity2CH);
                     }
