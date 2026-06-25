@@ -550,10 +550,12 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             Map<String, IncentiveActivity> activityMap =
                     incentivesRepo.findIncentiveMasterByNameAndGroup(
-                            List.of("NCD_POP_ENUMERATION", "NCD_FOLLOWUP_TREATMENT"), groupName
+                            List.of("NCD_POP_ENUMERATION", "HWC_REFERRAL_10_CASES"), groupName
                     ).stream().collect(Collectors.toMap(IncentiveActivity::getName, Function.identity()));
 
             IncentiveActivity ncdPopEnumeration = activityMap.get("NCD_POP_ENUMERATION");
+
+            IncentiveActivity hwcReferralEnumeration = activityMap.get("HWC_REFERRAL_10_CASES");
 
             CompletableFuture<List<BenReferDetails>> benReferFuture =
                     CompletableFuture.supplyAsync(() -> benReferDetailsRepo.findByCreatedBy(userName));
@@ -587,6 +589,25 @@ public class IncentiveServiceImpl implements IncentiveService {
                                 recordsToSave.add(addNCDandCBACIncentiveRecord(activity, ashaId, c.getBeneficiaryRegId(), c.getCreatedDate(), userName));
                             }
                         });
+            }
+
+            if (hwcReferralEnumeration != null) {
+
+                LocalDate now = LocalDate.now();
+
+                Long referralCount = benReferDetailsRepo.countMonthlyReferrals(
+                        userName,
+                        now.getMonthValue(),
+                        now.getYear());
+
+                if (referralCount >= 10) {
+
+                    addHwcReferalAshaIncentiveRecord(
+                            hwcReferralEnumeration,
+                            ashaId,
+                            userName
+                    );
+                }
             }
 
             // ---- Single batch insert instead of N individual saves ----
@@ -707,6 +728,45 @@ public class IncentiveServiceImpl implements IncentiveService {
                 record.setAshaId(ashaId);
                 record.setIsEligible(true);
                 record.setIsDefaultActivity(true);
+                record.setAmount(Long.valueOf(incentiveActivity.getRate()));
+                recordRepo.save(record);
+            }
+        } catch (Exception e) {
+            logger.error("Error in addMonthlyAshaIncentiveRecord", e);
+
+        }
+
+    }
+
+    private void addHwcReferalAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId, String userName) {
+        try {
+            Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+
+            Timestamp startOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(1).atStartOfDay());
+            Timestamp endOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth()).atTime(23, 59, 59));
+
+            IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                    incentiveActivity.getId(),
+                    startOfMonth,
+                    endOfMonth,
+                    0L,
+                    ashaId
+            );
+
+
+            if (record == null) {
+                record = new IncentiveActivityRecord();
+                record.setActivityId(incentiveActivity.getId());
+                record.setCreatedDate(timestamp);
+                record.setCreatedBy(userName);
+                record.setStartDate(timestamp);
+                record.setEndDate(timestamp);
+                record.setUpdatedDate(timestamp);
+                record.setUpdatedBy(userName);
+                record.setBenId(0L);
+                record.setAshaId(ashaId);
+                record.setIsEligible(true);
+                record.setIsDefaultActivity(false);
                 record.setAmount(Long.valueOf(incentiveActivity.getRate()));
                 recordRepo.save(record);
             }

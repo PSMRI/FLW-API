@@ -46,4 +46,17 @@ public interface BenReferDetailsRepo extends JpaRepository<BenReferDetails, Long
 	String findReasonByBeneficiaryRegID(@Param("benRegID") Long benRegID);
 
 	List<BenReferDetails> findByCreatedBy(String userName);
+
+	@Query("""
+       SELECT COUNT(b)
+       FROM BenReferDetails b
+       WHERE b.createdBy = :userName
+       AND FUNCTION('MONTH', b.createdDate) = :month
+       AND FUNCTION('YEAR', b.createdDate) = :year
+       """)
+	Long countMonthlyReferrals(
+			@Param("userName") String userName,
+			@Param("month") Integer month,
+			@Param("year") Integer year);
+
 }
