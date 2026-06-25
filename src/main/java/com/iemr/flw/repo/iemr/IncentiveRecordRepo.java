@@ -17,8 +17,17 @@ import java.util.Optional;
 @Repository
 public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityRecord, Long> {
 
-    @Query("select record from IncentiveActivityRecord record where record.activityId = :id and record.createdDate = :createdDate and record.benId = :benId")
+    @Query(value = """
+        SELECT *
+        FROM db_iemr.incentive_activity_record r
+        WHERE r.activity_id = :id
+        AND r.ben_id = :benId
+        AND MONTH(r.created_date) = MONTH(:createdDate)
+        AND YEAR(r.created_date) = YEAR(:createdDate)
+        LIMIT 1
+        """, nativeQuery = true)
     IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(@Param("id") Long id, @Param("createdDate") Timestamp createdDate, @Param("benId") Long benId);
+
 
     Optional<IncentiveActivityRecord> findById(Long id);
 
