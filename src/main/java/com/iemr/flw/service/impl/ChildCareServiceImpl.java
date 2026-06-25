@@ -371,6 +371,8 @@ public class ChildCareServiceImpl implements ChildCareService {
                     vaccinationDTO.setBeneficiaryId(benId.longValue());
 
                 }
+                checkAndAddIncentives(vaccinationDetails);
+
 
                 result.add(vaccinationDTO);
             });
@@ -981,17 +983,68 @@ public class ChildCareServiceImpl implements ChildCareService {
                         createIncentiveRecord(vaccination, benId, userId, immunizationActivityCH);
                     }
                 } else if (immunizationServiceId == 7) {
+
                     IncentiveActivity immunizationActivity2AM =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup("COMPLETE_IMMUNIZATION_1_2", GroupName.IMMUNIZATION.getDisplayName());
+                            incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                    "COMPLETE_IMMUNIZATION_1_2",
+                                    GroupName.IMMUNIZATION.getDisplayName());
+
                     IncentiveActivity immunizationActivity2CH =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup("COMPLETE_IMMUNIZATION_1_2", GroupName.ACTIVITY.getDisplayName());
-                    if (immunizationActivity2AM != null && childVaccinationRepo.getEligibleSecondYearVaccines(vaccination.getBeneficiaryRegId())
-                            .equals(childVaccinationRepo.getSecondYearVaccineCount())) {
-                        createIncentiveRecord(vaccination, benId, userId, immunizationActivity2AM);
-                    }
-                    if (immunizationActivity2CH != null && childVaccinationRepo.getEligibleSecondYearVaccines(vaccination.getBeneficiaryRegId())
-                            .equals(childVaccinationRepo.getSecondYearVaccineCount())) {
-                        createIncentiveRecord(vaccination, benId, userId, immunizationActivity2CH);
+                            incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                    "COMPLETE_IMMUNIZATION_1_2",
+                                    GroupName.ACTIVITY.getDisplayName());
+
+                    Integer completedVaccines =
+                            childVaccinationRepo.getEligibleSecondYearVaccines(
+                                    vaccination.getBeneficiaryRegId());
+
+                    logger.info(
+                            "COMPLETE_IMMUNIZATION_1_2 :: BeneficiaryRegId={}, Vaccine={}, VaccineId={}, CompletedVaccines={}",
+                            vaccination.getBeneficiaryRegId(),
+                            vaccination.getVaccineName(),
+                            vaccination.getVaccineId(),
+                            completedVaccines
+                    );
+
+                    // Required vaccines count = 3
+                    if (completedVaccines != null && completedVaccines == 3) {
+
+                        logger.info(
+                                "Beneficiary {} completed all required second year vaccines.",
+                                vaccination.getBeneficiaryRegId());
+
+                        if (immunizationActivity2AM != null) {
+
+                            logger.info(
+                                    "Creating IMMUNIZATION incentive for BeneficiaryRegId={}",
+                                    vaccination.getBeneficiaryRegId());
+
+                            createIncentiveRecord(
+                                    vaccination,
+                                    benId,
+                                    userId,
+                                    immunizationActivity2AM);
+                        }
+
+                        if (immunizationActivity2CH != null) {
+
+                            logger.info(
+                                    "Creating ACTIVITY incentive for BeneficiaryRegId={}",
+                                    vaccination.getBeneficiaryRegId());
+
+                            createIncentiveRecord(
+                                    vaccination,
+                                    benId,
+                                    userId,
+                                    immunizationActivity2CH);
+                        }
+
+                    } else {
+
+                        logger.info(
+                                "BeneficiaryRegId={} not eligible. CompletedVaccines={}/3",
+                                vaccination.getBeneficiaryRegId(),
+                                completedVaccines);
                     }
                 }
                 IncentiveActivity immunizationActivity5AM =
