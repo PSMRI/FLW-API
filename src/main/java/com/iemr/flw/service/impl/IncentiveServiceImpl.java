@@ -592,13 +592,16 @@ public class IncentiveServiceImpl implements IncentiveService {
             }
 
             if (hwcReferralEnumeration != null) {
-
+               logger.info("hwcReferralEnumeration :"+hwcReferralEnumeration.getDescription());
                 LocalDate now = LocalDate.now();
 
                 Long referralCount = benReferDetailsRepo.countMonthlyReferrals(
                         userName,
                         now.getMonthValue(),
                         now.getYear());
+
+                logger.info("referralCount :"+referralCount);
+
 
                 if (referralCount >= 10) {
 
