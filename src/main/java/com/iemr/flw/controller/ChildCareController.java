@@ -7,9 +7,12 @@ import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.HbncVisit;
 import com.iemr.flw.domain.iemr.IfaDistribution;
 import com.iemr.flw.domain.iemr.SamVisitResponseDTO;
+import com.iemr.flw.domain.iemr.UserServiceRole;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
+import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.ChildCareService;
+import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.response.OutputResponse;
 
@@ -40,8 +43,13 @@ public class ChildCareController {
     private ChildCareService childCareService;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private UserServiceRoleRepo userServiceRoleRepo;
     @Operation(summary = "save HBYC details")
     @RequestMapping(value = {"/hbycVisit/saveAll"}, method = {RequestMethod.POST})
     public String saveHbycRecords(@RequestBody List<HbycRequestDTO> hbycDTOs,
@@ -117,7 +125,7 @@ public class ChildCareController {
             }
         } catch (Exception e) {
             logger.error("Error saving HBNC visit: ", e);
-            response.setError(500, "Server error: " + e.getMessage());
+            response.setError(5000, "Server error: " + e.getMessage());
         }
         return response.toString();
     }
@@ -153,7 +161,7 @@ public class ChildCareController {
         } catch (Exception e) {
             logger.error("Exception in fetching HBNC visits", e);
 
-            response.setStatusCode(500);
+            response.setStatusCode(5000);
             response.setStatus("Failed");
             response.setErrorMessage("Internal Server Error: " + e.getMessage());
             response.setData(null);
@@ -249,7 +257,7 @@ public class ChildCareController {
 
             if(token!=null){
                 Integer userId = jwtUtil.extractUserId(token);
-                String userName = jwtUtil.extractUsername(token);
+                String userName = userService.getUserDetail(userId).getUserName();
                 String responseObject = childCareService.saveSamDetails(samRequest,userId,userName);
 
                 if (responseObject != null) {
@@ -270,7 +278,7 @@ public class ChildCareController {
 
         } catch (Exception e) {
             logger.error("Error saving SAM details:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode",5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -295,7 +303,7 @@ public class ChildCareController {
 
         } catch (Exception e) {
             logger.error("Error fetching SAM records:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode", 5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -313,9 +321,8 @@ public class ChildCareController {
                 response.put("message", "Request body cannot be empty");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
-           if(token!=null){
-               Integer userId = jwtUtil.extractUserId(token);
-               String responseObject = childCareService.saveOrsDistributionDetails(orsDistributionDTOS,userId);
+           if(!orsDistributionDTOS.isEmpty()){
+               String responseObject = childCareService.saveOrsDistributionDetails(orsDistributionDTOS);
 
                if (responseObject != null) {
                    response.put("statusCode", HttpStatus.OK.value());
@@ -336,7 +343,7 @@ public class ChildCareController {
 
         } catch (Exception e) {
             logger.error("Error saving ORS:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode", 5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -355,14 +362,14 @@ public class ChildCareController {
                 response.put("data", responseObject);
                 return ResponseEntity.ok(response);
             } else {
-                response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+                response.put("statusCode", 5000);
                 response.put("message", "No ORS records found");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
         } catch (Exception e) {
             logger.error("Error fetching ORS records:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode", 5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -402,7 +409,7 @@ public class ChildCareController {
 
         } catch (Exception e) {
             logger.error("Error saving IFA:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode", 5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -428,7 +435,7 @@ public class ChildCareController {
 
         } catch (Exception e) {
             logger.error("Error fetching IFA records:", e);
-            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("statusCode", 5000);
             response.put("errorMessage", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }

@@ -25,12 +25,14 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iemr.flw.domain.identity.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.DiseaseType;
 import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.masterEnum.StateCode;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.DiseaseControlService;
 import com.iemr.flw.service.IncentiveLogicService;
@@ -96,6 +98,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
 
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
@@ -312,38 +317,41 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     }
                 }
                 if (screeningLeprosy.getIsConfirmed()) {
-                    if (screeningLeprosy.getTypeOfLeprosy().equals("PB (Paucibacillary)")) {
-                        IncentiveActivityRecord incentiveActivityRecord =
-                                incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
-                                        screeningLeprosy.getBenId(),
-                                        screeningLeprosy.getTreatmentStartDate(),
-                                        screeningLeprosy.getTreatmentEndDate(),
-                                        diseaseControlDTO.getUserId());
+                    if(screeningLeprosy.getTypeOfLeprosy()!=null){
+                        if (screeningLeprosy.getTypeOfLeprosy().equals("PB (Paucibacillary)")) {
+                            IncentiveActivityRecord incentiveActivityRecord =
+                                    incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
+                                            screeningLeprosy.getBenId(),
+                                            screeningLeprosy.getTreatmentStartDate(),
+                                            screeningLeprosy.getTreatmentEndDate(),
+                                            diseaseControlDTO.getUserId());
 
-                        if (incentiveActivityRecord != null) {
-                            logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                                    incentiveActivityRecord.getId());
-                        } else {
-                            logger.info("Incentive not created");
+                            if (incentiveActivityRecord != null) {
+                                logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                        incentiveActivityRecord.getId());
+                            } else {
+                                logger.info("Incentive not created");
+                            }
+
                         }
+                        if (screeningLeprosy.getTypeOfLeprosy().equals("MB (Multibacillary)")) {
+                            IncentiveActivityRecord incentiveActivityRecord =
+                                    incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
+                                            screeningLeprosy.getBenId(),
+                                            screeningLeprosy.getTreatmentStartDate(),
+                                            screeningLeprosy.getTreatmentEndDate(),
+                                            diseaseControlDTO.getUserId());
 
-                    }
-                    if (screeningLeprosy.getTypeOfLeprosy().equals("MB (Multibacillary)")) {
-                        IncentiveActivityRecord incentiveActivityRecord =
-                                incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
-                                        screeningLeprosy.getBenId(),
-                                        screeningLeprosy.getTreatmentStartDate(),
-                                        screeningLeprosy.getTreatmentEndDate(),
-                                        diseaseControlDTO.getUserId());
+                            if (incentiveActivityRecord != null) {
+                                logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                        incentiveActivityRecord.getId());
+                            } else {
+                                logger.info("Incentive not created");
+                            }
 
-                        if (incentiveActivityRecord != null) {
-                            logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                                    incentiveActivityRecord.getId());
-                        } else {
-                            logger.info("Incentive not created");
                         }
-
                     }
+
 
                 }
 
@@ -457,38 +465,42 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             }
         }
         if (screeningLeprosy.getIsConfirmed()) {
-            if (screeningLeprosy.getTypeOfLeprosy().equals("PB (Paucibacillary)")) {
-                IncentiveActivityRecord incentiveActivityRecord =
-                        incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
-                                screeningLeprosy.getBenId(),
-                                screeningLeprosy.getTreatmentStartDate(),
-                                screeningLeprosy.getTreatmentEndDate(),
-                                userId);
+            if(screeningLeprosy.getTypeOfLeprosy()!=null){
+                if (screeningLeprosy.getTypeOfLeprosy().equals("PB (Paucibacillary)")) {
+                    IncentiveActivityRecord incentiveActivityRecord =
+                            incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
+                                    screeningLeprosy.getBenId(),
+                                    screeningLeprosy.getTreatmentStartDate(),
+                                    screeningLeprosy.getTreatmentEndDate(),
+                                    userId);
 
-                if (incentiveActivityRecord != null) {
-                    logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                            incentiveActivityRecord.getId());
-                } else {
-                    logger.info("Incentive not created");
+                    if (incentiveActivityRecord != null) {
+                        logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                incentiveActivityRecord.getId());
+                    } else {
+                        logger.info("Incentive not created");
+                    }
+
                 }
+                if (screeningLeprosy.getTypeOfLeprosy().equals("MB (Multibacillary)")) {
+                    IncentiveActivityRecord incentiveActivityRecord =
+                            incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
+                                    screeningLeprosy.getBenId(),
+                                    screeningLeprosy.getTreatmentStartDate(),
+                                    screeningLeprosy.getTreatmentEndDate(),
+                                    userId);
 
-            }
-            if (screeningLeprosy.getTypeOfLeprosy().equals("MB (Multibacillary)")) {
-                IncentiveActivityRecord incentiveActivityRecord =
-                        incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
-                                screeningLeprosy.getBenId(),
-                                screeningLeprosy.getTreatmentStartDate(),
-                                screeningLeprosy.getTreatmentEndDate(),
-                                userId);
+                    if (incentiveActivityRecord != null) {
+                        logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                incentiveActivityRecord.getId());
+                    } else {
+                        logger.info("Incentive not created");
+                    }
 
-                if (incentiveActivityRecord != null) {
-                    logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                            incentiveActivityRecord.getId());
-                } else {
-                    logger.info("Incentive not created");
                 }
-
             }
+
+
 
         }
     }
@@ -523,39 +535,92 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Map to DTOs
         List<DiseaseMalariaDTO> dtoList = filteredList.stream().map(disease -> {
+
             DiseaseMalariaDTO dto = new DiseaseMalariaDTO();
 
-            // Map fields from DiseaseMalaria to DTO
-            dto.setId(disease.getId());
-            dto.setBenId(disease.getBenId());
-            dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
-            dto.setScreeningDate(disease.getScreeningDate());
-            dto.setBeneficiaryStatus(disease.getBeneficiaryStatus());
-            dto.setDateOfDeath(disease.getDateOfDeath());
-            dto.setPlaceOfDeath(disease.getPlaceOfDeath());
-            dto.setOtherPlaceOfDeath(disease.getOtherPlaceOfDeath());
-            dto.setReasonForDeath(disease.getReasonForDeath());
-            dto.setOtherReasonForDeath(disease.getOtherReasonForDeath());
-            dto.setCaseStatus(disease.getCaseStatus());
-            dto.setRapidDiagnosticTest(disease.getRapidDiagnosticTest());
-            dto.setDateOfRdt(disease.getDateOfRdt());
-            dto.setSlideTestPf(disease.getSlideTestPf());
-            dto.setSlideTestPv(disease.getSlideTestPv());
-            dto.setDateOfSlideTest(disease.getDateOfSlideTest());
-            dto.setSlideNo(disease.getSlideNo());
-            dto.setReferredTo(disease.getReferredTo());
-            dto.setOtherReferredFacility(disease.getOtherReferredFacility());
-            dto.setRemarks(disease.getRemarks());
-            dto.setMalariaSlideTestType(disease.getMalariaSlideTestType());
-            dto.setMalariaTestType(disease.getMalariaTestType());
-            dto.setDateOfVisitBySupervisor(disease.getDateOfVisitBySupervisor());
-            dto.setUserId(disease.getUserId());
-            dto.setDiseaseTypeId(disease.getDiseaseTypeId());
+            if (disease.getId() != null)
+                dto.setId(disease.getId());
 
-            // Parse symptoms (if present)
+            if (disease.getBenId() != null)
+                dto.setBenId(disease.getBenId());
+
+            if (disease.getHouseHoldDetailsId() != null)
+                dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
+
+            if (disease.getScreeningDate() != null)
+                dto.setScreeningDate(disease.getScreeningDate());
+
+            if (disease.getBeneficiaryStatus() != null && !disease.getBeneficiaryStatus().trim().isEmpty())
+                dto.setBeneficiaryStatus(disease.getBeneficiaryStatus());
+
+            if (disease.getDateOfDeath() != null)
+                dto.setDateOfDeath(disease.getDateOfDeath());
+
+            if (disease.getPlaceOfDeath() != null && !disease.getPlaceOfDeath().trim().isEmpty())
+                dto.setPlaceOfDeath(disease.getPlaceOfDeath());
+
+            if (disease.getOtherPlaceOfDeath() != null && !disease.getOtherPlaceOfDeath().trim().isEmpty())
+                dto.setOtherPlaceOfDeath(disease.getOtherPlaceOfDeath());
+
+            if (disease.getReasonForDeath() != null && !disease.getReasonForDeath().trim().isEmpty())
+                dto.setReasonForDeath(disease.getReasonForDeath());
+
+            if (disease.getOtherReasonForDeath() != null && !disease.getOtherReasonForDeath().trim().isEmpty())
+                dto.setOtherReasonForDeath(disease.getOtherReasonForDeath());
+
+            if (disease.getCaseStatus() != null && !disease.getCaseStatus().trim().isEmpty())
+                dto.setCaseStatus(disease.getCaseStatus());
+
+            if (disease.getRapidDiagnosticTest() != null)
+                dto.setRapidDiagnosticTest(disease.getRapidDiagnosticTest());
+
+            if (disease.getDateOfRdt() != null)
+                dto.setDateOfRdt(disease.getDateOfRdt());
+
+            if (disease.getSlideTestPf() != null)
+                dto.setSlideTestPf(disease.getSlideTestPf());
+
+            if (disease.getSlideTestPv() != null)
+                dto.setSlideTestPv(disease.getSlideTestPv());
+
+            if (disease.getDateOfSlideTest() != null)
+                dto.setDateOfSlideTest(disease.getDateOfSlideTest());
+
+            if (disease.getSlideNo() != null && !disease.getSlideNo().trim().isEmpty())
+                dto.setSlideNo(disease.getSlideNo());
+
+            if (disease.getReferredTo() != null)
+                dto.setReferredTo(disease.getReferredTo());
+
+            if (disease.getOtherReferredFacility() != null && !disease.getOtherReferredFacility().trim().isEmpty())
+                dto.setOtherReferredFacility(disease.getOtherReferredFacility());
+
+            if (disease.getRemarks() != null && !disease.getRemarks().trim().isEmpty())
+                dto.setRemarks(disease.getRemarks());
+
+            if (disease.getMalariaSlideTestType() != null && !disease.getMalariaSlideTestType().trim().isEmpty())
+                dto.setMalariaSlideTestType(disease.getMalariaSlideTestType());
+
+            if (disease.getMalariaTestType() != null && !disease.getMalariaTestType().trim().isEmpty())
+                dto.setMalariaTestType(disease.getMalariaTestType());
+
+            if (disease.getDateOfVisitBySupervisor() != null)
+                dto.setDateOfVisitBySupervisor(disease.getDateOfVisitBySupervisor());
+
+            if (disease.getUserId() != null)
+                dto.setUserId(disease.getUserId());
+
+            if (disease.getDiseaseTypeId() != null)
+                dto.setDiseaseTypeId(disease.getDiseaseTypeId());
+
+            // Symptoms JSON
             try {
-                if (disease.getSymptoms() != null && !disease.getSymptoms().isEmpty()) {
-                    MalariaSymptomsDTO symptomsDTO = objectMapper.readValue(disease.getSymptoms(), MalariaSymptomsDTO.class);
+                if (disease.getSymptoms() != null &&
+                        !disease.getSymptoms().trim().isEmpty()) {
+
+                    MalariaSymptomsDTO symptomsDTO =
+                            objectMapper.readValue(disease.getSymptoms(), MalariaSymptomsDTO.class);
+
                     dto.setFeverMoreThanTwoWeeks(symptomsDTO.isFeverMoreThanTwoWeeks());
                     dto.setFluLikeIllness(symptomsDTO.isFluLikeIllness());
                     dto.setShakingChills(symptomsDTO.isShakingChills());
@@ -567,7 +632,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     dto.setDiarrhea(symptomsDTO.isDiarrhea());
                 }
             } catch (Exception e) {
-                throw new RuntimeException("Error parsing symptoms JSON for Malaria Disease ID: " + disease.getId(), e);
+                logger.error("Error parsing symptoms for diseaseId={}",
+                        disease.getId(), e);
             }
 
             return dto;
@@ -613,30 +679,77 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Map to DTOs
         List<DiseaseKalaAzarDTO> dtoList = filteredList.stream().map(disease -> {
+
             DiseaseKalaAzarDTO dto = new DiseaseKalaAzarDTO();
-            dto.setId(disease.getId());
-            dto.setBenId(disease.getBenId());
-            dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
-            dto.setVisitDate(disease.getVisitDate());
-            dto.setBeneficiaryStatus(disease.getBeneficiaryStatus());
-            dto.setDateOfDeath(disease.getDateOfDeath());
-            dto.setPlaceOfDeath(disease.getPlaceOfDeath());
-            dto.setOtherPlaceOfDeath(disease.getOtherPlaceOfDeath());
-            dto.setReasonForDeath(disease.getReasonForDeath());
-            dto.setOtherReasonForDeath(disease.getOtherReasonForDeath());
-            dto.setKalaAzarCaseStatus(disease.getKalaAzarCaseStatus());
-            dto.setKalaAzarCaseCount(disease.getKalaAzarCaseCount());
-            dto.setRapidDiagnosticTest(disease.getRapidDiagnosticTest());
-            dto.setDateOfRdt(disease.getDateOfRdt());
-            dto.setFollowUpPoint(disease.getFollowUpPoint());
-            dto.setReferredTo(disease.getReferredTo());
-            dto.setOtherReferredFacility(disease.getOtherReferredFacility());
-            dto.setCreatedDate(disease.getCreatedDate());
-            dto.setCreatedBy(disease.getCreatedBy());
-            dto.setBeneficiaryStatusId(disease.getBeneficiaryStatusId());
-            dto.setReferToName(disease.getReferToName());
-            dto.setUserId(disease.getUserId());
-            dto.setDiseaseTypeId(disease.getDiseaseTypeId());
+
+            if (disease.getId() != null)
+                dto.setId(disease.getId());
+
+            if (disease.getBenId() != null)
+                dto.setBenId(disease.getBenId());
+
+            if (disease.getHouseHoldDetailsId() != null)
+                dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
+
+            if (disease.getVisitDate() != null)
+                dto.setVisitDate(disease.getVisitDate());
+
+            if (disease.getBeneficiaryStatus() != null && !disease.getBeneficiaryStatus().trim().isEmpty())
+                dto.setBeneficiaryStatus(disease.getBeneficiaryStatus());
+
+            if (disease.getDateOfDeath() != null)
+                dto.setDateOfDeath(disease.getDateOfDeath());
+
+            if (disease.getPlaceOfDeath() != null && !disease.getPlaceOfDeath().trim().isEmpty())
+                dto.setPlaceOfDeath(disease.getPlaceOfDeath());
+
+            if (disease.getOtherPlaceOfDeath() != null && !disease.getOtherPlaceOfDeath().trim().isEmpty())
+                dto.setOtherPlaceOfDeath(disease.getOtherPlaceOfDeath());
+
+            if (disease.getReasonForDeath() != null && !disease.getReasonForDeath().trim().isEmpty())
+                dto.setReasonForDeath(disease.getReasonForDeath());
+
+            if (disease.getOtherReasonForDeath() != null && !disease.getOtherReasonForDeath().trim().isEmpty())
+                dto.setOtherReasonForDeath(disease.getOtherReasonForDeath());
+
+            if (disease.getKalaAzarCaseStatus() != null && !disease.getKalaAzarCaseStatus().trim().isEmpty())
+                dto.setKalaAzarCaseStatus(disease.getKalaAzarCaseStatus());
+
+            if (disease.getKalaAzarCaseCount() != null)
+                dto.setKalaAzarCaseCount(disease.getKalaAzarCaseCount());
+
+            if (disease.getRapidDiagnosticTest() != null)
+                dto.setRapidDiagnosticTest(disease.getRapidDiagnosticTest());
+
+            if (disease.getDateOfRdt() != null)
+                dto.setDateOfRdt(disease.getDateOfRdt());
+
+            if (disease.getFollowUpPoint() != null)
+                dto.setFollowUpPoint(disease.getFollowUpPoint());
+
+            if (disease.getReferredTo() != null && !disease.getReferredTo().trim().isEmpty())
+                dto.setReferredTo(disease.getReferredTo());
+
+            if (disease.getOtherReferredFacility() != null && !disease.getOtherReferredFacility().trim().isEmpty())
+                dto.setOtherReferredFacility(disease.getOtherReferredFacility());
+
+            if (disease.getCreatedDate() != null)
+                dto.setCreatedDate(disease.getCreatedDate());
+
+            if (disease.getCreatedBy() != null && !disease.getCreatedBy().trim().isEmpty())
+                dto.setCreatedBy(disease.getCreatedBy());
+
+            if (disease.getBeneficiaryStatusId() != null)
+                dto.setBeneficiaryStatusId(disease.getBeneficiaryStatusId());
+
+            if (disease.getReferToName() != null && !disease.getReferToName().trim().isEmpty())
+                dto.setReferToName(disease.getReferToName());
+
+            if (disease.getUserId() != null)
+                dto.setUserId(disease.getUserId());
+
+            if (disease.getDiseaseTypeId() != null)
+                dto.setDiseaseTypeId(disease.getDiseaseTypeId());
 
             return dto;
         }).collect(Collectors.toList());
@@ -666,23 +779,58 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         // Map to DTOs
         List<DiseaseFilariasisDTO> dtoList = filteredList.stream().map(disease -> {
+
             DiseaseFilariasisDTO dto = new DiseaseFilariasisDTO();
-            dto.setId(disease.getId());
-            dto.setBenId(disease.getBenId());
-            dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
-            dto.setSufferingFromFilariasis(disease.getSufferingFromFilariasis());
-            dto.setAffectedBodyPart(disease.getAffectedBodyPart());
-            dto.setMdaHomeVisitDate(disease.getMdaHomeVisitDate());
-            dto.setDoseStatus(disease.getDoseStatus());
-            dto.setFilariasisCaseCount(disease.getFilariasisCaseCount());
-            dto.setOtherDoseStatusDetails(disease.getOtherDoseStatusDetails());
-            dto.setMedicineSideEffect(disease.getMedicineSideEffect());
-            dto.setOtherSideEffectDetails(disease.getOtherSideEffectDetails());
-            dto.setCreatedDate(disease.getCreatedDate());
-            dto.setCreatedBy(disease.getCreatedBy());
-            dto.setUserId(disease.getUserId());
+
+            if (disease.getId() != null)
+                dto.setId(disease.getId());
+
+            if (disease.getBenId() != null)
+                dto.setBenId(disease.getBenId());
+
+            if (disease.getHouseHoldDetailsId() != null)
+                dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
+
+            if (disease.getSufferingFromFilariasis() != null)
+                dto.setSufferingFromFilariasis(disease.getSufferingFromFilariasis());
+
+            if (disease.getAffectedBodyPart() != null &&
+                    !disease.getAffectedBodyPart().trim().isEmpty())
+                dto.setAffectedBodyPart(disease.getAffectedBodyPart());
+
+            if (disease.getMdaHomeVisitDate() != null)
+                dto.setMdaHomeVisitDate(disease.getMdaHomeVisitDate());
+
+            if (disease.getDoseStatus() != null &&
+                    !disease.getDoseStatus().trim().isEmpty())
+                dto.setDoseStatus(disease.getDoseStatus());
+
+            if (disease.getFilariasisCaseCount() != null)
+                dto.setFilariasisCaseCount(disease.getFilariasisCaseCount());
+
+            if (disease.getOtherDoseStatusDetails() != null &&
+                    !disease.getOtherDoseStatusDetails().trim().isEmpty())
+                dto.setOtherDoseStatusDetails(disease.getOtherDoseStatusDetails());
+
+            if (disease.getMedicineSideEffect() != null)
+                dto.setMedicineSideEffect(disease.getMedicineSideEffect());
+
+            if (disease.getOtherSideEffectDetails() != null &&
+                    !disease.getOtherSideEffectDetails().trim().isEmpty())
+                dto.setOtherSideEffectDetails(disease.getOtherSideEffectDetails());
+
+            if (disease.getCreatedDate() != null)
+                dto.setCreatedDate(disease.getCreatedDate());
+
+            if (disease.getCreatedBy() != null &&
+                    !disease.getCreatedBy().trim().isEmpty())
+                dto.setCreatedBy(disease.getCreatedBy());
+
+            if (disease.getUserId() != null)
+                dto.setUserId(disease.getUserId());
 
             return dto;
+
         }).collect(Collectors.toList());
 
         return dtoList;
@@ -704,19 +852,44 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         // Map to DTOs
         List<DiseaseLeprosyDTO> dtoList = filteredList.stream().map(disease -> {
             DiseaseLeprosyDTO dto = new DiseaseLeprosyDTO();
-            dto.setId(disease.getId());
-            dto.setBenId(disease.getBenId());
-            dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
-            dto.setHomeVisitDate(disease.getHomeVisitDate());
-            dto.setLeprosyStatus(disease.getLeprosyStatus());
-            dto.setReferredTo(disease.getReferredTo());
-            dto.setOtherReferredTo(disease.getOtherReferredTo());
-            dto.setLeprosyStatusDate(disease.getLeprosyStatusDate());
-            dto.setTypeOfLeprosy(disease.getTypeOfLeprosy());
-            dto.setFollowUpDate(disease.getFollowUpDate());
-            dto.setBeneficiaryStatus(disease.getLeprosyStatus());
-            dto.setRemark(disease.getRemark());
-            dto.setUserId(disease.getUserId());
+            if (disease.getId() != null)
+                dto.setId(disease.getId());
+
+            if (disease.getBenId() != null)
+                dto.setBenId(disease.getBenId());
+
+            if (disease.getHouseHoldDetailsId() != null)
+                dto.setHouseHoldDetailsId(disease.getHouseHoldDetailsId());
+
+            if (disease.getHomeVisitDate() != null)
+                dto.setHomeVisitDate(disease.getHomeVisitDate());
+
+            if (disease.getLeprosyStatus() != null && !disease.getLeprosyStatus().trim().isEmpty())
+                dto.setLeprosyStatus(disease.getLeprosyStatus());
+
+            if (disease.getReferredTo() != null && !disease.getReferredTo().trim().isEmpty())
+                dto.setReferredTo(disease.getReferredTo());
+
+            if (disease.getOtherReferredTo() != null && !disease.getOtherReferredTo().trim().isEmpty())
+                dto.setOtherReferredTo(disease.getOtherReferredTo());
+
+            if (disease.getLeprosyStatusDate() != null)
+                dto.setLeprosyStatusDate(disease.getLeprosyStatusDate());
+
+            if (disease.getTypeOfLeprosy() != null && !disease.getTypeOfLeprosy().trim().isEmpty())
+                dto.setTypeOfLeprosy(disease.getTypeOfLeprosy());
+
+            if (disease.getFollowUpDate() != null)
+                dto.setFollowUpDate(disease.getFollowUpDate());
+
+            if (disease.getLeprosyStatus() != null && !disease.getLeprosyStatus().trim().isEmpty())
+                dto.setBeneficiaryStatus(disease.getLeprosyStatus());
+
+            if (disease.getRemark() != null && !disease.getRemark().trim().isEmpty())
+                dto.setRemark(disease.getRemark());
+
+            if (disease.getUserId() != null)
+                dto.setUserId(disease.getUserId());
 
 
             return dto;
@@ -812,7 +985,10 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         diseaseLeprosy.setDiseaseTypeId(diseaseControlData.getDiseaseTypeId());
         diseaseLeprosy.setOtherReferredTo(diseaseControlData.getOtherReferredTo());
         diseaseLeprosy.setLeprosyStatusDate(diseaseControlData.getLeprosyStatusDate());
-        diseaseLeprosy.setTypeOfLeprosy(diseaseControlData.getTypeOfLeprosy());
+        if(diseaseControlData.getTypeOfLeprosy()!=null){
+            diseaseLeprosy.setTypeOfLeprosy(diseaseControlData.getTypeOfLeprosy());
+
+        }
         diseaseLeprosy.setFollowUpDate(diseaseControlData.getFollowUpDate());
         diseaseLeprosy.setBeneficiaryStatus(diseaseControlData.getBeneficiaryStatus());
         diseaseLeprosy.setBeneficiaryStatusId(diseaseControlData.getBeneficiaryStatusId());
@@ -1044,8 +1220,10 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         List<MosquitoNetEntity> entityList = mosquitoNetDTOList.stream().map(dto -> {
 
             MosquitoNetEntity entity = new MosquitoNetEntity();
+            if(!beneficiaryRepo.findByHouseoldId(dto.getHouseHoldId()).isEmpty()){
+                entity.setBeneficiaryId(beneficiaryRepo.findByHouseoldId(dto.getHouseHoldId()).get(0).getBenficieryid());
 
-            entity.setBeneficiaryId(dto.getBeneficiaryId());
+            }
             entity.setHouseHoldId(dto.getHouseHoldId());
 
             // ✅ String → LocalDate conversion
@@ -1122,7 +1300,6 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             mosquitoNetListDTO.setVisit_date(entity.getVisitDate().format(formatter));
 
             dto.setFields(mosquitoNetListDTO);
-            checkAndAddIncentives(entity);
 
 
             return dto;
@@ -1142,17 +1319,28 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     private void checkAndAddIncentives(ScreeningMalaria diseaseScreening) {
         Integer stateId = userService.getUserDetail(diseaseScreening.getUserId()).getStateId();
         IncentiveActivity diseaseScreeningActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_MALARIA_TREATMENT", GroupName.UMBRELLA_PROGRAMMES.getDisplayName());
+        IncentiveActivity diseaseScreeningActivityCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_MALARIA_TREATMENT", GroupName.ACTIVITY.getDisplayName());
         IncentiveActivity incentiveActivityForCollectSlideAM = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_SLIDE_COLLECTION", GroupName.UMBRELLA_PROGRAMMES.getDisplayName());
         IncentiveActivity incentiveActivityForCollectSlideCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NVBDCP_SLIDE_COLLECTION", GroupName.ACTIVITY.getDisplayName());
 
         if (diseaseScreeningActivity != null) {
-            if (Objects.equals(diseaseScreening.getCaseStatus(), "Confirmed")) {
-                addIncentive(diseaseScreeningActivity, diseaseScreening);
+            if(stateId.equals(StateCode.AM.getStateCode())){
+                if (Objects.equals(diseaseScreening.getCaseStatus(), "Confirmed")) {
+                    addIncentive(diseaseScreeningActivity, diseaseScreening);
 
+                }
             }
+            if(stateId.equals(StateCode.CG.getStateCode())){
+                if (Objects.equals(diseaseScreening.getCaseStatus(), "Confirmed")) {
+                    addIncentive(diseaseScreeningActivityCG, diseaseScreening);
+
+                }
+            }
+
         }
+
         if (diseaseScreening.getCaseStatus().equals("Suspected")) {
-            if (diseaseScreening.getMalariaSlideTestType().equals("Slide Test") || diseaseScreening.getMalariaSlideTestType().equals("2")) {
+            if (!diseaseScreening.getMalariaTestType().isEmpty()) {
                 if (stateId.equals(StateCode.AM.getStateCode())) {
                     if (incentiveActivityForCollectSlideAM != null) {
                         addIncentive(incentiveActivityForCollectSlideAM, diseaseScreening);
@@ -1176,12 +1364,11 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
         Timestamp visitTimestamp =
                 Timestamp.valueOf(diseaseScreening.getVisitDate().atStartOfDay());
-
         IncentiveActivityRecord record = recordRepo
                 .findRecordByActivityIdCreatedDateBenId(
                         diseaseScreeningActivity.getId(),
                         visitTimestamp,
-                        diseaseScreening.getBeneficiaryId().longValue());
+                        diseaseScreening.getBeneficiaryId());
 
         if (record == null) {
 
@@ -1201,35 +1388,45 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
             recordRepo.save(record);
         }
+
     }
 
 
     private void addIncentive(IncentiveActivity diseaseScreeningActivity, ScreeningMalaria diseaseScreening) {
-        IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(diseaseScreeningActivity.getId(), Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()), diseaseScreening.getBenId().longValue());
-        if (record == null) {
-            record = new IncentiveActivityRecord();
-            record.setActivityId(diseaseScreeningActivity.getId());
-            record.setCreatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-            record.setCreatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
-            record.setStartDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-            record.setEndDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-            record.setUpdatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-            record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
-            record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
-            record.setBenId(diseaseScreening.getBenId().longValue());
-            record.setAshaId(diseaseScreening.getUserId());
-            record.setAmount(Long.valueOf(diseaseScreeningActivity.getRate()));
-            record.setIsEligible(true);
-            recordRepo.save(record);
+        try {
+            IncentiveActivityRecord record = recordRepo
+                    .findRecordByActivityIdCreatedDateBenId(diseaseScreeningActivity.getId(), Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()), diseaseScreening.getBenId().longValue());
+            if (record == null) {
+                record = new IncentiveActivityRecord();
+                record.setActivityId(diseaseScreeningActivity.getId());
+                record.setCreatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+                record.setCreatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
+                record.setStartDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+                record.setEndDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+                record.setUpdatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+                record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
+                record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
+                record.setBenId(diseaseScreening.getBenId().longValue());
+                record.setAshaId(diseaseScreening.getUserId());
+                record.setAmount(Long.valueOf(diseaseScreeningActivity.getRate()));
+                record.setIsEligible(true);
+                recordRepo.save(record);
+                logger.info("Incentive for {}"+diseaseScreeningActivity.getDescription());
+
+            }
+        }catch (Exception e){
+            logger.info("Fail to generate Incentive for {}"+diseaseScreeningActivity.getDescription()+ "Exception"+e.getMessage());
 
         }
+
     }
 
 
     @Override
     public List<ChronicDiseaseVisitDTO> saveChronicDiseaseVisit(
             List<ChronicDiseaseVisitDTO> requestList, String token) throws IEMRException {
+        Integer userId =  jwtUtil.extractUserId(token);
+       String  userName= userRepo.getUserNamedByUserId(userId);
 
         List<ChronicDiseaseVisitDTO> responseList = new ArrayList<>();
 
@@ -1249,9 +1446,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             }
             entity.setDiagnosisCodes(dto.getDiagnosisCodes());
             entity.setFormDataJson(dto.getFormDataJson());
-            entity.setUserID(jwtUtil.extractUserId(token));
-            entity.setCreatedBy(userRepo.getUserNamedByUserId(jwtUtil.extractUserId(token)));
-            entity.setUpdatedBy(jwtUtil.extractUserId(token));
+            entity.setUserID(userId);
+            entity.setCreatedBy(userName);
+            entity.setUpdatedBy(userId);
 
 
             if (dto.getTreatmentStartDate() != null) {
@@ -1275,7 +1472,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     private void checkIncentive(ChronicDiseaseVisitEntity chronicDiseaseVisitEntity, Integer ashaId) {
         String userName = userRepo.getUserNamedByUserId(ashaId);
+        Integer stateId = userService.getUserDetail(ashaId).getStateId();
         IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.NCD.getDisplayName());
+        IncentiveActivity incentiveActivityCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.ACTIVITY.getDisplayName());
         logger.info("incentiveActivity:" + incentiveActivity.getId());
         if (incentiveActivity != null) {
             if (chronicDiseaseVisitEntity.getFollowUpNo() != null
@@ -1297,17 +1496,28 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                         .anyMatch(targetDiseases::contains);
 
                 if (matchFound && Integer.valueOf(6).equals(chronicDiseaseVisitEntity.getFollowUpNo())) {
-                    LocalDateTime localDateTime = chronicDiseaseVisitEntity.getCreatedDate();
+                    LocalDateTime localDateTime = chronicDiseaseVisitEntity.getFollowUpDate().atStartOfDay();
 
                     Timestamp followUpTimestamp = Timestamp.valueOf(localDateTime);
+                    if(stateId.equals(StateCode.AM.getStateCode())){
+                        addNCDFolloupIncentiveRecord(
+                                incentiveActivity,
+                                ashaId,
+                                chronicDiseaseVisitEntity.getBenId(),
+                                followUpTimestamp,
+                                userName
+                        );
+                    }
+                    if(stateId.equals(StateCode.CG.getStateCode())){
+                        addNCDFolloupIncentiveRecord(
+                                incentiveActivityCG,
+                                ashaId,
+                                chronicDiseaseVisitEntity.getBenId(),
+                                followUpTimestamp,
+                                userName
+                        );
+                    }
 
-                    addNCDFolloupIncentiveRecord(
-                            incentiveActivity,
-                            ashaId,
-                            chronicDiseaseVisitEntity.getBenId(),
-                            followUpTimestamp,
-                            userName
-                    );
                 }
             }
         }

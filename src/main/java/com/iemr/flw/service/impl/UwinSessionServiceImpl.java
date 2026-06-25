@@ -107,6 +107,7 @@ public class UwinSessionServiceImpl implements UwinSessionService {
         dto.setParticipants(session.getParticipants());
         dto.setAttachments(Collections.singletonList(session.getAttachmentsJson()));
 
+
         return dto;
     }
     @Override
@@ -137,8 +138,6 @@ public class UwinSessionServiceImpl implements UwinSessionService {
                 String imagesJson = objectMapper.writeValueAsString(base64Images);
                 session.setAttachmentsJson(imagesJson);
 
-                // Trigger incentive update if attachments exist
-                updateIncentivePendindDocService.updateIncentive(activityId);
             }
 
             repo.save(session); // ✅ Save updated session

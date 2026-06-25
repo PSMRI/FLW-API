@@ -20,7 +20,8 @@ public interface IncentiveLogicService {
 
     IncentiveActivityRecord incentiveForSecondChildGap(Long benId, Timestamp secondChildDob, Timestamp secondChildDob1, Integer userId);
 
-    IncentiveActivityRecord incentiveForEyeSurgeyRefer(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
+    IncentiveActivityRecord incentiveForEyeSurgeyReferGovtHospital(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
+    IncentiveActivityRecord incentiveForEyeSurgeyReferPrivateHospital(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
 
     IncentiveActivityRecord incentiveForMalariaFollowUp(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
 
@@ -29,4 +30,6 @@ public interface IncentiveLogicService {
     IncentiveActivityRecord incentiveForTbFollowUpIsDrTb(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
 
     IncentiveActivityRecord incentiveForGiveingIFA(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
+
+    IncentiveActivityRecord incentiveForTbSuspected(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
 }

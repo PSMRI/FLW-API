@@ -27,7 +27,7 @@ public interface ChildCareService {
 
     List<SAMResponseDTO> getSamVisitsByBeneficiary(GetBenRequestHandler dto);
 
-    String saveOrsDistributionDetails(List<OrsDistributionDTO> orsDistributionDTOS,Integer userId);
+    String saveOrsDistributionDetails(List<OrsDistributionDTO> orsDistributionDTOS);
 
     List<OrsDistributionResponseDTO> getOrdDistrubtion(GetBenRequestHandler request);
 
