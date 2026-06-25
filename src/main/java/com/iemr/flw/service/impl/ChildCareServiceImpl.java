@@ -371,7 +371,10 @@ public class ChildCareServiceImpl implements ChildCareService {
                     vaccinationDTO.setBeneficiaryId(benId.longValue());
 
                 }
-                checkAndAddIncentives(vaccinationDetails);
+                if(!vaccinationDetails.isEmpty()){
+                    checkAndAddIncentives(vaccinationDetails);
+
+                }
 
 
                 result.add(vaccinationDTO);
@@ -406,7 +409,10 @@ public class ChildCareServiceImpl implements ChildCareService {
                 vaccinationList.add(vaccination);
             });
             childVaccinationRepo.saveAll(vaccinationList);
-            checkAndAddIncentives(vaccinationList);
+            if(!vaccinationList.isEmpty()){
+                checkAndAddIncentives(vaccinationList);
+
+            }
             logger.info("Child Vaccination details saved");
             return "No of child vaccination details saved: " + vaccinationList.size();
         } catch (Exception e) {
@@ -954,8 +960,10 @@ public class ChildCareServiceImpl implements ChildCareService {
 
 
     private void checkAndAddIncentives(List<ChildVaccination> vaccinationList) {
+        String createdBy = vaccinationList.get(0).getCreatedBy();
 
-
+        Integer userId = userRepo.getUserIdByName(createdBy);
+        Integer stateId = userService.getUserDetail(userId).getStateId();
         vaccinationList.forEach(vaccination -> {
             Long benId= null;
             if(vaccination.getBeneficiaryRegId()!=null){
@@ -964,7 +972,6 @@ public class ChildCareServiceImpl implements ChildCareService {
                      benId = benIdObj.longValue();
                 }
 
-                Integer userId = userRepo.getUserIdByName(vaccination.getCreatedBy());
                 Integer immunizationServiceId = getImmunizationServiceIdForVaccine(vaccination.getVaccineId().shortValue());
                 if (immunizationServiceId < 6) {
                     IncentiveActivity immunizationActivityAM =
@@ -972,16 +979,20 @@ public class ChildCareServiceImpl implements ChildCareService {
                     IncentiveActivity immunizationActivityCH =
                             incentivesRepo.findIncentiveMasterByNameAndGroup("FULL_IMMUNIZATION_0_1", GroupName.ACTIVITY.getDisplayName());
 
+                     if(userService.getUserDetail(userId).getStateId().equals(StateCode.AM.getStateCode())){
+                         if (immunizationActivityAM != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
+                                 .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
+                             createIncentiveRecord(vaccination, benId, userId, immunizationActivityAM);
+                         }
+                     }
 
-                    if (immunizationActivityAM != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
-                            .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
-                        createIncentiveRecord(vaccination, benId, userId, immunizationActivityAM);
+                    if(userService.getUserDetail(userId).getStateId().equals(StateCode.CG.getStateCode())){
+                        if (immunizationActivityCH != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
+                                .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
+                            createIncentiveRecord(vaccination, benId, userId, immunizationActivityCH);
+                        }
                     }
 
-                    if (immunizationActivityCH != null && childVaccinationRepo.getFirstYearVaccineCountForBenId(vaccination.getBeneficiaryRegId())
-                            .equals(childVaccinationRepo.getFirstYearVaccineCount())) {
-                        createIncentiveRecord(vaccination, benId, userId, immunizationActivityCH);
-                    }
                 } else if (immunizationServiceId == 7) {
 
                     IncentiveActivity immunizationActivity2AM =
@@ -1012,31 +1023,35 @@ public class ChildCareServiceImpl implements ChildCareService {
                         logger.info(
                                 "Beneficiary {} completed all required second year vaccines.",
                                 vaccination.getBeneficiaryRegId());
+                        if(userService.getUserDetail(userId).getStateId().equals(StateCode.AM.getStateCode())) {
 
-                        if (immunizationActivity2AM != null) {
+                            if (immunizationActivity2AM != null) {
 
-                            logger.info(
-                                    "Creating IMMUNIZATION incentive for BeneficiaryRegId={}",
-                                    vaccination.getBeneficiaryRegId());
+                                logger.info(
+                                        "Creating IMMUNIZATION incentive for BeneficiaryRegId={}",
+                                        vaccination.getBeneficiaryRegId());
 
-                            createIncentiveRecord(
-                                    vaccination,
-                                    benId,
-                                    userId,
-                                    immunizationActivity2AM);
+                                createIncentiveRecord(
+                                        vaccination,
+                                        benId,
+                                        userId,
+                                        immunizationActivity2AM);
+                            }
                         }
+                        if(userService.getUserDetail(userId).getStateId().equals(StateCode.CG.getStateCode())) {
 
-                        if (immunizationActivity2CH != null) {
+                            if (immunizationActivity2CH != null) {
 
-                            logger.info(
-                                    "Creating ACTIVITY incentive for BeneficiaryRegId={}",
-                                    vaccination.getBeneficiaryRegId());
+                                logger.info(
+                                        "Creating ACTIVITY incentive for BeneficiaryRegId={}",
+                                        vaccination.getBeneficiaryRegId());
 
-                            createIncentiveRecord(
-                                    vaccination,
-                                    benId,
-                                    userId,
-                                    immunizationActivity2CH);
+                                createIncentiveRecord(
+                                        vaccination,
+                                        benId,
+                                        userId,
+                                        immunizationActivity2CH);
+                            }
                         }
 
                     } else {
@@ -1049,14 +1064,20 @@ public class ChildCareServiceImpl implements ChildCareService {
                 }
                 IncentiveActivity immunizationActivity5AM =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("DPT_IMMUNIZATION_5_YEARS", GroupName.IMMUNIZATION.getDisplayName());
-                if (immunizationActivity5AM != null && childVaccinationRepo.checkDptVaccinatedUser(vaccination.getBeneficiaryRegId()) == 1) {
-                    createIncentiveRecord(vaccination, benId, userId, immunizationActivity5AM);
+                if(userService.getUserDetail(userId).getStateId().equals(StateCode.AM.getStateCode())) {
+
+                    if (immunizationActivity5AM != null && childVaccinationRepo.checkDptVaccinatedUser(vaccination.getBeneficiaryRegId()) == 1) {
+                        createIncentiveRecord(vaccination, benId, userId, immunizationActivity5AM);
+                    }
                 }
 
                 IncentiveActivity immunizationActivity5CH =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("DPT_IMMUNIZATION_5_YEARS", GroupName.ACTIVITY.getDisplayName());
-                if (immunizationActivity5CH != null && childVaccinationRepo.checkDptVaccinatedUser(vaccination.getBeneficiaryRegId()) == 1) {
-                    createIncentiveRecord(vaccination, benId, userId, immunizationActivity5CH);
+                if(userService.getUserDetail(userId).getStateId().equals(StateCode.CG.getStateCode())) {
+
+                    if (immunizationActivity5CH != null && childVaccinationRepo.checkDptVaccinatedUser(vaccination.getBeneficiaryRegId()) == 1) {
+                        createIncentiveRecord(vaccination, benId, userId, immunizationActivity5CH);
+                    }
                 }
 
             }
