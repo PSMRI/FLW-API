@@ -34,6 +34,9 @@ import com.iemr.flw.dto.iemr.QuestionAnswerRequest;
 import com.iemr.flw.dto.iemr.QuestionResponseDTO;
 import com.iemr.flw.dto.iemr.SectionAnswerRequest;
 import com.iemr.flw.dto.iemr.SectionResponseDTO;
+import com.iemr.flw.domain.iemr.DynamicForm;
+import com.iemr.flw.masterEnum.FormType;
+import com.iemr.flw.repo.iemr.DynamicFormRepo;
 import com.iemr.flw.repo.iemr.FormResponseRepo;
 import com.iemr.flw.repo.iemr.FormSectionRepo;
 import com.iemr.flw.repo.iemr.FormVersionRepo;
@@ -77,6 +80,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     private static final String STATUS_COMPLETE = "COMPLETE";
     private static final String SECTION_STATUS_DONE = "DONE";
 
+    private final DynamicFormRepo dynamicFormRepo;
     private final FormResponseRepo formResponseRepo;
     private final SectionResponseRepo sectionResponseRepo;
     private final QuestionResponseRepo questionResponseRepo;
@@ -461,5 +465,14 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 .stream()
                 .map(r -> buildFormResponseDTO(r, List.of()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Long> getCompletedBeneficiaries(FormType formType) {
+        DynamicForm form = dynamicFormRepo.findByFormTypeAndIsActive(formType, true)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "No active form found for type: " + formType));
+        return formResponseRepo.findBeneficiaryIdsByFormIdAndStatus(form.getFormId(), STATUS_COMPLETE);
     }
 }

@@ -23,6 +23,7 @@ package com.iemr.flw.service;
 
 import com.iemr.flw.dto.iemr.FormResponseDTO;
 import com.iemr.flw.dto.iemr.FormResponseRequest;
+import com.iemr.flw.masterEnum.FormType;
 import com.iemr.flw.utils.exception.IEMRException;
 
 import java.util.List;
@@ -59,4 +60,7 @@ public interface DynamicFormResponseService {
      * Used by the follow-up notification scheduler.
      */
     List<FormResponseDTO> findPendingFollowUps(List<Long> formIds, int delayDays);
+
+    /** Returns beneficiary IDs with COMPLETE status for the given form type. */
+    List<Long> getCompletedBeneficiaries(FormType formType);
 }

@@ -73,6 +73,9 @@ public class SectionQuestion {
     @Column(name = "questionText", nullable = false)
     private String questionText;
 
+    @Column(name = "questionText_hindi", columnDefinition = "TEXT")
+    private String questionTextHindi;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "questionType", nullable = false, length = 20)
     private QuestionType questionType;
