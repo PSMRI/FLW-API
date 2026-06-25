@@ -68,7 +68,6 @@ public class CoupleServiceImpl implements CoupleService {
             List<IncentiveActivityRecord> recordList = new ArrayList<>();
             eligibleCoupleDTOs.forEach(it -> {
                 EligibleCoupleRegister existingECR =
-//                        eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenIdAndCreatedDate(it.getBenId(), it.getCreatedDate());
                         eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
                 if (kitPhoto1 != null) {
                     String kitPhoto1base64Image = null;
