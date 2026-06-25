@@ -798,9 +798,9 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
 
 
-                if (comprehensiveAbortionActivityCH != null && ancVisit.getIsAborted() != null
+                if (paiucdActivityCH != null && ancVisit.getIsAborted() != null
                         && ancVisit.getIsAborted()) {
-                    recordAncRelatedIncentive(comprehensiveAbortionActivityCH, ancVisit);
+                    recordAncRelatedIncentive(paiucdActivityCH, ancVisit);
                 }
 
 
