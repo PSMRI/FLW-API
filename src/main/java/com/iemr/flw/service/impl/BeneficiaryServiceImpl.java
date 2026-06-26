@@ -344,6 +344,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             benDetailsRMNCH_OBJ.setGpsTimestamp(benAddressOBJ.getGpsTimestamp());
                         if (benDetailsRMNCH_OBJ.getIsGpsUnavailable() == null && benAddressOBJ.getIsGpsUnavailable() != null)
                             benDetailsRMNCH_OBJ.setIsGpsUnavailable(benAddressOBJ.getIsGpsUnavailable());
+                        if (benDetailsRMNCH_OBJ.getGpsUnavailableReason() == null && benAddressOBJ.getGpsUnavailableReason() != null)
+                            benDetailsRMNCH_OBJ.setGpsUnavailableReason(benAddressOBJ.getGpsUnavailableReason());
 
                         // Map GPS double fields to the exposed latitude/longitude BigDecimal fields for response
                         if (benDetailsRMNCH_OBJ.getGpsLatitude() != null)
