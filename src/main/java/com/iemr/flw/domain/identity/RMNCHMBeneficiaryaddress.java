@@ -262,4 +262,7 @@ public class RMNCHMBeneficiaryaddress implements Serializable {
 
 	@Column(name = "isGpsUnavailable", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
 	private Boolean isGpsUnavailable = false;
+
+	@Column(name = "gpsUnavailableReason")
+	private String gpsUnavailableReason;
 }
