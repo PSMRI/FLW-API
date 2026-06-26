@@ -142,6 +142,8 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<ANCVisit> ancVisits = ancVisitRepo.getANCForPW(user, dto.getFromDate(), dto.getToDate());
+            checkAndAddIncentives(ancVisits, dto.getAshaId());
+
             return ancVisits.stream()
                     .map(anc -> mapper.convertValue(anc, ANCVisitDTO.class))
                     .collect(Collectors.toList());
@@ -373,6 +375,11 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<PNCVisit> pncVisits = pncVisitRepo.getPNCForPW(user);
+            pncVisits.forEach(pncVisit -> {
+                checkAndAddAntaraIncentive(pncVisit);
+
+            });
+
             return pncVisits.stream()
                     .map(pnc -> mapper.convertValue(pnc, PNCVisitDTO.class))
                     .collect(Collectors.toList());
@@ -424,7 +431,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     pncCare.setLastModDate(it.getUpdatedDate());
                     pncCare.setProcessed("N");
                     pncCareList.add(pncCare);
-                    checkAndAddAntaraIncentive(pncList, pncVisit);
+                    checkAndAddAntaraIncentive(pncVisit);
                 }
                 pncList.add(pncVisit);
             });
@@ -582,7 +589,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     }
 
 
-    private void checkAndAddAntaraIncentive(List<PNCVisit> recordList, PNCVisit ect) {
+    private void checkAndAddAntaraIncentive(PNCVisit ect) {
         Integer userId = userRepo.getUserIdByName(ect.getCreatedBy());
         Integer stateId = userRepo.getUserRole(userId).get(0).getStateId();
         logger.info("ContraceptionMethod:" + ect.getContraceptionMethod());
@@ -636,6 +643,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
             }
 
+
         }
         // logic for cg
         if(stateId.equals(StateCode.CG.getStateCode())){
@@ -665,7 +673,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
             if (ect.getMotherDangerSign() != null
                     && !ect.getMotherDangerSign().isEmpty()
-                    && ect.getPncPeriod() == 7) {
+                    && ect.getPncPeriod() == 42) {
 
                 IncentiveActivity highRiskPostpartumCareActivityCH =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
