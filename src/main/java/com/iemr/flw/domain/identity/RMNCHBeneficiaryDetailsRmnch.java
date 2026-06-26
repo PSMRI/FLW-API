@@ -121,6 +121,10 @@ public class RMNCHBeneficiaryDetailsRmnch {
 	private Boolean isGpsUnavailable = false;
 
 	@Expose
+	@Column(name = "gpsUnavailableReason")
+	private String gpsUnavailableReason;
+
+	@Expose
 	@Column(name = "menstrualBFDId")
 	private Integer menstrualBFDId;
 
