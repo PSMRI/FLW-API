@@ -106,6 +106,7 @@ public class FormResponse {
     private Integer parkingPlaceID;
 
     @Column(name = "processed")
+    @Builder.Default
     private String processed = "N";
 
     @Column(name = "vanSerialNo")
