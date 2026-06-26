@@ -98,6 +98,6 @@ public class OptionCondition {
     @Column(name = "Syncedby", length = 50)
     private String syncedBy;
 
-    @Column(name = "SyncFailureReason")
+    @Column(name = "SyncFailureReason", length = 255)
     private String syncFailureReason;
 }
