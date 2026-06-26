@@ -892,7 +892,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                             IncentiveActivity activity1 =
                                     incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                            "MARRIAGE_1st_CHILD_GAP",
+                                            "FP_DELAY_2Y",
                                             GroupName.FAMILY_PLANNING.getDisplayName());
 
                             logger.info("Incentive Activity: {}", activity1);
@@ -908,7 +908,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                             IncentiveActivity activityCH =
                                     incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                            "MARRIAGE_1st_CHILD_GAP",
+                                            "FP_DELAY_2Y",
                                             GroupName.ACTIVITY.getDisplayName());
 
                             logger.info("Incentive Activity: {}", activityCH);

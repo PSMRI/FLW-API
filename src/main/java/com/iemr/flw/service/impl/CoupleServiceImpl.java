@@ -146,14 +146,14 @@ public class CoupleServiceImpl implements CoupleService {
                 EligibleCoupleRegister existingECR =
                         eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
 
-                if (existingECR != null && null != existingECR.getNumLiveChildren()) {
+                if (existingECR !=null) {
                     if (it.getFirstAndSecondChildGap() >= 2) {
                         IncentiveActivity activity1 =
-                                incentivesRepo.findIncentiveMasterByNameAndGroup("MARRIAGE_1st_CHILD_GAP", GroupName.FAMILY_PLANNING.getDisplayName())
+                                incentivesRepo.findIncentiveMasterByNameAndGroup("FP_DELAY_2Y", GroupName.FAMILY_PLANNING.getDisplayName())
                         ;
 
                         IncentiveActivity activityCH =
-                                incentivesRepo.findIncentiveMasterByNameAndGroup("MARRIAGE_1st_CHILD_GAP", GroupName.ACTIVITY.getDisplayName());
+                                incentivesRepo.findIncentiveMasterByNameAndGroup("FP_DELAY_2Y", GroupName.ACTIVITY.getDisplayName());
                         createIncentiveRecord(it, activity1);
                         createIncentiveRecord(it, activityCH);
                     } else if (it.getMarriageFirstChildGap() >= 3) {
