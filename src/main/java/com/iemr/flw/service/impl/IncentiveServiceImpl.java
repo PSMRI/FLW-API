@@ -920,7 +920,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                 }
 
                 // First -> Second Child Gap
-                if ((eligibleCoupleRegister.getNumChildren() >= 2 || eligibleCoupleRegister.getNumLiveChildren()>=2)
+                if ((eligibleCoupleRegister.getNumChildren() >= 1 || eligibleCoupleRegister.getNumLiveChildren()>=1)
                         && eligibleCoupleRegister.getFirstAndSecondChildGap() >= 3) {
 
                     logger.info("1st -> 2nd Child Gap condition matched.");
