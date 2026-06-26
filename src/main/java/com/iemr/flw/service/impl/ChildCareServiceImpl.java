@@ -273,8 +273,6 @@ public class ChildCareServiceImpl implements ChildCareService {
                 result.add(responseDTO);
 
             }
-            checkAndAddHbncIncentives(hbncVisits, dto.getAshaId());
-
 
         } catch (Exception e) {
             logger.error("Error in getHBNCDetails: ", e);
