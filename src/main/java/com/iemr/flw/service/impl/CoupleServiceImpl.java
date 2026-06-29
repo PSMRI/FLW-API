@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -62,78 +63,95 @@ public class CoupleServiceImpl implements CoupleService {
 
 
     @Override
-    public String registerEligibleCouple(List<EligibleCoupleDTO> eligibleCoupleDTOs, MultipartFile kitPhoto1, MultipartFile kitPhoto2) {
+    @Transactional
+    public String registerEligibleCouple(List<EligibleCoupleDTO> eligibleCoupleDTOs,
+                                         MultipartFile kitPhoto1,
+                                         MultipartFile kitPhoto2) {
         try {
+
             List<EligibleCoupleRegister> ecrList = new ArrayList<>();
-            List<IncentiveActivityRecord> recordList = new ArrayList<>();
-            eligibleCoupleDTOs.forEach(it -> {
+
+            for (EligibleCoupleDTO it : eligibleCoupleDTOs) {
+
                 EligibleCoupleRegister existingECR =
                         eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
-                if (kitPhoto1 != null) {
-                    String kitPhoto1base64Image = null;
-                    try {
-                        kitPhoto1base64Image = Base64.getEncoder().encodeToString(kitPhoto1.getBytes());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    existingECR.setKitPhoto1(String.valueOf(kitPhoto1base64Image));
 
-                }
+                boolean isNew = false;
 
-
-                if (kitPhoto2 != null) {
-                    String kitPhoto2base64Image = null;
-                    try {
-                        kitPhoto2base64Image = Base64.getEncoder().encodeToString(kitPhoto2.getBytes());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    existingECR.setKitPhoto2(String.valueOf(kitPhoto2base64Image));
-
-                }
-
-                if (existingECR != null && null != existingECR.getNumLiveChildren()) {
-                    if (existingECR.getNumLiveChildren() == 0 && it.getNumLiveChildren() >= 1 && it.getMarriageFirstChildGap() != null && it.getMarriageFirstChildGap() >= 2) {
-                        IncentiveActivity activity1 =
-                                incentivesRepo.findIncentiveMasterByNameAndGroup("FP_DELAY_2Y", GroupName.FAMILY_PLANNING.getDisplayName());
-                        createIncentiveRecord(it, activity1);
-                    } else if (existingECR.getNumLiveChildren() == 1 && it.getNumLiveChildren() >= 2 && it.getFirstAndSecondChildGap() != null && it.getFirstAndSecondChildGap() == 3) {
-                        IncentiveActivity activity2 =
-                                incentivesRepo.findIncentiveMasterByNameAndGroup("1st_2nd_CHILD_GAP", GroupName.FAMILY_PLANNING.getDisplayName());
-                        createIncentiveRecord(it, activity2);
-                    }
-                    Long id = existingECR.getId();
-
-                    modelMapper.map(it, existingECR);
-                    existingECR.setId(id);
-                } else {
+                if (existingECR == null) {
                     existingECR = new EligibleCoupleRegister();
-                    modelMapper.map(it, existingECR);
-                    existingECR.setId(null);
+                    isNew = true;
                 }
-                if (existingECR.getIsKitHandedOver() && (!existingECR.getKitPhoto1().isEmpty() || !existingECR.getKitPhoto2().isEmpty())) {
-                    IncentiveActivity handoverKitActivityAM =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.FAMILY_PLANNING.getDisplayName());
-                    if (handoverKitActivityAM != null) {
-                        createIncentiveRecord(it, handoverKitActivityAM);
 
+                Long id = existingECR.getId();
+
+                modelMapper.map(it, existingECR);
+
+                existingECR.setId(id);
+
+                // Photo 1
+                if (kitPhoto1 != null && !kitPhoto1.isEmpty()) {
+                    existingECR.setKitPhoto1(
+                            Base64.getEncoder().encodeToString(kitPhoto1.getBytes()));
+                }
+
+                // Photo 2
+                if (kitPhoto2 != null && !kitPhoto2.isEmpty()) {
+                    existingECR.setKitPhoto2(
+                            Base64.getEncoder().encodeToString(kitPhoto2.getBytes()));
+                }
+
+                // Incentive only for new registration
+                if (isNew) {
+
+                    if (it.getMarriageFirstChildGap() != null
+                            && it.getMarriageFirstChildGap() >= 2) {
+
+                        IncentiveActivity activity =
+                                incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                        "FP_DELAY_2Y",
+                                        GroupName.FAMILY_PLANNING.getDisplayName());
+
+                        createIncentiveRecord(existingECR, activity);
                     }
 
+                    if (it.getFirstAndSecondChildGap() != null
+                            && it.getFirstAndSecondChildGap() >= 3) {
 
-                    IncentiveActivity handoverKitActivityCH =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.ACTIVITY.getDisplayName());
-                    if (handoverKitActivityCH != null) {
-                        createIncentiveRecord(it, handoverKitActivityCH);
+                        IncentiveActivity activity =
+                                incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                        "1st_2nd_CHILD_GAP",
+                                        GroupName.FAMILY_PLANNING.getDisplayName());
 
+                        createIncentiveRecord(existingECR, activity);
                     }
                 }
+
+                // Kit Incentive
+                if (Boolean.TRUE.equals(existingECR.getIsKitHandedOver())
+                        && ((existingECR.getKitPhoto1() != null && !existingECR.getKitPhoto1().isEmpty())
+                        || (existingECR.getKitPhoto2() != null && !existingECR.getKitPhoto2().isEmpty()))) {
+
+                    IncentiveActivity activity =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                    "FP_NP_KIT",
+                                    GroupName.FAMILY_PLANNING.getDisplayName());
+
+                    if (activity != null) {
+                        createIncentiveRecord(existingECR, activity);
+                    }
+                }
+
                 ecrList.add(existingECR);
-            });
+            }
+
             eligibleCoupleRegisterRepo.saveAll(ecrList);
-            recordRepo.saveAll(recordList);
-            return "no of ecr details saved: " + ecrList.size();
+
+            return "No of ECR details saved: " + ecrList.size();
+
         } catch (Exception e) {
-            return "error while saving ecr details: " + e.getMessage();
+            logger.error("Error while saving Eligible Couple Registration", e);
+            return "Error while saving ECR details: " + e.getMessage();
         }
     }
 
@@ -141,60 +159,30 @@ public class CoupleServiceImpl implements CoupleService {
     public String registerEligibleCouple(List<EligibleCoupleDTO> eligibleCoupleDTOs) {
         try {
             List<EligibleCoupleRegister> ecrList = new ArrayList<>();
-            List<IncentiveActivityRecord> recordList = new ArrayList<>();
             eligibleCoupleDTOs.forEach(it -> {
                 EligibleCoupleRegister existingECR =
                         eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
-
-                if (existingECR !=null) {
-                    if (it.getFirstAndSecondChildGap()!=null && it.getFirstAndSecondChildGap() >= 2) {
-                        IncentiveActivity activity1 =
-                                incentivesRepo.findIncentiveMasterByNameAndGroup("FP_DELAY_2Y", GroupName.FAMILY_PLANNING.getDisplayName());
-
-                        IncentiveActivity activityCH =
-                                incentivesRepo.findIncentiveMasterByNameAndGroup("FP_DELAY_2Y", GroupName.ACTIVITY.getDisplayName());
-                        createIncentiveRecord(it, activity1);
-                        createIncentiveRecord(it, activityCH);
-                    } else if (it.getFirstAndSecondChildGap()!=null && it.getMarriageFirstChildGap() >= 3) {
-                        IncentiveActivity activity2 =
-                                incentivesRepo.findIncentiveMasterByNameAndGroup("1st_2nd_CHILD_GAP", GroupName.FAMILY_PLANNING.getDisplayName());
-
-                        IncentiveActivity activityCH =
-                                incentivesRepo.findIncentiveMasterByNameAndGroup("1st_2nd_CHILD_GAP", GroupName.ACTIVITY.getDisplayName());
-                        createIncentiveRecord(it, activity2);
-                        createIncentiveRecord(it, activityCH);
-                    }
+                if(existingECR!=null){
                     Long id = existingECR.getId();
                     modelMapper.map(it, existingECR);
                     existingECR.setId(id);
-                } else {
+                }else {
                     existingECR = new EligibleCoupleRegister();
                     modelMapper.map(it, existingECR);
                     existingECR.setId(null);
                 }
 
-
-                if (existingECR.getIsKitHandedOver()!=null && existingECR.getIsKitHandedOver()) {
-                    IncentiveActivity handoverKitActivityAM =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.FAMILY_PLANNING.getDisplayName());
-                    if (handoverKitActivityAM != null) {
-                        createIncentiveRecord(it, handoverKitActivityAM);
-
-                    }
-
-
-                    IncentiveActivity handoverKitActivityCH =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.ACTIVITY.getDisplayName());
-                    if (handoverKitActivityCH != null) {
-                        createIncentiveRecord(it, handoverKitActivityCH);
-
-                    }
-                }
-
                 ecrList.add(existingECR);
+
             });
+
             eligibleCoupleRegisterRepo.saveAll(ecrList);
-            recordRepo.saveAll(recordList);
+            if(!ecrList.isEmpty()){
+                Integer userId = userRepo.getUserIdByName(ecrList.get(0).getCreatedBy());
+                Integer stateId = userService.getUserDetail(userId).getStateId();
+                checkIncentiveForChildGap(stateId,ecrList.get(0).getCreatedBy(),ecrList);
+
+            }
             return "no of ecr details saved: " + ecrList.size();
         } catch (Exception e) {
             return "error while saving ecr details: " + e.getMessage();
@@ -202,7 +190,136 @@ public class CoupleServiceImpl implements CoupleService {
     }
 
 
-    private void createIncentiveRecord(EligibleCoupleDTO eligibleCoupleDTO, IncentiveActivity activity) {
+    private void checkIncentiveForChildGap(Integer stateId, String userName,List<EligibleCoupleRegister> eligibleCoupleRegisters) {
+
+        logger.info("Checking Child Gap Incentive for user: {}, stateId: {}", userName, stateId);
+
+
+        logger.info("Eligible Couple Records Found: {}", eligibleCoupleRegisters.size());
+
+        if (!eligibleCoupleRegisters.isEmpty()) {
+
+            eligibleCoupleRegisters.forEach(eligibleCoupleRegister -> {
+
+                logger.info(
+                        "Processing EligibleCoupleRegister -> BenId: {}, NumChildren: {}, MarriageFirstChildGap: {}, FirstAndSecondChildGap: {}",
+                        eligibleCoupleRegister.getBenId(),
+                        eligibleCoupleRegister.getNumChildren(),
+                        eligibleCoupleRegister.getMarriageFirstChildGap(),
+                        eligibleCoupleRegister.getFirstAndSecondChildGap());
+
+                // Marriage -> First Child Gap
+                if(eligibleCoupleRegister.getFirstAndSecondChildGap()!=null){
+                    if (eligibleCoupleRegister.getFirstAndSecondChildGap()>=2 ) {
+
+                        logger.info("Marriage -> First Child Gap condition matched.");
+
+                        if (stateId.equals(StateCode.AM.getStateCode())) {
+
+                            logger.info("Fetching incentive for Assam.");
+
+                            IncentiveActivity activity1 =
+                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                            "FP_DELAY_2Y",
+                                            GroupName.FAMILY_PLANNING.getDisplayName());
+
+                            logger.info("Incentive Activity: {}", activity1);
+
+                            createIncentiveRecord(eligibleCoupleRegister, activity1);
+
+                            logger.info("Marriage -> First Child Gap incentive created.");
+                        }
+
+                        if (stateId.equals(StateCode.CG.getStateCode())) {
+
+                            logger.info("Fetching incentive for Chhattisgarh.");
+
+                            IncentiveActivity activityCH =
+                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                            "FP_DELAY_2Y",
+                                            GroupName.ACTIVITY.getDisplayName());
+
+                            logger.info("Incentive Activity: {}", activityCH);
+
+                            createIncentiveRecord(eligibleCoupleRegister, activityCH);
+
+                            logger.info("Marriage -> First Child Gap incentive created.");
+                        }
+                    }
+                }
+
+
+                // First -> Second Child Gap
+                if(eligibleCoupleRegister.getMarriageFirstChildGap()!=null){
+                    if (eligibleCoupleRegister.getMarriageFirstChildGap()>=3) {
+
+                        logger.info("1st -> 2nd Child Gap condition matched.");
+
+                        if (stateId.equals(StateCode.AM.getStateCode())) {
+
+                            logger.info("Fetching incentive for Assam.");
+
+                            IncentiveActivity activity2 =
+                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                            "1st_2nd_CHILD_GAP",
+                                            GroupName.FAMILY_PLANNING.getDisplayName());
+
+                            logger.info("Incentive Activity: {}", activity2);
+
+                            createIncentiveRecord(eligibleCoupleRegister, activity2);
+
+                            logger.info("1st -> 2nd Child Gap incentive created.");
+                        }
+
+                        if (stateId.equals(StateCode.CG.getStateCode())) {
+
+                            logger.info("Fetching incentive for Chhattisgarh.");
+
+                            IncentiveActivity activityCH =
+                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                            "1st_2nd_CHILD_GAP",
+                                            GroupName.ACTIVITY.getDisplayName());
+
+                            logger.info("Incentive Activity: {}", activityCH);
+
+                            createIncentiveRecord(eligibleCoupleRegister, activityCH);
+
+                            logger.info("1st -> 2nd Child Gap incentive created.");
+                        }
+                    }
+                }
+
+                if (eligibleCoupleRegister.getIsKitHandedOver()!=null && eligibleCoupleRegister.getIsKitHandedOver()) {
+                    IncentiveActivity handoverKitActivityAM =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.FAMILY_PLANNING.getDisplayName());
+                    if (handoverKitActivityAM != null) {
+                        createIncentiveRecord(eligibleCoupleRegister, handoverKitActivityAM);
+
+                    }
+
+
+                    IncentiveActivity handoverKitActivityCH =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.ACTIVITY.getDisplayName());
+                    if (handoverKitActivityCH != null) {
+                        createIncentiveRecord(eligibleCoupleRegister, handoverKitActivityCH);
+
+                    }
+                }
+
+
+
+
+            });
+
+        } else {
+            logger.info("No Eligible Couple Register records found for user: {}", userName);
+        }
+
+        logger.info("Completed Child Gap Incentive check for user: {}", userName);
+    }
+
+
+    private void createIncentiveRecord(EligibleCoupleRegister eligibleCoupleDTO, IncentiveActivity activity) {
         if (activity != null) {
             IncentiveActivityRecord record = recordRepo
                     .findRecordByActivityIdCreatedDateBenId(activity.getId(), eligibleCoupleDTO.getCreatedDate(), eligibleCoupleDTO.getBenId());
