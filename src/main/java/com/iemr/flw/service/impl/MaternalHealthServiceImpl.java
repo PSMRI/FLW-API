@@ -142,6 +142,8 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<ANCVisit> ancVisits = ancVisitRepo.getANCForPW(user, dto.getFromDate(), dto.getToDate());
+            checkAndAddIncentives(ancVisits, dto.getAshaId());
+
             return ancVisits.stream()
                     .map(anc -> mapper.convertValue(anc, ANCVisitDTO.class))
                     .collect(Collectors.toList());
@@ -373,6 +375,11 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<PNCVisit> pncVisits = pncVisitRepo.getPNCForPW(user);
+            pncVisits.forEach(pncVisit -> {
+                checkAndAddAntaraIncentive(pncVisit);
+
+            });
+
             return pncVisits.stream()
                     .map(pnc -> mapper.convertValue(pnc, PNCVisitDTO.class))
                     .collect(Collectors.toList());
@@ -424,7 +431,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     pncCare.setLastModDate(it.getUpdatedDate());
                     pncCare.setProcessed("N");
                     pncCareList.add(pncCare);
-                    checkAndAddAntaraIncentive(pncList, pncVisit);
+                    checkAndAddAntaraIncentive(pncVisit);
                 }
                 pncList.add(pncVisit);
             });
@@ -582,7 +589,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     }
 
 
-    private void checkAndAddAntaraIncentive(List<PNCVisit> recordList, PNCVisit ect) {
+    private void checkAndAddAntaraIncentive(PNCVisit ect) {
         Integer userId = userRepo.getUserIdByName(ect.getCreatedBy());
         Integer stateId = userRepo.getUserRole(userId).get(0).getStateId();
         logger.info("ContraceptionMethod:" + ect.getContraceptionMethod());
@@ -636,6 +643,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
             }
 
+
         }
         // logic for cg
         if(stateId.equals(StateCode.CG.getStateCode())){
@@ -662,17 +670,28 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             if (maleSterilizationActivityCH != null) {
                 addIncenticeRecord(ect, userId, maleSterilizationActivityCH);
             }
-
-            if (ect.getMotherDangerSign() != null
+            if(ect.getMotherDangerSign() != null
                     && !ect.getMotherDangerSign().isEmpty()
-                    && ect.getPncPeriod() == 7) {
-
+                    && ect.getPncPeriod() == 42){
                 IncentiveActivity highRiskPostpartumCareActivityCH =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
                 if (highRiskPostpartumCareActivityCH != null) {
                     addIncenticeRecord(ect, userId, highRiskPostpartumCareActivityCH);
 
                 }
+
+            }
+            if (ect.getPncPeriod() == 42) {
+
+
+                IncentiveActivity highRiskPostpartumHealthCareActivityCH =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_HEALTH_CHECK", GroupName.ACTIVITY.getDisplayName());
+
+                if (highRiskPostpartumHealthCareActivityCH != null) {
+                    addIncenticeRecord(ect, userId, highRiskPostpartumHealthCareActivityCH);
+
+                }
+
 
             }
             if (ect.getPncPeriod() == 1 || ect.getPncPeriod() == 3 || ect.getPncPeriod() == 7) {
@@ -784,8 +803,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             ancList.forEach(ancVisit -> {
 
 
-                if (paiucdActivityCH != null && ancVisit.getIsPaiucdId() != null
-                        && ancVisit.getIsPaiucdId().toString().equals("1")) {
+                if ( ancVisit.getIsAborted()) {
                     recordAncRelatedIncentive(paiucdActivityCH, ancVisit);
                 }
 
@@ -794,13 +812,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                 if (ancFullActivityCH != null && ancVisit.getAncVisit() != null
                         && ancVisit.getAncVisit() == 4) {
                     recordAncRelatedIncentive(ancFullActivityCH, ancVisit);
-                }
-
-
-
-                if (comprehensiveAbortionActivityCH != null && ancVisit.getIsAborted() != null
-                        && ancVisit.getIsAborted()) {
-                    recordAncRelatedIncentive(comprehensiveAbortionActivityCH, ancVisit);
                 }
 
 
