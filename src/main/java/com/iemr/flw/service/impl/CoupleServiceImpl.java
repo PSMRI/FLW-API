@@ -138,15 +138,16 @@ public class CoupleServiceImpl implements CoupleService {
                                 createIncentiveRecord(existingECR, activity);
 
                             }
-                        }
-                        if(stateId.equals(StateCode.CG.getStateCode())){
-                            IncentiveActivity activity =
-                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                            "1st_2nd_CHILD_GAP",
-                                            GroupName.ACTIVITY.getDisplayName());
+                            if(stateId.equals(StateCode.CG.getStateCode())){
+                                IncentiveActivity activity =
+                                        incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                                "1st_2nd_CHILD_GAP",
+                                                GroupName.ACTIVITY.getDisplayName());
 
-                            createIncentiveRecord(existingECR, activity);
+                                createIncentiveRecord(existingECR, activity);
+                            }
                         }
+
                     }
 
                     // Kit Incentive
