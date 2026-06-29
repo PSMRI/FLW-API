@@ -671,16 +671,23 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                 addIncenticeRecord(ect, userId, maleSterilizationActivityCH);
             }
 
-            if (ect.getMotherDangerSign() != null
-                    && !ect.getMotherDangerSign().isEmpty()
-                    && ect.getPncPeriod() == 42) {
+            if (ect.getPncPeriod() == 42) {
 
                 IncentiveActivity highRiskPostpartumCareActivityCH =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
+
+                IncentiveActivity highRiskPostpartumHealthCareActivityCH =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_HEALTH_CHECK", GroupName.ACTIVITY.getDisplayName());
                 if (highRiskPostpartumCareActivityCH != null) {
                     addIncenticeRecord(ect, userId, highRiskPostpartumCareActivityCH);
 
                 }
+
+                if (highRiskPostpartumHealthCareActivityCH != null) {
+                    addIncenticeRecord(ect, userId, highRiskPostpartumHealthCareActivityCH);
+
+                }
+
 
             }
             if (ect.getPncPeriod() == 1 || ect.getPncPeriod() == 3 || ect.getPncPeriod() == 7) {
