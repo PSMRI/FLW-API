@@ -70,82 +70,120 @@ public class CoupleServiceImpl implements CoupleService {
         try {
 
             List<EligibleCoupleRegister> ecrList = new ArrayList<>();
+            if(!eligibleCoupleDTOs.isEmpty()){
+                for (EligibleCoupleDTO it : eligibleCoupleDTOs) {
+                 Integer userId = userRepo.getUserIdByName(it.getCreatedBy());
+                 Integer stateId = userService.getUserDetail(userId).getStateId();
+                    EligibleCoupleRegister existingECR =
+                            eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
 
-            for (EligibleCoupleDTO it : eligibleCoupleDTOs) {
+                    boolean isNew = false;
 
-                EligibleCoupleRegister existingECR =
-                        eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
+                    if (existingECR == null) {
+                        existingECR = new EligibleCoupleRegister();
+                        isNew = true;
+                    }
 
-                boolean isNew = false;
+                    Long id = existingECR.getId();
 
-                if (existingECR == null) {
-                    existingECR = new EligibleCoupleRegister();
-                    isNew = true;
-                }
+                    modelMapper.map(it, existingECR);
 
-                Long id = existingECR.getId();
+                    existingECR.setId(id);
 
-                modelMapper.map(it, existingECR);
+                    // Photo 1
+                    if (kitPhoto1 != null && !kitPhoto1.isEmpty()) {
+                        existingECR.setKitPhoto1(
+                                Base64.getEncoder().encodeToString(kitPhoto1.getBytes()));
+                    }
 
-                existingECR.setId(id);
+                    // Photo 2
+                    if (kitPhoto2 != null && !kitPhoto2.isEmpty()) {
+                        existingECR.setKitPhoto2(
+                                Base64.getEncoder().encodeToString(kitPhoto2.getBytes()));
+                    }
 
-                // Photo 1
-                if (kitPhoto1 != null && !kitPhoto1.isEmpty()) {
-                    existingECR.setKitPhoto1(
-                            Base64.getEncoder().encodeToString(kitPhoto1.getBytes()));
-                }
+                    // Incentive only for new registration
+                    if (isNew) {
 
-                // Photo 2
-                if (kitPhoto2 != null && !kitPhoto2.isEmpty()) {
-                    existingECR.setKitPhoto2(
-                            Base64.getEncoder().encodeToString(kitPhoto2.getBytes()));
-                }
+                        if (it.getMarriageFirstChildGap() != null
+                                && it.getMarriageFirstChildGap() >= 2) {
 
-                // Incentive only for new registration
-                if (isNew) {
+                            IncentiveActivity activity = null;
 
-                    if (it.getMarriageFirstChildGap() != null
-                            && it.getMarriageFirstChildGap() >= 2) {
-
-                        IncentiveActivity activity =
-                                incentivesRepo.findIncentiveMasterByNameAndGroup(
+                            if (stateId.equals(StateCode.AM.getStateCode())) {
+                                activity = incentivesRepo.findIncentiveMasterByNameAndGroup(
                                         "FP_DELAY_2Y",
                                         GroupName.FAMILY_PLANNING.getDisplayName());
 
-                        createIncentiveRecord(existingECR, activity);
+                            } else if (stateId.equals(StateCode.CG.getStateCode())) {
+                                activity = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                        "FP_DELAY_2Y",
+                                        GroupName.ACTIVITY.getDisplayName());
+                            }
+
+                            if (activity != null) {
+                                createIncentiveRecord(existingECR, activity);
+                            }
+                        }
+
+                        if (it.getFirstAndSecondChildGap() != null
+                                && it.getFirstAndSecondChildGap() >= 3) {
+
+                            if(stateId.equals(StateCode.AM.getStateCode())){
+                                IncentiveActivity activity =
+                                        incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                                "1st_2nd_CHILD_GAP",
+                                                GroupName.FAMILY_PLANNING.getDisplayName());
+
+                                createIncentiveRecord(existingECR, activity);
+
+                            }
+                        }
+                        if(stateId.equals(StateCode.CG.getStateCode())){
+                            IncentiveActivity activity =
+                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                            "1st_2nd_CHILD_GAP",
+                                            GroupName.ACTIVITY.getDisplayName());
+
+                            createIncentiveRecord(existingECR, activity);
+                        }
                     }
 
-                    if (it.getFirstAndSecondChildGap() != null
-                            && it.getFirstAndSecondChildGap() >= 3) {
+                    // Kit Incentive
+                    if (Boolean.TRUE.equals(existingECR.getIsKitHandedOver())
+                            && ((existingECR.getKitPhoto1() != null && !existingECR.getKitPhoto1().isEmpty())
+                            || (existingECR.getKitPhoto2() != null && !existingECR.getKitPhoto2().isEmpty()))) {
+                         if(stateId.equals(StateCode.AM.getStateCode())){
+                             IncentiveActivity activity =
+                                     incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                             "FP_NP_KIT",
+                                             GroupName.FAMILY_PLANNING.getDisplayName());
 
-                        IncentiveActivity activity =
-                                incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                        "1st_2nd_CHILD_GAP",
-                                        GroupName.FAMILY_PLANNING.getDisplayName());
+                             if (activity != null) {
+                                 createIncentiveRecord(existingECR, activity);
+                             }
+                         }
+                        if(stateId.equals(StateCode.CG.getStateCode())){
+                            IncentiveActivity activity =
+                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                            "FP_NP_KIT",
+                                            GroupName.ACTIVITY.getDisplayName());
 
-                        createIncentiveRecord(existingECR, activity);
+                            if (activity != null) {
+                                createIncentiveRecord(existingECR, activity);
+                            }
+                        }
+
+
                     }
+
+                    ecrList.add(existingECR);
                 }
 
-                // Kit Incentive
-                if (Boolean.TRUE.equals(existingECR.getIsKitHandedOver())
-                        && ((existingECR.getKitPhoto1() != null && !existingECR.getKitPhoto1().isEmpty())
-                        || (existingECR.getKitPhoto2() != null && !existingECR.getKitPhoto2().isEmpty()))) {
+                eligibleCoupleRegisterRepo.saveAll(ecrList);
 
-                    IncentiveActivity activity =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                    "FP_NP_KIT",
-                                    GroupName.FAMILY_PLANNING.getDisplayName());
-
-                    if (activity != null) {
-                        createIncentiveRecord(existingECR, activity);
-                    }
-                }
-
-                ecrList.add(existingECR);
             }
 
-            eligibleCoupleRegisterRepo.saveAll(ecrList);
 
             return "No of ECR details saved: " + ecrList.size();
 
