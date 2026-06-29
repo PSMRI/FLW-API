@@ -199,8 +199,6 @@ public class IncentiveServiceImpl implements IncentiveService {
                 checkMonthlyAshaIncentiveForCg(request.getAshaId());
 
             }
-            checkIncentiveForChildGap(stateCode, userName);
-
         } catch (Exception e) {
             logger.error("Error in checkMonthlyAshaIncentive: ", e);
         }

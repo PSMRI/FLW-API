@@ -147,16 +147,15 @@ public class CoupleServiceImpl implements CoupleService {
                         eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
 
                 if (existingECR !=null) {
-                    if (it.getFirstAndSecondChildGap() >= 2) {
+                    if (it.getFirstAndSecondChildGap()!=null && it.getFirstAndSecondChildGap() >= 2) {
                         IncentiveActivity activity1 =
-                                incentivesRepo.findIncentiveMasterByNameAndGroup("FP_DELAY_2Y", GroupName.FAMILY_PLANNING.getDisplayName())
-                        ;
+                                incentivesRepo.findIncentiveMasterByNameAndGroup("FP_DELAY_2Y", GroupName.FAMILY_PLANNING.getDisplayName());
 
                         IncentiveActivity activityCH =
                                 incentivesRepo.findIncentiveMasterByNameAndGroup("FP_DELAY_2Y", GroupName.ACTIVITY.getDisplayName());
                         createIncentiveRecord(it, activity1);
                         createIncentiveRecord(it, activityCH);
-                    } else if (it.getMarriageFirstChildGap() >= 3) {
+                    } else if (it.getFirstAndSecondChildGap()!=null && it.getMarriageFirstChildGap() >= 3) {
                         IncentiveActivity activity2 =
                                 incentivesRepo.findIncentiveMasterByNameAndGroup("1st_2nd_CHILD_GAP", GroupName.FAMILY_PLANNING.getDisplayName());
 
@@ -175,7 +174,7 @@ public class CoupleServiceImpl implements CoupleService {
                 }
 
 
-                if (existingECR.getIsKitHandedOver()) {
+                if (existingECR.getIsKitHandedOver()!=null && existingECR.getIsKitHandedOver()) {
                     IncentiveActivity handoverKitActivityAM =
                             incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.FAMILY_PLANNING.getDisplayName());
                     if (handoverKitActivityAM != null) {
