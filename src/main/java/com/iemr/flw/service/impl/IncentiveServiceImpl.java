@@ -882,7 +882,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                 // Marriage -> First Child Gap
                 if(eligibleCoupleRegister.getFirstAndSecondChildGap()!=null){
-                    if (eligibleCoupleRegister.getFirstAndSecondChildGap()>=2 ) {
+                    if (eligibleCoupleRegister.getFirstAndSecondChildGap()>=3 ) {
 
                         logger.info("Marriage -> First Child Gap condition matched.");
 
@@ -923,7 +923,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                 // First -> Second Child Gap
                 if(eligibleCoupleRegister.getMarriageFirstChildGap()!=null){
-                    if (eligibleCoupleRegister.getMarriageFirstChildGap()>=3) {
+                    if (eligibleCoupleRegister.getMarriageFirstChildGap()>=2) {
 
                         logger.info("1st -> 2nd Child Gap condition matched.");
 
