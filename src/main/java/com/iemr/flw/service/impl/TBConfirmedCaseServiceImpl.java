@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.DynamicForm;
 import com.iemr.flw.domain.iemr.TBConfirmedCaseDTO;
 import com.iemr.flw.domain.iemr.TBConfirmedCase;
-import com.iemr.flw.domain.iemr.TBStopVisit;
+import com.iemr.flw.domain.iemr.BenVisitDetail;
 import com.iemr.flw.dto.iemr.TBConfirmedCasesResponseDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.DynamicFormRepo;
@@ -80,14 +80,14 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                 for(TBConfirmedCaseDTO dto:request){
                     String modifiedBy = jwtUtil.extractUsername(authorisation);
                     Long beneficiaryRegID = beneficiaryRepo.getRegIDFromBenId(dto.getBenId());
-                    TBStopVisit visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, null,
+                    BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, null,
                             modifiedBy, vanID, parkingPlaceID);
 
-                    List<TBConfirmedCase> existing = repository.findByBenIdAndVisitCode(dto.getBenId(), visit.getId());
+                    List<TBConfirmedCase> existing = repository.findByBenIdAndVisitCode(dto.getBenId(), visit.getVisitCode());
                     boolean isNew = existing.isEmpty();
                     TBConfirmedCase entity = isNew ? new TBConfirmedCase() : existing.get(0);
                     entity.setBenId(dto.getBenId());
-                    entity.setVisitCode(visit.getId());
+                    entity.setVisitCode(visit.getVisitCode());
                     entity.setUserId(jwtUtil.extractUserId(authorisation));
                     entity.setModifiedBy(modifiedBy);
                     entity.setRegimenType(dto.getRegimenType());

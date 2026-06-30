@@ -2,7 +2,7 @@ package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.iemr.flw.domain.iemr.TBStopVisit;
+import com.iemr.flw.domain.iemr.BenVisitDetail;
 import com.iemr.flw.domain.iemr.TBSuspected;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.TBSuspectedDTO;
@@ -50,11 +50,11 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
         Integer parkingPlaceID = campConfigService.getParkingPlaceID();
         for (TBSuspectedDTO tbSuspectedDTO : requestDTO.getTbSuspectedList()) {
             Long beneficiaryRegID = beneficiaryRepo.getRegIDFromBenId(tbSuspectedDTO.getBenId());
-            TBStopVisit visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, null,
+            BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, null,
                     requestDTO.getUserId() != null ? requestDTO.getUserId().toString() : null, vanID, parkingPlaceID);
 
             TBSuspected tbSuspected =
-                    tbSuspectedRepo.getByUserIdAndBenIdAndVisitCode(tbSuspectedDTO.getBenId(), requestDTO.getUserId(), visit.getId());
+                    tbSuspectedRepo.getByUserIdAndBenIdAndVisitCode(tbSuspectedDTO.getBenId(), requestDTO.getUserId(), visit.getVisitCode());
 
             if (tbSuspected == null) {
                 tbSuspected = new TBSuspected();
@@ -67,7 +67,7 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
             }
 
             tbSuspected.setUserId(requestDTO.getUserId());
-            tbSuspected.setVisitCode(visit.getId());
+            tbSuspected.setVisitCode(visit.getVisitCode());
             if (tbSuspected.getVanID() == null && vanID != null) { tbSuspected.setVanID(vanID); tbSuspected.setParkingPlaceID(parkingPlaceID); }
             tbSuspected.setProcessed("N");
             tbSuspectedRepo.save(tbSuspected);

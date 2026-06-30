@@ -5,15 +5,29 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
 import com.iemr.flw.domain.identity.RMNCHMBeneficiarymapping;
+import com.iemr.flw.domain.iemr.BenAnthropometryDetail;
+import com.iemr.flw.domain.iemr.BenChiefComplaint;
 import com.iemr.flw.domain.iemr.BenFlowStatus;
+import com.iemr.flw.domain.iemr.BenPhysicalVitalDetail;
+import com.iemr.flw.domain.iemr.BenReferDetails;
+import com.iemr.flw.domain.iemr.BenVisitDetail;
+import com.iemr.flw.domain.iemr.PhyGeneralExamination;
+import com.iemr.flw.domain.iemr.PrescribedDrugDetail;
+import com.iemr.flw.domain.iemr.PrescriptionDetail;
 import com.iemr.flw.domain.iemr.StopTBDiagnostics;
 import com.iemr.flw.domain.iemr.StopTBGeneralExamination;
 import com.iemr.flw.domain.iemr.StopTBGeneralOpd;
 import com.iemr.flw.domain.iemr.TBScreening;
-import com.iemr.flw.domain.iemr.TBStopVisit;
 import com.iemr.flw.dto.iemr.StopTBRegistrationDto;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
+import com.iemr.flw.repo.iemr.BenAnthropometryRepo;
+import com.iemr.flw.repo.iemr.BenChiefComplaintRepo;
 import com.iemr.flw.repo.iemr.BenFlowStatusRepo;
+import com.iemr.flw.repo.iemr.BenPhysicalVitalRepo;
+import com.iemr.flw.repo.iemr.BenReferDetailsRepo;
+import com.iemr.flw.repo.iemr.PhyGeneralExaminationRepo;
+import com.iemr.flw.repo.iemr.PrescribedDrugDetailRepo;
+import com.iemr.flw.repo.iemr.PrescriptionDetailRepo;
 import com.iemr.flw.repo.iemr.StopTBDiagnosticsRepo;
 import com.iemr.flw.repo.iemr.StopTBGeneralExaminationRepo;
 import com.iemr.flw.repo.iemr.StopTBGeneralOpdRepo;
@@ -63,6 +77,27 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Autowired
     private TBStopVisitService tbStopVisitService;
+
+    @Autowired
+    private BenAnthropometryRepo benAnthropometryRepo;
+
+    @Autowired
+    private BenPhysicalVitalRepo benPhysicalVitalRepo;
+
+    @Autowired
+    private PhyGeneralExaminationRepo phyGeneralExaminationRepo;
+
+    @Autowired
+    private BenChiefComplaintRepo benChiefComplaintRepo;
+
+    @Autowired
+    private PrescriptionDetailRepo prescriptionDetailRepo;
+
+    @Autowired
+    private PrescribedDrugDetailRepo prescribedDrugDetailRepo;
+
+    @Autowired
+    private BenReferDetailsRepo benReferDetailsRepo;
 
     @Value("${tm-url}")
     private String tmUrl;
@@ -299,15 +334,16 @@ public class StopTBServiceImpl implements StopTBService {
 
             Integer providerServiceMapID = getInt(data, "providerServiceMapID");
             String createdBy = getString(data, "createdBy");
-            TBStopVisit visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
+            BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
                     createdBy, vanID, parkingPlaceID);
 
-            StopTBGeneralExamination exam = generalExaminationRepo.findByBeneficiaryRegIDAndVisitCode(beneficiaryRegID, visit.getId());
+            StopTBGeneralExamination exam = generalExaminationRepo.findByBeneficiaryRegIDAndVisitCode(beneficiaryRegID, visit.getVisitCode());
             if (exam == null) exam = new StopTBGeneralExamination();
             boolean isNew = exam.getId() == null;
 
             exam.setBeneficiaryRegID(beneficiaryRegID);
-            exam.setVisitCode(visit.getId());
+            exam.setVisitCode(visit.getVisitCode());
+            exam.setBenVisitID(visit.getBenVisitId());
             exam.setProviderServiceMapID(providerServiceMapID);
             exam.setPulseRate(getInt(data, "pulseRate"));
             exam.setSystolicBP(getInt(data, "systolicBP"));
@@ -337,7 +373,10 @@ public class StopTBServiceImpl implements StopTBService {
             exam.setProcessed("N");
 
             generalExaminationRepo.save(exam);
-            if (isNew) generalExaminationRepo.updateVanSerialNo(exam.getId());
+            if (isNew) {
+                generalExaminationRepo.updateVanSerialNo(exam.getId());
+                dualWriteExamToStandardTables(exam, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
+            }
 
             Map<String, Object> result = new HashMap<>();
             result.put("beneficiaryRegID", beneficiaryRegID);
@@ -422,15 +461,15 @@ public class StopTBServiceImpl implements StopTBService {
 
             Integer providerServiceMapID = getInt(data, "providerServiceMapID");
             String createdBy = getString(data, "createdBy");
-            TBStopVisit visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
+            BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
                     createdBy, vanID, parkingPlaceID);
 
-            TBScreening screening = tbScreeningRepo.findByBenRegIDAndVisitCode(beneficiaryRegID, visit.getId());
+            TBScreening screening = tbScreeningRepo.findByBenRegIDAndVisitCode(beneficiaryRegID, visit.getVisitCode());
             if (screening == null) screening = new TBScreening();
             boolean isNew = screening.getId() == null;
 
             screening.setBenRegID(beneficiaryRegID);
-            screening.setVisitCode(visit.getId());
+            screening.setVisitCode(visit.getVisitCode());
             screening.setProviderServiceMapID(providerServiceMapID);
             screening.setCoughMoreThan2Weeks(getBool(data, "coughMoreThan2Weeks"));
             screening.setBloodInSputum(getBool(data, "bloodInSputum"));
@@ -550,15 +589,16 @@ public class StopTBServiceImpl implements StopTBService {
 
             Integer providerServiceMapID = getInt(data, "providerServiceMapID");
             String createdBy = getString(data, "createdBy");
-            TBStopVisit visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
+            BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
                     createdBy, vanID, parkingPlaceID);
 
-            StopTBGeneralOpd opd = generalOpdRepo.findByBenRegIDAndVisitCode(beneficiaryRegID, visit.getId());
+            StopTBGeneralOpd opd = generalOpdRepo.findByBenRegIDAndVisitCode(beneficiaryRegID, visit.getVisitCode());
             if (opd == null) opd = new StopTBGeneralOpd();
             boolean isNew = opd.getId() == null;
 
             opd.setBenRegID(beneficiaryRegID);
-            opd.setVisitCode(visit.getId());
+            opd.setVisitCode(visit.getVisitCode());
+            opd.setBenVisitID(visit.getBenVisitId());
             opd.setProviderServiceMapID(providerServiceMapID);
             opd.setChiefComplaint(toJsonString(data.get("chiefComplaint")));
             opd.setMedication(getString(data, "medication"));
@@ -573,7 +613,10 @@ public class StopTBServiceImpl implements StopTBService {
             opd.setProcessed("N");
 
             generalOpdRepo.save(opd);
-            if (isNew) generalOpdRepo.updateVanSerialNo(opd.getId());
+            if (isNew) {
+                generalOpdRepo.updateVanSerialNo(opd.getId());
+                dualWriteOpdToStandardTables(opd, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
+            }
 
             Map<String, Object> result = new HashMap<>();
             result.put("beneficiaryRegID", beneficiaryRegID);
@@ -752,6 +795,189 @@ public class StopTBServiceImpl implements StopTBService {
         result.put("benFlowID", benFlowID);
         result.put("status", "nurse_done");
         return result;
+    }
+
+    // ── Standard table dual-writes ────────────────────────────────────────────
+
+    private Map<String, Object> getRegistrationExtras(Long beneficiaryRegID) {
+        try {
+            RMNCHMBeneficiarymapping mapping = beneficiaryRepo.getById(BigInteger.valueOf(beneficiaryRegID));
+            RMNCHMBeneficiarydetail detail = (mapping != null && mapping.getBenDetailsId() != null)
+                    ? beneficiaryRepo.getDetailsById(mapping.getBenDetailsId())
+                    : null;
+            if (detail != null && detail.getOtherFields() != null && !detail.getOtherFields().isEmpty()) {
+                return new ObjectMapper().readValue(detail.getOtherFields(), Map.class);
+            }
+        } catch (Exception e) {
+            logger.warn("Cannot read otherFields for benRegID: " + beneficiaryRegID);
+        }
+        return Collections.emptyMap();
+    }
+
+    private void dualWriteExamToStandardTables(StopTBGeneralExamination exam, Long beneficiaryRegID,
+            BenVisitDetail visit, String createdBy, Integer vanID, Integer parkingPlaceID) {
+        try {
+            Map<String, Object> extras = getRegistrationExtras(beneficiaryRegID);
+            writeAnthropometry(extras, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
+            writeVitals(exam, extras, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
+            writePhyGeneralExam(exam, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
+            if (Boolean.TRUE.equals(exam.getReferralToHWCNeeded())) {
+                writeReferral(beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
+            }
+        } catch (Exception e) {
+            logger.error("Dual-write exam to standard tables failed for benRegID: " + beneficiaryRegID, e);
+        }
+    }
+
+    private void writeAnthropometry(Map<String, Object> extras, Long beneficiaryRegID,
+            BenVisitDetail visit, String createdBy, Integer vanID, Integer parkingPlaceID) {
+        try {
+            BenAnthropometryDetail a = new BenAnthropometryDetail();
+            a.setBeneficiaryRegID(beneficiaryRegID);
+            a.setBenVisitID(visit.getBenVisitId());
+            a.setVisitCode(visit.getVisitCode());
+            a.setProviderServiceMapID(visit.getProviderServiceMapID());
+            a.setCreatedBy(createdBy);
+            a.setVanID(vanID);
+            a.setParkingPlaceID(parkingPlaceID);
+            Object h = extras.get("height");
+            Object w = extras.get("weight");
+            Object b = extras.get("bmi");
+            if (h instanceof Number) a.setHeightCm(((Number) h).doubleValue());
+            if (w instanceof Number) a.setWeightKg(((Number) w).doubleValue());
+            if (b instanceof Number) a.setBmi(((Number) b).doubleValue());
+            benAnthropometryRepo.save(a);
+        } catch (Exception e) {
+            logger.error("writeAnthropometry failed for benRegID: " + beneficiaryRegID, e);
+        }
+    }
+
+    private void writeVitals(StopTBGeneralExamination exam, Map<String, Object> extras,
+            Long beneficiaryRegID, BenVisitDetail visit, String createdBy, Integer vanID, Integer parkingPlaceID) {
+        try {
+            BenPhysicalVitalDetail v = new BenPhysicalVitalDetail();
+            v.setBeneficiaryRegID(beneficiaryRegID);
+            v.setBenVisitID(visit.getBenVisitId());
+            v.setVisitCode(visit.getVisitCode());
+            v.setProviderServiceMapID(visit.getProviderServiceMapID());
+            v.setCreatedBy(createdBy);
+            v.setVanID(vanID);
+            v.setParkingPlaceID(parkingPlaceID);
+            Object t = extras.get("temperatureValue");
+            if (t instanceof Number) v.setTemperature(((Number) t).doubleValue());
+            if (exam.getPulseRate() != null) v.setPulseRate(exam.getPulseRate().shortValue());
+            if (exam.getSystolicBP() != null) v.setSystolicBP(exam.getSystolicBP().shortValue());
+            if (exam.getDiastolicBP() != null) v.setDiastolicBP(exam.getDiastolicBP().shortValue());
+            if (exam.getRandomBloodSugar() != null) v.setBloodGlucoseRandom(exam.getRandomBloodSugar().shortValue());
+            benPhysicalVitalRepo.save(v);
+        } catch (Exception e) {
+            logger.error("writeVitals failed for benRegID: " + beneficiaryRegID, e);
+        }
+    }
+
+    private void writePhyGeneralExam(StopTBGeneralExamination exam, Long beneficiaryRegID,
+            BenVisitDetail visit, String createdBy, Integer vanID, Integer parkingPlaceID) {
+        try {
+            PhyGeneralExamination g = new PhyGeneralExamination();
+            g.setBeneficiaryRegID(beneficiaryRegID);
+            g.setBenVisitID(visit.getBenVisitId());
+            g.setVisitCode(visit.getVisitCode());
+            g.setProviderServiceMapID(visit.getProviderServiceMapID());
+            g.setCreatedBy(createdBy);
+            g.setVanID(vanID);
+            g.setParkingPlaceID(parkingPlaceID);
+            g.setPallor(exam.getPallor());
+            g.setJaundice(exam.getIcterus());
+            g.setCyanosis(exam.getCyanosis());
+            g.setClubbing(exam.getClubbing());
+            g.setLymphadenopathy(exam.getLymphadenopathy());
+            g.setEdema(exam.getOedema());
+            phyGeneralExaminationRepo.save(g);
+        } catch (Exception e) {
+            logger.error("writePhyGeneralExam failed for benRegID: " + beneficiaryRegID, e);
+        }
+    }
+
+    private void writeReferral(Long beneficiaryRegID, BenVisitDetail visit,
+            String createdBy, Integer vanID, Integer parkingPlaceID) {
+        try {
+            BenReferDetails r = new BenReferDetails();
+            r.setBeneficiaryRegID(beneficiaryRegID);
+            r.setBenVisitID(visit.getBenVisitId());
+            r.setVisitCode(visit.getVisitCode());
+            r.setProviderServiceMapID(visit.getProviderServiceMapID());
+            r.setCreatedBy(createdBy);
+            r.setVanID(vanID);
+            r.setParkingPlaceID(parkingPlaceID);
+            r.setReferredToInstituteName("HWC");
+            r.setReferralReason("Stop TB Referral");
+            benReferDetailsRepo.save(r);
+        } catch (Exception e) {
+            logger.error("writeReferral failed for benRegID: " + beneficiaryRegID, e);
+        }
+    }
+
+    private void dualWriteOpdToStandardTables(StopTBGeneralOpd opd, Long beneficiaryRegID,
+            BenVisitDetail visit, String createdBy, Integer vanID, Integer parkingPlaceID) {
+        try {
+            writeChiefComplaint(opd.getChiefComplaint(), beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
+            writePrescription(opd, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
+        } catch (Exception e) {
+            logger.error("Dual-write OPD to standard tables failed for benRegID: " + beneficiaryRegID, e);
+        }
+    }
+
+    private void writeChiefComplaint(String complaint, Long beneficiaryRegID, BenVisitDetail visit,
+            String createdBy, Integer vanID, Integer parkingPlaceID) {
+        if (complaint == null || complaint.isBlank()) return;
+        try {
+            BenChiefComplaint c = new BenChiefComplaint();
+            c.setBeneficiaryRegID(beneficiaryRegID);
+            c.setBenVisitID(visit.getBenVisitId());
+            c.setVisitCode(visit.getVisitCode());
+            c.setProviderServiceMapID(visit.getProviderServiceMapID());
+            c.setCreatedBy(createdBy);
+            c.setVanID(vanID);
+            c.setParkingPlaceID(parkingPlaceID);
+            c.setChiefComplaint(complaint);
+            benChiefComplaintRepo.save(c);
+        } catch (Exception e) {
+            logger.error("writeChiefComplaint failed for benRegID: " + beneficiaryRegID, e);
+        }
+    }
+
+    private void writePrescription(StopTBGeneralOpd opd, Long beneficiaryRegID, BenVisitDetail visit,
+            String createdBy, Integer vanID, Integer parkingPlaceID) {
+        if (opd.getMedication() == null || opd.getMedication().isBlank()) return;
+        try {
+            PrescriptionDetail p = new PrescriptionDetail();
+            p.setBeneficiaryRegID(beneficiaryRegID);
+            p.setBenVisitID(visit.getBenVisitId());
+            p.setVisitCode(visit.getVisitCode());
+            p.setProviderServiceMapID(visit.getProviderServiceMapID());
+            p.setCreatedBy(createdBy);
+            p.setVanID(vanID);
+            p.setParkingPlaceID(parkingPlaceID);
+            p.setInstruction(opd.getNotes());
+            p = prescriptionDetailRepo.save(p);
+
+            PrescribedDrugDetail d = new PrescribedDrugDetail();
+            d.setBeneficiaryRegID(beneficiaryRegID);
+            d.setBenVisitID(visit.getBenVisitId());
+            d.setVisitCode(visit.getVisitCode());
+            d.setProviderServiceMapID(visit.getProviderServiceMapID());
+            d.setCreatedBy(createdBy);
+            d.setVanID(vanID);
+            d.setParkingPlaceID(parkingPlaceID);
+            d.setPrescriptionID(p.getPrescriptionID());
+            d.setDrugName(opd.getMedication());
+            d.setDose(opd.getDosage());
+            d.setFrequency(opd.getFrequency());
+            d.setDuration(opd.getDuration());
+            prescribedDrugDetailRepo.save(d);
+        } catch (Exception e) {
+            logger.error("writePrescription failed for benRegID: " + beneficiaryRegID, e);
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

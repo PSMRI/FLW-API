@@ -45,6 +45,7 @@ import com.iemr.flw.repo.iemr.QuestionResponseRepo;
 import com.iemr.flw.repo.iemr.SectionQuestionRepo;
 import com.iemr.flw.repo.iemr.SectionResponseRepo;
 import com.iemr.flw.masterEnum.QuestionType;
+import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.DynamicFormResponseService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.exception.IEMRException;
@@ -90,10 +91,13 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     private final QuestionOptionRepo questionOptionRepo;
     private final FormResponseItemSaver itemSaver;
     private final JwtUtil jwtUtil;
+    private final CampConfigService campConfigService;
 
     @Override
     @Transactional
     public FormResponseDTO submitForm(FormResponseRequest request) {
+        Integer vanID = campConfigService.getVanID();
+        Integer parkingPlaceID = campConfigService.getParkingPlaceID();
         FormVersion version = resolveLatestVersion(request.getFormUuid());
         Timestamp now = new Timestamp(System.currentTimeMillis());
         FormResponse formResponse;
@@ -112,15 +116,17 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             formResponse.setLastFollowUpAt(now);
             formResponse = formResponseRepo.save(formResponse);
         } else {
-            formResponse = createFormResponse(request, version, STATUS_SUBMITTED, now);
+            formResponse = createFormResponse(request, version, STATUS_SUBMITTED, now, vanID, parkingPlaceID);
         }
-        return processSections(formResponse, request, version, null);
+        return processSections(formResponse, request, version, null, vanID, parkingPlaceID);
     }
 
     @Override
     @Transactional
     public FormResponseDTO completeForm(FormResponseRequest request, String jwtToken) throws IEMRException {
         String actor = jwtUtil.extractUserId(jwtToken).toString();
+        Integer vanID = campConfigService.getVanID();
+        Integer parkingPlaceID = campConfigService.getParkingPlaceID();
 
         FormVersion version = resolveLatestVersion(request.getFormUuid());
         Long formId = version.getDynamicForm().getFormId();
@@ -138,7 +144,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         formResponse.setStatus(STATUS_COMPLETE);
         formResponse.setCompletedAt(new Timestamp(System.currentTimeMillis()));
         formResponse = formResponseRepo.save(formResponse);
-        return processSections(formResponse, request, version, actor);
+        return processSections(formResponse, request, version, actor, vanID, parkingPlaceID);
     }
 
     @Override
@@ -175,7 +181,9 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             FormResponseRequest request,
             FormVersion version,
             String status,
-            Timestamp submittedAt) {
+            Timestamp submittedAt,
+            Integer vanID,
+            Integer parkingPlaceID) {
 
         FormResponse formResponse = FormResponse.builder()
                 .beneficiaryId(request.getBeneficiaryId())
@@ -188,6 +196,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 // TODO: set audit fields when auth is re-enabled for /dynamicForm/response endpoints
                 // .createdBy(jwtUtil.extractUsername(authorization))
                 // .updatedBy(jwtUtil.extractUsername(authorization))
+                .vanID(vanID)
+                .parkingPlaceID(parkingPlaceID)
                 .build();
         return formResponseRepo.save(formResponse);
     }
@@ -199,7 +209,9 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             FormResponse formResponse,
             FormResponseRequest request,
             FormVersion version,
-            String actor) {
+            String actor,
+            Integer vanID,
+            Integer parkingPlaceID) {
 
         List<FormSection> allSections =
                 formSectionRepo.findByFormVersion_VersionIdOrderByDisplayOrderAsc(version.getVersionId());
@@ -243,7 +255,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             }
 
             SectionResponse sectionResponse = upsertSectionResponse(
-                    formResponse.getResponseId(), section.getSectionId(), actor);
+                    formResponse.getResponseId(), section.getSectionId(), actor, vanID, parkingPlaceID);
 
             if ("POST_SUBMIT".equals(section.getSectionPhase())) {
                 formResponse.setLastFollowUpAt(sectionResponse.getSavedAt());
@@ -258,7 +270,9 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                     sectionReq.getAnswers(),
                     questionMap,
                     optionsByQuestion,
-                    actor);
+                    actor,
+                    vanID,
+                    parkingPlaceID);
 
             questionResponseRepo.saveAll(questionResponses);
 
@@ -268,7 +282,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         return buildFormResponseDTO(formResponse, sectionDTOs);
     }
 
-    private SectionResponse upsertSectionResponse(Long responseId, Long sectionId, String actor) {
+    private SectionResponse upsertSectionResponse(Long responseId, Long sectionId, String actor,
+            Integer vanID, Integer parkingPlaceID) {
         Optional<SectionResponse> existing =
                 sectionResponseRepo.findByResponseIdAndSectionId(responseId, sectionId);
         if (existing.isPresent()) {
@@ -276,6 +291,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             sr.setStatus(SECTION_STATUS_DONE);
             sr.setSavedAt(new Timestamp(System.currentTimeMillis()));
             sr.setUpdatedBy(actor);
+            if (sr.getVanID() == null) { sr.setVanID(vanID); sr.setParkingPlaceID(parkingPlaceID); }
             return sectionResponseRepo.save(sr);
         }
         SectionResponse sr = SectionResponse.builder()
@@ -285,6 +301,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 .savedAt(new Timestamp(System.currentTimeMillis()))
                 .createdBy(actor)
                 .updatedBy(actor)
+                .vanID(vanID)
+                .parkingPlaceID(parkingPlaceID)
                 .build();
         return sectionResponseRepo.save(sr);
     }
@@ -294,7 +312,9 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             List<QuestionAnswerRequest> answers,
             Map<String, SectionQuestion> questionMap,
             Map<Long, Map<String, QuestionOption>> optionsByQuestion,
-            String actor) {
+            String actor,
+            Integer vanID,
+            Integer parkingPlaceID) {
 
         List<QuestionResponse> results = new ArrayList<>();
 
@@ -329,6 +349,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                             .optionId(opt != null ? opt.getOptionId() : null)
                             .createdBy(actor)
                             .updatedBy(actor)
+                            .vanID(vanID)
+                            .parkingPlaceID(parkingPlaceID)
                             .build());
                 }
             } else if (type == QuestionType.MCQ) {
@@ -342,6 +364,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                                 .optionId(opt != null ? opt.getOptionId() : null)
                                 .createdBy(actor)
                                 .updatedBy(actor)
+                                .vanID(vanID)
+                                .parkingPlaceID(parkingPlaceID)
                                 .build());
                     }
                 }
@@ -356,6 +380,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                         .answerText(value)
                         .createdBy(actor)
                         .updatedBy(actor)
+                        .vanID(vanID)
+                        .parkingPlaceID(parkingPlaceID)
                         .build());
             }
         }
