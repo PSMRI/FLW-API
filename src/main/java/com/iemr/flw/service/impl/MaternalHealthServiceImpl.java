@@ -205,6 +205,8 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     benVisitDetail.setModifiedBy(it.getUpdatedBy());
                     benVisitDetail.setLastModDate(it.getUpdatedDate());
                     benVisitDetail.setProviderServiceMapID(it.getProviderServiceMapID());
+                    if (benVisitDetail.getCreatedDate() == null)
+                        benVisitDetail.setCreatedDate(new java.sql.Timestamp(System.currentTimeMillis()));
 
                     logger.info("Saving BenVisitDetail");
 
@@ -406,6 +408,8 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     benVisitDetail.setProcessed("N");
                     benVisitDetail.setModifiedBy(it.getUpdatedBy());
                     benVisitDetail.setLastModDate(it.getUpdatedDate());
+                    if (benVisitDetail.getCreatedDate() == null)
+                        benVisitDetail.setCreatedDate(new java.sql.Timestamp(System.currentTimeMillis()));
                     benVisitDetail = benVisitDetailsRepo.save(benVisitDetail);
 
                     // Saving Data in AncCare table
