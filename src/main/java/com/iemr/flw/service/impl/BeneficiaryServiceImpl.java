@@ -520,18 +520,18 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
                             Map<String, Object> anthropometry = new HashMap<>();
                             if (!anthroList.isEmpty()) {
-                                BenAnthropometryDetail a = anthroList.get(0);
-                                if (a.getHeightCm()  != null) anthropometry.put("height", a.getHeightCm());
-                                if (a.getWeightKg()  != null) anthropometry.put("weight", a.getWeightKg());
-                                if (a.getBmi()       != null) anthropometry.put("bmi",    a.getBmi());
+                                BenAnthropometryDetail anthro = anthroList.get(0);
+                                if (anthro.getHeightCm() != null) anthropometry.put("height", anthro.getHeightCm());
+                                if (anthro.getWeightKg() != null) anthropometry.put("weight", anthro.getWeightKg());
+                                if (anthro.getBmi()      != null) anthropometry.put("bmi",    anthro.getBmi());
                             }
                             if (!vitalList.isEmpty()) {
-                                BenPhysicalVitalDetail v = vitalList.get(0);
-                                if (v.getTemperature()     != null) anthropometry.put("temperatureValue", v.getTemperature());
-                                if (v.getPulseRate()       != null) anthropometry.put("pulseRate",        v.getPulseRate());
-                                if (v.getSystolicBP()      != null) anthropometry.put("systolicBP",       v.getSystolicBP());
-                                if (v.getDiastolicBP()     != null) anthropometry.put("diastolicBP",      v.getDiastolicBP());
-                                if (v.getBloodGlucoseRandom() != null) anthropometry.put("bloodGlucoseRandom", v.getBloodGlucoseRandom());
+                                BenPhysicalVitalDetail vital = vitalList.get(0);
+                                if (vital.getTemperature()        != null) anthropometry.put("temperatureValue",    vital.getTemperature());
+                                if (vital.getPulseRate()          != null) anthropometry.put("pulseRate",           vital.getPulseRate());
+                                if (vital.getSystolicBP()         != null) anthropometry.put("systolicBP",          vital.getSystolicBP());
+                                if (vital.getDiastolicBP()        != null) anthropometry.put("diastolicBP",         vital.getDiastolicBP());
+                                if (vital.getBloodGlucoseRandom() != null) anthropometry.put("bloodGlucoseRandom",  vital.getBloodGlucoseRandom());
                             }
 
                             // fallback: if no exam saved yet, read from registration otherFields
