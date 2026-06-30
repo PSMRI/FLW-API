@@ -38,6 +38,7 @@ public class TBStopVisitServiceImpl implements TBStopVisitService {
         visit.setVisitDateTime(new Timestamp(System.currentTimeMillis()));
         visit.setProviderServiceMapID(providerServiceMapID);
         visit.setCreatedBy(createdBy);
+        visit.setCreatedDate(new Timestamp(System.currentTimeMillis()));
         visit.setVanId(vanID);
         visit.setParkingPlaceId(parkingPlaceID);
         visit.setDeleted(false);
