@@ -125,8 +125,8 @@ public class TbCounsellingFormSeeder {
     private FormSectionDTO buildSectionC() {
         FormSectionDTO s = section("TB_SEC_C", "Government Schemes", "सरकारी योजनाएं", "PRE_SUBMIT", 3, false, false);
         List<SectionQuestionDTO> qs = new ArrayList<>();
-        qs.add(yesNoRadio("TB_C_Q1", "Nikshay Poshan Yojana (NPY) eligibility explained", "निक्षय पोषण योजना (एनपीवाई) पात्रता के बारे में बताया गया", 1, false));
-        qs.add(yesNoRadio("TB_C_Q2", "DOTS free treatment explained", "DOTS मुफ़्त इलाज के बारे में जानकारी", 2, false));
+        qs.add(yesNoRadio("TB_C_Q1", "Nikshay Poshan Yojana (NPY) eligibility explained", "निक्षय पोषण योजना (एनपीवाई) पात्रता के बारे में बताया गया", 1, true));
+        qs.add(yesNoRadio("TB_C_Q2", "DOTS free treatment explained", "DOTS मुफ़्त इलाज के बारे में जानकारी", 2, true));
         qs.add(textQuestion("TB_C_REMARKS", "Schemes notes", "योजनाओं के नोट्स", 3, false, 300, true));
         s.setQuestions(qs);
         return s;
