@@ -56,8 +56,12 @@ import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
 import com.iemr.flw.domain.identity.RMNCHMBeneficiarymapping;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.mapper.InputMapper;
+import com.iemr.flw.domain.iemr.BenAnthropometryDetail;
+import com.iemr.flw.domain.iemr.BenPhysicalVitalDetail;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.identity.HouseHoldRepo;
+import com.iemr.flw.repo.iemr.BenAnthropometryRepo;
+import com.iemr.flw.repo.iemr.BenPhysicalVitalRepo;
 import com.iemr.flw.service.BeneficiaryService;
 import com.iemr.flw.utils.config.ConfigProperties;
 import com.iemr.flw.utils.http.HttpUtils;
@@ -108,6 +112,12 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     @Autowired
     private UserServiceRoleRepo userRepo;
+
+    @Autowired
+    private BenAnthropometryRepo benAnthropometryRepo;
+
+    @Autowired
+    private BenPhysicalVitalRepo benPhysicalVitalRepo;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
@@ -509,17 +519,51 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         if (benDetailsOBJ != null && benDetailsOBJ.getOccupation() != null)
                             benDetailsRMNCH_OBJ.setOccupation(benDetailsOBJ.getOccupation());
 
-                        // anthropometry and Stop TB fields from ExtraFields
+                        // anthropometry from t_phy_anthropometry, vitals from t_phy_vitals
+                        // fallback to otherFields if exam not yet saved for this beneficiary
+                        Long benRegIdLong = m.getBenRegId() != null ? m.getBenRegId().longValue() : null;
+                        if (benRegIdLong != null) {
+                            List<BenAnthropometryDetail> anthroList =
+                                    benAnthropometryRepo.findByBeneficiaryRegIDOrderByCreatedDateDesc(benRegIdLong);
+                            List<BenPhysicalVitalDetail> vitalList =
+                                    benPhysicalVitalRepo.findByBeneficiaryRegIDOrderByCreatedDateDesc(benRegIdLong);
+
+                            Map<String, Object> anthropometry = new HashMap<>();
+                            if (!anthroList.isEmpty()) {
+                                BenAnthropometryDetail a = anthroList.get(0);
+                                if (a.getHeightCm()  != null) anthropometry.put("height", a.getHeightCm());
+                                if (a.getWeightKg()  != null) anthropometry.put("weight", a.getWeightKg());
+                                if (a.getBmi()       != null) anthropometry.put("bmi",    a.getBmi());
+                            }
+                            if (!vitalList.isEmpty()) {
+                                BenPhysicalVitalDetail v = vitalList.get(0);
+                                if (v.getTemperature()     != null) anthropometry.put("temperatureValue", v.getTemperature());
+                                if (v.getPulseRate()       != null) anthropometry.put("pulseRate",        v.getPulseRate());
+                                if (v.getSystolicBP()      != null) anthropometry.put("systolicBP",       v.getSystolicBP());
+                                if (v.getDiastolicBP()     != null) anthropometry.put("diastolicBP",      v.getDiastolicBP());
+                                if (v.getBloodGlucoseRandom() != null) anthropometry.put("bloodGlucoseRandom", v.getBloodGlucoseRandom());
+                            }
+
+                            // fallback: if no exam saved yet, read from registration otherFields
+                            if (anthropometry.isEmpty() && benDetailsOBJ != null && benDetailsOBJ.getOtherFields() != null) {
+                                try {
+                                    Map<?, ?> extraFields = new Gson().fromJson(benDetailsOBJ.getOtherFields(), Map.class);
+                                    if (extraFields.containsKey("weight")) anthropometry.put("weight", extraFields.get("weight"));
+                                    if (extraFields.containsKey("height")) anthropometry.put("height", extraFields.get("height"));
+                                    if (extraFields.containsKey("bmi"))    anthropometry.put("bmi",    extraFields.get("bmi"));
+                                    if (extraFields.containsKey("temperatureValue")) anthropometry.put("temperatureValue", extraFields.get("temperatureValue"));
+                                } catch (Exception ex) {
+                                    logger.warn("Could not parse otherFields for fallback anthropometry: " + benDetailsOBJ.getBeneficiaryDetailsId());
+                                }
+                            }
+                            if (!anthropometry.isEmpty()) resultMap.put("anthropometry", anthropometry);
+                        }
+
+                        // Stop TB fields from ExtraFields
                         Map<String, Object> stopTBDetails = new HashMap<>();
                         if (benDetailsOBJ != null && benDetailsOBJ.getOtherFields() != null) {
                             try {
                                 Map<?, ?> extraFields = new Gson().fromJson(benDetailsOBJ.getOtherFields(), Map.class);
-                                Map<String, Object> anthropometry = new HashMap<>();
-                                if (extraFields.containsKey("weight")) anthropometry.put("weight", extraFields.get("weight"));
-                                if (extraFields.containsKey("height")) anthropometry.put("height", extraFields.get("height"));
-                                if (extraFields.containsKey("bmi")) anthropometry.put("bmi", extraFields.get("bmi"));
-                                if (extraFields.containsKey("temperatureValue")) anthropometry.put("temperatureValue", extraFields.get("temperatureValue"));
-                                if (!anthropometry.isEmpty()) resultMap.put("anthropometry", anthropometry);
 
                                 if (extraFields.containsKey("personFrom")) stopTBDetails.put("personFrom", extraFields.get("personFrom"));
                                 if (extraFields.containsKey("caseFindingType")) stopTBDetails.put("caseFindingType", extraFields.get("caseFindingType"));
