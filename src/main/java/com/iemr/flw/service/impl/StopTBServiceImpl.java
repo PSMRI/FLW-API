@@ -985,7 +985,7 @@ public class StopTBServiceImpl implements StopTBService {
     private Timestamp parseDob(JsonObject obj) {
         if (!obj.has("dob") || obj.get("dob").isJsonNull()) return null;
         try { return new Timestamp(obj.get("dob").getAsLong()); } catch (Exception ignored) {}
-        try { return Timestamp.valueOf(obj.get("dob").getAsString().replace("T", " ")); } catch (Exception ignored) {}
+        try { return Timestamp.valueOf(obj.get("dob").getAsString().replace("T", " ").replace("Z", "").trim()); } catch (Exception ignored) {}
         return null;
     }
 
