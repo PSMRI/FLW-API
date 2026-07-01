@@ -380,8 +380,15 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         if (benContactOBJ.getPreferredPhoneNum() != null)
                             benDetailsRMNCH_OBJ.setContact_number(benContactOBJ.getPreferredPhoneNum());
 
-                        if (benDetailsOBJ.getDob() != null)
+                        if (benDetailsOBJ.getDob() != null) {
                             benDetailsRMNCH_OBJ.setDob(benDetailsOBJ.getDob());
+                        } else {
+                            // i_beneficiarydetails.dob is null for Stop TB mobile registrations
+                            // (Identity-API mapper commented out) — fall back to i_ben_flow_outreach.ben_dob
+                            List<BenFlowStatus> flows = benFlowStatusRepo.findByBeneficiaryRegID(m.getBenRegId().longValue());
+                            if (!flows.isEmpty() && flows.get(0).getDob() != null)
+                                benDetailsRMNCH_OBJ.setDob(flows.get(0).getDob());
+                        }
                         if (benDetailsOBJ.getFatherName() != null)
                             benDetailsRMNCH_OBJ.setFatherName(benDetailsOBJ.getFatherName());
                         if (benDetailsOBJ.getFirstName() != null)
