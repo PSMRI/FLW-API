@@ -48,7 +48,9 @@ public class TBStopVisitServiceImpl implements TBStopVisitService {
         // VisitCode: sessionID(1) + vanID(5-digit) + benVisitId(8-digit) — MMU formula
         long visitCode = generateVisitCode(visit.getBenVisitId(), vanID != null ? vanID : 1);
         visit.setVisitCode(visitCode);
-        return benVisitDetailsRepo.save(visit);
+        // saveAndFlush ensures the VisitCode UPDATE reaches DB before child tables (e.g. t_benchiefcomplaint)
+        // insert with FK on VisitCode — same transaction, lazy flush otherwise causes FK violation
+        return benVisitDetailsRepo.saveAndFlush(visit);
     }
 
     private long generateVisitCode(long visitId, int vanID) {
