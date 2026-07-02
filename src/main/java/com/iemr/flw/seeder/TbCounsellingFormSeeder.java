@@ -85,7 +85,7 @@ public class TbCounsellingFormSeeder {
         sections.add(buildSectionC());
         sections.add(buildSectionD());
         sections.add(buildSectionE());
-        sections.add(buildSectionF());
+//        sections.add(buildSectionF());
         dto.setSections(sections);
         return dto;
     }
