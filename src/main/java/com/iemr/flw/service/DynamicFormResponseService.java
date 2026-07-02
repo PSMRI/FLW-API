@@ -61,6 +61,6 @@ public interface DynamicFormResponseService {
      */
     List<FormResponseDTO> findPendingFollowUps(List<Long> formIds, int delayDays);
 
-    /** Returns beneficiary IDs with COMPLETE status for the given form type. */
-    List<Long> getCompletedBeneficiaries(FormType formType);
+    /** Returns beneficiary IDs with COMPLETE status for the given form type, optionally filtered by village and/or provider service map. */
+    List<Long> getCompletedBeneficiaries(FormType formType, Integer villageId, Integer providerServiceMapId);
 }
