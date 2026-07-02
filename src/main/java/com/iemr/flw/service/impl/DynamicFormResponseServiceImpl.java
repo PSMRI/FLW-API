@@ -495,10 +495,12 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
     @Override
     @Transactional(readOnly = true)
-    public List<Long> getCompletedBeneficiaries(FormType formType) {
+    public List<Long> getCompletedBeneficiaries(FormType formType, Integer villageId, Integer providerServiceMapId) {
         DynamicForm form = dynamicFormRepo.findByFormTypeAndIsActive(formType, true)
                 .orElseThrow(() -> new NoSuchElementException(
                         "No active form found for type: " + formType));
-        return formResponseRepo.findBeneficiaryIdsByFormIdAndStatus(form.getFormId(), STATUS_COMPLETE);
+        return (villageId != null || providerServiceMapId != null)
+                ? formResponseRepo.findBeneficiaryIdsByFormIdAndStatusFiltered(form.getFormId(), STATUS_COMPLETE, villageId, providerServiceMapId)
+                : formResponseRepo.findBeneficiaryIdsByFormIdAndStatus(form.getFormId(), STATUS_COMPLETE);
     }
 }

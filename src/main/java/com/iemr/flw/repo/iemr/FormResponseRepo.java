@@ -43,6 +43,15 @@ public interface FormResponseRepo extends JpaRepository<FormResponse, Long> {
    @Query("SELECT r.beneficiaryId FROM FormResponse r WHERE r.formId = :formId AND r.status = :status")
     List<Long> findBeneficiaryIdsByFormIdAndStatus(@Param("formId") Long formId, @Param("status") String status);
 
+    @Query("SELECT r.beneficiaryId FROM FormResponse r WHERE r.formId = :formId AND r.status = :status " +
+           "AND r.beneficiaryId IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
+           "AND (:villageId IS NULL OR b.villageID = :villageId) " +
+           "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
+    List<Long> findBeneficiaryIdsByFormIdAndStatusFiltered(@Param("formId") Long formId,
+                                                            @Param("status") String status,
+                                                            @Param("villageId") Integer villageId,
+                                                            @Param("providerServiceMapId") Integer providerServiceMapId);
+
     @Query("SELECT r.beneficiaryId FROM FormResponse r " +
            "WHERE r.beneficiaryId IN :benIds " +
            "AND r.formId = :formId " +

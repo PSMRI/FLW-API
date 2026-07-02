@@ -98,10 +98,13 @@ public class DynamicFormResponseController {
         FormResponseDTO dto = responseService.getResponseById(responseId);
         return ResponseEntity.ok(new ApiResponse(true, "Response fetched successfully", dto));
     }
-    @Operation(summary = "Get beneficiary IDs that have a COMPLETE form response for the given form type")
+    @Operation(summary = "Get beneficiary IDs that have a COMPLETE form response for the given form type, optionally filtered by village and/or provider service map")
     @RequestMapping(value = "/getCompletedBeneficiaries", method = RequestMethod.GET)
-    public ResponseEntity<ApiResponse> getCompletedBeneficiaries(@RequestParam FormType formType) {
-        List<Long> beneficiaryIds = responseService.getCompletedBeneficiaries(formType);
+    public ResponseEntity<ApiResponse> getCompletedBeneficiaries(
+            @RequestParam FormType formType,
+            @RequestParam(required = false) Integer villageId,
+            @RequestParam(required = false) Integer providerServiceMapId) {
+        List<Long> beneficiaryIds = responseService.getCompletedBeneficiaries(formType, villageId, providerServiceMapId);
         return ResponseEntity.ok(new ApiResponse(true, "Completed beneficiaries fetched successfully", beneficiaryIds));
     }
 }
