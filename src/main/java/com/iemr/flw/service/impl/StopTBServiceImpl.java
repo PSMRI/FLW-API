@@ -32,6 +32,10 @@ import com.iemr.flw.repo.iemr.StopTBDiagnosticsRepo;
 import com.iemr.flw.repo.iemr.StopTBGeneralExaminationRepo;
 import com.iemr.flw.repo.iemr.StopTBGeneralOpdRepo;
 import com.iemr.flw.repo.iemr.TBScreeningRepo;
+import com.iemr.flw.domain.iemr.StopTBChiefComplaintMaster;
+import com.iemr.flw.domain.iemr.VDrugPrescription;
+import com.iemr.flw.repo.iemr.StopTBChiefComplaintRepo;
+import com.iemr.flw.repo.iemr.VDrugPrescriptionRepo;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.StopTBService;
 import com.iemr.flw.service.TBStopVisitService;
@@ -98,6 +102,12 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Autowired
     private BenReferDetailsRepo benReferDetailsRepo;
+
+    @Autowired
+    private StopTBChiefComplaintRepo stopTBChiefComplaintRepo;
+
+    @Autowired
+    private VDrugPrescriptionRepo vDrugPrescriptionRepo;
 
     @Value("${tm-url}")
     private String tmUrl;
@@ -1044,5 +1054,38 @@ public class StopTBServiceImpl implements StopTBService {
         try { return obj.get(field).getAsInt(); } catch (Exception e) {
             try { return Integer.parseInt(obj.get(field).getAsString().trim()); } catch (Exception ex) { return null; }
         }
+    }
+
+    // ── Master Data ───────────────────────────────────────────────────────────
+
+    @Override
+    public List<Map<String, Object>> getChiefComplaintMaster() throws Exception {
+        List<StopTBChiefComplaintMaster> list = stopTBChiefComplaintRepo.findByDeletedFalseOrDeletedIsNull();
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (StopTBChiefComplaintMaster cc : list) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("chiefComplaintID", cc.getStopTBChiefComplaintID());
+            m.put("chiefComplaint", cc.getChiefComplaint());
+            m.put("chiefComplaintDesc", cc.getChiefComplaintDesc());
+            result.add(m);
+        }
+        return result;
+    }
+
+    @Override
+    public List<Map<String, Object>> getDrugMasterList() throws Exception {
+        List<VDrugPrescription> list = vDrugPrescriptionRepo.findByFacilityID(127);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (VDrugPrescription drug : list) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("itemID", drug.getItemID());
+            m.put("itemName", drug.getItemName());
+            m.put("strength", drug.getStrength());
+            m.put("unitOfMeasurement", drug.getUnitOfMeasurement());
+            m.put("quantityInHand", drug.getQuantityInHand());
+            m.put("facilityID", drug.getFacilityID());
+            result.add(m);
+        }
+        return result;
     }
 }

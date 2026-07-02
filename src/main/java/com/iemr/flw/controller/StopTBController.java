@@ -281,4 +281,32 @@ public class StopTBController {
         }
         return response.toString();
     }
+
+    // ── Master Data ───────────────────────────────────────────────────────────
+
+    @GetMapping("/master/chiefComplaints")
+    @Operation(summary = "Get Stop TB chief complaint master list")
+    public String getChiefComplaintMaster() {
+        OutputResponse response = new OutputResponse();
+        try {
+            response.setResponse(new Gson().toJson(stopTBService.getChiefComplaintMaster()));
+        } catch (Exception e) {
+            logger.error("Error in getChiefComplaintMaster: " + e);
+            response.setError(5000, "Error fetching chief complaint master: " + e.getMessage());
+        }
+        return response.toString();
+    }
+
+    @GetMapping("/master/drugList")
+    @Operation(summary = "Get drug master list with available stock quantity")
+    public String getDrugMasterList() {
+        OutputResponse response = new OutputResponse();
+        try {
+            response.setResponse(new Gson().toJson(stopTBService.getDrugMasterList()));
+        } catch (Exception e) {
+            logger.error("Error in getDrugMasterList: " + e);
+            response.setError(5000, "Error fetching drug master list: " + e.getMessage());
+        }
+        return response.toString();
+    }
 }

@@ -35,4 +35,8 @@ public interface StopTBService {
 
     // Nurse — submit
     Map<String, Object> submitNurseData(Map<String, Object> data) throws Exception;
+
+    // Master data
+    List<Map<String, Object>> getChiefComplaintMaster() throws Exception;
+    List<Map<String, Object>> getDrugMasterList() throws Exception;
 }
