@@ -78,4 +78,13 @@ public class StopTBGeneralOpd {
 
     @Column(name = "benVisitID")
     private Long benVisitID;
+
+    @Column(name = "chief_complaint_id")
+    private Integer chiefComplaintID;
+
+    @Column(name = "item_id")
+    private Integer itemID;
+
+    @Column(name = "dispensed_qty")
+    private Integer dispensedQty;
 }

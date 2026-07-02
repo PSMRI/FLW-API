@@ -34,8 +34,10 @@ import com.iemr.flw.repo.iemr.StopTBGeneralOpdRepo;
 import com.iemr.flw.repo.iemr.TBScreeningRepo;
 import com.iemr.flw.domain.iemr.StopTBChiefComplaintMaster;
 import com.iemr.flw.domain.iemr.VDrugPrescription;
+import com.iemr.flw.domain.iemr.ItemStockEntry;
 import com.iemr.flw.repo.iemr.StopTBChiefComplaintRepo;
 import com.iemr.flw.repo.iemr.VDrugPrescriptionRepo;
+import com.iemr.flw.repo.iemr.ItemStockEntryRepo;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.StopTBService;
 import com.iemr.flw.service.TBStopVisitService;
@@ -108,6 +110,9 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Autowired
     private VDrugPrescriptionRepo vDrugPrescriptionRepo;
+
+    @Autowired
+    private ItemStockEntryRepo itemStockEntryRepo;
 
     @Value("${tm-url}")
     private String tmUrl;
@@ -611,7 +616,10 @@ public class StopTBServiceImpl implements StopTBService {
             opd.setBenVisitID(visit.getBenVisitId());
             opd.setProviderServiceMapID(providerServiceMapID);
             opd.setChiefComplaint(toJsonString(data.get("chiefComplaint")));
+            opd.setChiefComplaintID(getInt(data, "chiefComplaintID"));
             opd.setMedication(getString(data, "medication"));
+            opd.setItemID(getInt(data, "itemID"));
+            opd.setDispensedQty(getInt(data, "dispensedQty"));
             opd.setDosage(getString(data, "dosage"));
             opd.setFrequency(getString(data, "frequency"));
             opd.setDuration(getString(data, "duration"));
@@ -626,6 +634,7 @@ public class StopTBServiceImpl implements StopTBService {
             if (isNew) {
                 generalOpdRepo.updateVanSerialNo(opd.getId());
                 dualWriteOpdToStandardTables(opd, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
+                deductStock(opd.getItemID(), opd.getDispensedQty());
             }
 
             Map<String, Object> result = new HashMap<>();
@@ -661,7 +670,10 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("beneficiaryRegID", o.getBenRegID());
         m.put("providerServiceMapID", o.getProviderServiceMapID());
         m.put("chiefComplaint", o.getChiefComplaint());
+        m.put("chiefComplaintID", o.getChiefComplaintID());
         m.put("medication", o.getMedication());
+        m.put("itemID", o.getItemID());
+        m.put("dispensedQty", o.getDispensedQty());
         m.put("dosage", o.getDosage());
         m.put("frequency", o.getFrequency());
         m.put("duration", o.getDuration());
@@ -987,6 +999,29 @@ public class StopTBServiceImpl implements StopTBService {
             prescribedDrugDetailRepo.save(d);
         } catch (Exception e) {
             logger.error("writePrescription failed for benRegID: " + beneficiaryRegID, e);
+        }
+    }
+
+    private void deductStock(Integer itemID, Integer qty) {
+        if (itemID == null || qty == null || qty <= 0) return;
+        try {
+            List<ItemStockEntry> entries = itemStockEntryRepo
+                    .findByFacilityIDAndItemIDAndDeletedFalseAndQuantityInHandGreaterThan(127, itemID, 0);
+            if (entries.isEmpty()) {
+                logger.warn("deductStock: no stock found for itemID={}, facilityID=127", itemID);
+                return;
+            }
+            int remaining = qty;
+            for (ItemStockEntry entry : entries) {
+                if (remaining <= 0) break;
+                int deduct = Math.min(remaining, entry.getQuantityInHand());
+                itemStockEntryRepo.subtractStock(entry.getItemStockEntryID(), deduct);
+                remaining -= deduct;
+            }
+            if (remaining > 0)
+                logger.warn("deductStock: insufficient stock for itemID={}, short by {}", itemID, remaining);
+        } catch (Exception e) {
+            logger.error("deductStock failed for itemID={}: {}", itemID, e.getMessage());
         }
     }
 
