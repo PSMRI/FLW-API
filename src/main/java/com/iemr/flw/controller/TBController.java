@@ -168,13 +168,16 @@ public class TBController {
     @Operation(summary = "get tb confirmed case by beneficiary id")
     @RequestMapping(value = { "/confirmed/getAll" }, method = { RequestMethod.GET })
     public String getConfirmedByBenId(
-            @RequestHeader(value = "jwtToken") String token) {
+            @RequestHeader(value = "jwtToken") String token,
+            @RequestParam(required = false) Integer providerServiceMapID,
+            @RequestParam(required = false) Integer villageID) {
 
         OutputResponse response = new OutputResponse();
 
         try {
-            String result =
-                    tbConfirmedCaseService.getByUserId(token);
+            String result = providerServiceMapID != null
+                    ? tbConfirmedCaseService.getByProviderServiceMapId(providerServiceMapID, villageID)
+                    : tbConfirmedCaseService.getByUserId(token);
 
             if (result != null)
                 response.setResponse(result);

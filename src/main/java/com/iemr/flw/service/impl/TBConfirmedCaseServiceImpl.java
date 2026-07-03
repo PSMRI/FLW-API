@@ -145,6 +145,16 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
     public String getByUserId(String authorisation) throws Exception {
         Integer userId = jwtUtil.extractUserId(authorisation);
         List<TBConfirmedCase> list = repository.findByUserId(userId);
+        return buildTbConfirmedCasesResponse(userId, list);
+    }
+
+    @Override
+    public String getByProviderServiceMapId(Integer providerServiceMapID, Integer villageID) throws Exception {
+        List<TBConfirmedCase> list = repository.getByProviderServiceMapIdAndVillageId(providerServiceMapID, villageID);
+        return buildTbConfirmedCasesResponse(null, list);
+    }
+
+    private String buildTbConfirmedCasesResponse(Integer userId, List<TBConfirmedCase> list) {
         List<TBConfirmedCaseDTO> dtoList = list.stream().map(this::toDTO).collect(Collectors.toList());
 
         List<Long> benIds = dtoList.stream().map(TBConfirmedCaseDTO::getBenId).collect(Collectors.toList());
