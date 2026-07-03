@@ -27,7 +27,7 @@ public class AshaWorker {
     private Integer employeeId;  // Changed from Integer to String
 
     @Column(name = "dob")
-    private LocalDate dob; // Changed from String to LocalDate
+    private String dob; // Changed from String to LocalDate
 
 
     @Column(name = "mobile_number")
@@ -40,7 +40,7 @@ public class AshaWorker {
     private String fatherOrSpouseName;
 
     @Column(name = "date_of_joining")
-    private LocalDate dateOfJoining; // Changed from String to LocalDate
+    private String dateOfJoining; // Changed from String to LocalDate
 
 
     @Column(name = "bank_account")
