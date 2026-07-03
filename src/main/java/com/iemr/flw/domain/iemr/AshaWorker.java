@@ -98,8 +98,9 @@ public class AshaWorker {
     @Column(name = "ProviderServiceMapID")
     private Integer ProviderServiceMapID;
 
+    @Lob
     @Column(name = "profileImage")
-    private String profileImage;
+    private byte[] profileImage;
 
     @Column(name = "isFatherOrSpouse")
     private Boolean isFatherOrSpouse;

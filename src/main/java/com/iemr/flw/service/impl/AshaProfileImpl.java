@@ -103,7 +103,7 @@ public class AshaProfileImpl implements AshaProfileService {
             ashaWorker.setMobileNumber(m_user.getContactNo());
             ashaWorker.setAlternateMobileNumber(m_user.getEmergencyContactNo());
             ashaWorker.setProviderServiceMapID(m_user.getServiceProviderID());
-            ashaWorker.setProfileImage("");
+            ashaWorker.setProfileImage(null);
             ashaWorker.setSupervisorName("");
             ashaWorker.setAwwName("");
             ashaWorker.setVillage("");
@@ -161,7 +161,7 @@ public class AshaProfileImpl implements AshaProfileService {
         if (isValid(request.getAwwMobile())) existing.setAwwMobile(request.getAwwMobile());
         if (request.getProviderServiceMapID() != null)
             existing.setProviderServiceMapID(request.getProviderServiceMapID());
-        if (isValid(request.getProfileImage())) existing.setProfileImage(request.getProfileImage());
+        if (isValidImage(request.getProfileImage())) existing.setProfileImage(request.getProfileImage());
         if (request.getIsFatherOrSpouse() != null) existing.setIsFatherOrSpouse(request.getIsFatherOrSpouse());
         if (isValid(request.getSupervisorName())) existing.setSupervisorName(request.getSupervisorName());
         if (isValid(request.getSupervisorMobile())) existing.setSupervisorMobile(request.getSupervisorMobile());
@@ -170,6 +170,10 @@ public class AshaProfileImpl implements AshaProfileService {
 
     private boolean isValid(String value) {
         return value != null && !value.trim().isEmpty() && !"null".equalsIgnoreCase(value.trim());
+    }
+
+    private boolean isValidImage(byte[] value) {
+        return value != null && value.length > 0;
     }
 
 
