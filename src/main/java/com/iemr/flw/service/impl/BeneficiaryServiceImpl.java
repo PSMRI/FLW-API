@@ -431,9 +431,9 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         String ageDetails = "";
                         int age_val = 0;
                         String ageUnit = null;
-                        if (benDetailsOBJ.getDob() != null) {
+                        if (benDetailsRMNCH_OBJ.getDob() != null) {
 
-                            Date date = new Date(benDetailsOBJ.getDob().getTime());
+                            Date date = new Date(benDetailsRMNCH_OBJ.getDob().getTime());
                             Calendar cal = Calendar.getInstance();
 
                             cal.setTime(date);
