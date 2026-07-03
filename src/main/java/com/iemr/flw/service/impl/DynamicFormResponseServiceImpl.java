@@ -135,7 +135,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         List<FormResponse> existing =
                 formResponseRepo.findByBeneficiaryIdAndFormId(request.getBeneficiaryId(), formId);
         FormResponse formResponse = existing.isEmpty()
-                ? createFormResponse(request, version, STATUS_SUBMITTED, now)
+                ? createFormResponse(request, version, STATUS_SUBMITTED, now, vanID, parkingPlaceID)
                 : existing.get(0);
 
         formResponse.setUpdatedBy(actor);
