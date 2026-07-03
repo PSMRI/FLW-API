@@ -92,13 +92,19 @@ public class AshaProfileImpl implements AshaProfileService {
             AshaWorker ashaWorker = new AshaWorker();
             ashaWorker.setEmployeeId(m_user.getUserID());
             // Convert DOB (Timestamp) to LocalDate
-            java.sql.Timestamp dobTimestamp = m_user.getDOB();
-            LocalDate dob = dobTimestamp != null ? dobTimestamp.toLocalDateTime().toLocalDate() : null;
-            ashaWorker.setDob(dob);
+            if(!m_user.getDOB().equals("null")){
+                java.sql.Timestamp dobTimestamp = m_user.getDOB();
+                LocalDate dob = dobTimestamp != null ? dobTimestamp.toLocalDateTime().toLocalDate() : null;
+                ashaWorker.setDob(dob);
+        }
+
             // Convert DOJ (Timestamp) to LocalDate
-            java.sql.Timestamp dojTimestamp = m_user.getDOJ();
-            LocalDate doj = dojTimestamp != null ? dojTimestamp.toLocalDateTime().toLocalDate() : LocalDate.now();
-            ashaWorker.setDateOfJoining(doj);
+            if(!m_user.getDOJ().equals("null")){
+                java.sql.Timestamp dojTimestamp = m_user.getDOJ();
+                LocalDate doj = dojTimestamp != null ? dojTimestamp.toLocalDateTime().toLocalDate() : LocalDate.now();
+                ashaWorker.setDateOfJoining(doj);
+            }
+
             ashaWorker.setName(String.format("%s %s", Objects.toString(m_user.getFirstName(), ""), Objects.toString(m_user.getLastName(), "")).trim());
             ashaWorker.setMobileNumber(m_user.getContactNo());
             ashaWorker.setAlternateMobileNumber(m_user.getEmergencyContactNo());
