@@ -86,7 +86,10 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
     @Override
     public String getByUserId(GetBenRequestHandler request) {
         List<TBSuspectedDTO> dtos = new ArrayList<>();
-        List<TBSuspected> tbSuspectedList = tbSuspectedRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
+        List<TBSuspected> tbSuspectedList = request.getProviderServiceMapID() != null
+                ? tbSuspectedRepo.getByProviderServiceMapIdAndVillageId(request.getProviderServiceMapID(), request.getVillageID(),
+                        request.getFromDate(), request.getToDate())
+                : tbSuspectedRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
         for (TBSuspected tbSuspected : tbSuspectedList) {
             TBSuspectedDTO dto = modelMapper.map(tbSuspected, TBSuspectedDTO.class);
             dto.setUpdateDate(tbSuspected.getLastModDate());
