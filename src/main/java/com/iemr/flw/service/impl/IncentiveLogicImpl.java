@@ -86,6 +86,38 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
     }
 
     @Override
+    public IncentiveActivityRecord incentiveForTbSuspected(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "INFORMANT_INCENTIVE";
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check Tb Suspected Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+    @Override
     public IncentiveActivityRecord incentiveForLeprosyMultibacillaryConfirmed(
             Long benId,
             Date treatmentStartDate,
@@ -229,6 +261,335 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
     }
 
     @Override
+    public IncentiveActivityRecord incentiveForChildBirthGap(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "FP_DELAY_2Y";
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check FP_DELAY_2Y Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForEyeSurgeyReferGovtHospital(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "NPCB_GOVT_CATARACT";
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.UMBRELLA_PROGRAMMES.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check Eye surgery Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForEyeSurgeyReferPrivateHospital(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "NPCB_PRIVATE_CATARACT";
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.UMBRELLA_PROGRAMMES.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check Eye surgery Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+
+
+    @Override
+    public IncentiveActivityRecord incentiveForGiveingIFA(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "NIPI_CHILDREN";
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentStartDate,
+                        userId);
+            }
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.CHILD_HEALTH.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check IFA Exception: ", e);
+            return null;
+        }    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForTbFollowUpIsDrTb(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "DRTB_TREATMENT";
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentStartDate,
+                        userId);
+            }
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.UMBRELLA_PROGRAMMES.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check TB Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForTbFollowUp(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "DSTB_TREATMENT";
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentStartDate,
+                        userId);
+            }
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.UMBRELLA_PROGRAMMES.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check TB Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForMalariaFollowUp(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "NVBDCP_MALARIA_TREATMENT";
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentStartDate,
+                        userId);
+            }
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.UMBRELLA_PROGRAMMES.getDisplayName(),
+                        benId,
+                        treatmentStartDate,
+                        treatmentEndDate,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check Eye surgery Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+    @Override
+    public IncentiveActivityRecord incentiveForSecondChildGap(Long benId, Timestamp secondChildDob, Timestamp secondChildDob1, Integer userId) {
+        try {
+            Integer stateCode = userService.getUserDetail(userId).getStateId();
+
+            if (stateCode == null) {
+                logger.warn("State code is null for user: {}", userId);
+                return null;
+            }
+
+            String activityName = "1st_2nd_CHILD_GAP";
+
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.ACTIVITY.getDisplayName(),
+                        benId,
+                        secondChildDob,
+                        secondChildDob1,
+                        userId);
+            }
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
+                return processIncentive(
+                        activityName,
+                        GroupName.FAMILY_PLANNING.getDisplayName(),
+                        benId,
+                        secondChildDob,
+                        secondChildDob1,
+                        userId);
+            }
+
+            // state not supported
+            logger.info("No incentive mapping for stateCode: {}", stateCode);
+            return null;
+
+        } catch (Exception e) {
+            logger.error("Check FP_DELAY_2Y Incentive Exception: ", e);
+            return null;
+        }
+    }
+
+
+
+    @Override
     public IncentiveActivityRecord incentiveForIdentificationLeprosy(Long benId, Date treatmentStartDate, Date treatmentEndDate, Integer userId) {
         try {
             Integer stateCode = userService.getUserDetail(userId).getStateId();
@@ -297,6 +658,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             Integer userId) {
 
         try {
+            String userName = userServiceRoleRepo.getUserNamedByUserId(userId);
 
             if (activity == null || benId == null || startDate == null || endDate == null) {
                 logger.warn("Invalid input for saving incentive");
@@ -325,11 +687,10 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             record.setUpdatedDate(startTimestamp);
             record.setStartDate(startTimestamp);
             record.setEndDate(endTimestamp);
-            record.setCreatedBy(userServiceRoleRepo.getUserNamedByUserId(userId));
-            record.setUpdatedBy(userServiceRoleRepo.getUserNamedByUserId(userId));
+            record.setCreatedBy(userName);
+            record.setUpdatedBy(userName);
             record.setBenId(benId);
             record.setAshaId(userId);
-            record.setName(activity.getName());
             record.setAmount(Long.valueOf(activity.getRate()));
 
             record = incentiveRecordRepo.save(record);

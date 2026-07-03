@@ -17,8 +17,13 @@ public interface ANCVisitRepo extends JpaRepository<ANCVisit, Long> {
     List<ANCVisit> getANCForPW(@Param("userId") String userId,
                                @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
+    @Query(value = "SELECT anc FROM  ANCVisit anc WHERE anc.createdBy = :userId and anc.isActive = true")
+    List<ANCVisit> getANCForPW(@Param("userId") String userId);
+
 
     @Query
-    ANCVisit findANCVisitByBenIdAndAncVisitAndIsActive(Long benId, Integer ancVisit, boolean b);
+    List<ANCVisit> findANCVisitByBenIdAndAncVisitAndIsActive(Long benId, Integer ancVisit, boolean b);
+
+    List<ANCVisit> findByBenId(Long benId);
 
 }

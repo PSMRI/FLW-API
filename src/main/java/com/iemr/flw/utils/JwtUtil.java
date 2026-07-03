@@ -90,13 +90,4 @@ public class JwtUtil {
 				.getPayload();
 	}
 
-	public String getUserNameFromStorage() {
-		return  userName;
-
-	}
-
-	public void setUserNameFromStorage(String loginUserName) {
-		  this.userName = loginUserName;
-
-	}
 }

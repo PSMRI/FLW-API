@@ -15,7 +15,9 @@ import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.IncentiveService;
 import com.iemr.flw.service.MaaMeetingService;
+import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +25,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -37,18 +41,23 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     private final Logger logger = LoggerFactory.getLogger(IncentiveServiceImpl.class);
 
-    @Autowired private BeneficiaryRepo beneficiaryRepo;
-    @Autowired private IncentiveActivityLangMappingRepo incentiveActivityLangMappingRepo;
-    @Autowired private IncentivesRepo incentivesRepo;
-    @Autowired private IncentiveRecordRepo recordRepo;
-    @Autowired private IncentivePendingActivityRepository incentivePendingActivityRepository;
-    @Autowired private UserServiceRoleRepo userRepo;
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
+    @Autowired
+    private IncentiveActivityLangMappingRepo incentiveActivityLangMappingRepo;
+    @Autowired
+    private IncentivesRepo incentivesRepo;
+    @Autowired
+    private IncentiveRecordRepo recordRepo;
+    @Autowired
+    private IncentivePendingActivityRepository incentivePendingActivityRepository;
+    @Autowired
+    private UserServiceRoleRepo userRepo;
     ;
     ModelMapper modelMapper = new ModelMapper();
 
     @Autowired
     private JwtUtil jwtUtil;
-
 
 
     @Autowired
@@ -59,6 +68,15 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Autowired
     private CbacIemrDetailsRepo cbacIemrDetailsRepo;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private EligibleCoupleRegisterRepo eligibleCoupleRegisterRepo;
+
+    @Autowired
+    private IFAFormSubmissionRepository ifaFormSubmissionRepository;
 
 
     // ================= MASTER SAVE =================
@@ -146,7 +164,13 @@ public class IncentiveServiceImpl implements IncentiveService {
                     }
 
                 } else {
-                    dto.setGroupName(inc.getGroup());
+                    if (isCG) {
+                        dto.setGroupName("");
+
+                    } else {
+                        dto.setGroupName(inc.getGroup());
+
+                    }
                 }
 
                 return dto;
@@ -163,28 +187,33 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
+
+        Integer stateCode = userService.getUserDetail(request.getAshaId()).getStateId();
+        String userName = userService.getUserDetail(request.getAshaId()).getUserName();
         try {
-            if (request.getVillageID() != StateCode.CG.getStateCode()) {
+
+            if (stateCode.equals(StateCode.AM.getStateCode())) {
                 checkMonthlyAshaIncentive(request.getAshaId());
             }
+            if (stateCode.equals(StateCode.CG.getStateCode())) {
+                checkMonthlyAshaIncentiveForCg(request.getAshaId());
+
+            }
+            checkIncentiveForChildGap(stateCode, userName);
+
         } catch (Exception e) {
             logger.error("Error in checkMonthlyAshaIncentive: ", e);
         }
 
         try {
-
+            addIncentiveForIronTablets(request.getAshaId());
             incentiveOfNcdReferal(request.getAshaId(), request.getVillageID());
 
         } catch (Exception e) {
             logger.error("Error in incentiveOfNcdReferal: ", e);
         }
 
-        Integer villageID = request.getVillageID();
-        boolean isCG = villageID != null && villageID.intValue() == StateCode.CG.getStateCode();
-
-        if (!isCG) {
-            checkMonthlyAshaIncentive(request.getAshaId());
-        }
+        boolean isCG = stateCode != null && stateCode.equals(StateCode.CG.getStateCode());
 
         // Step 1: Fetch all records for this ASHA
         List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getAshaId());
@@ -240,18 +269,18 @@ public class IncentiveServiceImpl implements IncentiveService {
                 } else {
                     entry.setName("");
                 }
-                if(entry.getVerifiedByUserId()!=null){
+                if (entry.getVerifiedByUserId() != null) {
                     entry.setSupervisorRole(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getRoleName());
                     entry.setVerifiedByUserName(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getName());
 
                 }
-                if(entry.getAshaId()!=null){
+                if (entry.getAshaId() != null) {
                     if (entry.getCreatedBy() == null) {
-                        entry.setCreatedBy(userRepo.getUserNamedByUserId(entry.getAshaId()));
+                        entry.setCreatedBy(userName);
                     }
 
                     if (entry.getUpdatedBy() == null) {
-                        entry.setUpdatedBy(userRepo.getUserNamedByUserId(entry.getAshaId()));
+                        entry.setUpdatedBy(userName);
                     }
 
                     if (entry.getIsEligible() == null) {
@@ -416,6 +445,7 @@ public class IncentiveServiceImpl implements IncentiveService {
             return null;
         }
     }
+
     @Override
     public String updateIncentive(PendingActivityDTO pendingActivityDTO) {
         try {
@@ -491,7 +521,6 @@ public class IncentiveServiceImpl implements IncentiveService {
     }
 
 
-
     // ================= UPDATE CLAIM =================
     @Transactional
     public String updateClaimStatus(Integer ashaId, Integer month, Integer year, Boolean isClaimed, String token) {
@@ -522,10 +551,12 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             Map<String, IncentiveActivity> activityMap =
                     incentivesRepo.findIncentiveMasterByNameAndGroup(
-                            List.of("NCD_POP_ENUMERATION", "NCD_FOLLOWUP_TREATMENT"), groupName
+                            List.of("NCD_POP_ENUMERATION", "HWC_REFERRAL_10_CASES"), groupName
                     ).stream().collect(Collectors.toMap(IncentiveActivity::getName, Function.identity()));
 
-            IncentiveActivity ncdPopEnumeration   = activityMap.get("NCD_POP_ENUMERATION");
+            IncentiveActivity ncdPopEnumeration = activityMap.get("NCD_POP_ENUMERATION");
+
+            IncentiveActivity hwcReferralEnumeration = activityMap.get("HWC_REFERRAL_10_CASES");
 
             CompletableFuture<List<BenReferDetails>> benReferFuture =
                     CompletableFuture.supplyAsync(() -> benReferDetailsRepo.findByCreatedBy(userName));
@@ -535,7 +566,6 @@ public class IncentiveServiceImpl implements IncentiveService {
             List<CbacDetailsImer> cbacDetailsImer = cbacFuture.get();
 
             List<IncentiveActivityRecord> recordsToSave = new ArrayList<>();
-
 
 
             if (ncdPopEnumeration != null && !cbacDetailsImer.isEmpty()) {
@@ -560,6 +590,30 @@ public class IncentiveServiceImpl implements IncentiveService {
                                 recordsToSave.add(addNCDandCBACIncentiveRecord(activity, ashaId, c.getBeneficiaryRegId(), c.getCreatedDate(), userName));
                             }
                         });
+            }
+
+            if (hwcReferralEnumeration != null) {
+                logger.info("hwcReferralEnumeration :" + hwcReferralEnumeration.getDescription());
+                logger.info("userName={}", userName);
+
+                LocalDate now = LocalDate.now();
+
+                Long referralCount = benReferDetailsRepo.countMonthlyReferrals(
+                        userName,
+                        now.getMonthValue(),
+                        now.getYear());
+
+                logger.info("referralCount :" + referralCount);
+
+
+                if (referralCount >= 10) {
+
+                    addHwcReferalAshaIncentiveRecord(
+                            hwcReferralEnumeration,
+                            ashaId,
+                            userName
+                    );
+                }
             }
 
             // ---- Single batch insert instead of N individual saves ----
@@ -607,15 +661,15 @@ public class IncentiveServiceImpl implements IncentiveService {
             IncentiveActivity ADDITIONAL_ASHA_INCENTIVE = incentivesRepo.findIncentiveMasterByNameAndGroup("ADDITIONAL_ASHA_INCENTIVE", GroupName.ADDITIONAL_INCENTIVE.getDisplayName());
             IncentiveActivity ASHA_MONTHLY_ROUTINE = incentivesRepo.findIncentiveMasterByNameAndGroup("ASHA_MONTHLY_ROUTINE", GroupName.ASHA_MONTHLY_ROUTINE.getDisplayName());
             if (MOBILEBILLREIMB_ACTIVITY != null) {
-                addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY, ashaId,userName);
+                addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY, ashaId, userName);
             }
             if (ADDITIONAL_ASHA_INCENTIVE != null) {
-                addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE, ashaId,userName);
+                addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE, ashaId, userName);
 
             }
 
             if (ASHA_MONTHLY_ROUTINE != null) {
-                addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId,userName);
+                addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId, userName);
 
             }
         } catch (Exception e) {
@@ -625,7 +679,33 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     }
 
-    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId,String userName) {
+    private void checkMonthlyAshaIncentiveForCg(Integer ashaId) {
+        try {
+            String userName = userRepo.getUserNamedByUserId(ashaId);
+
+            IncentiveActivity MONTHLY_HONORARIUM = incentivesRepo.findIncentiveMasterByNameAndGroup("MONTHLY_HONORARIUM", GroupName.ACTIVITY.getDisplayName());
+            IncentiveActivity MITANIN_REGISTER_5_INFO_FILL = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER_5_INFO_FILL", GroupName.ACTIVITY.getDisplayName());
+            IncentiveActivity MITANIN_REGISTER = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER", GroupName.ACTIVITY.getDisplayName());
+            if (MONTHLY_HONORARIUM != null) {
+                addMonthlyAshaIncentiveRecord(MONTHLY_HONORARIUM, ashaId, userName);
+            }
+            if (MITANIN_REGISTER_5_INFO_FILL != null) {
+                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER_5_INFO_FILL, ashaId, userName);
+
+            }
+
+            if (MITANIN_REGISTER != null) {
+                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER, ashaId, userName);
+
+            }
+        } catch (Exception e) {
+            logger.error("Error in addMonthlyAshaIncentiveRecord", e);
+
+        }
+
+    }
+
+    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId, String userName) {
         try {
             Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
 
@@ -663,4 +743,253 @@ public class IncentiveServiceImpl implements IncentiveService {
         }
 
     }
+
+    private void addHwcReferalAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId, String userName) {
+        try {
+            Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+
+            Timestamp startOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(1).atStartOfDay());
+            Timestamp endOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth()).atTime(23, 59, 59));
+
+            IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                    incentiveActivity.getId(),
+                    startOfMonth,
+                    endOfMonth,
+                    0L,
+                    ashaId
+            );
+
+
+            if (record == null) {
+                record = new IncentiveActivityRecord();
+                record.setActivityId(incentiveActivity.getId());
+                record.setCreatedDate(timestamp);
+                record.setCreatedBy(userName);
+                record.setStartDate(timestamp);
+                record.setEndDate(timestamp);
+                record.setUpdatedDate(timestamp);
+                record.setUpdatedBy(userName);
+                record.setBenId(0L);
+                record.setAshaId(ashaId);
+                record.setIsEligible(true);
+                record.setIsDefaultActivity(false);
+                record.setAmount(Long.valueOf(incentiveActivity.getRate()));
+                recordRepo.save(record);
+            }
+        } catch (Exception e) {
+            logger.error("Error in addMonthlyAshaIncentiveRecord", e);
+
+        }
+
+    }
+
+    private void addIncentiveForIronTablets(Integer userId) {
+        IncentiveActivity incentiveActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("NATIONAL_IRON_PLUS", GroupName.CHILD_HEALTH.getDisplayName());
+        IncentiveActivity incentiveActivityCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NATIONAL_IRON_PLUS", GroupName.ACTIVITY.getDisplayName());
+
+        String userName = userService.getUserDetail(userId).getUserName();
+        Integer stateId = userService.getUserDetail(userId).getStateId();
+        if (userName != null) {
+            List<EligibleCoupleRegister> eligibleCoupleRegisters = eligibleCoupleRegisterRepo.findByCreatedBy(userName);
+            List<IFAFormSubmissionData> ifaFormSubmissionData = ifaFormSubmissionRepository.findByUserId(userId);
+            logger.info("eligibleCoupleRegisters :" + eligibleCoupleRegisters.size());
+            logger.info("ifaFormSubmissionData :" + ifaFormSubmissionData.size());
+
+            if (!eligibleCoupleRegisters.isEmpty() && !ifaFormSubmissionData.isEmpty()) {
+
+                int percentage = (int) (((double) ifaFormSubmissionData.size()
+                        / eligibleCoupleRegisters.size()) * 100);
+
+                logger.info("IFA Count : {}", ifaFormSubmissionData.size());
+                logger.info("Eligible Couple Count : {}", eligibleCoupleRegisters.size());
+                logger.info("Percentage : {}", percentage);
+
+                if (percentage >= 50) {
+
+                    if (stateId.equals(StateCode.AM.getStateCode())) {
+                        addIFAIncentive(
+                                ifaFormSubmissionData.get(ifaFormSubmissionData.size() - 1),
+                                incentiveActivityAM,
+                                userId,
+                                userName);
+                    }
+
+                    if (stateId.equals(StateCode.CG.getStateCode())) {
+                        addIFAIncentive(
+                                ifaFormSubmissionData.get(ifaFormSubmissionData.size() - 1),
+                                incentiveActivityCG,
+                                userId,
+                                userName);
+                    }
+                }
+            }
+
+        }
+
+
+    }
+
+    private void addIFAIncentive(IFAFormSubmissionData ifaFormSubmissionData, IncentiveActivity incentiveActivityAM, Integer userId, String userName) {
+        Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+
+        Timestamp startOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(1).atStartOfDay());
+        Timestamp endOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth()).atTime(23, 59, 59));
+
+        logger.info("IFA incentive");
+        IncentiveActivityRecord incentiveActivityRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                incentiveActivityAM.getId(),
+                startOfMonth,
+                endOfMonth,
+                0L,
+                userId
+        );
+        if (incentiveActivityRecord == null) {
+            incentiveActivityRecord = new IncentiveActivityRecord();
+            incentiveActivityRecord.setActivityId(incentiveActivityAM.getId());
+            incentiveActivityRecord.setCreatedDate(timestamp);
+            incentiveActivityRecord.setStartDate(timestamp);
+            incentiveActivityRecord.setEndDate(timestamp);
+            incentiveActivityRecord.setUpdatedDate(timestamp);
+            incentiveActivityRecord.setUpdatedBy(ifaFormSubmissionData.getUserName());
+            incentiveActivityRecord.setCreatedBy(ifaFormSubmissionData.getUserName());
+            incentiveActivityRecord.setBenId(0L);
+            incentiveActivityRecord.setAshaId(userId);
+            incentiveActivityRecord.setAmount(Long.valueOf(incentiveActivityAM.getRate()));
+            recordRepo.save(incentiveActivityRecord);
+            logger.info("saved IFA incentive");
+
+        }
+    }
+
+    private void checkIncentiveForChildGap(Integer stateId, String userName) {
+
+        logger.info("Checking Child Gap Incentive for user: {}, stateId: {}", userName, stateId);
+
+        List<EligibleCoupleRegister> eligibleCoupleRegisters = eligibleCoupleRegisterRepo.findByCreatedBy(userName);
+
+        logger.info("Eligible Couple Records Found: {}", eligibleCoupleRegisters.size());
+
+        if (!eligibleCoupleRegisters.isEmpty()) {
+
+            eligibleCoupleRegisters.forEach(eligibleCoupleRegister -> {
+
+                logger.info(
+                        "Processing EligibleCoupleRegister -> BenId: {}, NumChildren: {}, MarriageFirstChildGap: {}, FirstAndSecondChildGap: {}",
+                        eligibleCoupleRegister.getBenId(),
+                        eligibleCoupleRegister.getNumChildren(),
+                        eligibleCoupleRegister.getMarriageFirstChildGap(),
+                        eligibleCoupleRegister.getFirstAndSecondChildGap());
+
+                // Marriage -> First Child Gap
+                if(eligibleCoupleRegister.getFirstAndSecondChildGap()!=null){
+                    if (eligibleCoupleRegister.getFirstAndSecondChildGap()>=3 ) {
+
+                        logger.info("Marriage -> First Child Gap condition matched.");
+
+                        if (stateId.equals(StateCode.AM.getStateCode())) {
+
+                            logger.info("Fetching incentive for Assam.");
+
+                            IncentiveActivity activity1 =
+                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                            "FP_DELAY_2Y",
+                                            GroupName.FAMILY_PLANNING.getDisplayName());
+
+                            logger.info("Incentive Activity: {}", activity1);
+
+                            createIncentiveRecord(eligibleCoupleRegister, activity1);
+
+                            logger.info("Marriage -> First Child Gap incentive created.");
+                        }
+
+                        if (stateId.equals(StateCode.CG.getStateCode())) {
+
+                            logger.info("Fetching incentive for Chhattisgarh.");
+
+                            IncentiveActivity activityCH =
+                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                            "FP_DELAY_2Y",
+                                            GroupName.ACTIVITY.getDisplayName());
+
+                            logger.info("Incentive Activity: {}", activityCH);
+
+                            createIncentiveRecord(eligibleCoupleRegister, activityCH);
+
+                            logger.info("Marriage -> First Child Gap incentive created.");
+                        }
+                    }
+                }
+
+
+                // First -> Second Child Gap
+                if(eligibleCoupleRegister.getMarriageFirstChildGap()!=null){
+                    if (eligibleCoupleRegister.getMarriageFirstChildGap()>=2) {
+
+                        logger.info("1st -> 2nd Child Gap condition matched.");
+
+                        if (stateId.equals(StateCode.AM.getStateCode())) {
+
+                            logger.info("Fetching incentive for Assam.");
+
+                            IncentiveActivity activity2 =
+                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                            "1st_2nd_CHILD_GAP",
+                                            GroupName.FAMILY_PLANNING.getDisplayName());
+
+                            logger.info("Incentive Activity: {}", activity2);
+
+                            createIncentiveRecord(eligibleCoupleRegister, activity2);
+
+                            logger.info("1st -> 2nd Child Gap incentive created.");
+                        }
+
+                        if (stateId.equals(StateCode.CG.getStateCode())) {
+
+                            logger.info("Fetching incentive for Chhattisgarh.");
+
+                            IncentiveActivity activityCH =
+                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                            "1st_2nd_CHILD_GAP",
+                                            GroupName.ACTIVITY.getDisplayName());
+
+                            logger.info("Incentive Activity: {}", activityCH);
+
+                            createIncentiveRecord(eligibleCoupleRegister, activityCH);
+
+                            logger.info("1st -> 2nd Child Gap incentive created.");
+                        }
+                    }
+                }
+
+            });
+
+        } else {
+            logger.info("No Eligible Couple Register records found for user: {}", userName);
+        }
+
+        logger.info("Completed Child Gap Incentive check for user: {}", userName);
+    }
+
+    private void createIncentiveRecord(EligibleCoupleRegister eligibleCoupleRegister, IncentiveActivity activity) {
+        if (activity != null) {
+            IncentiveActivityRecord record = recordRepo
+                    .findRecordByActivityIdCreatedDateBenId(activity.getId(), eligibleCoupleRegister.getCreatedDate(), eligibleCoupleRegister.getBenId());
+            Integer userId = userRepo.getUserIdByName(eligibleCoupleRegister.getCreatedBy());
+            if (record == null) {
+                record = new IncentiveActivityRecord();
+                record.setActivityId(activity.getId());
+                record.setCreatedDate(eligibleCoupleRegister.getCreatedDate());
+                record.setCreatedBy(eligibleCoupleRegister.getCreatedBy());
+                record.setStartDate(eligibleCoupleRegister.getCreatedDate());
+                record.setEndDate(eligibleCoupleRegister.getCreatedDate());
+                record.setUpdatedDate(eligibleCoupleRegister.getCreatedDate());
+                record.setUpdatedBy(eligibleCoupleRegister.getCreatedBy());
+                record.setBenId(eligibleCoupleRegister.getBenId());
+                record.setAshaId(userId);
+                record.setAmount(Long.valueOf(activity.getRate()));
+                recordRepo.save(record);
+            }
+        }
+    }
+
 }

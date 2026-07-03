@@ -5,6 +5,7 @@ import com.iemr.flw.domain.iemr.MalariaFollowUp;
 import com.iemr.flw.dto.iemr.MalariaFollowListUpDTO;
 import com.iemr.flw.dto.iemr.MalariaFollowUpDTO;
 import com.iemr.flw.repo.iemr.MalariaFollowUpRepository;
+import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.MalariaFollowUpService;
 import com.iemr.flw.utils.JwtUtil;
 import io.jsonwebtoken.Jwt;
@@ -15,6 +16,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +26,9 @@ public class MalariaFollowUpServiceImpl implements MalariaFollowUpService {
 
     @Autowired
     private MalariaFollowUpRepository repository;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
 
     private final Logger logger = LoggerFactory.getLogger(MalariaFollowUpServiceImpl.class);
 
@@ -42,16 +47,20 @@ public class MalariaFollowUpServiceImpl implements MalariaFollowUpService {
                   return false;
               }
 
-              if (dto.getReferralDate() != null &&
-                      dto.getReferralDate().before(dto.getTreatmentStartDate())) {
-                  return false;
-              }
-
 
               dto.setUserId(jwtUtil.extractUserId(token));
               MalariaFollowUp entity = new MalariaFollowUp();
               BeanUtils.copyProperties(dto, entity);
               repository.save(entity);
+              if(entity!=null){
+                  incentiveLogicService.incentiveForMalariaFollowUp(
+                          entity.getBenId(),
+                          new Timestamp(entity.getTreatmentStartDate().getTime()),
+                          new Timestamp(entity.getTreatmentCompletionDate().getTime()),
+                          entity.getUserId()
+                  );
+              }
+
               return true;
           }
       }catch (Exception e){

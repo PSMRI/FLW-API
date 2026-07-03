@@ -226,20 +226,64 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         VHNDForm vhndForm = new VHNDForm();
         vhndForm.setUserId(userID);
         vhndForm.setVhndDate(vhndFormDTO.getVhndDate());
-        vhndForm.setImage2(vhndFormDTO.getImage2());
-        vhndForm.setImage1(vhndFormDTO.getImage1());
-        vhndForm.setPlace(vhndFormDTO.getPlace());
-        vhndForm.setNoOfBeneficiariesAttended(vhndFormDTO.getNoOfBeneficiariesAttended());
-        vhndForm.setPregnantWomenAnc(vhndFormDTO.getPregnantWomenAnc());
-        vhndForm.setLactatingMothersPnc(vhndFormDTO.getLactatingMothersPnc());
-        vhndForm.setChildrenImmunization(vhndFormDTO.getChildrenImmunization());
-        vhndForm.setSelectAllEducation(vhndFormDTO.getSelectAllEducation());
-        vhndForm.setKnowledgeBalancedDiet(vhndFormDTO.getKnowledgeBalancedDiet());
-        vhndForm.setCareDuringPregnancy(vhndFormDTO.getCareDuringPregnancy());
-        vhndForm.setImportanceBreastfeeding(vhndFormDTO.getImportanceBreastfeeding());
-        vhndForm.setComplementaryFeeding(vhndFormDTO.getComplementaryFeeding());
-        vhndForm.setHygieneSanitation(vhndFormDTO.getHygieneSanitation());
-        vhndForm.setFamilyPlanningHealthcare(vhndFormDTO.getFamilyPlanningHealthcare());
+        vhndForm.setImage2(vhndFormDTO.getImage2() != null ? vhndFormDTO.getImage2() : "");
+        vhndForm.setImage1(vhndFormDTO.getImage1() != null ? vhndFormDTO.getImage1() : "");
+        vhndForm.setPlace(vhndFormDTO.getPlace() != null ? vhndFormDTO.getPlace() : "");
+
+        vhndForm.setNoOfBeneficiariesAttended(
+                vhndFormDTO.getNoOfBeneficiariesAttended() != null
+                        ? vhndFormDTO.getNoOfBeneficiariesAttended()
+                        : 0);
+
+        vhndForm.setPregnantWomenAnc(
+                vhndFormDTO.getPregnantWomenAnc() != null
+                        ? vhndFormDTO.getPregnantWomenAnc()
+                        : null);
+
+        vhndForm.setLactatingMothersPnc(
+                vhndFormDTO.getLactatingMothersPnc() != null
+                        ? vhndFormDTO.getLactatingMothersPnc()
+                        : null);
+
+        vhndForm.setChildrenImmunization(
+                vhndFormDTO.getChildrenImmunization() != null
+                        ? vhndFormDTO.getChildrenImmunization()
+                        : null);
+
+        vhndForm.setSelectAllEducation(
+                vhndFormDTO.getSelectAllEducation() != null
+                        ? vhndFormDTO.getSelectAllEducation()
+                        : false);
+
+        vhndForm.setKnowledgeBalancedDiet(
+                vhndFormDTO.getKnowledgeBalancedDiet() != null
+                        ? vhndFormDTO.getKnowledgeBalancedDiet()
+                        : null);
+
+        vhndForm.setCareDuringPregnancy(
+                vhndFormDTO.getCareDuringPregnancy() != null
+                        ? vhndFormDTO.getCareDuringPregnancy()
+                        : null);
+
+        vhndForm.setImportanceBreastfeeding(
+                vhndFormDTO.getImportanceBreastfeeding() != null
+                        ? vhndFormDTO.getImportanceBreastfeeding()
+                        : null);
+
+        vhndForm.setComplementaryFeeding(
+                vhndFormDTO.getComplementaryFeeding() != null
+                        ? vhndFormDTO.getComplementaryFeeding()
+                        : null);
+
+        vhndForm.setHygieneSanitation(
+                vhndFormDTO.getHygieneSanitation() != null
+                        ? vhndFormDTO.getHygieneSanitation()
+                        : null);
+
+        vhndForm.setFamilyPlanningHealthcare(
+                vhndFormDTO.getFamilyPlanningHealthcare() != null
+                        ? vhndFormDTO.getFamilyPlanningHealthcare()
+                        : null);
         vhndForm.setFormType("VHND");
         vhndRepo.save(vhndForm);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
@@ -248,6 +292,7 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
         Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
         incentiveLogicService.incentiveForVhndMeeting(0L,date,date,vhndForm.getUserId());
+
         return true;
 
 
@@ -288,6 +333,8 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
 
     private void checkAndAddIncentives(String date, Integer userID, String formType, String createdBY) {
+        String userName = userRepo.getUserNamedByUserId(userID);
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
         // Parse to LocalDate
@@ -309,11 +356,11 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
                 record = new IncentiveActivityRecord();
                 record.setActivityId(villageFormEntryActivityAM.getId());
                 record.setCreatedDate(timestamp);
-                record.setCreatedBy(userRepo.getUserNamedByUserId(userID));
+                record.setCreatedBy(userName);
                 record.setStartDate(timestamp);
                 record.setEndDate(timestamp);
                 record.setUpdatedDate(timestamp);
-                record.setUpdatedBy(userRepo.getUserNamedByUserId(userID));
+                record.setUpdatedBy(userName);
                 record.setAshaId(userID);
                 record.setBenId(0L);
                 record.setAmount(Long.valueOf(villageFormEntryActivityAM.getRate()));
@@ -321,7 +368,6 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
             }
         }
-
         if (villageFormEntryActivityCH != null) {
             IncentiveActivityRecord record = recordRepo
                     .findRecordByActivityIdCreatedDateBenId(villageFormEntryActivityCH.getId(), timestamp, 0L,userID);
@@ -329,12 +375,12 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
                 record = new IncentiveActivityRecord();
                 record.setActivityId(villageFormEntryActivityCH.getId());
                 record.setCreatedDate(timestamp);
-                record.setCreatedBy(userRepo.getUserNamedByUserId(userID));
+                record.setCreatedBy(userName);
                 record.setStartDate(timestamp);
                 record.setEndDate(timestamp);
                 record.setBenId(0L);
                 record.setUpdatedDate(timestamp);
-                record.setUpdatedBy(userRepo.getUserNamedByUserId(userID));
+                record.setUpdatedBy(userName);
                 record.setAshaId(userID);
                 record.setAmount(Long.valueOf(villageFormEntryActivityCH.getRate()));
                 recordRepo.save(record);

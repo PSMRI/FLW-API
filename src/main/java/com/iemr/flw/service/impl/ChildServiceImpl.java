@@ -2,18 +2,24 @@ package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.iemr.flw.domain.identity.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.flw.domain.iemr.ChildRegister;
+import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
+import com.iemr.flw.domain.iemr.UserServiceRole;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.ChildRegisterDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.ChildRegisterRepo;
+import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.ChildService;
+import com.iemr.flw.service.IncentiveLogicService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,6 +34,12 @@ public class ChildServiceImpl implements ChildService {
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
 
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
+
+    @Autowired
+    private UserServiceRoleRepo userServiceRoleRepo;
+
     public String getByUserId(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
@@ -38,6 +50,7 @@ public class ChildServiceImpl implements ChildService {
 //                ChildRegisterDTO childDTO = modelMapper.map(childRegister, ChildRegisterDTO.class);
 //                result.add(childDTO);
 //            });
+
             List<ChildRegisterDTO> result = childRegisterList.stream()
                     .map(childRegister -> modelMapper.map(childRegister, ChildRegisterDTO.class))
                     .collect(Collectors.toList());
@@ -68,6 +81,68 @@ public class ChildServiceImpl implements ChildService {
             listToBeSaved.add(childRegister);
         });
         childRepo.saveAll(listToBeSaved);
+        for (ChildRegister childRegister : listToBeSaved) {
+            processFirstChildIncentive(childRegister);
+        }
+        for (ChildRegister childRegister : listToBeSaved) {
+            processSecondChildGapIncentive(childRegister);
+        }
         return "no of child details saved: " + childRegisterDTOs.size();
+    }
+
+    public void processFirstChildIncentive(ChildRegister childRegister) {
+        Long benId = childRegister.getBenId();
+        logger.info("Child register {}"+childRegister.getBenId());
+
+      // First child validation
+        List<ChildRegister> childCount = childRepo.findByBenId(benId);
+
+
+        if(!childCount.isEmpty()){
+            logger.info("Child register {}"+childCount.size());
+
+            if(childCount.size()==1){
+                 Integer userId =
+                         userServiceRoleRepo.getUserIdByName(childRegister.getCreatedBy());
+
+                 incentiveLogicService.incentiveForChildBirthGap(
+                         benId,
+                         childRegister.getCreatedDate(),
+                         childRegister.getCreatedDate(),
+                         userId
+                 );
+             }
+         }
+
+
+
+    }
+
+    private void processSecondChildGapIncentive(ChildRegister currentChild) {
+
+        Long benId = currentChild.getBenId();
+
+        // Total children count
+        List<ChildRegister> childCount = childRepo.findByBenId(benId);
+
+        // Applicable only for second child
+
+         if(!childCount.isEmpty()){
+             if(childCount.size()==2){
+                 Integer userId =
+                         userServiceRoleRepo.getUserIdByName(
+                                 currentChild.getCreatedBy());
+
+                 incentiveLogicService.incentiveForSecondChildGap(
+                         benId,
+                         currentChild.getCreatedDate(),
+                         currentChild.getCreatedDate(),
+                         userId
+                 );
+             }
+         }
+
+
+
     }
 }
