@@ -165,7 +165,7 @@ public class AshaProfileImpl implements AshaProfileService {
         if (request.getIsFatherOrSpouse() != null) existing.setIsFatherOrSpouse(request.getIsFatherOrSpouse());
         if (isValid(request.getSupervisorName())) existing.setSupervisorName(request.getSupervisorName());
         if (isValid(request.getSupervisorMobile())) existing.setSupervisorMobile(request.getSupervisorMobile());
-        return existing;
+        return ashaProfileRepo.save(existing);
     }
 
     private boolean isValid(String value) {
