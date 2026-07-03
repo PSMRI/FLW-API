@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.data.redis.core.RedisTemplate;
 
@@ -45,14 +46,12 @@ public class AshaProfileImpl implements AshaProfileService {
         try {
             Objects.requireNonNull(request, "ASHA worker request must not be null");
 
-            Long id = request.getId();
+            Optional<AshaWorker> ashaWorker = ashaProfileRepo.findByEmployeeId(request.getEmployeeId());
 
             // ---------- CREATE Case ----------
-            if (id == null || id == 0) {
-                // treat id=0 as null (frontend mistake)
-                if (id != null && id == 0) {
-                    request.setId(null);
-                }
+            if (!ashaWorker.isPresent()) {
+                request.setId(null);
+
 
                 AshaWorker saved = saveProfile(request);
                 logger.info("Created ASHA Worker: {}", saved.getId());
