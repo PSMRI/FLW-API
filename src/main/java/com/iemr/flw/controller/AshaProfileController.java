@@ -62,18 +62,18 @@ public class AshaProfileController {
         try {
             String jwtFromHeader = request.getHeader("JwtToken");
 
-            // Validate JWT header presence
-//            if (jwtFromHeader == null || jwtFromHeader.trim().isEmpty()) {
-//                response.put("statusCode", 401);
-//                response.put("status", "Unauthorized");
-//                response.put("errorMessage", "JWT token is missing");
-//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-//            }
+//             Validate JWT header presence
+            if (jwtFromHeader == null || jwtFromHeader.trim().isEmpty()) {
+                response.put("statusCode", 401);
+                response.put("status", "Unauthorized");
+                response.put("errorMessage", "JWT token is missing");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
 
             // Extract and validate user ID from JWT
-           // int userId = jwtUtil.extractUserId(jwtFromHeader); // Make sure this returns 0 or throws for invalid token
+            int userId = jwtUtil.extractUserId(jwtFromHeader); // Make sure this returns 0 or throws for invalid token
 
-            if (employeeId == 0) {
+            if (userId == 0) {
                 response.put("statusCode", 401);
                 response.put("status", "Unauthorized");
                 response.put("errorMessage", "Invalid JWT token");
@@ -81,7 +81,7 @@ public class AshaProfileController {
             }
 
             // Business logic
-            AshaWorker ashaWorker = ashaProfileService.getProfileData(employeeId);
+            AshaWorker ashaWorker = ashaProfileService.getProfileData(userId);
             logger.info("Asha Profile"+ashaWorker);
 
             response.put("statusCode", 200);
