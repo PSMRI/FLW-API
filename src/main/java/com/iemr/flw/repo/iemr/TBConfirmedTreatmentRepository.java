@@ -19,6 +19,10 @@ public interface TBConfirmedTreatmentRepository
     List<TBConfirmedCase> findByUserId(Integer benId);
     List<TBConfirmedCase> findByBenIdAndVisitCode(Long benId, Long visitCode);
 
+    @Query("SELECT tc FROM TBConfirmedCase tc WHERE tc.benId IN " +
+            "(SELECT b.beneficiaryRegID FROM BenFlowStatus b WHERE b.providerServiceMapId = :psmId AND b.villageID = :villageId)")
+    List<TBConfirmedCase> getByProviderServiceMapIdAndVillageId(@Param("psmId") Integer psmId, @Param("villageId") Integer villageId);
+
     @Transactional
     @Modifying
     @Query("UPDATE TBConfirmedCase t SET t.vanSerialNo = t.id WHERE t.id = :id")

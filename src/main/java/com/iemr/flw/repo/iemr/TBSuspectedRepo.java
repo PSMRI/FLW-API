@@ -27,6 +27,12 @@ public interface TBSuspectedRepo extends JpaRepository<TBSuspected, Long> {
     @Query("SELECT tbs FROM TBSuspected tbs WHERE tbs.userId = :userId and tbs.visitDate >= :fromDate and tbs.visitDate <= :toDate")
     List<TBSuspected> getByUserId(@Param("userId") Integer userId, @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
+    @Query("SELECT tbs FROM TBSuspected tbs WHERE tbs.benId IN " +
+            "(SELECT b.beneficiaryRegID FROM BenFlowStatus b WHERE b.providerServiceMapId = :psmId AND b.villageID = :villageId) " +
+            "AND tbs.visitDate >= :fromDate and tbs.visitDate <= :toDate")
+    List<TBSuspected> getByProviderServiceMapIdAndVillageId(@Param("psmId") Integer psmId, @Param("villageId") Integer villageId,
+                                                              @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
+
     @Transactional
     @Modifying
     @Query("UPDATE TBSuspected t SET t.vanSerialNo = t.id WHERE t.id = :id")
