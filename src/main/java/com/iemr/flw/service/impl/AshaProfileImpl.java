@@ -54,7 +54,7 @@ public class AshaProfileImpl implements AshaProfileService {
                     request.setId(null);
                 }
 
-                AshaWorker saved = ashaProfileRepo.save(request);
+                AshaWorker saved = saveProfile(request);
                 logger.info("Created ASHA Worker: {}", saved.getId());
                 return saved;
             }
@@ -138,8 +138,104 @@ public class AshaProfileImpl implements AshaProfileService {
             throw new RuntimeException("Failed to create ASHA worker profile from user details", e);
         }
     }
+    @Transactional
+    public AshaWorker saveProfile(AshaWorker request) {
+        logger.info("Saving ASHA Profile for EmployeeId: {}", request.getEmployeeId());
 
-    public AshaWorker updateProfile(AshaWorker request) {
+        logger.info("Received DOB: {}", request.getDob());
+        logger.info("Received Date Of Joining: {}", request.getDateOfJoining());
+
+        AshaWorker existing = ashaProfileRepo
+                .findByEmployeeId(request.getEmployeeId())
+                .orElse(new AshaWorker());
+
+        if (isValid(request.getName()))
+            existing.setName(request.getName());
+
+        if (isValid(request.getVillage()))
+            existing.setVillage(request.getVillage());
+
+        if (request.getEmployeeId() != null)
+            existing.setEmployeeId(request.getEmployeeId());
+
+        // Save even if null
+           existing.setDob(request.getDob());
+
+        if (isValid(request.getMobileNumber()))
+            existing.setMobileNumber(request.getMobileNumber());
+
+        if (isValid(request.getAlternateMobileNumber()))
+            existing.setAlternateMobileNumber(request.getAlternateMobileNumber());
+
+        if (isValid(request.getFatherOrSpouseName()))
+            existing.setFatherOrSpouseName(request.getFatherOrSpouseName());
+
+        // Save even if null
+        existing.setDateOfJoining(request.getDateOfJoining());
+
+        if (isValid(request.getBankAccount()))
+            existing.setBankAccount(request.getBankAccount());
+
+        if (isValid(request.getIfsc()))
+            existing.setIfsc(request.getIfsc());
+
+        if (request.getPopulationCovered() != null)
+            existing.setPopulationCovered(request.getPopulationCovered());
+
+        if (isValid(request.getChoName()))
+            existing.setChoName(request.getChoName());
+
+        if (isValid(request.getChoMobile()))
+            existing.setChoMobile(request.getChoMobile());
+
+        if (isValid(request.getAwwName()))
+            existing.setAwwName(request.getAwwName());
+
+        if (isValid(request.getAwwMobile()))
+            existing.setAwwMobile(request.getAwwMobile());
+
+        if (isValid(request.getAnm1Name()))
+            existing.setAnm1Name(request.getAnm1Name());
+
+        if (isValid(request.getAnm1Mobile()))
+            existing.setAnm1Mobile(request.getAnm1Mobile());
+
+        if (isValid(request.getAnm2Name()))
+            existing.setAnm2Name(request.getAnm2Name());
+
+        if (isValid(request.getAnm2Mobile()))
+            existing.setAnm2Mobile(request.getAnm2Mobile());
+
+        if (isValid(request.getAbhaNumber()))
+            existing.setAbhaNumber(request.getAbhaNumber());
+
+        if (isValid(request.getAshaHouseholdRegistration()))
+            existing.setAshaHouseholdRegistration(request.getAshaHouseholdRegistration());
+
+        if (isValid(request.getAshaFamilyMember()))
+            existing.setAshaFamilyMember(request.getAshaFamilyMember());
+
+        if (request.getProviderServiceMapID() != null)
+            existing.setProviderServiceMapID(request.getProviderServiceMapID());
+
+        if (request.getProfileImage() != null && request.getProfileImage().length > 0)
+            existing.setProfileImage(request.getProfileImage());
+
+        if (request.getIsFatherOrSpouse() != null)
+            existing.setIsFatherOrSpouse(request.getIsFatherOrSpouse());
+
+        if (isValid(request.getSupervisorName()))
+            existing.setSupervisorName(request.getSupervisorName());
+
+        if (isValid(request.getSupervisorMobile()))
+            existing.setSupervisorMobile(request.getSupervisorMobile());
+
+        return ashaProfileRepo.save(existing);
+    }
+
+
+
+        public AshaWorker updateProfile(AshaWorker request) {
         AshaWorker existing = ashaProfileRepo.findByEmployeeId(request.getEmployeeId()).orElseThrow(() -> new RuntimeException("ASHA worker not found"));
         if (isValid(request.getAbhaNumber())) existing.setAbhaNumber(request.getAbhaNumber());
         if (request.getEmployeeId() != null) existing.setEmployeeId(request.getEmployeeId());
