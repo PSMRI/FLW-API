@@ -2,12 +2,14 @@ package com.iemr.flw.service.impl;
 
 import com.iemr.flw.domain.iemr.AshaWorker;
 import com.iemr.flw.domain.iemr.User;
+import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
 import com.iemr.flw.repo.iemr.AshaProfileRepo;
 import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.AshaProfileService;
 import com.iemr.flw.service.EmployeeMasterInter;
 
 import com.iemr.flw.repo.iemr.EmployeeMasterRepo;
+import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtAuthenticationUtil;
 import com.iemr.flw.utils.JwtUtil;
 import jakarta.transaction.Transactional;
@@ -38,6 +40,9 @@ public class AshaProfileImpl implements AshaProfileService {
     JwtAuthenticationUtil jwtAuthenticationUtil;
     @Autowired
     private UserServiceRoleRepo userServiceRoleRepo;
+
+    @Autowired
+    private  UserService userService;
     private final Logger logger = LoggerFactory.getLogger(AshaProfileImpl.class);
 
     @Transactional
@@ -52,7 +57,10 @@ public class AshaProfileImpl implements AshaProfileService {
             if (!ashaWorker.isPresent()) {
                 request.setId(null);
 
-
+                UserServiceRoleDTO userServiceRoleDTO=  userService.getUserDetail(request.getEmployeeId());
+                if(userServiceRoleDTO!=null){
+                    request.setName(userServiceRoleDTO.getName());
+                }
                 AshaWorker saved = saveProfile(request);
                 logger.info("Created ASHA Worker: {}", saved.getId());
                 return saved;
