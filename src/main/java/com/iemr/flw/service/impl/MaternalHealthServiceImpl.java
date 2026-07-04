@@ -29,6 +29,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -90,6 +91,9 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
     public static final List<String> PNC_PERIODS =
             Arrays.asList("1st Day", "3rd Day", "7th Day", "14th Day", "21st Day", "28th Day", "42nd Day");
+
+    private final ConcurrentHashMap<String, Object> lockMap = new ConcurrentHashMap<>();
+
 
     @Override
     public String registerPregnantWoman(List<PregnantWomanDTO> pregnantWomanDTOs) {
@@ -723,25 +727,35 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
     }
 
-    private void addIncenticeRecord(PNCVisit ect, Integer userId, IncentiveActivity antaraActivity) {
-        IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(antaraActivity.getId(), ect.getCreatedDate(), ect.getBenId());
-        // get bene details
 
-        if (record == null) {
-            record = new IncentiveActivityRecord();
-            record.setActivityId(antaraActivity.getId());
-            record.setCreatedDate(ect.getPncDate());
-            record.setCreatedBy(ect.getCreatedBy());
-            record.setStartDate(ect.getPncDate());
-            record.setEndDate(ect.getPncDate());
-            record.setUpdatedDate(ect.getPncDate());
-            record.setUpdatedBy(ect.getCreatedBy());
-            record.setBenId(ect.getBenId());
-            record.setAshaId(userId);
-            record.setAmount(Long.valueOf(antaraActivity.getRate()));
-            recordRepo.save(record);
+    @Transactional
+    private void addIncenticeRecord(PNCVisit ect, Integer userId, IncentiveActivity antaraActivity) {
+
+        String lockKey = antaraActivity.getId() + "_" + ect.getBenId() + "_" + ect.getPncDate();
+
+        Object lock = lockMap.computeIfAbsent(lockKey, k -> new Object());
+
+        synchronized (lock) {
+            IncentiveActivityRecord record = recordRepo
+                    .findRecordByActivityIdCreatedDateBenId(antaraActivity.getId(), ect.getPncDate(), ect.getBenId());
+
+            if (record == null) {
+                record = new IncentiveActivityRecord();
+                record.setActivityId(antaraActivity.getId());
+                record.setCreatedDate(ect.getPncDate());
+                record.setCreatedBy(ect.getCreatedBy());
+                record.setStartDate(ect.getPncDate());
+                record.setEndDate(ect.getPncDate());
+                record.setUpdatedDate(ect.getPncDate());
+                record.setUpdatedBy(ect.getCreatedBy());
+                record.setBenId(ect.getBenId());
+                record.setAshaId(userId);
+                record.setAmount(Long.valueOf(antaraActivity.getRate()));
+                recordRepo.save(record);
+            }
         }
+
+        lockMap.remove(lockKey, lock);
     }
 
 
