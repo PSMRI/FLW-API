@@ -66,7 +66,6 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     entity.setReasonForNotCompleting(dto.getReasonForNotCompleting());
                     if(entity!=null){
                         repository.save(entity);
-
                         checkIncentive(entity);
 
                     }

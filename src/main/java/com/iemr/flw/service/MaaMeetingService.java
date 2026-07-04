@@ -239,20 +239,23 @@ public class MaaMeetingService {
             record.setBenId(0L);
             record.setAshaId(meeting.getAshaId());
             record.setAmount(Long.valueOf(incentiveActivity.getRate()));
+            record.setIsEligible(true);
+            recordRepo.save(record);
 
-            if (meeting.getMeetingImagesJson() != null) {
-                record.setIsEligible(true);
-                recordRepo.save(record);
 
-            } else {
-                record.setIsEligible(false);
-                IncentiveActivityRecord activityRecord = recordRepo.save(record);
-                if (activityRecord != null) {
-                    updatePendingActivity(meeting.getAshaId(), meeting.getId(), activityRecord.getId(), incentiveActivity.getId());
-
-                }
-
-            }
+//            if (meeting.getMeetingImagesJson() != null) {
+//                record.setIsEligible(true);
+//                recordRepo.save(record);
+//
+//            } else {
+//                record.setIsEligible(false);
+//                IncentiveActivityRecord activityRecord = recordRepo.save(record);
+//                if (activityRecord != null) {
+//                    updatePendingActivity(meeting.getAshaId(), meeting.getId(), activityRecord.getId(), incentiveActivity.getId());
+//
+//                }
+//
+//            }
         }
 
     }
