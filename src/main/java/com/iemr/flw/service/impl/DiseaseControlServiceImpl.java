@@ -305,8 +305,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     IncentiveActivityRecord incentiveActivityRecord =
                             incentiveLogicService.incentiveForIdentificationLeprosy(
                                     screeningLeprosy.getBenId(),
-                                    screeningLeprosy.getTreatmentStartDate(),
-                                    screeningLeprosy.getTreatmentEndDate(),
+                                    screeningLeprosy.getHomeVisitDate(),
+                                    screeningLeprosy.getHomeVisitDate(),
                                     diseaseControlDTO.getUserId());
 
                     if (incentiveActivityRecord != null) {
@@ -322,8 +322,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                             IncentiveActivityRecord incentiveActivityRecord =
                                     incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
                                             screeningLeprosy.getBenId(),
-                                            screeningLeprosy.getTreatmentStartDate(),
-                                            screeningLeprosy.getTreatmentEndDate(),
+                                            screeningLeprosy.getHomeVisitDate(),
+                                            screeningLeprosy.getHomeVisitDate(),
                                             diseaseControlDTO.getUserId());
 
                             if (incentiveActivityRecord != null) {
@@ -338,8 +338,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                             IncentiveActivityRecord incentiveActivityRecord =
                                     incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
                                             screeningLeprosy.getBenId(),
-                                            screeningLeprosy.getTreatmentStartDate(),
-                                            screeningLeprosy.getTreatmentEndDate(),
+                                            screeningLeprosy.getHomeVisitDate(),
+                                            screeningLeprosy.getHomeVisitDate(),
                                             diseaseControlDTO.getUserId());
 
                             if (incentiveActivityRecord != null) {
