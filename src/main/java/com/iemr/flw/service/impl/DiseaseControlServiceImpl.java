@@ -322,7 +322,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                             IncentiveActivityRecord incentiveActivityRecord =
                                     incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
                                             screeningLeprosy.getBenId(),
-                                            screeningLeprosy.getTreatmentStartDate(),
+                                            screeningLeprosy.getTreatmentEndDate(),
                                             screeningLeprosy.getTreatmentEndDate(),
                                             diseaseControlDTO.getUserId());
 
@@ -338,7 +338,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                             IncentiveActivityRecord incentiveActivityRecord =
                                     incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
                                             screeningLeprosy.getBenId(),
-                                            screeningLeprosy.getTreatmentStartDate(),
+                                            screeningLeprosy.getTreatmentEndDate(),
                                             screeningLeprosy.getTreatmentEndDate(),
                                             diseaseControlDTO.getUserId());
 
@@ -470,7 +470,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     IncentiveActivityRecord incentiveActivityRecord =
                             incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
                                     screeningLeprosy.getBenId(),
-                                    screeningLeprosy.getTreatmentStartDate(),
+                                    screeningLeprosy.getTreatmentEndDate(),
                                     screeningLeprosy.getTreatmentEndDate(),
                                     userId);
 
@@ -486,7 +486,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     IncentiveActivityRecord incentiveActivityRecord =
                             incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
                                     screeningLeprosy.getBenId(),
-                                    screeningLeprosy.getTreatmentStartDate(),
+                                    screeningLeprosy.getTreatmentEndDate(),
                                     screeningLeprosy.getTreatmentEndDate(),
                                     userId);
 
