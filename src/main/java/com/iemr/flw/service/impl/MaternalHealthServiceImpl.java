@@ -375,11 +375,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<PNCVisit> pncVisits = pncVisitRepo.getPNCForPW(user);
-            pncVisits.forEach(pncVisit -> {
-                checkAndAddAntaraIncentive(pncVisit);
-
-            });
-
             return pncVisits.stream()
                     .map(pnc -> mapper.convertValue(pnc, PNCVisitDTO.class))
                     .collect(Collectors.toList());
