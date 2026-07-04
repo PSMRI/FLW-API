@@ -1475,8 +1475,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         Integer stateId = userService.getUserDetail(ashaId).getStateId();
         IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.NCD.getDisplayName());
         IncentiveActivity incentiveActivityCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.ACTIVITY.getDisplayName());
+        IncentiveActivity incentiveActivityCGForNCDnewPatient = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_NEW_PATIENT_MEDICATION_SUPPORT", GroupName.ACTIVITY.getDisplayName());
         logger.info("incentiveActivity:" + incentiveActivity.getId());
-        if (incentiveActivity != null) {
+
             if (chronicDiseaseVisitEntity.getFollowUpNo() != null
                     && chronicDiseaseVisitEntity.getCreatedDate() != null
                     && chronicDiseaseVisitEntity.getDiagnosisCodes() != null) {
@@ -1487,6 +1488,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                         "Cancer"
                 );
 
+
                 List<String> diagnosisList = Arrays.asList(
                         chronicDiseaseVisitEntity.getDiagnosisCodes().split(",")
                 );
@@ -1494,7 +1496,18 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 boolean matchFound = diagnosisList.stream()
                         .map(String::trim)
                         .anyMatch(targetDiseases::contains);
+                if(matchFound & Integer.valueOf(0).equals(chronicDiseaseVisitEntity.getFollowUpNo()) ){
+                    LocalDateTime localDateTime = chronicDiseaseVisitEntity.getTreatmentStartDate().atStartOfDay();
 
+                    Timestamp treatmentStartDate = Timestamp.valueOf(localDateTime);
+                    addNCDFolloupIncentiveRecord(
+                            incentiveActivityCGForNCDnewPatient,
+                            ashaId,
+                            chronicDiseaseVisitEntity.getBenId(),
+                            treatmentStartDate,
+                            userName
+                    );
+                }
                 if (matchFound && Integer.valueOf(6).equals(chronicDiseaseVisitEntity.getFollowUpNo())) {
                     LocalDateTime localDateTime = chronicDiseaseVisitEntity.getFollowUpDate().atStartOfDay();
 
@@ -1520,7 +1533,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
                 }
             }
-        }
+
 
 
     }
