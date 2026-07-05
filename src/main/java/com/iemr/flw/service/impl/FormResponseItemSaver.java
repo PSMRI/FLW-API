@@ -42,6 +42,7 @@ import com.iemr.flw.repo.iemr.QuestionResponseRepo;
 import com.iemr.flw.repo.iemr.SectionQuestionRepo;
 import com.iemr.flw.repo.iemr.SectionResponseRepo;
 import com.iemr.flw.masterEnum.QuestionType;
+import com.iemr.flw.masterEnum.SectionPhase;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.exception.IEMRException;
 import lombok.RequiredArgsConstructor;
@@ -224,18 +225,24 @@ public class FormResponseItemSaver {
                         "' not found in form '" + req.getFormUuid() + "'");
             }
 
+            Optional<SectionResponse> existingSr = sectionResponseRepo.findByResponseIdAndSectionId(
+                    formResponse.getResponseId(), section.getSectionId());
+            if (existingSr.isPresent() && Boolean.FALSE.equals(section.getIsEditable())) {
+                log.info("saveForBulk: section '{}' is not editable — skipping update for responseId={}",
+                        section.getSectionUuid(), formResponse.getResponseId());
+                continue;
+            }
+
             // Delete existing SectionResponse (and its QuestionResponses) for this section only
-            sectionResponseRepo.findByResponseIdAndSectionId(
-        formResponse.getResponseId(), section.getSectionId())
-                .ifPresent(sr -> {
-                    questionResponseRepo.deleteBySectionResponseIdIn(Set.of(sr.getSectionResponseId()));
-                    sectionResponseRepo.deleteById(sr.getSectionResponseId());
-                });
+            existingSr.ifPresent(sr -> {
+                questionResponseRepo.deleteBySectionResponseIdIn(Set.of(sr.getSectionResponseId()));
+                sectionResponseRepo.deleteById(sr.getSectionResponseId());
+            });
 
             SectionResponse sectionResponse = upsertSectionResponse(
                     formResponse.getResponseId(), section.getSectionId(), actor);
 
-            if ("POST_SUBMIT".equals(section.getSectionPhase())) {
+            if (section.getSectionPhase() == SectionPhase.POST_SUBMIT) {
                 formResponse.setLastFollowUpAt(sectionResponse.getSavedAt());
                 formResponseRepo.save(formResponse);
             }
@@ -251,7 +258,7 @@ public class FormResponseItemSaver {
                     actor);
 
             questionResponseRepo.saveAll(questionResponses);
-            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, questionResponses));
+            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, section, questionResponses));
         }
 
         return buildFormResponseDTO(formResponse, sectionDTOs);
@@ -332,7 +339,7 @@ public class FormResponseItemSaver {
                     }
                 }
             } else {
-                // TEXT, DATE, AUTO_FILL — prefer answerText, then answerDate, then optionValue (legacy)
+                // TEXT, DATE, AUTO_FILL, CHECKBOX — prefer answerText, then answerDate, then optionValue (legacy)
                 String value = answer.getAnswerText() != null ? answer.getAnswerText()
                         : answer.getAnswerDate() != null ? answer.getAnswerDate()
                         : answer.getOptionValue();
@@ -378,7 +385,8 @@ public class FormResponseItemSaver {
                 .build();
     }
 
-    private SectionResponseDTO buildSectionResponseDTO(SectionResponse sr, List<QuestionResponse> answers) {
+    private SectionResponseDTO buildSectionResponseDTO(
+            SectionResponse sr, FormSection section, List<QuestionResponse> answers) {
         List<QuestionResponseDTO> answerDTOs = answers.stream()
                 .map(a -> QuestionResponseDTO.builder()
                         .questionResponseId(a.getQuestionResponseId())
@@ -390,6 +398,8 @@ public class FormResponseItemSaver {
         return SectionResponseDTO.builder()
                 .sectionResponseId(sr.getSectionResponseId())
                 .sectionId(sr.getSectionId())
+                .sectionUuid(section != null ? section.getSectionUuid() : null)
+                .isEditable(section != null ? section.getIsEditable() : null)
                 .status(sr.getStatus())
                 .savedAt(sr.getSavedAt())
                 .answers(answerDTOs)

@@ -45,6 +45,7 @@ import com.iemr.flw.repo.iemr.QuestionResponseRepo;
 import com.iemr.flw.repo.iemr.SectionQuestionRepo;
 import com.iemr.flw.repo.iemr.SectionResponseRepo;
 import com.iemr.flw.masterEnum.QuestionType;
+import com.iemr.flw.masterEnum.SectionPhase;
 import com.iemr.flw.service.DynamicFormResponseService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.exception.IEMRException;
@@ -240,10 +241,14 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                         "' not found in form '" + request.getFormUuid() + "'");
             }
 
-            SectionResponse sectionResponse = upsertSectionResponse(
-                    formResponse.getResponseId(), section.getSectionId(), actor);
+            Optional<SectionResponse> sectionResponseOpt = upsertSectionResponse(
+                    formResponse.getResponseId(), section, actor);
+            if (sectionResponseOpt.isEmpty()) {
+                continue;
+            }
+            SectionResponse sectionResponse = sectionResponseOpt.get();
 
-            if ("POST_SUBMIT".equals(section.getSectionPhase())) {
+            if (section.getSectionPhase() == SectionPhase.POST_SUBMIT) {
                 formResponse.setLastFollowUpAt(sectionResponse.getSavedAt());
                 formResponseRepo.save(formResponse);
             }
@@ -260,31 +265,36 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
             questionResponseRepo.saveAll(questionResponses);
 
-            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, questionResponses));
+            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, section, questionResponses));
         }
 
         return buildFormResponseDTO(formResponse, sectionDTOs);
     }
 
-    private SectionResponse upsertSectionResponse(Long responseId, Long sectionId, String actor) {
+    private Optional<SectionResponse> upsertSectionResponse(Long responseId, FormSection section, String actor) {
         Optional<SectionResponse> existing =
-                sectionResponseRepo.findByResponseIdAndSectionId(responseId, sectionId);
+                sectionResponseRepo.findByResponseIdAndSectionId(responseId, section.getSectionId());
         if (existing.isPresent()) {
+            if (Boolean.FALSE.equals(section.getIsEditable())) {
+                log.info("Section '{}' is not editable — skipping update for responseId={}",
+                        section.getSectionUuid(), responseId);
+                return Optional.empty();
+            }
             SectionResponse sr = existing.get();
             sr.setStatus(SECTION_STATUS_DONE);
             sr.setSavedAt(new Timestamp(System.currentTimeMillis()));
             sr.setUpdatedBy(actor);
-            return sectionResponseRepo.save(sr);
+            return Optional.of(sectionResponseRepo.save(sr));
         }
         SectionResponse sr = SectionResponse.builder()
                 .responseId(responseId)
-                .sectionId(sectionId)
+                .sectionId(section.getSectionId())
                 .status(SECTION_STATUS_DONE)
                 .savedAt(new Timestamp(System.currentTimeMillis()))
                 .createdBy(actor)
                 .updatedBy(actor)
                 .build();
-        return sectionResponseRepo.save(sr);
+        return Optional.of(sectionResponseRepo.save(sr));
     }
 
     private List<QuestionResponse> processAnswers(
@@ -344,7 +354,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                     }
                 }
             } else {
-                // TEXT, DATE, AUTO_FILL — prefer answerText, then answerDate, then optionValue (legacy)
+                // TEXT, DATE, AUTO_FILL, CHECKBOX — prefer answerText, then answerDate, then optionValue (legacy)
                 String value = answer.getAnswerText() != null ? answer.getAnswerText()
                         : answer.getAnswerDate() != null ? answer.getAnswerDate()
                         : answer.getOptionValue();
@@ -390,9 +400,16 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         Map<Long, List<QuestionResponse>> answersBySectionResponse = allAnswers.stream()
                 .collect(Collectors.groupingBy(QuestionResponse::getSectionResponseId));
 
+        Set<Long> sectionIds = sections.stream()
+                .map(SectionResponse::getSectionId)
+                .collect(Collectors.toSet());
+        Map<Long, FormSection> sectionById = formSectionRepo.findAllById(sectionIds).stream()
+                .collect(Collectors.toMap(FormSection::getSectionId, Function.identity()));
+
         return sections.stream()
                 .map(sr -> buildSectionResponseDTO(
                         sr,
+                        sectionById.get(sr.getSectionId()),
                         answersBySectionResponse.getOrDefault(sr.getSectionResponseId(), List.of())))
                 .collect(Collectors.toList());
     }
@@ -417,7 +434,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     }
 
     private SectionResponseDTO buildSectionResponseDTO(
-            SectionResponse sr, List<QuestionResponse> answers) {
+            SectionResponse sr, FormSection section, List<QuestionResponse> answers) {
         List<QuestionResponseDTO> answerDTOs = answers.stream()
                 .map(a -> QuestionResponseDTO.builder()
                         .questionResponseId(a.getQuestionResponseId())
@@ -429,6 +446,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         return SectionResponseDTO.builder()
                 .sectionResponseId(sr.getSectionResponseId())
                 .sectionId(sr.getSectionId())
+                .sectionUuid(section != null ? section.getSectionUuid() : null)
+                .isEditable(section != null ? section.getIsEditable() : null)
                 .status(sr.getStatus())
                 .savedAt(sr.getSavedAt())
                 .answers(answerDTOs)

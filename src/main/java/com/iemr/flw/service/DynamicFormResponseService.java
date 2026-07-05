@@ -35,7 +35,7 @@ import java.util.List;
  */
 public interface DynamicFormResponseService {
 
-    /** Save PRE_SUBMIT section answers and advance status to SUBMITTED. */
+    /** Save GENERAL_INFO and PRE_SUBMIT section answers and advance status to SUBMITTED. */
     FormResponseDTO submitForm(FormResponseRequest request);
 
     /** Save POST_SUBMIT section answers and advance status to COMPLETE. */

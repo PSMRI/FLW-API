@@ -21,9 +21,12 @@
  */
 package com.iemr.flw.domain.iemr;
 
+import com.iemr.flw.masterEnum.SectionPhase;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -71,9 +74,9 @@ public class FormSection {
     @Column(name = "sectionName_hindi", length = 255)
     private String sectionNameHindi;
 
-    /** PRE_SUBMIT sections are shown before the form's main submit. POST_SUBMIT after. */
+    @Enumerated(EnumType.STRING)
     @Column(name = "sectionPhase", nullable = false, length = 20)
-    private String sectionPhase;
+    private SectionPhase sectionPhase;
 
     @Column(name = "isRequired", nullable = false)
     private Boolean isRequired = true;
@@ -81,9 +84,11 @@ public class FormSection {
     @Column(name = "displayOrder", nullable = false)
     private Integer displayOrder;
 
-    /** True only on the last PRE_SUBMIT section — renders the Submit button. */
     @Column(name = "hasSubmitButton", nullable = false)
     private Boolean hasSubmitButton = false;
+
+    @Column(name = "isEditable", nullable = false)
+    private Boolean isEditable = false;
 
     @Column(name = "created_by", length = 100)
     private String createdBy;

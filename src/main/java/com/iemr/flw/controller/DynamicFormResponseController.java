@@ -53,7 +53,7 @@ public class DynamicFormResponseController {
 
     private final DynamicFormResponseService responseService;
 
-    @Operation(summary = "Submit PRE_SUBMIT section answers, status → SUBMITTED. " +
+    @Operation(summary = "Submit GENERAL_INFO and PRE_SUBMIT section answers, status → SUBMITTED. " +
             "Pass responseId in body to re-submit an existing SUBMITTED response.")
     @RequestMapping(value = "/submit", method = RequestMethod.POST)
     public ResponseEntity<ApiResponse> submitForm(
