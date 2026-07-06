@@ -106,7 +106,7 @@ public class TbCounsellingV2FormSeeder {
         consentQ.setQuestionUuid("TB2_GI_Q1");
         consentQ.setQuestionText("Has the beneficiary agreed for counselling?");
         consentQ.setQuestionTextHindi("क्या लाभार्थी काउंसलिंग के लिए सहमत हुआ है?");
-        consentQ.setQuestionType(QuestionType.CHECKBOX);
+        consentQ.setQuestionType(QuestionType.RADIO);
         consentQ.setIsMandatory(true);
         consentQ.setDisplayOrder(1);
         consentQ.setVisibleByDefault(true);
@@ -233,12 +233,7 @@ public class TbCounsellingV2FormSeeder {
         q.setIsMandatory(mandatory);
         q.setDisplayOrder(order);
         q.setVisibleByDefault(true);
-
-        List<QuestionOptionDTO> opts = new ArrayList<>();
-        opts.add(option("Yes", "हाँ", "YES", "हाँ", 1, List.of()));
-        opts.add(option("No", "नहीं", "NO", "नहीं", 2, List.of()));
-        q.setOptions(opts);
-
+        q.setOptions(List.of(option("Checked", "चेक किया गया", "CHECKED", "चेक किया गया", 1, List.of())));
         q.setValidations(List.of());
         return q;
     }
