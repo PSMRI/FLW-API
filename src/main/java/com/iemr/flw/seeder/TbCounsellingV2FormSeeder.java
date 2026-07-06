@@ -98,7 +98,7 @@ public class TbCounsellingV2FormSeeder {
 
     private FormSectionDTO buildGeneralInfoSection() {
         FormSectionDTO s = section("TB2_SEC_GENERAL_INFO", "General Information", "सामान्य जानकारी",
-                SectionPhase.GENERAL_INFO, 1, true, false, false);
+                SectionPhase.GENERAL_INFO, 1, true, false, true);
         List<SectionQuestionDTO> qs = new ArrayList<>();
 
         // "Has the beneficiary agreed for counselling?" — RADIO: Yes | No

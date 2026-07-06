@@ -21,6 +21,7 @@
  */
 package com.iemr.flw.service;
 
+import com.iemr.flw.dto.iemr.CompletedBeneficiariesDTO;
 import com.iemr.flw.dto.iemr.FormResponseDTO;
 import com.iemr.flw.dto.iemr.FormResponseRequest;
 import com.iemr.flw.masterEnum.FormType;
@@ -61,6 +62,9 @@ public interface DynamicFormResponseService {
      */
     List<FormResponseDTO> findPendingFollowUps(List<Long> formIds, int delayDays);
 
-    /** Returns beneficiary IDs with COMPLETE status for the given form type, optionally filtered by village and/or provider service map. */
-    List<Long> getCompletedBeneficiaries(FormType formType, Integer villageId, Integer providerServiceMapId);
+    /**
+     * Returns beneficiary IDs for the given form type split by outcome — COMPLETE and REFUSED —
+     * optionally filtered by village and/or provider service map.
+     */
+    CompletedBeneficiariesDTO getCompletedBeneficiaries(FormType formType, Integer villageId, Integer providerServiceMapId);
 }

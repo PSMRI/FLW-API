@@ -41,6 +41,7 @@ import com.iemr.flw.repo.iemr.QuestionOptionRepo;
 import com.iemr.flw.repo.iemr.QuestionResponseRepo;
 import com.iemr.flw.repo.iemr.SectionQuestionRepo;
 import com.iemr.flw.repo.iemr.SectionResponseRepo;
+import com.iemr.flw.masterEnum.FormResponseStatus;
 import com.iemr.flw.masterEnum.QuestionType;
 import com.iemr.flw.masterEnum.SectionPhase;
 import com.iemr.flw.utils.JwtUtil;
@@ -73,7 +74,6 @@ import java.util.stream.Collectors;
 @Component
 public class FormResponseItemSaver {
 
-    private static final String STATUS_SUBMITTED = "SUBMITTED";
     private static final String SECTION_STATUS_DONE = "DONE";
 
     private final FormResponseRepo formResponseRepo;
@@ -110,7 +110,7 @@ public class FormResponseItemSaver {
             Long responseId = formResponse.getResponseId();
 
             // Step 3: Update FormResponse header
-            formResponse.setStatus(STATUS_SUBMITTED);
+            formResponse.setStatus(FormResponseStatus.SUBMITTED.name());
             formResponse.setSubmittedAt(now);
             formResponse.setUpdatedBy(actor);
             formResponse.setLastFollowUpAt(now);
@@ -176,7 +176,7 @@ public class FormResponseItemSaver {
                 .formId(version.getDynamicForm().getFormId())
                 .versionId(version.getVersionId())
                 .officerId(req.getOfficerId())
-                .status(STATUS_SUBMITTED)
+                .status(FormResponseStatus.SUBMITTED.name())
                 .createdBy(actor)
                 .updatedBy(actor)
                 .submittedAt(now)
