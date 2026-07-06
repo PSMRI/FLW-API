@@ -449,7 +449,7 @@ public class CampaignServiceImpl implements CampaignService {
 
     private void checkMonthlyPulsePolioIncentive(Integer ashaId,LocalDate startDate,LocalDate endDate) {
 
-        IncentiveActivity CHILD_MOBILIZATION_SESSIONS = incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_MOBILIZATION_SESSIONS", GroupName.ACTIVITY.getDisplayName());
+        IncentiveActivity CHILD_MOBILIZATION_SESSIONS = incentivesRepo.findIncentiveMasterByNameAndGroup("PULSE_POLIO_SUPPORT", GroupName.ACTIVITY.getDisplayName());
         if (CHILD_MOBILIZATION_SESSIONS != null) {
             addAshaIncentiveRecord(CHILD_MOBILIZATION_SESSIONS, ashaId,startDate,endDate);
         }

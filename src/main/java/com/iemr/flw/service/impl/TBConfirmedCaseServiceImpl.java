@@ -66,14 +66,10 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     entity.setReasonForNotCompleting(dto.getReasonForNotCompleting());
                     if(entity!=null){
                         repository.save(entity);
-
                         checkIncentive(entity);
 
                     }
                 }
-
-
-
 
                 response.setResponse("TB Confirmed case saved successfully");
 
@@ -96,21 +92,21 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                         || "Longer Regimen (18–24 Months)".equalsIgnoreCase(regimen);
 
         if (Boolean.TRUE.equals(entity.getTreatmentCompleted())
-                && entity.getActualTreatmentCompletionDate() != null) {
+                && entity.getExpectedTreatmentCompletionDate() != null) {
 
 
             if (isDrTb) {
                 incentiveLogicService.incentiveForTbFollowUpIsDrTb(
                         entity.getBenId(),
-                        Timestamp.valueOf(entity.getTreatmentStartDate().atStartOfDay()),
-                        Timestamp.valueOf(entity.getActualTreatmentCompletionDate().atStartOfDay()),
+                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
                         entity.getUserId()
                 );
             } else {
                 incentiveLogicService.incentiveForTbFollowUp(
                         entity.getBenId(),
-                        Timestamp.valueOf(entity.getTreatmentStartDate().atStartOfDay()),
-                        Timestamp.valueOf(entity.getActualTreatmentCompletionDate().atStartOfDay()),
+                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
                         entity.getUserId()
                 );
 
