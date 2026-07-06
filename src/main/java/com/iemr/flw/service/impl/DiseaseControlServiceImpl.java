@@ -1306,16 +1306,19 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     private void addIncentive(IncentiveActivity diseaseScreeningActivity, ScreeningMalaria diseaseScreening) {
         try {
+            Timestamp screeningTimestamp = diseaseScreening.getScreeningDate() != null
+                    ? new Timestamp(diseaseScreening.getScreeningDate().getTime())
+                    : null;
             IncentiveActivityRecord record = recordRepo
                     .findRecordByActivityIdCreatedDateBenId(diseaseScreeningActivity.getId(), Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()), diseaseScreening.getBenId().longValue());
             if (record == null) {
                 record = new IncentiveActivityRecord();
                 record.setActivityId(diseaseScreeningActivity.getId());
-                record.setCreatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+                record.setCreatedDate(screeningTimestamp);
                 record.setCreatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
-                record.setStartDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-                record.setEndDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-                record.setUpdatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+                record.setStartDate(screeningTimestamp);
+                record.setEndDate(screeningTimestamp);
+                record.setUpdatedDate(screeningTimestamp);
                 record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
                 record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
                 record.setBenId(diseaseScreening.getBenId().longValue());
