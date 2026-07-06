@@ -558,8 +558,6 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             IncentiveActivity hwcReferralEnumeration = activityMap.get("HWC_REFERRAL_10_CASES");
 
-            CompletableFuture<List<BenReferDetails>> benReferFuture =
-                    CompletableFuture.supplyAsync(() -> benReferDetailsRepo.findByCreatedBy(userName));
             CompletableFuture<List<CbacDetailsImer>> cbacFuture =
                     CompletableFuture.supplyAsync(() -> cbacIemrDetailsRepo.findByCreatedBy(userName));
 
@@ -569,27 +567,13 @@ public class IncentiveServiceImpl implements IncentiveService {
 
 
             if (ncdPopEnumeration != null && !cbacDetailsImer.isEmpty()) {
-                List<Long> cbacBenIds = cbacDetailsImer.stream()
-                        .filter(c -> c != null && c.getBeneficiaryRegId() != null)
-                        .map(CbacDetailsImer::getBeneficiaryRegId)
-                        .collect(Collectors.toList());
-
-                // Batch fetch existing records — 1 query instead of N
-                Set<String> existingKeys = recordRepo
-                        .findExistingRecords(ncdPopEnumeration.getId(), cbacBenIds, ashaId)
-                        .stream()
-                        .map(r -> r.getActivityId() + "_" + r.getBenId() + "_" + r.getCreatedDate())
-                        .collect(Collectors.toSet());
 
                 final IncentiveActivity activity = ncdPopEnumeration;
-                cbacDetailsImer.stream()
-                        .filter(c -> c != null && c.getBeneficiaryRegId() != null)
-                        .forEach(c -> {
-                            String key = activity.getId() + "_" + c.getBeneficiaryRegId() + "_" + c.getCreatedDate();
-                            if (!existingKeys.contains(key)) {
-                                recordsToSave.add(addNCDandCBACIncentiveRecord(activity, ashaId, c.getBeneficiaryRegId(), c.getCreatedDate(), userName));
-                            }
-                        });
+                cbacDetailsImer.forEach(cbacDetailsImer1 -> {
+                    if(cbacDetailsImer1!=null){
+                        addNCDandCBACIncentiveRecord(activity, ashaId, cbacDetailsImer1.getBeneficiaryRegId(), cbacDetailsImer1.getCreatedDate(), userName);
+                    }
+                });
             }
 
             if (hwcReferralEnumeration != null) {
@@ -627,21 +611,25 @@ public class IncentiveServiceImpl implements IncentiveService {
     }
 
     // Helper — record banana
-    private IncentiveActivityRecord addNCDandCBACIncentiveRecord(IncentiveActivity activity, Integer ashaId,
+    private void addNCDandCBACIncentiveRecord(IncentiveActivity activity, Integer ashaId,
                                                                  Long benId, Timestamp createdDate, String userName) {
-        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
-        IncentiveActivityRecord record = new IncentiveActivityRecord();
-        record.setActivityId(activity.getId());
-        record.setCreatedDate(createdDate);
-        record.setCreatedBy(userName);
-        record.setStartDate(createdDate);
-        record.setEndDate(createdDate);
-        record.setUpdatedDate(now);
-        record.setUpdatedBy(userName);
-        record.setBenId(benId);
-        record.setAshaId(ashaId);
-        record.setAmount(Long.valueOf(activity.getRate()));
-        return record;
+        IncentiveActivityRecord incentiveActivityRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(activity.getId(),createdDate,benId,ashaId);
+        if(incentiveActivityRecord==null){
+            Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+            IncentiveActivityRecord record = new IncentiveActivityRecord();
+            record.setActivityId(activity.getId());
+            record.setCreatedDate(createdDate);
+            record.setCreatedBy(userName);
+            record.setStartDate(createdDate);
+            record.setEndDate(createdDate);
+            record.setUpdatedDate(now);
+            record.setUpdatedBy(userName);
+            record.setBenId(benId);
+            record.setAshaId(ashaId);
+            record.setAmount(Long.valueOf(activity.getRate()));
+            recordRepo.save(record);
+        }
+
     }
 
     private String resolveGroupName(Integer stateId) {
