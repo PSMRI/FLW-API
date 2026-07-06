@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 
@@ -69,6 +70,9 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
     ModelMapper modelMapper = new ModelMapper();
 
     boolean institutionalDelivery = false;
+
+    private final ConcurrentHashMap<String, Object> lockMap = new ConcurrentHashMap<>();
+
 
     @Override
     public String registerDeliveryOutcome(List<DeliveryOutcomeDTO> deliveryOutcomeDTOS) {
@@ -210,11 +214,13 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
 
     private void createIncentiveRecordforJsy(DeliveryOutcome delOutList, Long benId, IncentiveActivity immunizationActivity) {
         logger.info("benId" + benId);
+        String lockKey = immunizationActivity.getId() + "_" + benId + "_" + delOutList.getCreatedDate();
 
-        try {
+        Object lock = lockMap.computeIfAbsent(lockKey, k -> new Object());
+
+        synchronized (lock) {
             IncentiveActivityRecord record = recordRepo
                     .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), delOutList.getCreatedDate(), benId);
-
 
             if (record == null) {
                 logger.info("setStartDate" + delOutList.getDateOfDelivery());
@@ -235,9 +241,9 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                 logger.info("benId:" + record.getId());
 
             }
-        } catch (Exception e) {
-            logger.error("JSY Incentive:", e);
         }
+
+        lockMap.remove(lockKey, lock);
 
 
     }
