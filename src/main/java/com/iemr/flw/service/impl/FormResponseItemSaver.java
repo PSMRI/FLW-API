@@ -328,7 +328,7 @@ public class FormResponseItemSaver {
 
             questionResponseRepo.deleteByQuestionIdAndSectionResponseId(questionId, sectionResponseId);
 
-            if (type == QuestionType.RADIO) {
+            if (type == QuestionType.RADIO || type == QuestionType.CHECKBOX) {
                 if (answer.getOptionValue() != null) {
                     QuestionOption opt = resolveOption(optionsByQuestion, questionId,
                             answer.getOptionValue(), answer.getQuestionUuid());
@@ -359,7 +359,7 @@ public class FormResponseItemSaver {
                     }
                 }
             } else {
-                // TEXT, DATE, AUTO_FILL, CHECKBOX — prefer answerText, then answerDate, then optionValue (legacy)
+                // TEXT, DATE, AUTO_FILL — prefer answerText, then answerDate, then optionValue (legacy)
                 String value = answer.getAnswerText() != null ? answer.getAnswerText()
                         : answer.getAnswerDate() != null ? answer.getAnswerDate()
                         : answer.getOptionValue();
