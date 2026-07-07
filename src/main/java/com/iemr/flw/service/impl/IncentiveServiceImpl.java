@@ -203,7 +203,6 @@ public class IncentiveServiceImpl implements IncentiveService {
                 checkMonthlyAshaIncentiveForCg(request.getAshaId());
 
             }
-            checkIncentiveForChildGap(stateCode, userName);
 
         } catch (Exception e) {
             logger.error("Error in checkMonthlyAshaIncentive: ", e);
@@ -862,115 +861,6 @@ public class IncentiveServiceImpl implements IncentiveService {
             logger.info("saved IFA incentive");
 
         }
-    }
-
-    private void checkIncentiveForChildGap(Integer stateId, String userName) {
-
-        logger.info("Checking Child Gap Incentive for user: {}, stateId: {}", userName, stateId);
-
-        List<EligibleCoupleRegister> eligibleCoupleRegisters = eligibleCoupleRegisterRepo.findByCreatedBy(userName);
-
-        logger.info("Eligible Couple Records Found: {}", eligibleCoupleRegisters.size());
-
-        if (!eligibleCoupleRegisters.isEmpty()) {
-
-            eligibleCoupleRegisters.forEach(eligibleCoupleRegister -> {
-
-                logger.info(
-                        "Processing EligibleCoupleRegister -> BenId: {}, NumChildren: {}, MarriageFirstChildGap: {}, FirstAndSecondChildGap: {}",
-                        eligibleCoupleRegister.getBenId(),
-                        eligibleCoupleRegister.getNumChildren(),
-                        eligibleCoupleRegister.getMarriageFirstChildGap(),
-                        eligibleCoupleRegister.getFirstAndSecondChildGap());
-
-                // Marriage -> First Child Gap
-                if(eligibleCoupleRegister.getFirstAndSecondChildGap()!=null){
-                    if (eligibleCoupleRegister.getFirstAndSecondChildGap()>=3 ) {
-
-                        logger.info("Marriage -> First Child Gap condition matched.");
-
-                        if (stateId.equals(StateCode.AM.getStateCode())) {
-
-                            logger.info("Fetching incentive for Assam.");
-
-                            IncentiveActivity activity1 =
-                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                            "1st_2nd_CHILD_GAP",
-                                            GroupName.FAMILY_PLANNING.getDisplayName());
-
-                            logger.info("Incentive Activity: {}", activity1);
-
-                            createIncentiveRecord(eligibleCoupleRegister, activity1);
-
-                            logger.info("Marriage -> First Child Gap incentive created.");
-                        }
-
-                        if (stateId.equals(StateCode.CG.getStateCode())) {
-
-                            logger.info("Fetching incentive for Chhattisgarh.");
-
-                            IncentiveActivity activityCH =
-                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                            "1st_2nd_CHILD_GAP",
-                                            GroupName.ACTIVITY.getDisplayName());
-
-                            logger.info("Incentive Activity: {}", activityCH);
-
-                            createIncentiveRecord(eligibleCoupleRegister, activityCH);
-
-                            logger.info("Marriage -> First Child Gap incentive created.");
-                        }
-                    }
-                }
-
-
-                // First -> Second Child Gap
-                if(eligibleCoupleRegister.getMarriageFirstChildGap()!=null){
-                    if (eligibleCoupleRegister.getMarriageFirstChildGap()>=2) {
-
-                        logger.info("1st -> 2nd Child Gap condition matched.");
-
-                        if (stateId.equals(StateCode.AM.getStateCode())) {
-
-                            logger.info("Fetching incentive for Assam.");
-
-                            IncentiveActivity activity2 =
-                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                            "FP_DELAY_2Y",
-                                            GroupName.FAMILY_PLANNING.getDisplayName());
-
-                            logger.info("Incentive Activity: {}", activity2);
-
-                            createIncentiveRecord(eligibleCoupleRegister, activity2);
-
-                            logger.info("1st -> 2nd Child Gap incentive created.");
-                        }
-
-                        if (stateId.equals(StateCode.CG.getStateCode())) {
-
-                            logger.info("Fetching incentive for Chhattisgarh.");
-
-                            IncentiveActivity activityCH =
-                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                            "FP_DELAY_2Y",
-                                            GroupName.ACTIVITY.getDisplayName());
-
-                            logger.info("Incentive Activity: {}", activityCH);
-
-                            createIncentiveRecord(eligibleCoupleRegister, activityCH);
-
-                            logger.info("1st -> 2nd Child Gap incentive created.");
-                        }
-                    }
-                }
-
-            });
-
-        } else {
-            logger.info("No Eligible Couple Register records found for user: {}", userName);
-        }
-
-        logger.info("Completed Child Gap Incentive check for user: {}", userName);
     }
 
     private void createIncentiveRecord(EligibleCoupleRegister eligibleCoupleRegister, IncentiveActivity activity) {
