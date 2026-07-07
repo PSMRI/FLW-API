@@ -33,7 +33,7 @@ public enum QuestionType {
     /** Multi-select from a predefined list of options. */
     MCQ,
     /** Single boolean checkbox — checked or unchecked. Resolved like RADIO: submit
-     *  optionValue (e.g. "CHECKED") to select it, omit to leave unanswered. */
+     *  optionValue to select it, omit to leave unanswered. */
     CHECKBOX,
     /** Free-text input. */
     TEXT,

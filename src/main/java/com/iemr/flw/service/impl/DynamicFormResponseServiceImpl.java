@@ -420,7 +420,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                     }
                 }
             } else {
-                // TEXT, DATE, AUTO_FILL — prefer answerText, then answerDate, then optionValue (legacy)
+                // TEXT, DATE, AUTO_FILL, CHECKBOX — prefer answerText, then answerDate, then optionValue (legacy)
                 String value = answer.getAnswerText() != null ? answer.getAnswerText()
                         : answer.getAnswerDate() != null ? answer.getAnswerDate()
                         : answer.getOptionValue();
