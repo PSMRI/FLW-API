@@ -28,6 +28,7 @@ import com.iemr.flw.domain.iemr.QuestionOption;
 import com.iemr.flw.domain.iemr.QuestionResponse;
 import com.iemr.flw.domain.iemr.SectionQuestion;
 import com.iemr.flw.domain.iemr.SectionResponse;
+import com.iemr.flw.dto.iemr.CompletedBeneficiariesDTO;
 import com.iemr.flw.dto.iemr.FormResponseDTO;
 import com.iemr.flw.dto.iemr.FormResponseRequest;
 import com.iemr.flw.dto.iemr.QuestionAnswerRequest;
@@ -35,6 +36,8 @@ import com.iemr.flw.dto.iemr.QuestionResponseDTO;
 import com.iemr.flw.dto.iemr.SectionAnswerRequest;
 import com.iemr.flw.dto.iemr.SectionResponseDTO;
 import com.iemr.flw.domain.iemr.DynamicForm;
+import com.iemr.flw.masterEnum.FormResponseStatus;
+import com.iemr.flw.masterEnum.FormResponseStatus;
 import com.iemr.flw.masterEnum.FormType;
 import com.iemr.flw.repo.iemr.DynamicFormRepo;
 import com.iemr.flw.repo.iemr.FormResponseRepo;
@@ -45,6 +48,7 @@ import com.iemr.flw.repo.iemr.QuestionResponseRepo;
 import com.iemr.flw.repo.iemr.SectionQuestionRepo;
 import com.iemr.flw.repo.iemr.SectionResponseRepo;
 import com.iemr.flw.masterEnum.QuestionType;
+import com.iemr.flw.masterEnum.SectionPhase;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.DynamicFormResponseService;
 import com.iemr.flw.utils.JwtUtil;
@@ -76,10 +80,11 @@ import java.util.stream.Collectors;
 @Service
 public class DynamicFormResponseServiceImpl implements DynamicFormResponseService {
 
-    private static final String STATUS_DRAFT = "DRAFT";
-    private static final String STATUS_SUBMITTED = "SUBMITTED";
-    private static final String STATUS_COMPLETE = "COMPLETE";
     private static final String SECTION_STATUS_DONE = "DONE";
+    private static final String SECTION_STATUS_REFUSED = "REFUSED";
+    private static final String SECTION_UUID_GENERAL_INFO = "TB2_SEC_GENERAL_INFO";
+    private static final String QUESTION_UUID_CONSENT = "TB2_GI_Q1";
+    private static final String OPTION_VALUE_CONSENT_REFUSED = "NO";
 
     private final DynamicFormRepo dynamicFormRepo;
     private final FormResponseRepo formResponseRepo;
@@ -106,19 +111,19 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             formResponse = formResponseRepo.findById(request.getResponseId())
                     .orElseThrow(() -> new NoSuchElementException(
                             "FormResponse not found: " + request.getResponseId()));
-            if (STATUS_COMPLETE.equals(formResponse.getStatus())) {
+            if (FormResponseStatus.COMPLETE.name().equals(formResponse.getStatus())) {
                 throw new IllegalStateException(
                         "Cannot update a COMPLETE response (responseId=" + request.getResponseId() + ")");
             }
             // Bump submittedAt to reflect the re-submission time
-            formResponse.setStatus(STATUS_SUBMITTED);
+            formResponse.setStatus(FormResponseStatus.SUBMITTED.name());
             formResponse.setSubmittedAt(now);
             formResponse.setLastFollowUpAt(now);
             formResponse = formResponseRepo.save(formResponse);
         } else {
-            formResponse = createFormResponse(request, version, STATUS_SUBMITTED, now, vanID, parkingPlaceID);
+            formResponse = createFormResponse(request, version, FormResponseStatus.SUBMITTED.name(), now, vanID, parkingPlaceID);
         }
-        return processSections(formResponse, request, version, null, vanID, parkingPlaceID);
+        return processSections(formResponse, request, version, null, false, vanID, parkingPlaceID);
     }
 
     @Override
@@ -135,14 +140,16 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         List<FormResponse> existing =
                 formResponseRepo.findByBeneficiaryIdAndFormId(request.getBeneficiaryId(), formId);
         FormResponse formResponse = existing.isEmpty()
-                ? createFormResponse(request, version, STATUS_SUBMITTED, now, vanID, parkingPlaceID)
+                ? createFormResponse(request, version, FormResponseStatus.SUBMITTED.name(), now, vanID, parkingPlaceID)
                 : existing.get(0);
 
         formResponse.setUpdatedBy(actor);
-        formResponse.setStatus(STATUS_COMPLETE);
+        formResponse.setStatus(isConsentRefused(request)
+                ? FormResponseStatus.REFUSED.name()
+                : FormResponseStatus.COMPLETE.name());
         formResponse.setCompletedAt(now);
         formResponse = formResponseRepo.save(formResponse);
-        return processSections(formResponse, request, version, actor, vanID, parkingPlaceID);
+        return processSections(formResponse, request, version, actor, true, vanID, parkingPlaceID);
     }
 
     @Override
@@ -208,6 +215,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             FormResponseRequest request,
             FormVersion version,
             String actor,
+            boolean applyRefusalRule,
             Integer vanID,
             Integer parkingPlaceID) {
 
@@ -252,10 +260,17 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                         "' not found in form '" + request.getFormUuid() + "'");
             }
 
-            SectionResponse sectionResponse = upsertSectionResponse(
-                    formResponse.getResponseId(), section.getSectionId(), actor, vanID, parkingPlaceID);
+            String desiredStatus = applyRefusalRule
+                    ? determineSectionStatus(section, sectionReq.getAnswers())
+                    : SECTION_STATUS_DONE;
+            Optional<SectionResponse> sectionResponseOpt = upsertSectionResponse(
+                    formResponse.getResponseId(), section, actor, desiredStatus, vanID, parkingPlaceID);
+            if (sectionResponseOpt.isEmpty()) {
+                continue;
+            }
+            SectionResponse sectionResponse = sectionResponseOpt.get();
 
-            if ("POST_SUBMIT".equals(section.getSectionPhase())) {
+            if (section.getSectionPhase() == SectionPhase.POST_SUBMIT) {
                 formResponse.setLastFollowUpAt(sectionResponse.getSavedAt());
                 formResponseRepo.save(formResponse);
             }
@@ -274,35 +289,72 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
             questionResponseRepo.saveAll(questionResponses);
 
-            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, questionResponses));
+            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, section, questionResponses));
         }
 
         return buildFormResponseDTO(formResponse, sectionDTOs);
     }
 
-    private SectionResponse upsertSectionResponse(Long responseId, Long sectionId, String actor,
-            Integer vanID, Integer parkingPlaceID) {
+    private Optional<SectionResponse> upsertSectionResponse(
+            Long responseId, FormSection section, String actor, String status, Integer vanID, Integer parkingPlaceID) {
         Optional<SectionResponse> existing =
-                sectionResponseRepo.findByResponseIdAndSectionId(responseId, sectionId);
+                sectionResponseRepo.findByResponseIdAndSectionId(responseId, section.getSectionId());
         if (existing.isPresent()) {
+            if (Boolean.FALSE.equals(section.getIsEditable())) {
+                log.info("Section '{}' is not editable — skipping update for responseId={}",
+                        section.getSectionUuid(), responseId);
+                return Optional.empty();
+            }
             SectionResponse sr = existing.get();
-            sr.setStatus(SECTION_STATUS_DONE);
+            sr.setStatus(status);
             sr.setSavedAt(new Timestamp(System.currentTimeMillis()));
             sr.setUpdatedBy(actor);
             if (sr.getVanID() == null) { sr.setVanID(vanID); sr.setParkingPlaceID(parkingPlaceID); }
-            return sectionResponseRepo.save(sr);
+            return Optional.of(sectionResponseRepo.save(sr));
         }
         SectionResponse sr = SectionResponse.builder()
                 .responseId(responseId)
-                .sectionId(sectionId)
-                .status(SECTION_STATUS_DONE)
+                .sectionId(section.getSectionId())
+                .status(status)
                 .savedAt(new Timestamp(System.currentTimeMillis()))
                 .createdBy(actor)
                 .updatedBy(actor)
                 .vanID(vanID)
                 .parkingPlaceID(parkingPlaceID)
                 .build();
-        return sectionResponseRepo.save(sr);
+        return Optional.of(sectionResponseRepo.save(sr));
+    }
+
+    // TB2_SEC_GENERAL_INFO's consent question (TB2_GI_Q1) gates the rest of the TB Counselling
+    // form; a "NO" answer means the beneficiary refused counselling. Absence-tolerant by design:
+    // any other section, a missing answers list, or no answer for the consent question at all
+    // just falls through to the normal DONE status.
+    private String determineSectionStatus(FormSection section, List<QuestionAnswerRequest> answers) {
+        if (!SECTION_UUID_GENERAL_INFO.equals(section.getSectionUuid()) || answers == null) {
+            return SECTION_STATUS_DONE;
+        }
+        boolean refused = answers.stream().anyMatch(this::isRefusalAnswer);
+        return refused ? SECTION_STATUS_REFUSED : SECTION_STATUS_DONE;
+    }
+
+    // Same TB2_GI_Q1="NO" signal as determineSectionStatus, but scanned directly off the raw
+    // request (before any FormSection is resolved) so completeForm() can decide the top-level
+    // FormResponse status. Absence-tolerant: no TB2_SEC_GENERAL_INFO section, no answers, or no
+    // TB2_GI_Q1 answer at all just means "not refused".
+    private boolean isConsentRefused(FormResponseRequest request) {
+        if (request.getSections() == null) {
+            return false;
+        }
+        return request.getSections().stream()
+                .filter(s -> SECTION_UUID_GENERAL_INFO.equals(s.getSectionUuid()))
+                .filter(s -> s.getAnswers() != null)
+                .flatMap(s -> s.getAnswers().stream())
+                .anyMatch(this::isRefusalAnswer);
+    }
+
+    private boolean isRefusalAnswer(QuestionAnswerRequest answer) {
+        return QUESTION_UUID_CONSENT.equals(answer.getQuestionUuid())
+                && OPTION_VALUE_CONSENT_REFUSED.equals(answer.getOptionValue());
     }
 
     private List<QuestionResponse> processAnswers(
@@ -368,7 +420,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                     }
                 }
             } else {
-                // TEXT, DATE, AUTO_FILL — prefer answerText, then answerDate, then optionValue (legacy)
+                // TEXT, DATE, AUTO_FILL, CHECKBOX — prefer answerText, then answerDate, then optionValue (legacy)
                 String value = answer.getAnswerText() != null ? answer.getAnswerText()
                         : answer.getAnswerDate() != null ? answer.getAnswerDate()
                         : answer.getOptionValue();
@@ -416,9 +468,16 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         Map<Long, List<QuestionResponse>> answersBySectionResponse = allAnswers.stream()
                 .collect(Collectors.groupingBy(QuestionResponse::getSectionResponseId));
 
+        Set<Long> sectionIds = sections.stream()
+                .map(SectionResponse::getSectionId)
+                .collect(Collectors.toSet());
+        Map<Long, FormSection> sectionById = formSectionRepo.findAllById(sectionIds).stream()
+                .collect(Collectors.toMap(FormSection::getSectionId, Function.identity()));
+
         return sections.stream()
                 .map(sr -> buildSectionResponseDTO(
                         sr,
+                        sectionById.get(sr.getSectionId()),
                         answersBySectionResponse.getOrDefault(sr.getSectionResponseId(), List.of())))
                 .collect(Collectors.toList());
     }
@@ -443,7 +502,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     }
 
     private SectionResponseDTO buildSectionResponseDTO(
-            SectionResponse sr, List<QuestionResponse> answers) {
+            SectionResponse sr, FormSection section, List<QuestionResponse> answers) {
         List<QuestionResponseDTO> answerDTOs = answers.stream()
                 .map(a -> QuestionResponseDTO.builder()
                         .questionResponseId(a.getQuestionResponseId())
@@ -455,6 +514,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         return SectionResponseDTO.builder()
                 .sectionResponseId(sr.getSectionResponseId())
                 .sectionId(sr.getSectionId())
+                .sectionUuid(section != null ? section.getSectionUuid() : null)
+                .isEditable(section != null ? section.getIsEditable() : null)
                 .status(sr.getStatus())
                 .savedAt(sr.getSavedAt())
                 .answers(answerDTOs)
@@ -493,12 +554,21 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
     @Override
     @Transactional(readOnly = true)
-    public List<Long> getCompletedBeneficiaries(FormType formType, Integer villageId, Integer providerServiceMapId) {
+    public CompletedBeneficiariesDTO getCompletedBeneficiaries(
+            FormType formType, Integer villageId, Integer providerServiceMapId) {
         DynamicForm form = dynamicFormRepo.findByFormTypeAndIsActive(formType, true)
                 .orElseThrow(() -> new NoSuchElementException(
                         "No active form found for type: " + formType));
+        return CompletedBeneficiariesDTO.builder()
+                .completed(findBeneficiaryIdsByStatus(form.getFormId(), FormResponseStatus.COMPLETE.name(), villageId, providerServiceMapId))
+                .refused(findBeneficiaryIdsByStatus(form.getFormId(), FormResponseStatus.REFUSED.name(), villageId, providerServiceMapId))
+                .build();
+    }
+
+    private List<Long> findBeneficiaryIdsByStatus(
+            Long formId, String status, Integer villageId, Integer providerServiceMapId) {
         return (villageId != null || providerServiceMapId != null)
-                ? formResponseRepo.findBeneficiaryIdsByFormIdAndStatusFiltered(form.getFormId(), STATUS_COMPLETE, villageId, providerServiceMapId)
-                : formResponseRepo.findBeneficiaryIdsByFormIdAndStatus(form.getFormId(), STATUS_COMPLETE);
+                ? formResponseRepo.findBeneficiaryIdsByFormIdAndStatusFiltered(formId, status, villageId, providerServiceMapId)
+                : formResponseRepo.findBeneficiaryIdsByFormIdAndStatus(formId, status);
     }
 }

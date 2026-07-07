@@ -21,6 +21,7 @@
  */
 package com.iemr.flw.service;
 
+import com.iemr.flw.dto.iemr.CompletedBeneficiariesDTO;
 import com.iemr.flw.dto.iemr.FormResponseDTO;
 import com.iemr.flw.dto.iemr.FormResponseRequest;
 import com.iemr.flw.masterEnum.FormType;
@@ -35,7 +36,7 @@ import java.util.List;
  */
 public interface DynamicFormResponseService {
 
-    /** Save PRE_SUBMIT section answers and advance status to SUBMITTED. */
+    /** Save GENERAL_INFO and PRE_SUBMIT section answers and advance status to SUBMITTED. */
     FormResponseDTO submitForm(FormResponseRequest request);
 
     /** Save POST_SUBMIT section answers and advance status to COMPLETE. */
@@ -61,6 +62,9 @@ public interface DynamicFormResponseService {
      */
     List<FormResponseDTO> findPendingFollowUps(List<Long> formIds, int delayDays);
 
-    /** Returns beneficiary IDs with COMPLETE status for the given form type, optionally filtered by village and/or provider service map. */
-    List<Long> getCompletedBeneficiaries(FormType formType, Integer villageId, Integer providerServiceMapId);
+    /**
+     * Returns beneficiary IDs for the given form type split by outcome — COMPLETE and REFUSED —
+     * optionally filtered by village and/or provider service map.
+     */
+    CompletedBeneficiariesDTO getCompletedBeneficiaries(FormType formType, Integer villageId, Integer providerServiceMapId);
 }

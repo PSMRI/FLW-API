@@ -19,28 +19,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
-package com.iemr.flw.masterEnum;
+package com.iemr.flw.dto.iemr;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /**
- * Exhaustive set of question input types for dynamic form questions.
- * No other values may be stored in t_section_question.questionType.
+ * Beneficiary IDs for a form type, split by outcome: those who completed the form and those
+ * who refused (TB2_GI_Q1 = NO on the General Info consent question).
  *
  * @author Piramal Swasthya
  */
-public enum QuestionType {
-    /** Single-select from a predefined list of options. */
-    RADIO,
-    /** Multi-select from a predefined list of options. */
-    MCQ,
-    /** Single boolean checkbox — checked or unchecked. May carry options for display
-     *  purposes; answers are still stored as free text. */
-    CHECKBOX,
-    /** Free-text input. */
-    TEXT,
-    /** Date picker input. */
-    DATE,
-    /** Read-only display text — carries no answer data. */
-    DISPLAY,
-    /** Value auto-filled from context (e.g. ASHA worker ID). */
-    AUTO_FILL
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class CompletedBeneficiariesDTO {
+    private List<Long> completed;
+    private List<Long> refused;
 }
