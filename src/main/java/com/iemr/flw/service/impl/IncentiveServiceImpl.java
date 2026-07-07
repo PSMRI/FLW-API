@@ -895,7 +895,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                             IncentiveActivity activity1 =
                                     incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                            "FP_DELAY_2Y",
+                                            "1st_2nd_CHILD_GAP",
                                             GroupName.FAMILY_PLANNING.getDisplayName());
 
                             logger.info("Incentive Activity: {}", activity1);
@@ -911,7 +911,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                             IncentiveActivity activityCH =
                                     incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                            "FP_DELAY_2Y",
+                                            "1st_2nd_CHILD_GAP",
                                             GroupName.ACTIVITY.getDisplayName());
 
                             logger.info("Incentive Activity: {}", activityCH);
@@ -936,7 +936,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                             IncentiveActivity activity2 =
                                     incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                            "1st_2nd_CHILD_GAP",
+                                            "FP_DELAY_2Y",
                                             GroupName.FAMILY_PLANNING.getDisplayName());
 
                             logger.info("Incentive Activity: {}", activity2);
@@ -952,7 +952,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                             IncentiveActivity activityCH =
                                     incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                            "1st_2nd_CHILD_GAP",
+                                            "FP_DELAY_2Y",
                                             GroupName.ACTIVITY.getDisplayName());
 
                             logger.info("Incentive Activity: {}", activityCH);
