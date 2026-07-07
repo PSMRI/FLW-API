@@ -832,58 +832,46 @@ public class IncentiveServiceImpl implements IncentiveService {
     }
 
     private void addIFAIncentive(IFAFormSubmissionData ifaFormSubmissionData, IncentiveActivity incentiveActivityAM, Integer userId, String userName) {
-        Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
-
         Timestamp startOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(1).atStartOfDay());
         Timestamp endOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth()).atTime(23, 59, 59));
 
+        String lockKey = incentiveActivityAM.getId() + "_" + 0 + "_" + startOfMonth;
+
+        Object lock = lockMap.computeIfAbsent(lockKey, k -> new Object());
+        Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+
+
         logger.info("IFA incentive");
-        IncentiveActivityRecord incentiveActivityRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
-                incentiveActivityAM.getId(),
-                startOfMonth,
-                endOfMonth,
-                0L,
-                userId
-        );
-        if (incentiveActivityRecord == null) {
-            incentiveActivityRecord = new IncentiveActivityRecord();
-            incentiveActivityRecord.setActivityId(incentiveActivityAM.getId());
-            incentiveActivityRecord.setCreatedDate(timestamp);
-            incentiveActivityRecord.setStartDate(timestamp);
-            incentiveActivityRecord.setEndDate(timestamp);
-            incentiveActivityRecord.setUpdatedDate(timestamp);
-            incentiveActivityRecord.setUpdatedBy(ifaFormSubmissionData.getUserName());
-            incentiveActivityRecord.setCreatedBy(ifaFormSubmissionData.getUserName());
-            incentiveActivityRecord.setBenId(0L);
-            incentiveActivityRecord.setAshaId(userId);
-            incentiveActivityRecord.setAmount(Long.valueOf(incentiveActivityAM.getRate()));
-            recordRepo.save(incentiveActivityRecord);
-            logger.info("saved IFA incentive");
+        synchronized (lock){
+            IncentiveActivityRecord incentiveActivityRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                    incentiveActivityAM.getId(),
+                    startOfMonth,
+                    endOfMonth,
+                    0L,
+                    userId
+            );
+            if (incentiveActivityRecord == null) {
+                incentiveActivityRecord = new IncentiveActivityRecord();
+                incentiveActivityRecord.setActivityId(incentiveActivityAM.getId());
+                incentiveActivityRecord.setCreatedDate(timestamp);
+                incentiveActivityRecord.setStartDate(timestamp);
+                incentiveActivityRecord.setEndDate(timestamp);
+                incentiveActivityRecord.setUpdatedDate(timestamp);
+                incentiveActivityRecord.setUpdatedBy(ifaFormSubmissionData.getUserName());
+                incentiveActivityRecord.setCreatedBy(ifaFormSubmissionData.getUserName());
+                incentiveActivityRecord.setBenId(0L);
+                incentiveActivityRecord.setAshaId(userId);
+                incentiveActivityRecord.setAmount(Long.valueOf(incentiveActivityAM.getRate()));
+                recordRepo.save(incentiveActivityRecord);
+                logger.info("saved IFA incentive");
 
-        }
-    }
-
-    private void createIncentiveRecord(EligibleCoupleRegister eligibleCoupleRegister, IncentiveActivity activity) {
-        if (activity != null) {
-            Integer userId = userRepo.getUserIdByName(eligibleCoupleRegister.getCreatedBy());
-
-            IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(activity.getId(), eligibleCoupleRegister.getCreatedDate(), eligibleCoupleRegister.getBenId(),userId);
-            if (record == null) {
-                record = new IncentiveActivityRecord();
-                record.setActivityId(activity.getId());
-                record.setCreatedDate(eligibleCoupleRegister.getDob1());
-                record.setCreatedBy(eligibleCoupleRegister.getCreatedBy());
-                record.setStartDate(eligibleCoupleRegister.getDob1());
-                record.setEndDate(eligibleCoupleRegister.getDob1());
-                record.setUpdatedDate(eligibleCoupleRegister.getDob1());
-                record.setUpdatedBy(eligibleCoupleRegister.getCreatedBy());
-                record.setBenId(eligibleCoupleRegister.getBenId());
-                record.setAshaId(userId);
-                record.setAmount(Long.valueOf(activity.getRate()));
-                recordRepo.save(record);
             }
+
         }
+        lockMap.remove(lockKey, lock);
+
+
     }
+
 
 }

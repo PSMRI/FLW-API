@@ -776,12 +776,21 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             IncentiveActivity paiucdActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "FP_PAIUCD", GroupName.FAMILY_PLANNING.getDisplayName());
 
-            ancList.forEach(ancVisit -> {
+            IncentiveActivity iucdActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "FP_IUCD", GroupName.FAMILY_PLANNING.getDisplayName());
 
-                if (paiucdActivityAM != null && ancVisit.getIsPaiucdId() != null
-                        && ancVisit.getIsPaiucdId().toString().equals("1")) {
-                    recordAncRelatedIncentive(paiucdActivityAM, ancVisit);
+            ancList.forEach(ancVisit -> {
+                if(ancVisit.getIsAborted()){
+                    if (paiucdActivityAM != null) {
+                        recordAncRelatedIncentive(paiucdActivityAM, ancVisit);
+                    }
+
+                    if (iucdActivityAM != null && ancVisit.getIsPaiucdId() != null
+                            && ancVisit.getIsPaiucdId().toString().contains("Has a PAIUCD been inserted?(Copper-T) or")) {
+                        recordAncRelatedIncentive(iucdActivityAM, ancVisit);
+                    }
                 }
+
 
 
                 if (anc1Activity != null && ancVisit.getAncVisit() != null
@@ -822,11 +831,21 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             IncentiveActivity paiucdActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "FP_PAIUCD", GroupName.ACTIVITY.getDisplayName());
 
+            IncentiveActivity iucdActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "FP_IUCD", GroupName.ACTIVITY.getDisplayName());
+
             ancList.forEach(ancVisit -> {
 
 
                 if (ancVisit.getIsAborted()) {
-                    recordAncRelatedIncentive(paiucdActivityCH, ancVisit);
+                    if (paiucdActivityCH != null) {
+                        recordAncRelatedIncentive(paiucdActivityCH, ancVisit);
+                    }
+
+                    if (iucdActivityCH != null && ancVisit.getIsPaiucdId() != null
+                            && ancVisit.getIsPaiucdId().toString().contains("Has a PAIUCD been inserted?(Copper-T) or")) {
+                        recordAncRelatedIncentive(iucdActivityCH, ancVisit);
+                    }
                 }
 
 
