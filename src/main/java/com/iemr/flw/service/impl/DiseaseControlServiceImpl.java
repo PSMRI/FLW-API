@@ -1280,7 +1280,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 .findRecordByActivityIdCreatedDateBenId(
                         diseaseScreeningActivity.getId(),
                         visitTimestamp,
-                        diseaseScreening.getBeneficiaryId());
+                        diseaseScreening.getBeneficiaryId(),diseaseScreening.getUserId());
 
         if (record == null) {
 
@@ -1310,7 +1310,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     ? new Timestamp(diseaseScreening.getScreeningDate().getTime())
                     : null;
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(diseaseScreeningActivity.getId(), Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()), diseaseScreening.getBenId().longValue());
+                    .findRecordByActivityIdCreatedDateBenId(diseaseScreeningActivity.getId(), Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()), diseaseScreening.getBenId().longValue(),diseaseScreening.getUserId());
             if (record == null) {
                 record = new IncentiveActivityRecord();
                 record.setActivityId(diseaseScreeningActivity.getId());
@@ -1457,7 +1457,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                                               Long benId, Timestamp createdDate, String userName) {
         try {
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), createdDate, benId);
+                    .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), createdDate, benId,ashaId);
 
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
             if (record == null) {

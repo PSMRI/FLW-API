@@ -826,16 +826,9 @@ public class ChildCareServiceImpl implements ChildCareService {
         orsDistributionList.forEach(orsDistribution -> {
             IncentiveActivity orsPacketActivityAM =
                     incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.CHILD_HEALTH.getDisplayName());
-            IncentiveActivity orsPacketActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
             if (orsPacketActivityAM != null) {
                 if (orsDistribution.getNumOrsPackets() != null) {
                     createIncentiveRecordforOrsDistribution(orsDistribution, orsDistribution.getBeneficiaryId(), orsPacketActivityAM, userRepo.getUserNamedByUserId(orsDistribution.getUserId()), false);
-                }
-            }
-
-            if (orsPacketActivityCH != null) {
-                if (orsDistribution.getNumOrsPackets() != null) {
-                    createIncentiveRecordforOrsDistribution(orsDistribution, orsDistribution.getBeneficiaryId(), orsPacketActivityCH, userRepo.getUserNamedByUserId(orsDistribution.getUserId()), true);
                 }
             }
 
@@ -1158,7 +1151,7 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     private void createIncentiveRecord(ChildVaccination vaccination, Long benId, Integer userId, IncentiveActivity immunizationActivity) {
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), vaccination.getCreatedDate(), benId);
+                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), vaccination.getCreatedDate(), benId,userId);
 
         if (record == null) {
             record = new IncentiveActivityRecord();
@@ -1180,7 +1173,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         logger.info("RecordIncentive" + activityName);
 
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), hbncVisit.getCreatedDate(), benId);
+                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), hbncVisit.getCreatedDate(), benId,hbncVisit.getAshaId());
 
         if (record == null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
@@ -1267,7 +1260,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         // Convert LocalDate to Timestamp (00:00:00 by default)
         Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId);
+                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId,data.getUserId());
 
 
         if (record == null) {
@@ -1297,7 +1290,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         // Convert LocalDate to Timestamp (00:00:00 by default)
         Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId);
+                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId,data.getUserId());
 
 
         if (record == null) {
@@ -1322,7 +1315,7 @@ public class ChildCareServiceImpl implements ChildCareService {
             // Convert to LocalDate
             Timestamp visitDate = Timestamp.valueOf(data.getVisitDate().atStartOfDay());
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId);
+                    .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId,data.getUserId());
             double packets = Double.parseDouble(data.getNumOrsPackets());
             double rate = immunizationActivity.getRate();
 
@@ -1336,7 +1329,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 record.setEndDate(visitDate);
                 record.setUpdatedDate(visitDate);
                 record.setUpdatedBy(createdBy);
-                record.setBenId(benId);
+                record.setBenId(0L);
                 record.setAshaId(data.getUserId());
                 if (isCH) {
                     record.setAmount((long) rate);
@@ -1359,7 +1352,7 @@ public class ChildCareServiceImpl implements ChildCareService {
             // Convert to LocalDate
             Timestamp visitDate = Timestamp.valueOf(data.getVisitDate().atStartOfDay());
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), visitDate, benId);
+                    .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), visitDate, benId,data.getUserId());
 
 
             if (record == null) {

@@ -213,7 +213,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
 
         try {
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), delOutList.getCreatedDate(), benId);
+                    .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), delOutList.getCreatedDate(), benId,userRepo.getUserIdByName(delOutList.getUpdatedBy()));
 
 
             if (record == null) {

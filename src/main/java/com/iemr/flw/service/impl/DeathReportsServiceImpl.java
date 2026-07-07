@@ -263,7 +263,7 @@ public class DeathReportsServiceImpl implements DeathReportsService {
 
     private void createIncentiveRecord(CDR cdr, Long benId, Integer userId, IncentiveActivity immunizationActivity) {
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), cdr.getCreatedDate(), benId);
+                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), cdr.getCreatedDate(), benId,userId);
         if (record == null) {
             record = new IncentiveActivityRecord();
             record.setActivityId(immunizationActivity.getId());
@@ -276,32 +276,16 @@ public class DeathReportsServiceImpl implements DeathReportsService {
             record.setBenId(benId);
             record.setAshaId(userId);
             record.setAmount(Long.valueOf(immunizationActivity.getRate()));
-            if (userRepo.getUserRole(userId).get(0).getStateId() == StateCode.AM.getStateCode()) {
-                if (cdr.getDeathCertImage1() != null && cdr.getCdrImage() != null && cdr.getCdrImage2() != null && cdr.getDeathCertImage2() != null) {
-                    record.setIsEligible(true);
-                    recordRepo.save(record);
+            record.setIsEligible(true);
+            recordRepo.save(record);
 
-                } else {
-                    record.setIsEligible(false);
-                    IncentiveActivityRecord incentiveActivityRecord = recordRepo.save(record);
-                    if (incentiveActivityRecord == null) {
-                        recordRepo.save(record);
-                        pendindDocService.updatePendingActivity(userId, cdr.getId(), record.getId(), immunizationActivity.getId());
-
-                    }
-
-                }
-            } else {
-                recordRepo.save(record);
-
-            }
 
         }
     }
 
     private void createIncentiveRecord(MDSR mdsr, Long benId, Integer userId, IncentiveActivity immunizationActivity) {
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), mdsr.getCreatedDate(), benId);
+                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), mdsr.getCreatedDate(), benId,userId);
         if (record == null) {
             record = new IncentiveActivityRecord();
             record.setActivityId(immunizationActivity.getId());

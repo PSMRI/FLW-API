@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -60,6 +61,8 @@ public class CoupleServiceImpl implements CoupleService {
     private BeneficiaryRepo beneficiaryRepo;
 
     private final Logger logger = LoggerFactory.getLogger(CoupleServiceImpl.class);
+    private final ConcurrentHashMap<String, Object> lockMap = new ConcurrentHashMap<>();
+
 
 
     @Override
@@ -359,25 +362,35 @@ public class CoupleServiceImpl implements CoupleService {
 
 
     private void createIncentiveRecord(EligibleCoupleRegister eligibleCoupleDTO, IncentiveActivity activity) {
-        if (activity != null) {
-            IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(activity.getId(), eligibleCoupleDTO.getCreatedDate(), eligibleCoupleDTO.getBenId());
-            Integer userId = userRepo.getUserIdByName(eligibleCoupleDTO.getCreatedBy());
-            if (record == null) {
-                record = new IncentiveActivityRecord();
-                record.setActivityId(activity.getId());
-                record.setCreatedDate(eligibleCoupleDTO.getCreatedDate());
-                record.setCreatedBy(eligibleCoupleDTO.getCreatedBy());
-                record.setStartDate(eligibleCoupleDTO.getCreatedDate());
-                record.setEndDate(eligibleCoupleDTO.getCreatedDate());
-                record.setUpdatedDate(eligibleCoupleDTO.getCreatedDate());
-                record.setUpdatedBy(eligibleCoupleDTO.getCreatedBy());
-                record.setBenId(eligibleCoupleDTO.getBenId());
-                record.setAshaId(userId);
-                record.setAmount(Long.valueOf(activity.getRate()));
-                recordRepo.save(record);
+        String lockKey = activity.getId() + "_" + eligibleCoupleDTO.getBenId() + "_" + eligibleCoupleDTO.getCreatedDate();
+
+        Object lock = lockMap.computeIfAbsent(lockKey, k -> new Object());
+        synchronized (lock){
+            if (activity != null) {
+                Integer userId = userRepo.getUserIdByName(eligibleCoupleDTO.getCreatedBy());
+
+                IncentiveActivityRecord record = recordRepo
+                        .findRecordByActivityIdCreatedDateBenId(activity.getId(), eligibleCoupleDTO.getCreatedDate(), eligibleCoupleDTO.getBenId(),userId);
+                if (record == null) {
+                    record = new IncentiveActivityRecord();
+                    record.setActivityId(activity.getId());
+                    record.setCreatedDate(eligibleCoupleDTO.getCreatedDate());
+                    record.setCreatedBy(eligibleCoupleDTO.getCreatedBy());
+                    record.setStartDate(eligibleCoupleDTO.getCreatedDate());
+                    record.setEndDate(eligibleCoupleDTO.getCreatedDate());
+                    record.setUpdatedDate(eligibleCoupleDTO.getCreatedDate());
+                    record.setUpdatedBy(eligibleCoupleDTO.getCreatedBy());
+                    record.setBenId(eligibleCoupleDTO.getBenId());
+                    record.setAshaId(userId);
+                    record.setAmount(Long.valueOf(activity.getRate()));
+                    recordRepo.save(record);
+                }
             }
         }
+        lockMap.remove(lockKey, lock);
+
+
+
     }
 
     @Override
@@ -572,7 +585,7 @@ public class CoupleServiceImpl implements CoupleService {
 
     private void addIncenticeRecord(EligibleCoupleTracking ect, Integer userId, IncentiveActivity antaraActivity) {
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(antaraActivity.getId(), ect.getCreatedDate(), ect.getBenId());
+                .findRecordByActivityIdCreatedDateBenId(antaraActivity.getId(), ect.getCreatedDate(), ect.getBenId(),userId);
         // get bene details
 
         if (record == null) {
