@@ -37,6 +37,7 @@ import com.iemr.flw.dto.iemr.SectionAnswerRequest;
 import com.iemr.flw.dto.iemr.SectionResponseDTO;
 import com.iemr.flw.domain.iemr.DynamicForm;
 import com.iemr.flw.masterEnum.FormResponseStatus;
+import com.iemr.flw.masterEnum.FormResponseStatus;
 import com.iemr.flw.masterEnum.FormType;
 import com.iemr.flw.repo.iemr.DynamicFormRepo;
 import com.iemr.flw.repo.iemr.FormResponseRepo;
@@ -388,7 +389,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             // Delete any existing answers for this question in this section (handles re-saves)
             questionResponseRepo.deleteByQuestionIdAndSectionResponseId(questionId, sectionResponseId);
 
-            if (type == QuestionType.RADIO) {
+            if (type == QuestionType.RADIO || type == QuestionType.CHECKBOX) {
                 if (answer.getOptionValue() != null) {
                     QuestionOption opt = resolveOption(
                             optionsByQuestion, questionId, answer.getOptionValue(), answer.getQuestionUuid());
