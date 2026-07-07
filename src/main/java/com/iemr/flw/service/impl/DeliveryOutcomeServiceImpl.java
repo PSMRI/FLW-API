@@ -231,7 +231,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                                                 "FP_DELAY_2Y",
                                                 GroupName.ACTIVITY.getDisplayName());
 
-                                createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), activity);
+                                createIncentiveRecordforYearGap(deliveryOutcome, deliveryOutcome.getBenId(), activity);
                             }
                             if(stateId.equals(StateCode.AM.getStateCode())){
                                 IncentiveActivity activity =
@@ -239,7 +239,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                                                 "FP_DELAY_2Y",
                                                 GroupName.FAMILY_PLANNING.getDisplayName());
 
-                                createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), activity);
+                                createIncentiveRecordforYearGap(deliveryOutcome, deliveryOutcome.getBenId(), activity);
                             }
 
 
@@ -272,7 +272,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                                                 "1st_2nd_CHILD_GAP",
                                                 GroupName.FAMILY_PLANNING.getDisplayName());
 
-                                createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), activity);
+                                createIncentiveRecordforYearGap(deliveryOutcome, deliveryOutcome.getBenId(), activity);
                             }
                             if(stateId.equals(StateCode.CG.getStateCode())){
                                 IncentiveActivity activity =
@@ -280,7 +280,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                                                 "1st_2nd_CHILD_GAP",
                                                 GroupName.ACTIVITY.getDisplayName());
 
-                                createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), activity);
+                                createIncentiveRecordforYearGap(deliveryOutcome, deliveryOutcome.getBenId(), activity);
                             }
 
 
@@ -304,6 +304,40 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
     }
 
     private void createIncentiveRecordforJsy(DeliveryOutcome delOutList, Long benId, IncentiveActivity immunizationActivity) {
+        logger.info("benId" + benId);
+
+        try {
+            IncentiveActivityRecord record = recordRepo
+                    .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), delOutList.getCreatedDate(), benId,userRepo.getUserIdByName(delOutList.getUpdatedBy()));
+
+
+            if (record == null) {
+                logger.info("setStartDate" + delOutList.getDateOfDelivery());
+                logger.info("setCreatedDate" + delOutList.getCreatedDate());
+                record = new IncentiveActivityRecord();
+                record.setActivityId(immunizationActivity.getId());
+                record.setCreatedDate(delOutList.getDateOfDelivery());
+                record.setCreatedBy(delOutList.getCreatedBy());
+                record.setStartDate(delOutList.getDateOfDelivery());
+                record.setEndDate(delOutList.getDateOfDelivery());
+                record.setUpdatedDate(delOutList.getCreatedDate());
+                record.setUpdatedBy(delOutList.getCreatedBy());
+                record.setBenId(benId);
+                record.setAshaId(userRepo.getUserIdByName(delOutList.getUpdatedBy()));
+                record.setAmount(Long.valueOf(immunizationActivity.getRate()));
+                recordRepo.save(record);
+            } else {
+                logger.info("benId:" + record.getId());
+
+            }
+        } catch (Exception e) {
+            logger.error("JSY Incentive:", e);
+        }
+
+
+    }
+
+    private void createIncentiveRecordforYearGap(DeliveryOutcome delOutList, Long benId, IncentiveActivity immunizationActivity) {
         logger.info("benId" + benId);
 
         try {
