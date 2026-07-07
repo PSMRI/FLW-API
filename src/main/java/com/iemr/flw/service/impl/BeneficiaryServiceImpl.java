@@ -341,6 +341,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             benDetailsRMNCH_OBJ.setAddressLine2(benAddressOBJ.getPermAddrLine2());
                         if (benAddressOBJ.getPermAddrLine3() != null)
                             benDetailsRMNCH_OBJ.setAddressLine3(benAddressOBJ.getPermAddrLine3());
+                        if (benAddressOBJ.getPermPinCode() != null)
+                            benDetailsRMNCH_OBJ.setPinCode(benAddressOBJ.getPermPinCode());
 
                         // GPS fallback: if not in RMNCH details (syncdatatoamrti not yet called),
                         // pull from i_beneficiaryaddress (saved during TM-API registration)

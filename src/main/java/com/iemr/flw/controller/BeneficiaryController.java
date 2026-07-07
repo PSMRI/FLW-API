@@ -54,7 +54,9 @@ public class BeneficiaryController {
             if (requestDTO != null) {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
+                System.out.println("getBeneficiaryData request : " + requestDTO);
                 String s = beneficiaryService.getBenData(requestDTO, authorization);
+                System.out.println("getBeneficiaryData response : " + s);
                 if (s != null)
                     response.setResponse(s);
                 else
