@@ -32,8 +32,8 @@ public enum QuestionType {
     RADIO,
     /** Multi-select from a predefined list of options. */
     MCQ,
-    /** Single boolean checkbox — checked or unchecked. May carry options for display
-     *  purposes; answers are still stored as free text. */
+    /** Single boolean checkbox — checked or unchecked. Resolved like RADIO: submit
+     *  optionValue to select it, omit to leave unanswered. */
     CHECKBOX,
     /** Free-text input. */
     TEXT,
