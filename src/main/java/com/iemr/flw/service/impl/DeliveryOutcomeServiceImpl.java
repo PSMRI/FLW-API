@@ -27,6 +27,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -196,6 +200,34 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                         }
                     }
                 }
+
+            }
+            if(deliveryOutcome.getDeliveryOutcome()==1){
+                if(!beneficiaryRepo.findByBenficieryid(deliveryOutcome.getBenId()).isEmpty()){
+                    RMNCHBeneficiaryDetailsRmnch rmnchBeneficiaryDetailsRmnch = beneficiaryRepo.findByBenficieryid(deliveryOutcome.getBenId()).get(0);
+                    LocalDate marriageDate = rmnchBeneficiaryDetailsRmnch.getDateMarriage()
+                            .toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
+
+                    LocalDate deliveryDate = deliveryOutcome.getDateOfDelivery()
+                            .toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
+
+                    long years = ChronoUnit.YEARS.between(marriageDate, deliveryDate);
+
+                    if (years >= 2) {
+                        IncentiveActivity activity =
+                                incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                        "FP_DELAY_2Y",
+                                        GroupName.FAMILY_PLANNING.getDisplayName());
+
+                        createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), activity);
+
+                    }
+                }
+
 
             }
 
