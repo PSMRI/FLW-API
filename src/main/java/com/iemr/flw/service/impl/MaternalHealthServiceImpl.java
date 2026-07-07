@@ -781,12 +781,12 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
             ancList.forEach(ancVisit -> {
                 if(ancVisit.getIsAborted()){
-                    if (paiucdActivityAM != null) {
+                    if (paiucdActivityAM != null && ancVisit.getIsPaiucdId() != null &&  ancVisit.getIsPaiucdId()==0 ) {
                         recordAncRelatedIncentive(paiucdActivityAM, ancVisit);
                     }
 
-                    if (iucdActivityAM != null && ancVisit.getIsPaiucdId() != null
-                            && ancVisit.getIsPaiucdId().toString().contains("Has a PAIUCD been inserted?(Copper-T) or")) {
+                    if (iucdActivityAM != null &&  ancVisit.getIsPaiucdId() != null &&  ancVisit.getIsPaiucdId()==1 &&
+                             ancVisit.getIsPaiucdId().toString().contains("Has a PAIUCD been inserted?(Copper-T) or")) {
                         recordAncRelatedIncentive(iucdActivityAM, ancVisit);
                     }
                 }
@@ -838,11 +838,11 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
 
                 if (ancVisit.getIsAborted()) {
-                    if (paiucdActivityCH != null) {
+                    if (paiucdActivityCH != null && ancVisit.getIsPaiucdId() != null &&  ancVisit.getIsPaiucdId()==0 ) {
                         recordAncRelatedIncentive(paiucdActivityCH, ancVisit);
                     }
 
-                    if (iucdActivityCH != null && ancVisit.getIsPaiucdId() != null
+                    if (iucdActivityCH != null && ancVisit.getIsPaiucdId() != null && ancVisit.getIsPaiucdId() != null &&  ancVisit.getIsPaiucdId()==1
                             && ancVisit.getIsPaiucdId().toString().contains("Has a PAIUCD been inserted?(Copper-T) or")) {
                         recordAncRelatedIncentive(iucdActivityCH, ancVisit);
                     }
