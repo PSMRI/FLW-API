@@ -229,6 +229,37 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                 }
 
 
+
+            }
+
+            if(deliveryOutcome.getDeliveryOutcome()==2){
+                if(!beneficiaryRepo.findByBenficieryid(deliveryOutcome.getBenId()).isEmpty()){
+                    RMNCHBeneficiaryDetailsRmnch rmnchBeneficiaryDetailsRmnch = beneficiaryRepo.findByBenficieryid(deliveryOutcome.getBenId()).get(0);
+                    LocalDate marriageDate = rmnchBeneficiaryDetailsRmnch.getDateMarriage()
+                            .toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
+
+                    LocalDate deliveryDate = deliveryOutcome.getDateOfDelivery()
+                            .toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
+
+                    long years = ChronoUnit.YEARS.between(marriageDate, deliveryDate);
+
+                    if (years >= 3) {
+                        IncentiveActivity activity =
+                                incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                        "1st_2nd_CHILD_GAP",
+                                        GroupName.ACTIVITY.getDisplayName());
+
+                        createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), activity);
+
+                    }
+                }
+
+
+
             }
 
 
