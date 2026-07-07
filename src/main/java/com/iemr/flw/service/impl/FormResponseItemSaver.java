@@ -44,6 +44,7 @@ import com.iemr.flw.repo.iemr.SectionResponseRepo;
 import com.iemr.flw.masterEnum.FormResponseStatus;
 import com.iemr.flw.masterEnum.QuestionType;
 import com.iemr.flw.masterEnum.SectionPhase;
+import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.exception.IEMRException;
 import lombok.RequiredArgsConstructor;
@@ -84,6 +85,7 @@ public class FormResponseItemSaver {
     private final SectionQuestionRepo sectionQuestionRepo;
     private final QuestionOptionRepo questionOptionRepo;
     private final JwtUtil jwtUtil;
+    private final CampConfigService campConfigService;
 
     /**
      * Saves one form response in its own independent REQUIRES_NEW transaction.
@@ -93,6 +95,8 @@ public class FormResponseItemSaver {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public FormResponseDTO saveForBulk(FormResponseRequest req, String jwtToken) throws IEMRException {
         String actor = jwtUtil.extractUserId(jwtToken).toString();
+        Integer vanID = campConfigService.getVanID();
+        Integer parkingPlaceID = campConfigService.getParkingPlaceID();
         FormVersion version = resolveLatestVersion(req.getFormUuid());
         Timestamp now = new Timestamp(System.currentTimeMillis());
         Long formId = version.getDynamicForm().getFormId();
@@ -118,11 +122,11 @@ public class FormResponseItemSaver {
             log.info("saveForBulk: overwriting responseId={} for beneficiaryId={}",
                     formResponse.getResponseId(), req.getBeneficiaryId());
         } else {
-            formResponse = createFormResponse(req, version, now, actor);
+            formResponse = createFormResponse(req, version, now, actor, vanID, parkingPlaceID);
         }
 
         // Step 5: Insert fresh sections and answers
-        return processSections(formResponse, req, version, actor);
+        return processSections(formResponse, req, version, actor, vanID, parkingPlaceID);
     }
 
     /** Pre-flight: validates every sectionUuid and questionUuid in the request exist in the form. */
@@ -170,7 +174,8 @@ public class FormResponseItemSaver {
                         "No active FormVersion found for form: " + formUuid));
     }
 
-    private FormResponse createFormResponse(FormResponseRequest req, FormVersion version, Timestamp now, String actor) {
+    private FormResponse createFormResponse(FormResponseRequest req, FormVersion version, Timestamp now, String actor,
+            Integer vanID, Integer parkingPlaceID) {
         FormResponse formResponse = FormResponse.builder()
                 .beneficiaryId(req.getBeneficiaryId())
                 .formId(version.getDynamicForm().getFormId())
@@ -181,11 +186,14 @@ public class FormResponseItemSaver {
                 .updatedBy(actor)
                 .submittedAt(now)
                 .lastFollowUpAt(now)
+                .vanID(vanID)
+                .parkingPlaceID(parkingPlaceID)
                 .build();
         return formResponseRepo.save(formResponse);
     }
 
-    private FormResponseDTO processSections(FormResponse formResponse, FormResponseRequest req, FormVersion version, String actor) {
+    private FormResponseDTO processSections(FormResponse formResponse, FormResponseRequest req, FormVersion version, String actor,
+            Integer vanID, Integer parkingPlaceID) {
         List<FormSection> allSections =
                 formSectionRepo.findByFormVersion_VersionIdOrderByDisplayOrderAsc(version.getVersionId());
         Map<String, FormSection> sectionByUuid = allSections.stream()
@@ -240,7 +248,7 @@ public class FormResponseItemSaver {
             });
 
             SectionResponse sectionResponse = upsertSectionResponse(
-                    formResponse.getResponseId(), section.getSectionId(), actor);
+                    formResponse.getResponseId(), section.getSectionId(), actor, vanID, parkingPlaceID);
 
             if (section.getSectionPhase() == SectionPhase.POST_SUBMIT) {
                 formResponse.setLastFollowUpAt(sectionResponse.getSavedAt());
@@ -255,7 +263,9 @@ public class FormResponseItemSaver {
                     sectionReq.getAnswers(),
                     questionMap,
                     optionsByQuestion,
-                    actor);
+                    actor,
+                    vanID,
+                    parkingPlaceID);
 
             questionResponseRepo.saveAll(questionResponses);
             sectionDTOs.add(buildSectionResponseDTO(sectionResponse, section, questionResponses));
@@ -264,7 +274,8 @@ public class FormResponseItemSaver {
         return buildFormResponseDTO(formResponse, sectionDTOs);
     }
 
-    private SectionResponse upsertSectionResponse(Long responseId, Long sectionId, String actor) {
+    private SectionResponse upsertSectionResponse(Long responseId, Long sectionId, String actor,
+            Integer vanID, Integer parkingPlaceID) {
         Optional<SectionResponse> existing =
                 sectionResponseRepo.findByResponseIdAndSectionId(responseId, sectionId);
         if (existing.isPresent()) {
@@ -272,6 +283,7 @@ public class FormResponseItemSaver {
             sr.setStatus(SECTION_STATUS_DONE);
             sr.setSavedAt(new Timestamp(System.currentTimeMillis()));
             sr.setUpdatedBy(actor);
+            if (sr.getVanID() == null) { sr.setVanID(vanID); sr.setParkingPlaceID(parkingPlaceID); }
             return sectionResponseRepo.save(sr);
         }
         SectionResponse sr = SectionResponse.builder()
@@ -281,6 +293,8 @@ public class FormResponseItemSaver {
                 .savedAt(new Timestamp(System.currentTimeMillis()))
                 .createdBy(actor)
                 .updatedBy(actor)
+                .vanID(vanID)
+                .parkingPlaceID(parkingPlaceID)
                 .build();
         return sectionResponseRepo.save(sr);
     }
@@ -290,7 +304,9 @@ public class FormResponseItemSaver {
             List<QuestionAnswerRequest> answers,
             Map<String, SectionQuestion> questionMap,
             Map<Long, Map<String, QuestionOption>> optionsByQuestion,
-            String actor) {
+            String actor,
+            Integer vanID,
+            Integer parkingPlaceID) {
 
         List<QuestionResponse> results = new ArrayList<>();
         for (QuestionAnswerRequest answer : answers) {
@@ -322,6 +338,8 @@ public class FormResponseItemSaver {
                             .optionId(opt != null ? opt.getOptionId() : null)
                             .createdBy(actor)
                             .updatedBy(actor)
+                            .vanID(vanID)
+                            .parkingPlaceID(parkingPlaceID)
                             .build());
                 }
             } else if (type == QuestionType.MCQ) {
@@ -335,6 +353,8 @@ public class FormResponseItemSaver {
                                 .optionId(opt != null ? opt.getOptionId() : null)
                                 .createdBy(actor)
                                 .updatedBy(actor)
+                                .vanID(vanID)
+                                .parkingPlaceID(parkingPlaceID)
                                 .build());
                     }
                 }
@@ -349,6 +369,8 @@ public class FormResponseItemSaver {
                         .answerText(value)
                         .createdBy(actor)
                         .updatedBy(actor)
+                        .vanID(vanID)
+                        .parkingPlaceID(parkingPlaceID)
                         .build());
             }
         }
