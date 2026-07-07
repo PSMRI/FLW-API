@@ -209,7 +209,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                     }
 
                 }
-                if(deliveryOutcome.getDeliveryOutcome()==1){
+                if(deliveryOutcome.getDeliveryOutcome()!=null){
                     if(!beneficiaryRepo.findByBenficieryid(deliveryOutcome.getBenId()).isEmpty()){
                         RMNCHBeneficiaryDetailsRmnch rmnchBeneficiaryDetailsRmnch = beneficiaryRepo.findByBenficieryid(deliveryOutcome.getBenId()).get(0);
                         LocalDate marriageDate = rmnchBeneficiaryDetailsRmnch.getDateMarriage()
@@ -223,8 +223,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                                 .toLocalDate();
 
                         long years = ChronoUnit.YEARS.between(marriageDate, deliveryDate);
-
-                        if (years >= 2) {
+                        if (years >= 2 && !rmnchBeneficiaryDetailsRmnch.getDoYouHavechildren()) {
                             if(stateId.equals(StateCode.CG.getStateCode())){
                                 IncentiveActivity activity =
                                         incentivesRepo.findIncentiveMasterByNameAndGroup(
@@ -244,13 +243,14 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
 
 
                         }
+
                     }
 
 
 
                 }
 
-                if(deliveryOutcome.getDeliveryOutcome()==2){
+                if(deliveryOutcome.getDeliveryOutcome()!=null){
                     if(!beneficiaryRepo.findByBenficieryid(deliveryOutcome.getBenId()).isEmpty()){
                         RMNCHBeneficiaryDetailsRmnch rmnchBeneficiaryDetailsRmnch = beneficiaryRepo.findByBenficieryid(deliveryOutcome.getBenId()).get(0);
                         LocalDate marriageDate = rmnchBeneficiaryDetailsRmnch.getDateMarriage()
@@ -265,7 +265,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
 
                         long years = ChronoUnit.YEARS.between(marriageDate, deliveryDate);
 
-                        if (years >= 3) {
+                        if (years >= 3 && rmnchBeneficiaryDetailsRmnch.getDoYouHavechildren()) {
                             if(stateId.equals(StateCode.AM.getStateCode())){
                                 IncentiveActivity activity =
                                         incentivesRepo.findIncentiveMasterByNameAndGroup(

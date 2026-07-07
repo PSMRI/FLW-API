@@ -982,11 +982,11 @@ public class IncentiveServiceImpl implements IncentiveService {
             if (record == null) {
                 record = new IncentiveActivityRecord();
                 record.setActivityId(activity.getId());
-                record.setCreatedDate(eligibleCoupleRegister.getCreatedDate());
+                record.setCreatedDate(eligibleCoupleRegister.getDob1());
                 record.setCreatedBy(eligibleCoupleRegister.getCreatedBy());
-                record.setStartDate(eligibleCoupleRegister.getCreatedDate());
-                record.setEndDate(eligibleCoupleRegister.getCreatedDate());
-                record.setUpdatedDate(eligibleCoupleRegister.getCreatedDate());
+                record.setStartDate(eligibleCoupleRegister.getDob1());
+                record.setEndDate(eligibleCoupleRegister.getDob1());
+                record.setUpdatedDate(eligibleCoupleRegister.getDob1());
                 record.setUpdatedBy(eligibleCoupleRegister.getCreatedBy());
                 record.setBenId(eligibleCoupleRegister.getBenId());
                 record.setAshaId(userId);
