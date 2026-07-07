@@ -342,7 +342,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
 
         try {
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), delOutList.getCreatedDate(), benId,userRepo.getUserIdByName(delOutList.getUpdatedBy()));
+                    .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), delOutList.getDateOfDelivery(), benId,userRepo.getUserIdByName(delOutList.getUpdatedBy()));
 
 
             if (record == null) {
@@ -354,7 +354,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                 record.setCreatedBy(delOutList.getCreatedBy());
                 record.setStartDate(delOutList.getDateOfDelivery());
                 record.setEndDate(delOutList.getDateOfDelivery());
-                record.setUpdatedDate(delOutList.getCreatedDate());
+                record.setUpdatedDate(delOutList.getDateOfDelivery());
                 record.setUpdatedBy(delOutList.getCreatedBy());
                 record.setBenId(benId);
                 record.setAshaId(userRepo.getUserIdByName(delOutList.getUpdatedBy()));
