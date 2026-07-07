@@ -22,25 +22,15 @@
 package com.iemr.flw.masterEnum;
 
 /**
- * Exhaustive set of question input types for dynamic form questions.
- * No other values may be stored in t_section_question.questionType.
+ * Lifecycle status stored in FormResponse.status.
  *
  * @author Piramal Swasthya
  */
-public enum QuestionType {
-    /** Single-select from a predefined list of options. */
-    RADIO,
-    /** Multi-select from a predefined list of options. */
-    MCQ,
-    /** Single boolean checkbox — checked or unchecked. May carry options for display
-     *  purposes; answers are still stored as free text. */
-    CHECKBOX,
-    /** Free-text input. */
-    TEXT,
-    /** Date picker input. */
-    DATE,
-    /** Read-only display text — carries no answer data. */
-    DISPLAY,
-    /** Value auto-filled from context (e.g. ASHA worker ID). */
-    AUTO_FILL
+public enum FormResponseStatus {
+    /** Saved via /submit. */
+    SUBMITTED,
+    /** Saved via /complete, consent question answered YES (or not applicable). */
+    COMPLETE,
+    /** Saved via /complete, consent question TB2_GI_Q1 answered NO. */
+    REFUSED
 }

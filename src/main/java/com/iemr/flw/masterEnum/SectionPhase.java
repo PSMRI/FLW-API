@@ -22,25 +22,16 @@
 package com.iemr.flw.masterEnum;
 
 /**
- * Exhaustive set of question input types for dynamic form questions.
- * No other values may be stored in t_section_question.questionType.
+ * Exhaustive set of phases a form section can belong to.
+ * No other values may be stored in t_form_section.sectionPhase.
  *
  * @author Piramal Swasthya
  */
-public enum QuestionType {
-    /** Single-select from a predefined list of options. */
-    RADIO,
-    /** Multi-select from a predefined list of options. */
-    MCQ,
-    /** Single boolean checkbox — checked or unchecked. May carry options for display
-     *  purposes; answers are still stored as free text. */
-    CHECKBOX,
-    /** Free-text input. */
-    TEXT,
-    /** Date picker input. */
-    DATE,
-    /** Read-only display text — carries no answer data. */
-    DISPLAY,
-    /** Value auto-filled from context (e.g. ASHA worker ID). */
-    AUTO_FILL
+public enum SectionPhase {
+    /** Shown first, before PRE_SUBMIT sections. */
+    GENERAL_INFO,
+    /** Shown before the form's main submit. Saved via /submit. */
+    PRE_SUBMIT,
+    /** Shown after the main submit. Saved via /complete. */
+    POST_SUBMIT
 }

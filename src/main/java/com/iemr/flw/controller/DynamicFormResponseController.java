@@ -21,6 +21,7 @@
  */
 package com.iemr.flw.controller;
 
+import com.iemr.flw.dto.iemr.CompletedBeneficiariesDTO;
 import com.iemr.flw.dto.iemr.FormResponseDTO;
 import com.iemr.flw.dto.iemr.FormResponseRequest;
 import com.iemr.flw.masterEnum.FormType;
@@ -53,7 +54,7 @@ public class DynamicFormResponseController {
 
     private final DynamicFormResponseService responseService;
 
-    @Operation(summary = "Submit PRE_SUBMIT section answers, status → SUBMITTED. " +
+    @Operation(summary = "Submit GENERAL_INFO and PRE_SUBMIT section answers, status → SUBMITTED. " +
             "Pass responseId in body to re-submit an existing SUBMITTED response.")
     @RequestMapping(value = "/submit", method = RequestMethod.POST)
     public ResponseEntity<ApiResponse> submitForm(
@@ -98,13 +99,14 @@ public class DynamicFormResponseController {
         FormResponseDTO dto = responseService.getResponseById(responseId);
         return ResponseEntity.ok(new ApiResponse(true, "Response fetched successfully", dto));
     }
-    @Operation(summary = "Get beneficiary IDs that have a COMPLETE form response for the given form type, optionally filtered by village and/or provider service map")
+    @Operation(summary = "Get beneficiary IDs that have a COMPLETE or REFUSED form response for the given form type, optionally filtered by village and/or provider service map")
     @RequestMapping(value = "/getCompletedBeneficiaries", method = RequestMethod.GET)
     public ResponseEntity<ApiResponse> getCompletedBeneficiaries(
             @RequestParam FormType formType,
             @RequestParam(required = false) Integer villageId,
             @RequestParam(required = false) Integer providerServiceMapId) {
-        List<Long> beneficiaryIds = responseService.getCompletedBeneficiaries(formType, villageId, providerServiceMapId);
-        return ResponseEntity.ok(new ApiResponse(true, "Completed beneficiaries fetched successfully", beneficiaryIds));
+        CompletedBeneficiariesDTO result =
+                responseService.getCompletedBeneficiaries(formType, villageId, providerServiceMapId);
+        return ResponseEntity.ok(new ApiResponse(true, "Completed beneficiaries fetched successfully", result));
     }
 }
