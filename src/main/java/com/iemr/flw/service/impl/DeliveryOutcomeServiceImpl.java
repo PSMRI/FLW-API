@@ -221,7 +221,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                         IncentiveActivity activity =
                                 incentivesRepo.findIncentiveMasterByNameAndGroup(
                                         "FP_DELAY_2Y",
-                                        GroupName.FAMILY_PLANNING.getDisplayName());
+                                        GroupName.ACTIVITY.getDisplayName());
 
                         createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), activity);
 
