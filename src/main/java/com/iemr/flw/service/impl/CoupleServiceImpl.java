@@ -585,7 +585,7 @@ public class CoupleServiceImpl implements CoupleService {
 
     private void addIncenticeRecord(EligibleCoupleTracking ect, Integer userId, IncentiveActivity antaraActivity) {
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(antaraActivity.getId(), ect.getCreatedDate(), ect.getBenId(),userId);
+                .findRecordByActivityIdCreatedDateBenId(antaraActivity.getId(), ect.getVisitDate(), ect.getBenId(),userId);
         // get bene details
 
         if (record == null) {

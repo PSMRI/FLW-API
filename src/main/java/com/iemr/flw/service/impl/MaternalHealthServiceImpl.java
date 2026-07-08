@@ -932,7 +932,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         }
         IncentiveActivityRecord existRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
                 incentiveActivity.getId(),
-                ancVisit.getCreatedDate(),
+                ancVisit.getAncDate(),
                 ancVisit.getBenId(),userId
         );
 
@@ -940,8 +940,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         if (existRecord != null) {
             return;
         }
-
-
 
         IncentiveActivityRecord record = new IncentiveActivityRecord();
         record.setActivityId(incentiveActivity.getId());
