@@ -864,8 +864,8 @@ public class ChildCareServiceImpl implements ChildCareService {
                     incentivesRepo.findIncentiveMasterByNameAndGroup("HBYC_QUARTERLY_VISITS", GroupName.CHILD_HEALTH.getDisplayName());
 
 
-            IncentiveActivity hbyncOrsPacketActivityCH =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
+            IncentiveActivity hbyncLactatingIronPacketActivityCH =
+                    incentivesRepo.findIncentiveMasterByNameAndGroup("LACTATING_MOTHERS_HOME_VISIT", GroupName.ACTIVITY.getDisplayName());
 
             hbycList.forEach(hbyc -> {
                 Set<String> eligibleHbycVisits = Set.of("3 Months", "6 Months", "9 Months", "12 Months", "15 Months");
@@ -879,7 +879,15 @@ public class ChildCareServiceImpl implements ChildCareService {
                     if (hbync15MonethVisitActivityCH != null && eligibleHbycVisits.contains(hbyc.getVisit_day())) {
                         createIncentiveRecordforHbyncVisit(hbyc, hbyc.getBeneficiaryId(), hbync15MonethVisitActivityCH, hbyc.getCreated_by());
                     }
+                    if(hbyc.getIfa_given() && eligibleHbycVisits.contains(hbyc.getVisit_day())){
+                        if(hbyncLactatingIronPacketActivityCH!=null){
+                            createIncentiveRecordforHbyncVisit(hbyc, hbyc.getBeneficiaryId(), hbyncLactatingIronPacketActivityCH, hbyc.getCreated_by());
+
+                        }
+
+                    }
                 }
+
 
 
 
@@ -1298,35 +1306,6 @@ public class ChildCareServiceImpl implements ChildCareService {
         }
     }
 
-
-    private void createIncentiveRecordforHbyncOrsDistribution(HbycChildVisit data, Long benId, IncentiveActivity immunizationActivity, String createdBy) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-
-        // Convert to LocalDate
-        LocalDate localDate = LocalDate.parse(data.getVisit_date(), formatter);
-
-        // Convert LocalDate to Timestamp (00:00:00 by default)
-        Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
-        IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId,data.getUserId());
-
-
-        if (record == null) {
-
-            record = new IncentiveActivityRecord();
-            record.setActivityId(immunizationActivity.getId());
-            record.setCreatedDate(visitDate);
-            record.setCreatedBy(createdBy);
-            record.setStartDate(visitDate);
-            record.setEndDate(visitDate);
-            record.setUpdatedDate(visitDate);
-            record.setUpdatedBy(createdBy);
-            record.setBenId(benId);
-            record.setAshaId(data.getUserId());
-            record.setAmount(Long.valueOf(immunizationActivity.getRate()));
-            recordRepo.save(record);
-        }
-    }
 
     private void createIncentiveRecordforOrsDistribution(OrsDistribution data, Long benId, IncentiveActivity immunizationActivity, String createdBy, boolean isCH) {
         try {
