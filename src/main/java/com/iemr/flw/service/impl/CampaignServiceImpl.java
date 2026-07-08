@@ -480,10 +480,10 @@ public class CampaignServiceImpl implements CampaignService {
 
         IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
                 incentiveActivity.getId(),
-                startOfMonth,
-                endOfMonth,
                 0L,
-                ashaId
+                ashaId,
+                startOfMonth,
+                endOfMonth
         );
 
 

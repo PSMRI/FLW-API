@@ -21,6 +21,10 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -229,51 +233,63 @@ public class ChildCareServiceImpl implements ChildCareService {
     @Override
     public List<HbncVisitResponseDTO> getHBNCDetails(GetBenRequestHandler dto) {
         List<HbncVisitResponseDTO> result = new ArrayList<>();
+        int page = 0;
+        int size = 20;
+
+        Page<HbncVisit> visitPage;
         try {
-            List<HbncVisit> hbncVisits = hbncVisitRepo.findByAshaId(dto.getAshaId());
+            do {
+                Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
 
-            for (HbncVisit visit : hbncVisits) {
-                HbncVisitResponseDTO responseDTO = new HbncVisitResponseDTO();
-                responseDTO.setId(visit.getId());
-                responseDTO.setBeneficiaryId(visit.getBeneficiaryId()); // Update with actual value
-                responseDTO.setHouseHoldId(visit.getHouseHoldId());   // Update with actual value
-                responseDTO.setVisitDate(visit.getVisit_date().split(" ")[0]); // Format visit.getVisitDate()
+                visitPage = hbncVisitRepo.findByAshaId(dto.getAshaId(), pageable);
 
-                // Convert all fields to Map
-                Map<String, Object> fields = new HashMap<>();
-                if(visit.getVisit_day()!=null){
-                    addIfValid(fields, "visit_day", visit.getVisit_day());
+                List<HbncVisit> hbncVisits = visitPage.getContent();
+
+                for (HbncVisit visit : hbncVisits) {
+                    HbncVisitResponseDTO responseDTO = new HbncVisitResponseDTO();
+                    responseDTO.setId(visit.getId());
+                    responseDTO.setBeneficiaryId(visit.getBeneficiaryId()); // Update with actual value
+                    responseDTO.setHouseHoldId(visit.getHouseHoldId());   // Update with actual value
+                    responseDTO.setVisitDate(visit.getVisit_date().split(" ")[0]); // Format visit.getVisitDate()
+
+                    // Convert all fields to Map
+                    Map<String, Object> fields = new HashMap<>();
+                    if(visit.getVisit_day()!=null){
+                        addIfValid(fields, "visit_day", visit.getVisit_day());
+
+                    }
+                    addIfValid(fields, "due_date", visit.getDue_date());
+                    addIfValid(fields, "is_baby_alive", convert(visit.getIs_baby_alive()));
+                    addIfValid(fields, "date_of_death", visit.getDate_of_death());
+                    addIfValid(fields, "reason_for_death", visit.getReasonForDeath());
+                    addIfValid(fields, "place_of_death", visit.getPlace_of_death());
+                    addIfValid(fields, "other_place_of_death", visit.getOther_place_of_death());
+                    addIfValid(fields, "baby_weight", visit.getBaby_weight());
+                    addIfValid(fields, "urine_passed", convert(visit.getUrine_passed()));
+                    addIfValid(fields, "stool_passed", convert(visit.getStool_passed()));
+                    addIfValid(fields, "diarrhoea", convert(visit.getDiarrhoea()));
+                    addIfValid(fields, "vomiting", convert(visit.getVomiting()));
+                    addIfValid(fields, "convulsions", convert(visit.getConvulsions()));
+                    addIfValid(fields, "activity", visit.getActivity());
+                    addIfValid(fields, "sucking", visit.getSucking());
+                    addIfValid(fields, "breathing", visit.getBreathing());
+                    addIfValid(fields, "chest_indrawing", visit.getChest_indrawing());
+                    addIfValid(fields, "temperature", visit.getTemperature());
+                    addIfValid(fields, "jaundice", convert(visit.getJaundice()));
+                    addIfValid(fields, "umbilical_stump", visit.getUmbilical_stump());
+                    addIfValid(fields, "discharged_from_sncu", convert(visit.getDischarged_from_sncu()));
+                    addIfValid(fields, "discharge_summary_upload", visit.getDischarge_summary_upload());
+
+                    // Add more fields as required
+
+                    responseDTO.setFields(fields);
+                    result.add(responseDTO);
 
                 }
-                addIfValid(fields, "due_date", visit.getDue_date());
-                addIfValid(fields, "is_baby_alive", convert(visit.getIs_baby_alive()));
-                addIfValid(fields, "date_of_death", visit.getDate_of_death());
-                addIfValid(fields, "reason_for_death", visit.getReasonForDeath());
-                addIfValid(fields, "place_of_death", visit.getPlace_of_death());
-                addIfValid(fields, "other_place_of_death", visit.getOther_place_of_death());
-                addIfValid(fields, "baby_weight", visit.getBaby_weight());
-                addIfValid(fields, "urine_passed", convert(visit.getUrine_passed()));
-                addIfValid(fields, "stool_passed", convert(visit.getStool_passed()));
-                addIfValid(fields, "diarrhoea", convert(visit.getDiarrhoea()));
-                addIfValid(fields, "vomiting", convert(visit.getVomiting()));
-                addIfValid(fields, "convulsions", convert(visit.getConvulsions()));
-                addIfValid(fields, "activity", visit.getActivity());
-                addIfValid(fields, "sucking", visit.getSucking());
-                addIfValid(fields, "breathing", visit.getBreathing());
-                addIfValid(fields, "chest_indrawing", visit.getChest_indrawing());
-                addIfValid(fields, "temperature", visit.getTemperature());
-                addIfValid(fields, "jaundice", convert(visit.getJaundice()));
-                addIfValid(fields, "umbilical_stump", visit.getUmbilical_stump());
-                addIfValid(fields, "discharged_from_sncu", convert(visit.getDischarged_from_sncu()));
-                addIfValid(fields, "discharge_summary_upload", visit.getDischarge_summary_upload());
-
-                // Add more fields as required
-
-                responseDTO.setFields(fields);
-                result.add(responseDTO);
+                page++;
                 checkAndAddHbncIncentives(hbncVisits, dto.getAshaId());
 
-            }
+            }while (visitPage.hasNext());
 
         } catch (Exception e) {
             logger.error("Error in getHBNCDetails: ", e);
@@ -826,16 +842,9 @@ public class ChildCareServiceImpl implements ChildCareService {
         orsDistributionList.forEach(orsDistribution -> {
             IncentiveActivity orsPacketActivityAM =
                     incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.CHILD_HEALTH.getDisplayName());
-            IncentiveActivity orsPacketActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
             if (orsPacketActivityAM != null) {
                 if (orsDistribution.getNumOrsPackets() != null) {
                     createIncentiveRecordforOrsDistribution(orsDistribution, orsDistribution.getBeneficiaryId(), orsPacketActivityAM, userRepo.getUserNamedByUserId(orsDistribution.getUserId()), false);
-                }
-            }
-
-            if (orsPacketActivityCH != null) {
-                if (orsDistribution.getNumOrsPackets() != null) {
-                    createIncentiveRecordforOrsDistribution(orsDistribution, orsDistribution.getBeneficiaryId(), orsPacketActivityCH, userRepo.getUserNamedByUserId(orsDistribution.getUserId()), true);
                 }
             }
 
@@ -845,36 +854,46 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     private void checkAndAddHbyncIncentives(List<HbycChildVisit> hbycList) {
-        IncentiveActivity hbync15MonethVisitActivityCH =
-                incentivesRepo.findIncentiveMasterByNameAndGroup("HBYC_QUARTERLY_VISITS", GroupName.ACTIVITY.getDisplayName());
-        IncentiveActivity hbyncVisitActivity =
-                incentivesRepo.findIncentiveMasterByNameAndGroup("HBYC_QUARTERLY_VISITS", GroupName.CHILD_HEALTH.getDisplayName());
+        if(!hbycList.isEmpty()){
+            Integer userId = hbycList.get(0).getUserId();
+            Integer stateId = userService.getUserDetail(userId).getStateId();
+
+            IncentiveActivity hbync15MonethVisitActivityCH =
+                    incentivesRepo.findIncentiveMasterByNameAndGroup("HBYC_QUARTERLY_VISITS", GroupName.ACTIVITY.getDisplayName());
+            IncentiveActivity hbyncVisitActivity =
+                    incentivesRepo.findIncentiveMasterByNameAndGroup("HBYC_QUARTERLY_VISITS", GroupName.CHILD_HEALTH.getDisplayName());
 
 
-        IncentiveActivity hbyncOrsPacketActivityCH =
-                incentivesRepo.findIncentiveMasterByNameAndGroup("ORS_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
+            IncentiveActivity hbyncLactatingIronPacketActivityCH =
+                    incentivesRepo.findIncentiveMasterByNameAndGroup("LACTATING_MOTHERS_HOME_VISIT", GroupName.ACTIVITY.getDisplayName());
 
-        hbycList.forEach(hbyc -> {
-            Set<String> eligibleHbycVisits = Set.of("3 Months", "6 Months", "9 Months", "12 Months", "15 Months");
-
-            if (hbyncVisitActivity != null && eligibleHbycVisits.contains(hbyc.getVisit_day())) {
-                createIncentiveRecordforHbyncVisit(hbyc, hbyc.getBeneficiaryId(), hbyncVisitActivity, hbyc.getCreated_by());
-            }
-
-            if (hbync15MonethVisitActivityCH != null && eligibleHbycVisits.contains(hbyc.getVisit_day())) {
-                createIncentiveRecordforHbyncVisit(hbyc, hbyc.getBeneficiaryId(), hbync15MonethVisitActivityCH, hbyc.getCreated_by());
-            }
-
-
-            if (hbyncOrsPacketActivityCH != null) {
-                if (hbyc.getOrs_given()) {
-                    createIncentiveRecordforHbyncOrsDistribution(hbyc, hbyc.getBeneficiaryId(), hbyncOrsPacketActivityCH, hbyc.getCreated_by());
-
+            hbycList.forEach(hbyc -> {
+                Set<String> eligibleHbycVisits = Set.of("3 Months", "6 Months", "9 Months", "12 Months", "15 Months");
+                if(stateId.equals(StateCode.AM.getStateCode())){
+                    if (hbyncVisitActivity != null && eligibleHbycVisits.contains(hbyc.getVisit_day())) {
+                        createIncentiveRecordforHbyncVisit(hbyc, hbyc.getBeneficiaryId(), hbyncVisitActivity, hbyc.getCreated_by());
+                    }
                 }
 
-            }
+                if(stateId.equals(StateCode.CG.getStateCode())){
+                    if (hbync15MonethVisitActivityCH != null && eligibleHbycVisits.contains(hbyc.getVisit_day())) {
+                        createIncentiveRecordforHbyncVisit(hbyc, hbyc.getBeneficiaryId(), hbync15MonethVisitActivityCH, hbyc.getCreated_by());
+                    }
+                    if(hbyc.getIfa_given() && eligibleHbycVisits.contains(hbyc.getVisit_day())){
+                        if(hbyncLactatingIronPacketActivityCH!=null){
+                            createIncentiveRecordforHbyncVisit(hbyc, hbyc.getBeneficiaryId(), hbyncLactatingIronPacketActivityCH, hbyc.getCreated_by());
 
-        });
+                        }
+
+                    }
+                }
+
+
+
+
+            });
+        }
+
 
 
     }
@@ -1158,7 +1177,7 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     private void createIncentiveRecord(ChildVaccination vaccination, Long benId, Integer userId, IncentiveActivity immunizationActivity) {
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), vaccination.getCreatedDate(), benId);
+                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), vaccination.getCreatedDate(), benId,userId);
 
         if (record == null) {
             record = new IncentiveActivityRecord();
@@ -1180,7 +1199,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         logger.info("RecordIncentive" + activityName);
 
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), hbncVisit.getCreatedDate(), benId);
+                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), hbncVisit.getCreatedDate(), benId,hbncVisit.getAshaId());
 
         if (record == null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
@@ -1267,7 +1286,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         // Convert LocalDate to Timestamp (00:00:00 by default)
         Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId);
+                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId,data.getUserId());
 
 
         if (record == null) {
@@ -1287,42 +1306,13 @@ public class ChildCareServiceImpl implements ChildCareService {
         }
     }
 
-
-    private void createIncentiveRecordforHbyncOrsDistribution(HbycChildVisit data, Long benId, IncentiveActivity immunizationActivity, String createdBy) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-
-        // Convert to LocalDate
-        LocalDate localDate = LocalDate.parse(data.getVisit_date(), formatter);
-
-        // Convert LocalDate to Timestamp (00:00:00 by default)
-        Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
-        IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId);
-
-
-        if (record == null) {
-
-            record = new IncentiveActivityRecord();
-            record.setActivityId(immunizationActivity.getId());
-            record.setCreatedDate(visitDate);
-            record.setCreatedBy(createdBy);
-            record.setStartDate(visitDate);
-            record.setEndDate(visitDate);
-            record.setUpdatedDate(visitDate);
-            record.setUpdatedBy(createdBy);
-            record.setBenId(benId);
-            record.setAshaId(data.getUserId());
-            record.setAmount(Long.valueOf(immunizationActivity.getRate()));
-            recordRepo.save(record);
-        }
-    }
 
     private void createIncentiveRecordforOrsDistribution(OrsDistribution data, Long benId, IncentiveActivity immunizationActivity, String createdBy, boolean isCH) {
         try {
             // Convert to LocalDate
             Timestamp visitDate = Timestamp.valueOf(data.getVisitDate().atStartOfDay());
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId);
+                    .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), visitDate, benId,data.getUserId());
             double packets = Double.parseDouble(data.getNumOrsPackets());
             double rate = immunizationActivity.getRate();
 
@@ -1336,7 +1326,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 record.setEndDate(visitDate);
                 record.setUpdatedDate(visitDate);
                 record.setUpdatedBy(createdBy);
-                record.setBenId(benId);
+                record.setBenId(0L);
                 record.setAshaId(data.getUserId());
                 if (isCH) {
                     record.setAmount((long) rate);
@@ -1359,7 +1349,7 @@ public class ChildCareServiceImpl implements ChildCareService {
             // Convert to LocalDate
             Timestamp visitDate = Timestamp.valueOf(data.getVisitDate().atStartOfDay());
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), visitDate, benId);
+                    .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), visitDate, benId,data.getUserId());
 
 
             if (record == null) {

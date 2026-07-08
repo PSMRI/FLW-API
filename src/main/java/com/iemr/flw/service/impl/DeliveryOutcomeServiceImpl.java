@@ -11,6 +11,7 @@ import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.DeliveryOutcomeDTO;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.identity.HouseHoldRepo;
 import com.iemr.flw.repo.iemr.DeliveryOutcomeRepo;
@@ -18,6 +19,7 @@ import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
 import com.iemr.flw.repo.iemr.IncentivesRepo;
 import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.DeliveryOutcomeService;
+import com.iemr.flw.service.UserService;
 import jakarta.annotation.PostConstruct;
 import org.apache.commons.lang3.Validate;
 import org.modelmapper.ModelMapper;
@@ -27,6 +29,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -50,6 +56,9 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
 
     @Autowired
     private UserServiceRoleRepo userRepo;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private IncentiveRecordRepo recordRepo;
@@ -122,85 +131,171 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
 
 
     public void checkAndAddJsyIncentive(List<DeliveryOutcome> delOutList) {
+        if(!delOutList.isEmpty()){
+            Integer userID = userRepo.getUserIdByName(delOutList.get(0).getCreatedBy());
+            Integer stateId = userService.getUserDetail(userID).getStateId();
+            delOutList.forEach(deliveryOutcome -> {
 
-        delOutList.forEach(deliveryOutcome -> {
+                IncentiveActivity institutionalDeliveryActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("MH_MOTIVATE_INST_DEL", GroupName.MATERNAL_HEALTH.getDisplayName());
+                IncentiveActivity institutionalDeliveryActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("INST_DELIVERY_ESCORT", GroupName.ACTIVITY.getDisplayName());
+                if (deliveryOutcome.getPlaceOfDelivery() != null) {
+                    String placeOfDelivery = deliveryOutcome.getPlaceOfDelivery();
 
-            IncentiveActivity institutionalDeliveryActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("MH_MOTIVATE_INST_DEL", GroupName.MATERNAL_HEALTH.getDisplayName());
-            IncentiveActivity institutionalDeliveryActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("INST_DELIVERY_ESCORT", GroupName.ACTIVITY.getDisplayName());
-            if (deliveryOutcome.getPlaceOfDelivery() != null) {
-                String placeOfDelivery = deliveryOutcome.getPlaceOfDelivery();
+                    if (placeOfDelivery != null &&
+                            (!placeOfDelivery.equalsIgnoreCase("home") ||
+                                    !placeOfDelivery.equalsIgnoreCase("in transit") ||
+                                    !placeOfDelivery.equalsIgnoreCase("other private hospital"))) {
 
-                if (placeOfDelivery != null &&
-                        (!placeOfDelivery.equalsIgnoreCase("home") ||
-                                !placeOfDelivery.equalsIgnoreCase("in transit") ||
-                                !placeOfDelivery.equalsIgnoreCase("other private hospital"))) {
+                        // Institutional delivery (eligible case)
+                        if (institutionalDeliveryActivityAM != null) {
+                            createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), institutionalDeliveryActivityAM);
+                        }
 
-                    // Institutional delivery (eligible case)
-                    if (institutionalDeliveryActivityAM != null) {
-                        createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), institutionalDeliveryActivityAM);
-                    }
-
-                    if (institutionalDeliveryActivityCH != null) {
-                        createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), institutionalDeliveryActivityCH);
-                    }
-                }
-            }
-
-            if (deliveryOutcome.getIsJSYBenificiary()) {
-                IncentiveActivity incentiveActivityInstJSY1 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_1ST_DEL_INST_RURAL", GroupName.JSY.getDisplayName());
-                IncentiveActivity incentiveActivityInstJSY2 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_2ND_DEL_INST_RURAL", GroupName.JSY.getDisplayName());
-                IncentiveActivity incentiveActivityInstJSY3 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_3RD_DEL_INST_RURAL", GroupName.JSY.getDisplayName());
-                IncentiveActivity incentiveActivityInstJSY4 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_4TH_DEL_INST_RURAL", GroupName.JSY.getDisplayName());
-
-
-                logger.info("delOutList" + gson.toJson(deliveryOutcome));
-                IncentiveActivity incentiveActivityJSY1 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_1ST_DEL_ANC_RURAL", GroupName.JSY.getDisplayName());
-                if (incentiveActivityJSY1 != null) {
-                    if (deliveryOutcome.getDeliveryOutcome() == 1) {
-                        createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityJSY1);
-                        if (deliveryOutcome.getPlaceOfDelivery() != null) {
-                            createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY1);
+                        if (institutionalDeliveryActivityCH != null) {
+                            createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), institutionalDeliveryActivityCH);
                         }
                     }
                 }
 
+                if (deliveryOutcome.getIsJSYBenificiary()) {
+                    IncentiveActivity incentiveActivityInstJSY1 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_1ST_DEL_INST_RURAL", GroupName.JSY.getDisplayName());
+                    IncentiveActivity incentiveActivityInstJSY2 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_2ND_DEL_INST_RURAL", GroupName.JSY.getDisplayName());
+                    IncentiveActivity incentiveActivityInstJSY3 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_3RD_DEL_INST_RURAL", GroupName.JSY.getDisplayName());
+                    IncentiveActivity incentiveActivityInstJSY4 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_4TH_DEL_INST_RURAL", GroupName.JSY.getDisplayName());
 
-                IncentiveActivity incentiveActivityJSY2 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_2ND_DEL_ANC_RURAL", GroupName.JSY.getDisplayName());
-                if (incentiveActivityJSY2 != null) {
-                    if (deliveryOutcome.getDeliveryOutcome() == 2) {
-                        createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityJSY2);
-                        if (deliveryOutcome.getPlaceOfDelivery() != null) {
 
-                            createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY2);
+                    logger.info("delOutList" + gson.toJson(deliveryOutcome));
+                    IncentiveActivity incentiveActivityJSY1 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_1ST_DEL_ANC_RURAL", GroupName.JSY.getDisplayName());
+                    if (incentiveActivityJSY1 != null) {
+                        if (deliveryOutcome.getDeliveryOutcome() == 1) {
+                            createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityJSY1);
+                            if (deliveryOutcome.getPlaceOfDelivery() != null) {
+                                createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY1);
+                            }
                         }
                     }
-                }
 
-                IncentiveActivity incentiveActivityJSY3 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_3RD_DEL_ANC_RURAL", GroupName.JSY.getDisplayName());
-                if (incentiveActivityJSY3 != null) {
-                    if (deliveryOutcome.getDeliveryOutcome() == 3) {
-                        createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityJSY3);
-                        if (deliveryOutcome.getPlaceOfDelivery() != null) {
-                            createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY3);
+
+                    IncentiveActivity incentiveActivityJSY2 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_2ND_DEL_ANC_RURAL", GroupName.JSY.getDisplayName());
+                    if (incentiveActivityJSY2 != null) {
+                        if (deliveryOutcome.getDeliveryOutcome() == 2) {
+                            createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityJSY2);
+                            if (deliveryOutcome.getPlaceOfDelivery() != null) {
+
+                                createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY2);
+                            }
                         }
                     }
+
+                    IncentiveActivity incentiveActivityJSY3 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_3RD_DEL_ANC_RURAL", GroupName.JSY.getDisplayName());
+                    if (incentiveActivityJSY3 != null) {
+                        if (deliveryOutcome.getDeliveryOutcome() == 3) {
+                            createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityJSY3);
+                            if (deliveryOutcome.getPlaceOfDelivery() != null) {
+                                createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY3);
+                            }
+                        }
+                    }
+
+                    IncentiveActivity incentiveActivityJSY4 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_4TH_DEL_ANC_RURAL", GroupName.JSY.getDisplayName());
+                    if (incentiveActivityJSY4 != null) {
+                        if (deliveryOutcome.getDeliveryOutcome() == 4) {
+                            createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityJSY4);
+                            if (deliveryOutcome.getPlaceOfDelivery() != null) {
+                                createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY4);
+
+                            }
+                        }
+                    }
+
+                }
+                if(deliveryOutcome.getDeliveryOutcome()!=null){
+                    if(!beneficiaryRepo.findByBenficieryid(deliveryOutcome.getBenId()).isEmpty()){
+                        RMNCHBeneficiaryDetailsRmnch rmnchBeneficiaryDetailsRmnch = beneficiaryRepo.findByBenficieryid(deliveryOutcome.getBenId()).get(0);
+                        LocalDate marriageDate = rmnchBeneficiaryDetailsRmnch.getDateMarriage()
+                                .toInstant()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate();
+
+                        LocalDate deliveryDate = deliveryOutcome.getDateOfDelivery()
+                                .toInstant()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate();
+
+                        long years = ChronoUnit.YEARS.between(marriageDate, deliveryDate);
+                        if (years >= 2 && !rmnchBeneficiaryDetailsRmnch.getDoYouHavechildren()) {
+                            if(stateId.equals(StateCode.CG.getStateCode())){
+                                IncentiveActivity activity =
+                                        incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                                "FP_DELAY_2Y",
+                                                GroupName.ACTIVITY.getDisplayName());
+
+                                createIncentiveRecordforYearGap(deliveryOutcome, deliveryOutcome.getBenId(), activity);
+                            }
+                            if(stateId.equals(StateCode.AM.getStateCode())){
+                                IncentiveActivity activity =
+                                        incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                                "FP_DELAY_2Y",
+                                                GroupName.FAMILY_PLANNING.getDisplayName());
+
+                                createIncentiveRecordforYearGap(deliveryOutcome, deliveryOutcome.getBenId(), activity);
+                            }
+
+
+                        }
+
+                    }
+
+
+
                 }
 
-                IncentiveActivity incentiveActivityJSY4 = incentivesRepo.findIncentiveMasterByNameAndGroup("JSY_4TH_DEL_ANC_RURAL", GroupName.JSY.getDisplayName());
-                if (incentiveActivityJSY4 != null) {
-                    if (deliveryOutcome.getDeliveryOutcome() == 4) {
-                        createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityJSY4);
-                        if (deliveryOutcome.getPlaceOfDelivery() != null) {
-                            createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY4);
+                if(deliveryOutcome.getDeliveryOutcome()!=null){
+                    if(!beneficiaryRepo.findByBenficieryid(deliveryOutcome.getBenId()).isEmpty()){
+                        RMNCHBeneficiaryDetailsRmnch rmnchBeneficiaryDetailsRmnch = beneficiaryRepo.findByBenficieryid(deliveryOutcome.getBenId()).get(0);
+                        LocalDate marriageDate = rmnchBeneficiaryDetailsRmnch.getDateMarriage()
+                                .toInstant()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate();
+
+                        LocalDate deliveryDate = deliveryOutcome.getDateOfDelivery()
+                                .toInstant()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate();
+
+                        long years = ChronoUnit.YEARS.between(marriageDate, deliveryDate);
+
+                        if (years >= 3 && rmnchBeneficiaryDetailsRmnch.getDoYouHavechildren()) {
+                            if(stateId.equals(StateCode.AM.getStateCode())){
+                                IncentiveActivity activity =
+                                        incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                                "1st_2nd_CHILD_GAP",
+                                                GroupName.FAMILY_PLANNING.getDisplayName());
+
+                                createIncentiveRecordforYearGap(deliveryOutcome, deliveryOutcome.getBenId(), activity);
+                            }
+                            if(stateId.equals(StateCode.CG.getStateCode())){
+                                IncentiveActivity activity =
+                                        incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                                "1st_2nd_CHILD_GAP",
+                                                GroupName.ACTIVITY.getDisplayName());
+
+                                createIncentiveRecordforYearGap(deliveryOutcome, deliveryOutcome.getBenId(), activity);
+                            }
+
 
                         }
                     }
+
+
+
                 }
 
-            }
+
+            });
+        }
 
 
-        });
 
 //        JSY_ANC_URBAN
 //        JSY_INST_URBAN
@@ -213,7 +308,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
 
         try {
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), delOutList.getCreatedDate(), benId);
+                    .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), delOutList.getDateOfDelivery(), benId,userRepo.getUserIdByName(delOutList.getUpdatedBy()));
 
 
             if (record == null) {
@@ -225,7 +320,41 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                 record.setCreatedBy(delOutList.getCreatedBy());
                 record.setStartDate(delOutList.getDateOfDelivery());
                 record.setEndDate(delOutList.getDateOfDelivery());
-                record.setUpdatedDate(delOutList.getCreatedDate());
+                record.setUpdatedDate(delOutList.getDateOfDelivery());
+                record.setUpdatedBy(delOutList.getCreatedBy());
+                record.setBenId(benId);
+                record.setAshaId(userRepo.getUserIdByName(delOutList.getUpdatedBy()));
+                record.setAmount(Long.valueOf(immunizationActivity.getRate()));
+                recordRepo.save(record);
+            } else {
+                logger.info("benId:" + record.getId());
+
+            }
+        } catch (Exception e) {
+            logger.error("JSY Incentive:", e);
+        }
+
+
+    }
+
+    private void createIncentiveRecordforYearGap(DeliveryOutcome delOutList, Long benId, IncentiveActivity immunizationActivity) {
+        logger.info("benId" + benId);
+
+        try {
+            IncentiveActivityRecord record = recordRepo
+                    .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), delOutList.getDateOfDelivery(), benId,userRepo.getUserIdByName(delOutList.getUpdatedBy()));
+
+
+            if (record == null) {
+                logger.info("setStartDate" + delOutList.getDateOfDelivery());
+                logger.info("setCreatedDate" + delOutList.getCreatedDate());
+                record = new IncentiveActivityRecord();
+                record.setActivityId(immunizationActivity.getId());
+                record.setCreatedDate(delOutList.getDateOfDelivery());
+                record.setCreatedBy(delOutList.getCreatedBy());
+                record.setStartDate(delOutList.getDateOfDelivery());
+                record.setEndDate(delOutList.getDateOfDelivery());
+                record.setUpdatedDate(delOutList.getDateOfDelivery());
                 record.setUpdatedBy(delOutList.getCreatedBy());
                 record.setBenId(benId);
                 record.setAshaId(userRepo.getUserIdByName(delOutList.getUpdatedBy()));

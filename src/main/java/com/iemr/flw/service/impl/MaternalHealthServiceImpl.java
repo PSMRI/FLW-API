@@ -355,7 +355,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
     private void addIncentiveForHighRisk(IncentiveActivity incentiveActivity, PMSMA pmsma) {
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), pmsma.getCreatedDate(), pmsma.getBenId());
+                .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), pmsma.getCreatedDate(), pmsma.getBenId(),userRepo.getUserIdByName(pmsma.getCreatedBy()));
         // get bene details
 
         if (record == null) {
@@ -737,7 +737,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
         synchronized (lock) {
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(antaraActivity.getId(), ect.getPncDate(), ect.getBenId());
+                    .findRecordByActivityIdCreatedDateBenId(antaraActivity.getId(), ect.getPncDate(), ect.getBenId(),userId);
 
             if (record == null) {
                 record = new IncentiveActivityRecord();
@@ -776,12 +776,20 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             IncentiveActivity paiucdActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "FP_PAIUCD", GroupName.FAMILY_PLANNING.getDisplayName());
 
+            IncentiveActivity iucdActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "FP_IUCD", GroupName.FAMILY_PLANNING.getDisplayName());
             ancList.forEach(ancVisit -> {
-
-                if (paiucdActivityAM != null && ancVisit.getIsPaiucdId() != null
-                        && ancVisit.getIsPaiucdId().toString().equals("1")) {
-                    recordAncRelatedIncentive(paiucdActivityAM, ancVisit);
+                if(ancVisit.getIsAborted()){
+                    if (paiucdActivityAM != null &&  ancVisit.getIsPaiucdId() != null &&  ancVisit.getIsPaiucdId()==2 &&
+                            ancVisit.getIsPaiucd().toString().contains("Tubectomy")) {
+                        recordAncRelatedIncentive(paiucdActivityAM, ancVisit);
+                    }
+                    if (iucdActivityAM != null &&  ancVisit.getIsPaiucdId() != null &&  ancVisit.getIsPaiucdId()==1 &&
+                             ancVisit.getIsPaiucd().toString().contains("Copper-T")) {
+                        recordAncRelatedIncentive(iucdActivityAM, ancVisit);
+                    }
                 }
+
 
 
                 if (anc1Activity != null && ancVisit.getAncVisit() != null
@@ -822,11 +830,21 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             IncentiveActivity paiucdActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
                     "FP_PAIUCD", GroupName.ACTIVITY.getDisplayName());
 
+            IncentiveActivity iucdActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "FP_IUCD", GroupName.ACTIVITY.getDisplayName());
+
             ancList.forEach(ancVisit -> {
 
 
                 if (ancVisit.getIsAborted()) {
-                    recordAncRelatedIncentive(paiucdActivityCH, ancVisit);
+                    if (paiucdActivityCH != null &&  ancVisit.getIsPaiucdId() != null &&  ancVisit.getIsPaiucdId()==2 &&
+                            ancVisit.getIsPaiucd().toString().contains("Tubectomy")) {
+                        recordAncRelatedIncentive(paiucdActivityCH, ancVisit);
+                    }
+                    if (iucdActivityCH != null && ancVisit.getIsPaiucdId() != null &&  ancVisit.getIsPaiucdId()==1
+                            && ancVisit.getIsPaiucd().toString().contains("Copper-T")) {
+                        recordAncRelatedIncentive(iucdActivityCH, ancVisit);
+                    }
                 }
 
 
@@ -847,8 +865,9 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     }
 
     private void recordAncRelatedIncentive(IncentiveActivity incentiveActivity, ANCVisit ancVisit) {
-        IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), ancVisit.getCreatedDate(), ancVisit.getBenId());
         Integer userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
+
+        IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), ancVisit.getCreatedDate(), ancVisit.getBenId(),userId);
 
         if (record == null) {
             record = new IncentiveActivityRecord();
@@ -868,6 +887,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     }
 
     private void recordAncFirstTRIMIncentive(IncentiveActivity incentiveActivity, ANCVisit ancVisit) {
+        Integer userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
 
         if (ancVisit.getAncDate() == null || ancVisit.getLmpDate() == null) {
             return;
@@ -885,10 +905,9 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
                 incentiveActivity.getId(),
                 ancVisit.getCreatedDate(),
-                ancVisit.getBenId()
+                ancVisit.getBenId(),userId
         );
 
-        Integer userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
 
         if (record == null) {
             record = new IncentiveActivityRecord();
@@ -907,20 +926,18 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     }
 
     private void recordFullAncIncentive(IncentiveActivity incentiveActivity, ANCVisit ancVisit) {
-
+        Integer userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
+        if (userId == null) {
+            return;
+        }
         IncentiveActivityRecord existRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
                 incentiveActivity.getId(),
-                ancVisit.getCreatedDate(),
-                ancVisit.getBenId()
+                ancVisit.getAncDate(),
+                ancVisit.getBenId(),userId
         );
 
 
         if (existRecord != null) {
-            return;
-        }
-
-        Integer userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
-        if (userId == null) {
             return;
         }
 

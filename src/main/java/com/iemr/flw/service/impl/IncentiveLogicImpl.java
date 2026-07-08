@@ -132,7 +132,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
                 return null;
             }
 
-            String activityName = "NLEP_PB_TREATMENT";
+            String activityName = "NLEP_MB_TREATMENT";
 
             if (stateCode.equals(StateCode.AM.getStateCode())) {
                 return processIncentive(
@@ -159,7 +159,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             return null;
 
         } catch (Exception e) {
-            logger.error("Check NLEP_PB_TREATMENT Incentive Exception: ", e);
+            logger.error("Check NLEP_MB_TREATMENT Incentive Exception: ", e);
             return null;
         }
     }
@@ -672,7 +672,7 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
             // 🔍 duplicate check
             IncentiveActivityRecord existing = incentiveRecordRepo
                     .findRecordByActivityIdCreatedDateBenId(
-                            activity.getId(), startTimestamp, benId);
+                            activity.getId(), startTimestamp, benId,userId);
 
             if (existing != null) {
                 logger.info("Incentive already exists for benId: {}, activityId: {}",
