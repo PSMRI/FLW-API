@@ -72,20 +72,6 @@ public class StopTBGeneralExamination {
     @Column(name = "clubbing")
     private String clubbing;
 
-    // JSON arrays serialised from mobile
-    @Column(name = "key_population_risk_factor_ids", columnDefinition = "TEXT")
-    private String keyPopulationRiskFactorIds;
-
-    @Column(name = "key_population_risk_factors", columnDefinition = "TEXT")
-    private String keyPopulationRiskFactors;
-
-    @Column(name = "hiv_status_id")
-    private Integer hivStatusId;
-
-    // "Positive" | "Reactive" | "Negative" | "Unknown"
-    @Column(name = "hiv_status")
-    private String hivStatus;
-
     @Column(name = "referral_to_hwc_needed_id")
     private Integer referralToHWCNeededId;
 
