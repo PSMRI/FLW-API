@@ -287,7 +287,6 @@ public class ChildCareServiceImpl implements ChildCareService {
 
                 }
                 page++;
-                checkAndAddHbncIncentives(hbncVisits, dto.getAshaId());
 
             }while (visitPage.hasNext());
 
