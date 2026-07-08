@@ -744,10 +744,10 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
                     incentiveActivity.getId(),
-                    startOfMonth,
-                    endOfMonth,
                     0L,
-                    ashaId
+                    ashaId,
+                    startOfMonth,
+                    endOfMonth
             );
 
 
@@ -783,10 +783,10 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
                     incentiveActivity.getId(),
-                    startOfMonth,
-                    endOfMonth,
                     0L,
-                    ashaId
+                    ashaId,
+                    startOfMonth,
+                    endOfMonth
             );
 
 
@@ -873,10 +873,10 @@ public class IncentiveServiceImpl implements IncentiveService {
         synchronized (lock){
             IncentiveActivityRecord incentiveActivityRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
                     incentiveActivityAM.getId(),
-                    startOfMonth,
-                    endOfMonth,
                     0L,
-                    userId
+                    userId,
+                    startOfMonth,
+                    endOfMonth
             );
             if (incentiveActivityRecord == null) {
                 incentiveActivityRecord = new IncentiveActivityRecord();

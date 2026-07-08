@@ -20,15 +20,15 @@ import java.util.Optional;
 public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityRecord, Long> {
 
     @Query(value = """
-    SELECT *
-    FROM db_iemr.incentive_activity_record r
-    WHERE r.activity_id = :id
-      AND r.ben_id = :benId
-      AND r.asha_id = :ashaId
-      AND MONTH(r.start_date) = MONTH(:createdDate)
-      AND YEAR(r.start_date) = YEAR(:createdDate)
-    LIMIT 1
-    """, nativeQuery = true)
+            SELECT *
+            FROM db_iemr.incentive_activity_record r
+            WHERE r.activity_id = :id
+              AND r.ben_id = :benId
+              AND r.asha_id = :ashaId
+              AND MONTH(r.start_date) = MONTH(:createdDate)
+              AND YEAR(r.start_date) = YEAR(:createdDate)
+            LIMIT 1
+            """, nativeQuery = true)
     IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(
             @Param("id") Long id,
             @Param("createdDate") Timestamp createdDate,
@@ -39,17 +39,23 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
     Optional<IncentiveActivityRecord> findById(Long id);
 
 
-    @Query("SELECT record FROM IncentiveActivityRecord record " +
-            "WHERE record.activityId = :id " +
-            "AND record.createdDate BETWEEN :startDate AND :endDate " +
-            "AND record.benId = :benId " +   // ← space added here
-            "AND record.ashaId = :ashaId")
+    @Query(value = """
+            SELECT *
+            FROM incentive_activity_record
+            WHERE activity_id = :activityId
+              AND ben_id = :benId
+              AND asha_id = :ashaId
+              AND created_date >= :startOfMonth
+              AND created_date < :startOfNextMonth
+            ORDER BY created_date DESC
+            LIMIT 1
+            """, nativeQuery = true)
     IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(
-            @Param("id") Long id,
-            @Param("startDate") Timestamp startDate,
-            @Param("endDate") Timestamp endDate,
+            @Param("activityId") Long activityId,
             @Param("benId") Long benId,
-            @Param("ashaId") Integer ashaId
+            @Param("ashaId") Integer ashaId,
+            @Param("startOfMonth") Timestamp startOfMonth,
+            @Param("startOfNextMonth") Timestamp startOfNextMonth
     );
 
     @Query("select record from IncentiveActivityRecord record where record.ashaId = :ashaId and record.startDate >= :fromDate and record.startDate <= :toDate and record.endDate >= :fromDate and record.endDate <= :toDate ")
