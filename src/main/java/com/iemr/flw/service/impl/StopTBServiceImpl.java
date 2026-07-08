@@ -361,10 +361,6 @@ public class StopTBServiceImpl implements StopTBService {
             exam.setCyanosis(getString(data, "cyanosis"));
             exam.setClubbingId(getInt(data, "clubbingId"));
             exam.setClubbing(getString(data, "clubbing"));
-            exam.setKeyPopulationRiskFactorIds(toJsonString(data.get("keyPopulationRiskFactorIds")));
-            exam.setKeyPopulationRiskFactors(toJsonString(data.get("keyPopulationRiskFactors")));
-            exam.setHivStatusId(getInt(data, "hivStatusId"));
-            exam.setHivStatus(getString(data, "hivStatus"));
             exam.setCreatedBy(getString(data, "createdBy"));
             exam.setModifiedBy(getString(data, "createdBy"));
             exam.setDeleted(false);
@@ -435,10 +431,6 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("cyanosis", e.getCyanosis());
         m.put("clubbingId", e.getClubbingId());
         m.put("clubbing", e.getClubbing());
-        m.put("keyPopulationRiskFactorIds", e.getKeyPopulationRiskFactorIds());
-        m.put("keyPopulationRiskFactors", e.getKeyPopulationRiskFactors());
-        m.put("hivStatusId", e.getHivStatusId());
-        m.put("hivStatus", e.getHivStatus());
         m.put("referralToHWCNeeded", e.getReferralToHWCNeeded());
         m.put("createdBy", e.getCreatedBy());
         m.put("createdDate", e.getCreatedDate());
@@ -482,6 +474,10 @@ public class StopTBServiceImpl implements StopTBService {
             screening.setRiseOfFever(getBool(data, "riseOfFever"));
             screening.setLossOfAppetite(getBool(data, "lossOfAppetite"));
             screening.setContactWithTBPatient(getBool(data, "contactWithTBPatient"));
+            screening.setKeyPopulationRiskFactorIds(toJsonString(data.get("keyPopulationRiskFactorIds")));
+            screening.setKeyPopulationRiskFactors(toJsonString(data.get("keyPopulationRiskFactors")));
+            screening.setHivStatusId(getInt(data, "hivStatusId"));
+            screening.setHivStatus(getString(data, "hivStatus"));
             String symptomaticInput = getString(data, "symptomatic");
             if ("Yes".equalsIgnoreCase(symptomaticInput)) {
                 screening.setSympotomatic(null);
@@ -555,6 +551,10 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("riseOfFever", s.getRiseOfFever());
         m.put("lossOfAppetite", s.getLossOfAppetite());
         m.put("contactWithTBPatient", s.getContactWithTBPatient());
+        m.put("keyPopulationRiskFactorIds", s.getKeyPopulationRiskFactorIds());
+        m.put("keyPopulationRiskFactors", s.getKeyPopulationRiskFactors());
+        m.put("hivStatusId", s.getHivStatusId());
+        m.put("hivStatus", s.getHivStatus());
         if ("Yes".equalsIgnoreCase(s.getAsymptomatic())) {
             m.put("symptomatic", "Yes");
         } else if ("Yes".equalsIgnoreCase(s.getSympotomatic())) {
