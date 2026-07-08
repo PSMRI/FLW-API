@@ -22,6 +22,10 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -191,6 +195,10 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
+        int page = 0;
+        int size = 20;
+        Page<IncentiveActivityRecord> pageResult;
+        List<IncentiveRecordDTO> finalDtos = new ArrayList<>();
 
         Integer stateCode = userService.getUserDetail(request.getAshaId()).getStateId();
         String userName = userService.getUserDetail(request.getAshaId()).getUserName();
@@ -218,86 +226,105 @@ public class IncentiveServiceImpl implements IncentiveService {
 
         boolean isCG = stateCode != null && stateCode.equals(StateCode.CG.getStateCode());
 
-        // Step 1: Fetch all records for this ASHA
-        List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAsha(request.getAshaId());
+        do {
 
-        if (entities.isEmpty()) {
-            return new Gson().toJson(Collections.emptyList());
-        }
+            Pageable pageable = PageRequest.of(
+                    page,
+                    size,
+                    Sort.by("id").descending() // latest first
+            );
 
-        // Step 2: Collect all activityIds — fetch valid ones in ONE query
-        List<Long> activityIds = entities.stream()
-                .map(IncentiveActivityRecord::getActivityId)
-                .distinct()
-                .collect(Collectors.toList());
+            pageResult = recordRepo.findRecordsByAsha(
+                    request.getAshaId(),
+                    pageable
+            );
 
-        // Single bulk query instead of N individual findIncentiveMasterById() calls
-        Set<Long> validActivityIds = isCG
-                ? incentivesRepo.findValidActivityIds(activityIds, true)
-                : incentivesRepo.findValidActivityIds(activityIds, false);
+            List<IncentiveActivityRecord> entities = pageResult.getContent();
 
-        // Filter entities based on valid activity IDs
-        entities = entities.stream()
-                .filter(e -> validActivityIds.contains(e.getActivityId()))
-                .collect(Collectors.toList());
-
-        // Step 3: Collect all benIds that need name lookup (name == null and benId > 0)
-        List<Long> benIdsToFetch = entities.stream()
-                .filter(e -> e.getName() == null && e.getBenId() != null && e.getBenId() > 0)
-                .map(IncentiveActivityRecord::getBenId)
-                .distinct()
-                .collect(Collectors.toList());
-
-        // Step 4: Bulk fetch all beneficiary names in ONE query instead of 3 queries per record
-        Map<Long, String> benIdToNameMap = new HashMap<>();
-        if (!benIdsToFetch.isEmpty()) {
-            List<Object[]> benDetails = beneficiaryRepo.findBenNamesByBenIds(benIdsToFetch);
-            for (Object[] row : benDetails) {
-                Long benId = ((Number) row[0]).longValue();
-                String first = row[1] != null ? (String) row[1] : "";
-                String last = row[2] != null ? (String) row[2] : "";
-                benIdToNameMap.put(benId, (first + " " + last).trim());
+            if (entities.isEmpty()) {
+                return new Gson().toJson(Collections.emptyList());
             }
-        }
 
-        // Step 5: Map entities to DTOs
-        List<IncentiveRecordDTO> dtos = entities.stream().map(entry -> {
-            if (entry.getName() == null) {
-                if (entry.getBenId() != null && entry.getBenId() > 0) {
-                    String name = benIdToNameMap.getOrDefault(entry.getBenId(), "");
-                    entry.setName(name);
-                    if (isCG) {
-                        entry.setIsEligible(true);
-                    }
-                } else {
-                    entry.setName("");
+            // Step 2: Collect all activityIds — fetch valid ones in ONE query
+            List<Long> activityIds = entities.stream()
+                    .map(IncentiveActivityRecord::getActivityId)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            // Single bulk query instead of N individual findIncentiveMasterById() calls
+            Set<Long> validActivityIds = isCG
+                    ? incentivesRepo.findValidActivityIds(activityIds, true)
+                    : incentivesRepo.findValidActivityIds(activityIds, false);
+
+            // Filter entities based on valid activity IDs
+            entities = entities.stream()
+                    .filter(e -> validActivityIds.contains(e.getActivityId()))
+                    .collect(Collectors.toList());
+
+            // Step 3: Collect all benIds that need name lookup (name == null and benId > 0)
+            List<Long> benIdsToFetch = entities.stream()
+                    .filter(e -> e.getName() == null && e.getBenId() != null && e.getBenId() > 0)
+                    .map(IncentiveActivityRecord::getBenId)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            // Step 4: Bulk fetch all beneficiary names in ONE query instead of 3 queries per record
+            Map<Long, String> benIdToNameMap = new HashMap<>();
+            if (!benIdsToFetch.isEmpty()) {
+                List<Object[]> benDetails = beneficiaryRepo.findBenNamesByBenIds(benIdsToFetch);
+                for (Object[] row : benDetails) {
+                    Long benId = ((Number) row[0]).longValue();
+                    String first = row[1] != null ? (String) row[1] : "";
+                    String last = row[2] != null ? (String) row[2] : "";
+                    benIdToNameMap.put(benId, (first + " " + last).trim());
                 }
-                if (entry.getVerifiedByUserId() != null) {
-                    entry.setSupervisorRole(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getRoleName());
-                    entry.setVerifiedByUserName(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getName());
-
-                }
-                if (entry.getAshaId() != null) {
-                    if (entry.getCreatedBy() == null) {
-                        entry.setCreatedBy(userName);
-                    }
-
-                    if (entry.getUpdatedBy() == null) {
-                        entry.setUpdatedBy(userName);
-                    }
-
-                    if (entry.getIsEligible() == null) {
-                        entry.setIsEligible(true);
-                    }
-                }
-
-
             }
-            return modelMapper.map(entry, IncentiveRecordDTO.class);
-        }).collect(Collectors.toList());
+
+            // Step 5: Map entities to DTOs
+            List<IncentiveRecordDTO> dtos = entities.stream().map(entry -> {
+                if (entry.getName() == null) {
+                    if (entry.getBenId() != null && entry.getBenId() > 0) {
+                        String name = benIdToNameMap.getOrDefault(entry.getBenId(), "");
+                        entry.setName(name);
+                        if (isCG) {
+                            entry.setIsEligible(true);
+                        }
+                    } else {
+                        entry.setName("");
+                    }
+                    if (entry.getVerifiedByUserId() != null) {
+                        entry.setSupervisorRole(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getRoleName());
+                        entry.setVerifiedByUserName(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getName());
+
+                    }
+                    if (entry.getAshaId() != null) {
+                        if (entry.getCreatedBy() == null) {
+                            entry.setCreatedBy(userName);
+                        }
+
+                        if (entry.getUpdatedBy() == null) {
+                            entry.setUpdatedBy(userName);
+                        }
+
+                        if (entry.getIsEligible() == null) {
+                            entry.setIsEligible(true);
+                        }
+                    }
+
+
+                }
+                return modelMapper.map(entry, IncentiveRecordDTO.class);
+            }).collect(Collectors.toList());
+            finalDtos.addAll(dtos);
+
+            page++;
+
+        } while (pageResult.hasNext());
+
+
 
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
-        return gson.toJson(dtos);
+        return gson.toJson(finalDtos);
     }
 
     // ================= GROUPED SUMMARY =================
@@ -656,6 +683,7 @@ public class IncentiveServiceImpl implements IncentiveService {
     }
 
     private void checkMonthlyAshaIncentive(Integer ashaId) {
+
         try {
             String userName = userRepo.getUserNamedByUserId(ashaId);
 

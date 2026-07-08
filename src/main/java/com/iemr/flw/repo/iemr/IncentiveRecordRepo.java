@@ -3,6 +3,8 @@ package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
 import jakarta.persistence.Column;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -23,8 +25,8 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
     WHERE r.activity_id = :id
       AND r.ben_id = :benId
       AND r.asha_id = :ashaId
-      AND MONTH(r.created_date) = MONTH(:createdDate)
-      AND YEAR(r.created_date) = YEAR(:createdDate)
+      AND MONTH(r.start_date) = MONTH(:createdDate)
+      AND YEAR(r.start_date) = YEAR(:createdDate)
     LIMIT 1
     """, nativeQuery = true)
     IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(
@@ -53,6 +55,9 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
     @Query("select record from IncentiveActivityRecord record where record.ashaId = :ashaId and record.startDate >= :fromDate and record.startDate <= :toDate and record.endDate >= :fromDate and record.endDate <= :toDate ")
     List<IncentiveActivityRecord> findRecordsByAsha(@Param("ashaId") Integer ashaId, @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
+
+    @Query("SELECT DISTINCT record FROM IncentiveActivityRecord record WHERE record.ashaId = :ashaId")
+    Page<IncentiveActivityRecord> findRecordsByAsha(@Param("ashaId") Integer ashaId, Pageable pageable);
 
     @Query("SELECT DISTINCT record FROM IncentiveActivityRecord record WHERE record.ashaId = :ashaId")
     List<IncentiveActivityRecord> findRecordsByAsha(@Param("ashaId") Integer ashaId);
