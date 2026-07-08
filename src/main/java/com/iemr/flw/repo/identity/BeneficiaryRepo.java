@@ -26,7 +26,7 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     Optional<RMNCHBeneficiaryDetailsRmnch> findById(Long benID);
 
     List<RMNCHBeneficiaryDetailsRmnch> findByHouseoldId(Long houseHoldId);
-    Optional<RMNCHBeneficiaryDetailsRmnch> findByBenficieryid(Long benID);
+    List<RMNCHBeneficiaryDetailsRmnch> findByBenficieryid(Long benID);
 
     List<RMNCHBeneficiaryDetailsRmnch> findByHouseoldId(Long houseHoldId);
     List<RMNCHBeneficiaryDetailsRmnch> findByBenficieryid(Long benID);
