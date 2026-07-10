@@ -41,4 +41,22 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
             "WHERE db.BlockID = :blockId LIMIT 1", nativeQuery = true)
     List<Object[]> getDistrictByBlockId(@Param("blockId") Integer blockId);
 
+    // Stop TB / Nikshay — additive only. Reads m_userservicerolemapping directly
+    // (NOT the shared v_userservicerolemapping view) so the view stays untouched
+    // and no other service line's query is affected. Returns nothing for any
+    // user whose rows don't have NikshayTUID set (i.e. every non-Stop-TB user).
+    @Query(value = "SELECT " +
+            "GROUP_CONCAT(DISTINCT usrm.NikshayTUID ORDER BY usrm.NikshayTUID), " +
+            "GROUP_CONCAT(DISTINCT nt.TUName ORDER BY usrm.NikshayTUID), " +
+            "GROUP_CONCAT(DISTINCT usrm.NikshayFacilityID ORDER BY usrm.NikshayFacilityID), " +
+            "GROUP_CONCAT(DISTINCT nf.FacilityName ORDER BY usrm.NikshayFacilityID) " +
+            "FROM m_userservicerolemapping usrm " +
+            "LEFT JOIN m_nikshay_tu nt ON nt.NikshayTUID = usrm.NikshayTUID " +
+            "LEFT JOIN m_nikshay_facility nf ON nf.NikshayFacilityID = usrm.NikshayFacilityID " +
+            "WHERE usrm.UserID = :userId AND usrm.ProviderServiceMapID = :providerServiceMapId " +
+            "AND usrm.Deleted = false AND usrm.NikshayTUID IS NOT NULL",
+            nativeQuery = true)
+    List<Object[]> getNikshayLocationScope(@Param("userId") Integer userId,
+                                            @Param("providerServiceMapId") Integer providerServiceMapId);
+
 }
