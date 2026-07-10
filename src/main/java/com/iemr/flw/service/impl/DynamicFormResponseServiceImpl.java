@@ -28,7 +28,7 @@ import com.iemr.flw.domain.iemr.QuestionOption;
 import com.iemr.flw.domain.iemr.QuestionResponse;
 import com.iemr.flw.domain.iemr.SectionQuestion;
 import com.iemr.flw.domain.iemr.SectionResponse;
-import com.iemr.flw.dto.iemr.CompletedBeneficiariesDTO;
+import com.iemr.flw.dto.iemr.CompletedBeneficiaryDetailDTO;
 import com.iemr.flw.dto.iemr.FormResponseDTO;
 import com.iemr.flw.dto.iemr.FormResponseRequest;
 import com.iemr.flw.dto.iemr.QuestionAnswerRequest;
@@ -36,7 +36,6 @@ import com.iemr.flw.dto.iemr.QuestionResponseDTO;
 import com.iemr.flw.dto.iemr.SectionAnswerRequest;
 import com.iemr.flw.dto.iemr.SectionResponseDTO;
 import com.iemr.flw.domain.iemr.DynamicForm;
-import com.iemr.flw.masterEnum.FormResponseStatus;
 import com.iemr.flw.masterEnum.FormResponseStatus;
 import com.iemr.flw.masterEnum.FormType;
 import com.iemr.flw.repo.iemr.DynamicFormRepo;
@@ -82,9 +81,6 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
     private static final String SECTION_STATUS_DONE = "DONE";
     private static final String SECTION_STATUS_REFUSED = "REFUSED";
-    private static final String SECTION_UUID_GENERAL_INFO = "TB2_SEC_GENERAL_INFO";
-    private static final String QUESTION_UUID_CONSENT = "TB2_GI_Q1";
-    private static final String OPTION_VALUE_CONSENT_REFUSED = "NO";
 
     private final DynamicFormRepo dynamicFormRepo;
     private final FormResponseRepo formResponseRepo;
@@ -97,6 +93,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     private final FormResponseItemSaver itemSaver;
     private final JwtUtil jwtUtil;
     private final CampConfigService campConfigService;
+    private final ConsentRefusalEvaluator consentRefusalEvaluator;
 
     @Override
     @Transactional
@@ -144,7 +141,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 : existing.get(0);
 
         formResponse.setUpdatedBy(actor);
-        formResponse.setStatus(isConsentRefused(request)
+        formResponse.setStatus(consentRefusalEvaluator.isConsentRefused(request)
                 ? FormResponseStatus.REFUSED.name()
                 : FormResponseStatus.COMPLETE.name());
         formResponse.setCompletedAt(now);
@@ -261,7 +258,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             }
 
             String desiredStatus = applyRefusalRule
-                    ? determineSectionStatus(section, sectionReq.getAnswers())
+                    ? consentRefusalEvaluator.determineSectionStatus(
+                            section, sectionReq.getAnswers(), SECTION_STATUS_DONE, SECTION_STATUS_REFUSED)
                     : SECTION_STATUS_DONE;
             Optional<SectionResponse> sectionResponseOpt = upsertSectionResponse(
                     formResponse.getResponseId(), section, actor, desiredStatus, vanID, parkingPlaceID);
@@ -323,38 +321,6 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 .parkingPlaceID(parkingPlaceID)
                 .build();
         return Optional.of(sectionResponseRepo.save(sr));
-    }
-
-    // TB2_SEC_GENERAL_INFO's consent question (TB2_GI_Q1) gates the rest of the TB Counselling
-    // form; a "NO" answer means the beneficiary refused counselling. Absence-tolerant by design:
-    // any other section, a missing answers list, or no answer for the consent question at all
-    // just falls through to the normal DONE status.
-    private String determineSectionStatus(FormSection section, List<QuestionAnswerRequest> answers) {
-        if (!SECTION_UUID_GENERAL_INFO.equals(section.getSectionUuid()) || answers == null) {
-            return SECTION_STATUS_DONE;
-        }
-        boolean refused = answers.stream().anyMatch(this::isRefusalAnswer);
-        return refused ? SECTION_STATUS_REFUSED : SECTION_STATUS_DONE;
-    }
-
-    // Same TB2_GI_Q1="NO" signal as determineSectionStatus, but scanned directly off the raw
-    // request (before any FormSection is resolved) so completeForm() can decide the top-level
-    // FormResponse status. Absence-tolerant: no TB2_SEC_GENERAL_INFO section, no answers, or no
-    // TB2_GI_Q1 answer at all just means "not refused".
-    private boolean isConsentRefused(FormResponseRequest request) {
-        if (request.getSections() == null) {
-            return false;
-        }
-        return request.getSections().stream()
-                .filter(s -> SECTION_UUID_GENERAL_INFO.equals(s.getSectionUuid()))
-                .filter(s -> s.getAnswers() != null)
-                .flatMap(s -> s.getAnswers().stream())
-                .anyMatch(this::isRefusalAnswer);
-    }
-
-    private boolean isRefusalAnswer(QuestionAnswerRequest answer) {
-        return QUESTION_UUID_CONSENT.equals(answer.getQuestionUuid())
-                && OPTION_VALUE_CONSENT_REFUSED.equals(answer.getOptionValue());
     }
 
     private List<QuestionResponse> processAnswers(
@@ -554,21 +520,38 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
     @Override
     @Transactional(readOnly = true)
-    public CompletedBeneficiariesDTO getCompletedBeneficiaries(
+    public List<CompletedBeneficiaryDetailDTO> getCompletedBeneficiaries(
             FormType formType, Integer villageId, Integer providerServiceMapId) {
         DynamicForm form = dynamicFormRepo.findByFormTypeAndIsActive(formType, true)
                 .orElseThrow(() -> new NoSuchElementException(
                         "No active form found for type: " + formType));
-        return CompletedBeneficiariesDTO.builder()
-                .completed(findBeneficiaryIdsByStatus(form.getFormId(), FormResponseStatus.COMPLETE.name(), villageId, providerServiceMapId))
-                .refused(findBeneficiaryIdsByStatus(form.getFormId(), FormResponseStatus.REFUSED.name(), villageId, providerServiceMapId))
-                .build();
-    }
 
-    private List<Long> findBeneficiaryIdsByStatus(
-            Long formId, String status, Integer villageId, Integer providerServiceMapId) {
-        return (villageId != null || providerServiceMapId != null)
-                ? formResponseRepo.findBeneficiaryIdsByFormIdAndStatusFiltered(formId, status, villageId, providerServiceMapId)
-                : formResponseRepo.findBeneficiaryIdsByFormIdAndStatus(formId, status);
+        List<String> statuses = List.of(FormResponseStatus.COMPLETE.name(), FormResponseStatus.REFUSED.name(), FormResponseStatus.SUBMITTED.name());
+        List<FormResponse> responses = (villageId != null || providerServiceMapId != null)
+                ? formResponseRepo.findByFormIdAndStatusInFiltered(form.getFormId(), statuses, villageId, providerServiceMapId)
+                : formResponseRepo.findByFormIdAndStatusIn(form.getFormId(), statuses);
+
+        if (responses.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> responseIds = responses.stream().map(FormResponse::getResponseId).collect(Collectors.toList());
+        Map<Long, Integer> sectionsFilledByResponseId = sectionResponseRepo
+                .countByResponseIdInAndSectionPhase(responseIds, SectionPhase.PRE_SUBMIT).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> ((Number) row[1]).intValue()));
+
+        List<Long> versionIds = responses.stream().map(FormResponse::getVersionId).distinct().collect(Collectors.toList());
+        Map<Long, Integer> totalSectionsByVersionId = formSectionRepo
+                .countByFormVersion_VersionIdInAndSectionPhase(versionIds, SectionPhase.PRE_SUBMIT).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> ((Number) row[1]).intValue()));
+
+        return responses.stream()
+                .map(r -> CompletedBeneficiaryDetailDTO.builder()
+                        .beneficiaryId(r.getBeneficiaryId())
+                        .isRefused(FormResponseStatus.REFUSED.name().equals(r.getStatus()))
+                        .sectionsFilled(sectionsFilledByResponseId.getOrDefault(r.getResponseId(), 0))
+                        .totalSections(totalSectionsByVersionId.getOrDefault(r.getVersionId(), 0))
+                        .build())
+                .collect(Collectors.toList());
     }
 }

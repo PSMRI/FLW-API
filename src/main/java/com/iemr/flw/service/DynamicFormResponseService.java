@@ -21,7 +21,7 @@
  */
 package com.iemr.flw.service;
 
-import com.iemr.flw.dto.iemr.CompletedBeneficiariesDTO;
+import com.iemr.flw.dto.iemr.CompletedBeneficiaryDetailDTO;
 import com.iemr.flw.dto.iemr.FormResponseDTO;
 import com.iemr.flw.dto.iemr.FormResponseRequest;
 import com.iemr.flw.masterEnum.FormType;
@@ -63,8 +63,9 @@ public interface DynamicFormResponseService {
     List<FormResponseDTO> findPendingFollowUps(List<Long> formIds, int delayDays);
 
     /**
-     * Returns beneficiary IDs for the given form type split by outcome — COMPLETE and REFUSED —
-     * optionally filtered by village and/or provider service map.
+     * Returns per-beneficiary detail (outcome plus section-fill progress) for COMPLETE and REFUSED
+     * responses to the given form type, optionally filtered by village and/or provider service map.
+     * sectionsFilled/totalSections only count PRE_SUBMIT-phase sections.
      */
-    CompletedBeneficiariesDTO getCompletedBeneficiaries(FormType formType, Integer villageId, Integer providerServiceMapId);
+    List<CompletedBeneficiaryDetailDTO> getCompletedBeneficiaries(FormType formType, Integer villageId, Integer providerServiceMapId);
 }

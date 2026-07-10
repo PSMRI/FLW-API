@@ -26,11 +26,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 /**
- * Beneficiary IDs for a form type, split by outcome: those who completed the form and those
- * who refused (TB2_GI_Q1 = NO on the General Info consent question).
+ * Per-beneficiary detail for a COMPLETE/REFUSED form response: outcome plus section-fill progress
+ * against the exact form version that response was submitted against.
  *
  * @author Piramal Swasthya
  */
@@ -38,7 +36,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CompletedBeneficiariesDTO {
-    private List<Long> completed;
-    private List<Long> refused;
+public class CompletedBeneficiaryDetailDTO {
+    private Long beneficiaryId;
+    private boolean isRefused;
+    private int sectionsFilled;
+    private int totalSections;
 }
