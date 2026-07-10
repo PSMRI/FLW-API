@@ -91,6 +91,7 @@ public class AshaProfileController {
             if (ashaWorker == null) {
                 response.put("errorMessage", "Asha profile not found");
             }
+            logger.info("Asha Profile Response: "+response);
 
             return ResponseEntity.ok().body(response);
 
