@@ -76,6 +76,9 @@ public class StopTBServiceImpl implements StopTBService {
     private StopTBDiagnosticsRepo diagnosticsRepo;
 
     @Autowired
+    private NikshayLocationDerivationService nikshayLocationDerivationService;
+
+    @Autowired
     private TBStopVisitService tbStopVisitService;
 
     @Autowired
@@ -482,6 +485,10 @@ public class StopTBServiceImpl implements StopTBService {
             screening.setRiseOfFever(getBool(data, "riseOfFever"));
             screening.setLossOfAppetite(getBool(data, "lossOfAppetite"));
             screening.setContactWithTBPatient(getBool(data, "contactWithTBPatient"));
+            screening.setKeyPopulationRiskFactorIds(toJsonString(data.get("keyPopulationRiskFactorIds")));
+            screening.setKeyPopulationRiskFactors(toJsonString(data.get("keyPopulationRiskFactors")));
+            screening.setHivStatusId(getInt(data, "hivStatusId"));
+            screening.setHivStatus(getString(data, "hivStatus"));
             String symptomaticInput = getString(data, "symptomatic");
             if ("Yes".equalsIgnoreCase(symptomaticInput)) {
                 screening.setSympotomatic(null);
@@ -555,6 +562,10 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("riseOfFever", s.getRiseOfFever());
         m.put("lossOfAppetite", s.getLossOfAppetite());
         m.put("contactWithTBPatient", s.getContactWithTBPatient());
+        m.put("keyPopulationRiskFactorIds", s.getKeyPopulationRiskFactorIds());
+        m.put("keyPopulationRiskFactors", s.getKeyPopulationRiskFactors());
+        m.put("hivStatusId", s.getHivStatusId());
+        m.put("hivStatus", s.getHivStatus());
         if ("Yes".equalsIgnoreCase(s.getAsymptomatic())) {
             m.put("symptomatic", "Yes");
         } else if ("Yes".equalsIgnoreCase(s.getSympotomatic())) {
@@ -718,6 +729,17 @@ public class StopTBServiceImpl implements StopTBService {
             diag.setDeleted(false);
             if (diag.getVanID() == null && vanID != null) { diag.setVanID(vanID); diag.setParkingPlaceID(parkingPlaceID); }
             diag.setProcessed("N");
+
+            // Stop TB / Nikshay — auto-derive from the beneficiary's existing village.
+            // Additive only: if no match is found, the case still saves normally,
+            // just without a Nikshay tag until that gap is resolved.
+            NikshayLocationDerivationService.NikshayLocationScope nikshayScope =
+                    nikshayLocationDerivationService.deriveForBeneficiary(benRegID);
+            if (nikshayScope != null) {
+                diag.setNikshayVillageID(nikshayScope.villageID);
+                diag.setNikshayFacilityID(nikshayScope.facilityID);
+                diag.setNikshayTUID(nikshayScope.tuID);
+            }
 
             diagnosticsRepo.save(diag);
             if (isNew) diagnosticsRepo.updateVanSerialNo(diag.getId());
