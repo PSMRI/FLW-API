@@ -211,17 +211,10 @@ public class IncentiveServiceImpl implements IncentiveService {
                 checkMonthlyAshaIncentiveForCg(request.getAshaId());
 
             }
-
-        } catch (Exception e) {
-            logger.error("Error in checkMonthlyAshaIncentive: ", e);
-        }
-
-        try {
             addIncentiveForIronTablets(request.getAshaId());
             incentiveOfNcdReferal(request.getAshaId(), request.getVillageID());
-
         } catch (Exception e) {
-            logger.error("Error in incentiveOfNcdReferal: ", e);
+            logger.error("Error in checkMonthlyAshaIncentive: ", e);
         }
 
         boolean isCG = stateCode != null && stateCode.equals(StateCode.CG.getStateCode());
