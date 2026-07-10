@@ -40,17 +40,17 @@ public interface FormResponseRepo extends JpaRepository<FormResponse, Long> {
 
     List<FormResponse> findByBeneficiaryIdAndFormId(Long beneficiaryId, Long formId);
 
-   @Query("SELECT r.beneficiaryId FROM FormResponse r WHERE r.formId = :formId AND r.status = :status")
-    List<Long> findBeneficiaryIdsByFormIdAndStatus(@Param("formId") Long formId, @Param("status") String status);
+   @Query("SELECT r FROM FormResponse r WHERE r.formId = :formId AND r.status IN :statuses")
+    List<FormResponse> findByFormIdAndStatusIn(@Param("formId") Long formId, @Param("statuses") List<String> statuses);
 
-    @Query("SELECT r.beneficiaryId FROM FormResponse r WHERE r.formId = :formId AND r.status = :status " +
+    @Query("SELECT r FROM FormResponse r WHERE r.formId = :formId AND r.status IN :statuses " +
            "AND r.beneficiaryId IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
            "AND (:villageId IS NULL OR b.villageID = :villageId) " +
            "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
-    List<Long> findBeneficiaryIdsByFormIdAndStatusFiltered(@Param("formId") Long formId,
-                                                            @Param("status") String status,
-                                                            @Param("villageId") Integer villageId,
-                                                            @Param("providerServiceMapId") Integer providerServiceMapId);
+    List<FormResponse> findByFormIdAndStatusInFiltered(@Param("formId") Long formId,
+                                                        @Param("statuses") List<String> statuses,
+                                                        @Param("villageId") Integer villageId,
+                                                        @Param("providerServiceMapId") Integer providerServiceMapId);
 
     @Query("SELECT r.beneficiaryId FROM FormResponse r " +
            "WHERE r.beneficiaryId IN :benIds " +
