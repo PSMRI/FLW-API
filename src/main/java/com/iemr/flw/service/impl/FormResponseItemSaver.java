@@ -328,7 +328,7 @@ public class FormResponseItemSaver {
 
             questionResponseRepo.deleteByQuestionIdAndSectionResponseId(questionId, sectionResponseId);
 
-            if (type == QuestionType.RADIO || type == QuestionType.CHECKBOX) {
+            if (type == QuestionType.RADIO) {
                 if (answer.getOptionValue() != null) {
                     QuestionOption opt = resolveOption(optionsByQuestion, questionId,
                             answer.getOptionValue(), answer.getQuestionUuid());
