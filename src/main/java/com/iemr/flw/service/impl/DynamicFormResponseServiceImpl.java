@@ -130,17 +130,19 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
         FormVersion version = resolveLatestVersion(request.getFormUuid());
         Long formId = version.getDynamicForm().getFormId();
-        Timestamp now = new Timestamp(System.currentTimeMillis());
 
         List<FormResponse> existing =
                 formResponseRepo.findByBeneficiaryIdAndFormId(request.getBeneficiaryId(), formId);
-        FormResponse formResponse = existing.isEmpty()
-                ? createFormResponse(request, version, STATUS_SUBMITTED, now, vanID, parkingPlaceID)
-                : existing.get(0);
+        if (existing.isEmpty()) {
+            throw new NoSuchElementException(
+                    "FormResponse not found for beneficiaryId=" + request.getBeneficiaryId()
+                    + " formUuid=" + request.getFormUuid());
+        }
+        FormResponse formResponse = existing.get(0);
 
         formResponse.setUpdatedBy(actor);
         formResponse.setStatus(STATUS_COMPLETE);
-        formResponse.setCompletedAt(now);
+        formResponse.setCompletedAt(new Timestamp(System.currentTimeMillis()));
         formResponse = formResponseRepo.save(formResponse);
         return processSections(formResponse, request, version, actor, vanID, parkingPlaceID);
     }
