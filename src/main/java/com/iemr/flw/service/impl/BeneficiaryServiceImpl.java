@@ -358,25 +358,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         if (benDetailsRMNCH_OBJ.getGpsLongitude() != null)
                             benDetailsRMNCH_OBJ.setLongitude(BigDecimal.valueOf(benDetailsRMNCH_OBJ.getGpsLongitude()));
 
-                        // GPS fallback: if not in RMNCH details (syncdatatoamrti not yet called),
-                        // pull from i_beneficiaryaddress (saved during TM-API registration)
-                        if (benDetailsRMNCH_OBJ.getGpsLatitude() == null && benAddressOBJ.getGpsLatitude() != null)
-                            benDetailsRMNCH_OBJ.setGpsLatitude(benAddressOBJ.getGpsLatitude());
-                        if (benDetailsRMNCH_OBJ.getGpsLongitude() == null && benAddressOBJ.getGpsLongitude() != null)
-                            benDetailsRMNCH_OBJ.setGpsLongitude(benAddressOBJ.getGpsLongitude());
-                        if (benDetailsRMNCH_OBJ.getDigipin() == null && benAddressOBJ.getDigipin() != null)
-                            benDetailsRMNCH_OBJ.setDigipin(benAddressOBJ.getDigipin());
-                        if (benDetailsRMNCH_OBJ.getGpsTimestamp() == null && benAddressOBJ.getGpsTimestamp() != null)
-                            benDetailsRMNCH_OBJ.setGpsTimestamp(benAddressOBJ.getGpsTimestamp());
-                        if (benDetailsRMNCH_OBJ.getIsGpsUnavailable() == null && benAddressOBJ.getIsGpsUnavailable() != null)
-                            benDetailsRMNCH_OBJ.setIsGpsUnavailable(benAddressOBJ.getIsGpsUnavailable());
-
-                        // Map GPS double fields to the exposed latitude/longitude BigDecimal fields for response
-                        if (benDetailsRMNCH_OBJ.getGpsLatitude() != null)
-                            benDetailsRMNCH_OBJ.setLatitude(BigDecimal.valueOf(benDetailsRMNCH_OBJ.getGpsLatitude()));
-                        if (benDetailsRMNCH_OBJ.getGpsLongitude() != null)
-                            benDetailsRMNCH_OBJ.setLongitude(BigDecimal.valueOf(benDetailsRMNCH_OBJ.getGpsLongitude()));
-
                         // -----------------------------------------------------------------------------
 
                         // related benids
