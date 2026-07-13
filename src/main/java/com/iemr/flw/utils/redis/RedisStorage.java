@@ -27,13 +27,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisStringCommands.SetOption;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class RedisStorage {
 	@Autowired
 	private LettuceConnectionFactory connection;
+
+	@Autowired
+	private RedisTemplate<String, String> redisTemplate;
 
 	Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
@@ -48,6 +54,7 @@ public class RedisStorage {
 			logger.info("updating session time of redis for " + key);
 			redCon.set(key.getBytes(), value.getBytes(), Expiration.seconds(expirationTime), SetOption.UPSERT);
 		}
+
 		return key;
 	}
 
@@ -91,5 +98,48 @@ public class RedisStorage {
 
 		return key;
 	}
+
+
+	public void save(String key, String value, long ttl, TimeUnit timeUnit) {
+		redisTemplate.opsForValue().set(key, value, ttl, timeUnit);
+	}
+
+	/**
+	 * Save/update value in Redis without TTL (never expires until manually deleted)
+	 */
+	public void save(String key, String value) {
+		redisTemplate.opsForValue().set(key, value);
+	}
+
+	/**
+	 * Get value from Redis. Returns null if key doesn't exist.
+	 */
+	public String get(String key) {
+		return redisTemplate.opsForValue().get(key);
+	}
+
+	/**
+	 * Delete/evict a single key
+	 */
+	public void evict(String key) {
+		redisTemplate.delete(key);
+	}
+
+	/**
+	 * Check if a key exists
+	 */
+	public boolean exists(String key) {
+		Boolean result = redisTemplate.hasKey(key);
+		return Boolean.TRUE.equals(result);
+	}
+
+	/**
+	 * Evict all keys matching a pattern (use carefully — KEYS is O(n), avoid on huge datasets)
+	 * Example pattern: "incentives:user:*"
+	 */
+	public void evictByPattern(String pattern) {
+		redisTemplate.keys(pattern).forEach(redisTemplate::delete);
+	}
+
 
 }

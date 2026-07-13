@@ -17,6 +17,7 @@ import com.iemr.flw.service.IncentiveService;
 import com.iemr.flw.service.MaaMeetingService;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
+import com.iemr.flw.utils.redis.RedisStorage;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,6 +40,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -84,6 +87,12 @@ public class IncentiveServiceImpl implements IncentiveService {
     private IFAFormSubmissionRepository ifaFormSubmissionRepository;
 
     private final ConcurrentHashMap<String, Object> lockMap = new ConcurrentHashMap<>();
+
+    @Autowired
+    private RedisStorage redisCacheHelper;
+
+    private static final long CACHE_TTL_MINUTES = 30;
+
 
 
 
@@ -195,6 +204,8 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
+        Integer ashaId = request.getAshaId();
+        String cacheKey = getCacheKey(ashaId);
         int page = 0;
         int size = 20;
         Page<IncentiveActivityRecord> pageResult;
@@ -202,6 +213,8 @@ public class IncentiveServiceImpl implements IncentiveService {
 
         Integer stateCode = userService.getUserDetail(request.getAshaId()).getStateId();
         String userName = userService.getUserDetail(request.getAshaId()).getUserName();
+        boolean inserted = false;
+
         try {
 
             if (stateCode.equals(StateCode.AM.getStateCode())) {
@@ -215,6 +228,15 @@ public class IncentiveServiceImpl implements IncentiveService {
             incentiveOfNcdReferal(request.getAshaId(), request.getVillageID());
         } catch (Exception e) {
             logger.error("Error in checkMonthlyAshaIncentive: ", e);
+        }
+
+        // Only trust the cache if nothing was just inserted
+        if (!inserted) {
+            String cached = redisCacheHelper.get(cacheKey);
+            if (cached != null) {
+                logger.info("Serving incentives for ashaId {} from Redis cache", ashaId);
+                return cached;
+            }
         }
 
         boolean isCG = stateCode != null && stateCode.equals(StateCode.CG.getStateCode());
@@ -235,7 +257,9 @@ public class IncentiveServiceImpl implements IncentiveService {
             List<IncentiveActivityRecord> entities = pageResult.getContent();
 
             if (entities.isEmpty()) {
-                return new Gson().toJson(Collections.emptyList());
+                String emptyJson = new Gson().toJson(Collections.emptyList());
+                redisCacheHelper.save(cacheKey, emptyJson, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+                return emptyJson;
             }
 
             // Step 2: Collect all activityIds — fetch valid ones in ONE query
@@ -317,7 +341,13 @@ public class IncentiveServiceImpl implements IncentiveService {
 
 
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
-        return gson.toJson(finalDtos);
+        String json = gson.toJson(finalDtos);
+
+        redisCacheHelper.save(cacheKey, json, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+        return json;
+    }
+    private String getCacheKey(Integer ashaId) {
+        return "incentives:user:" + ashaId;
     }
 
     // ================= GROUPED SUMMARY =================

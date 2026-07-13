@@ -257,7 +257,10 @@ public class AshaProfileImpl implements AshaProfileService {
         if (isValid(request.getAwwMobile())) existing.setAwwMobile(request.getAwwMobile());
         if (request.getProviderServiceMapID() != null)
             existing.setProviderServiceMapID(request.getProviderServiceMapID());
-        if (isValidImage(request.getProfileImage())) existing.setProfileImage(request.getProfileImage());
+        if(request.getProfileImage()!=null){
+            if (isValidImage(request.getProfileImage())) existing.setProfileImage(request.getProfileImage());
+
+        }
         if (request.getIsFatherOrSpouse() != null) existing.setIsFatherOrSpouse(request.getIsFatherOrSpouse());
         if (isValid(request.getSupervisorName())) existing.setSupervisorName(request.getSupervisorName());
         if (isValid(request.getSupervisorMobile())) existing.setSupervisorMobile(request.getSupervisorMobile());
