@@ -21,7 +21,6 @@
  */
 package com.iemr.flw.dto.iemr;
 
-import com.iemr.flw.masterEnum.SectionPhase;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -50,8 +49,8 @@ public class FormSectionDTO {
 
     private String sectionNameHindi;
 
-    @NotNull(message = "sectionPhase is required (GENERAL_INFO, PRE_SUBMIT, or POST_SUBMIT)")
-    private SectionPhase sectionPhase;
+    @NotBlank(message = "sectionPhase is required (PRE_SUBMIT or POST_SUBMIT)")
+    private String sectionPhase;
 
     private Boolean isRequired = true;
 
@@ -59,8 +58,6 @@ public class FormSectionDTO {
     private Integer displayOrder;
 
     private Boolean hasSubmitButton = false;
-
-    private Boolean isEditable = false;
 
     @Valid
     private List<SectionQuestionDTO> questions = new ArrayList<>();

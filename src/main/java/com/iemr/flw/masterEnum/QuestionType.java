@@ -32,9 +32,6 @@ public enum QuestionType {
     RADIO,
     /** Multi-select from a predefined list of options. */
     MCQ,
-    /** Single boolean checkbox — checked or unchecked. May carry options for display
-     *  purposes; answers are still stored as free text. */
-    CHECKBOX,
     /** Free-text input. */
     TEXT,
     /** Date picker input. */
