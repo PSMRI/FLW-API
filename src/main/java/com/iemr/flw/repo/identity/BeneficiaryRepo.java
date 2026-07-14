@@ -90,8 +90,10 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     @Query(nativeQuery = true, value = " SELECT HealthID,HealthIdNumber,isNewAbha FROM db_iemr.t_healthid WHERE HealthIdNumber = :healthIdNumber ")
     ArrayList<Object[]> getBenHealthDetails(@Param("healthIdNumber") String healthIdNumber);
 
-    @Query("SELECT b FROM RMNCHMBeneficiarymapping b WHERE b.benRegId = :benRegId")
-    RMNCHMBeneficiarymapping findByBenRegIdFromMapping(@Param("benRegId") BigInteger benRegId);
+    // benRegId has no unique constraint on i_beneficiarymapping — a beneficiary can have
+    // more than one mapping row, so this must return a list, not assume a single result.
+    @Query("SELECT b FROM RMNCHMBeneficiarymapping b WHERE b.benRegId = :benRegId ORDER BY b.benMapId DESC")
+    List<RMNCHMBeneficiarymapping> findByBenRegIdFromMapping(@Param("benRegId") BigInteger benRegId);
 
 
     @Query("SELECT d FROM RMNCHMBeneficiarydetail d WHERE d.beneficiaryDetailsId = :beneficiaryDetailsId")

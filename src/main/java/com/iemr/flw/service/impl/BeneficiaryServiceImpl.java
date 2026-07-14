@@ -145,9 +145,11 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
             List<RMNCHMBeneficiaryaddress> allAddresses = new ArrayList<>();
             for (BenFlowStatus flow : flows) {
                 if (flow.getBeneficiaryRegID() == null) continue;
-                RMNCHMBeneficiarymapping mapping = beneficiaryRepo.findByBenRegIdFromMapping(
+                List<RMNCHMBeneficiarymapping> mappings = beneficiaryRepo.findByBenRegIdFromMapping(
                         BigInteger.valueOf(flow.getBeneficiaryRegID()));
-                if (mapping == null || mapping.getBenAddressId() == null) continue;
+                if (mappings.isEmpty()) continue;
+                RMNCHMBeneficiarymapping mapping = mappings.get(0);
+                if (mapping.getBenAddressId() == null) continue;
                 RMNCHMBeneficiaryaddress address = beneficiaryRepo.getAddressById(mapping.getBenAddressId());
                 if (address != null) allAddresses.add(address);
             }
