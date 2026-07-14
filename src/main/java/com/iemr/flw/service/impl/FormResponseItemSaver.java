@@ -41,9 +41,7 @@ import com.iemr.flw.repo.iemr.QuestionOptionRepo;
 import com.iemr.flw.repo.iemr.QuestionResponseRepo;
 import com.iemr.flw.repo.iemr.SectionQuestionRepo;
 import com.iemr.flw.repo.iemr.SectionResponseRepo;
-import com.iemr.flw.masterEnum.FormResponseStatus;
 import com.iemr.flw.masterEnum.QuestionType;
-import com.iemr.flw.masterEnum.SectionPhase;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.exception.IEMRException;
@@ -75,6 +73,7 @@ import java.util.stream.Collectors;
 @Component
 public class FormResponseItemSaver {
 
+    private static final String STATUS_SUBMITTED = "SUBMITTED";
     private static final String SECTION_STATUS_DONE = "DONE";
 
     private final FormResponseRepo formResponseRepo;
@@ -114,7 +113,7 @@ public class FormResponseItemSaver {
             Long responseId = formResponse.getResponseId();
 
             // Step 3: Update FormResponse header
-            formResponse.setStatus(FormResponseStatus.SUBMITTED.name());
+            formResponse.setStatus(STATUS_SUBMITTED);
             formResponse.setSubmittedAt(now);
             formResponse.setUpdatedBy(actor);
             formResponse.setLastFollowUpAt(now);
@@ -181,7 +180,7 @@ public class FormResponseItemSaver {
                 .formId(version.getDynamicForm().getFormId())
                 .versionId(version.getVersionId())
                 .officerId(req.getOfficerId())
-                .status(FormResponseStatus.SUBMITTED.name())
+                .status(STATUS_SUBMITTED)
                 .createdBy(actor)
                 .updatedBy(actor)
                 .submittedAt(now)
@@ -233,24 +232,18 @@ public class FormResponseItemSaver {
                         "' not found in form '" + req.getFormUuid() + "'");
             }
 
-            Optional<SectionResponse> existingSr = sectionResponseRepo.findByResponseIdAndSectionId(
-                    formResponse.getResponseId(), section.getSectionId());
-            if (existingSr.isPresent() && Boolean.FALSE.equals(section.getIsEditable())) {
-                log.info("saveForBulk: section '{}' is not editable — skipping update for responseId={}",
-                        section.getSectionUuid(), formResponse.getResponseId());
-                continue;
-            }
-
             // Delete existing SectionResponse (and its QuestionResponses) for this section only
-            existingSr.ifPresent(sr -> {
-                questionResponseRepo.deleteBySectionResponseIdIn(Set.of(sr.getSectionResponseId()));
-                sectionResponseRepo.deleteById(sr.getSectionResponseId());
-            });
+            sectionResponseRepo.findByResponseIdAndSectionId(
+        formResponse.getResponseId(), section.getSectionId())
+                .ifPresent(sr -> {
+                    questionResponseRepo.deleteBySectionResponseIdIn(Set.of(sr.getSectionResponseId()));
+                    sectionResponseRepo.deleteById(sr.getSectionResponseId());
+                });
 
             SectionResponse sectionResponse = upsertSectionResponse(
                     formResponse.getResponseId(), section.getSectionId(), actor, vanID, parkingPlaceID);
 
-            if (section.getSectionPhase() == SectionPhase.POST_SUBMIT) {
+            if ("POST_SUBMIT".equals(section.getSectionPhase())) {
                 formResponse.setLastFollowUpAt(sectionResponse.getSavedAt());
                 formResponseRepo.save(formResponse);
             }
@@ -268,7 +261,7 @@ public class FormResponseItemSaver {
                     parkingPlaceID);
 
             questionResponseRepo.saveAll(questionResponses);
-            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, section, questionResponses));
+            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, questionResponses));
         }
 
         return buildFormResponseDTO(formResponse, sectionDTOs);
@@ -328,7 +321,7 @@ public class FormResponseItemSaver {
 
             questionResponseRepo.deleteByQuestionIdAndSectionResponseId(questionId, sectionResponseId);
 
-            if (type == QuestionType.RADIO || type == QuestionType.CHECKBOX) {
+            if (type == QuestionType.RADIO) {
                 if (answer.getOptionValue() != null) {
                     QuestionOption opt = resolveOption(optionsByQuestion, questionId,
                             answer.getOptionValue(), answer.getQuestionUuid());
@@ -359,7 +352,7 @@ public class FormResponseItemSaver {
                     }
                 }
             } else {
-                // TEXT, DATE, AUTO_FILL, CHECKBOX — prefer answerText, then answerDate, then optionValue (legacy)
+                // TEXT, DATE, AUTO_FILL — prefer answerText, then answerDate, then optionValue (legacy)
                 String value = answer.getAnswerText() != null ? answer.getAnswerText()
                         : answer.getAnswerDate() != null ? answer.getAnswerDate()
                         : answer.getOptionValue();
@@ -407,8 +400,7 @@ public class FormResponseItemSaver {
                 .build();
     }
 
-    private SectionResponseDTO buildSectionResponseDTO(
-            SectionResponse sr, FormSection section, List<QuestionResponse> answers) {
+    private SectionResponseDTO buildSectionResponseDTO(SectionResponse sr, List<QuestionResponse> answers) {
         List<QuestionResponseDTO> answerDTOs = answers.stream()
                 .map(a -> QuestionResponseDTO.builder()
                         .questionResponseId(a.getQuestionResponseId())
@@ -420,8 +412,6 @@ public class FormResponseItemSaver {
         return SectionResponseDTO.builder()
                 .sectionResponseId(sr.getSectionResponseId())
                 .sectionId(sr.getSectionId())
-                .sectionUuid(section != null ? section.getSectionUuid() : null)
-                .isEditable(section != null ? section.getIsEditable() : null)
                 .status(sr.getStatus())
                 .savedAt(sr.getSavedAt())
                 .answers(answerDTOs)

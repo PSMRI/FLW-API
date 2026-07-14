@@ -42,8 +42,6 @@ public class SectionResponseDTO {
 
     private Long sectionResponseId;
     private Long sectionId;
-    private String sectionUuid;
-    private Boolean isEditable;
     private String status;
     private Timestamp savedAt;
     private List<QuestionResponseDTO> answers;
