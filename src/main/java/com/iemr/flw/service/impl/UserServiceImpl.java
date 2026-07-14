@@ -28,21 +28,6 @@ public class UserServiceImpl implements UserService {
                 }
             }
         }
-
-        // Stop TB / Nikshay — additive only. This naturally returns nothing for
-        // any user whose rows don't have NikshayTUID set, i.e. every non-Stop-TB
-        // user, so no explicit service-name check is needed here.
-        java.util.List<Object[]> nikshayResults = userServiceRoleRepo.getNikshayLocationScope(userId, userRole.getProviderServiceMapId());
-        if (nikshayResults != null && !nikshayResults.isEmpty()) {
-            Object[] nikshay = nikshayResults.get(0);
-            if (nikshay != null && nikshay.length == 4 && nikshay[0] != null) {
-                userRole.setTuId((String) nikshay[0]);
-                userRole.setTuName((String) nikshay[1]);
-                userRole.setHealthFacilityId((String) nikshay[2]);
-                userRole.setHealthFacilityName((String) nikshay[3]);
-            }
-        }
-
         return userRole;
     }
 }

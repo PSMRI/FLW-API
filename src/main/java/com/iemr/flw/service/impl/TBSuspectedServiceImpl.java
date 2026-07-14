@@ -31,8 +31,6 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
     private CampConfigService campConfigService;
     @Autowired
     private TBStopVisitService tbStopVisitService;
-    @Autowired
-    private NikshayLocationDerivationService nikshayLocationDerivationService;
 
     @Override
     public String getByBenId(Long benId, String authorisation) throws Exception {
@@ -64,19 +62,6 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
             tbSuspected.setVisitCode(visit.getVisitCode());
             if (tbSuspected.getVanID() == null && vanID != null) { tbSuspected.setVanID(vanID); tbSuspected.setParkingPlaceID(parkingPlaceID); }
             tbSuspected.setProcessed("N");
-
-            // Stop TB / Nikshay — auto-derive from the beneficiary's existing village.
-            // Additive only: if no match is found (village not yet linked, or
-            // beneficiary has no village on file), the case still saves normally,
-            // just without a Nikshay tag until that gap is resolved.
-            NikshayLocationDerivationService.NikshayLocationScope nikshayScope =
-                    nikshayLocationDerivationService.deriveForBeneficiary(tbSuspected.getBenId());
-            if (nikshayScope != null) {
-                tbSuspected.setNikshayVillageID(nikshayScope.villageID);
-                tbSuspected.setNikshayFacilityID(nikshayScope.facilityID);
-                tbSuspected.setNikshayTUID(nikshayScope.tuID);
-            }
-
             tbSuspectedRepo.save(tbSuspected);
             tbSuspectedRepo.updateVanSerialNo(tbSuspected.getId());
         }
