@@ -23,6 +23,9 @@ public class UwinSession {
     @Column(name = "date", nullable = false)
     private Timestamp date;
 
+    @Column(name = "session_date", nullable = false)
+    private Timestamp sessionDate;
+
     @Column(name = "place", nullable = false)
     private String place;
 

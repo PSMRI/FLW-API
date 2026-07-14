@@ -42,6 +42,19 @@ public class PHCReviewForm {
     @Column(name = "created_date", updatable = false)
     private Timestamp createdDate;
 
+    @Column(name = "village_name ")
+    private String villageName;
+
+    @Column(name = "mitanin_history")
+    private String mitaninHistory;
+
+    @Column(name = "mitanin_activity_checkList")
+    private String mitaninActivityCheckList;
+
+    @Column(name = "place_Id")
+    private Integer placeId;
+
     @Column(name = "form_type")
     private String formType;
+
 }

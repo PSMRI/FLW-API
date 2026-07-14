@@ -12,7 +12,10 @@ import org.springframework.stereotype.Repository;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Repository
 public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRmnch, Long> {
@@ -22,22 +25,30 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
 
     Optional<RMNCHBeneficiaryDetailsRmnch> findById(Long benID);
 
+    List<RMNCHBeneficiaryDetailsRmnch> findByHouseoldId(Long houseHoldId);
+    List<RMNCHBeneficiaryDetailsRmnch> findByBenficieryid(Long benID);
+
     @Query(value = "SELECT beneficiaryRegID FROM db_identity.i_beneficiarydetails_rmnch WHERE BeneficiaryId = :benId", nativeQuery = true)
     Long getBenRegIdFromBenId(@Param("benId") Long benId);
 
     @Query(nativeQuery = true, value = " SELECT userid FROM db_iemr.m_user WHERE UserName = :userName ")
     Integer getUserIDByUserName(@Param("userName") String userName);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE DATE(t.createdDate) BETWEEN DATE(:fromDate) "
-            + " AND DATE(:toDate) AND t.createdBy = :userName ")
-    Page<RMNCHMBeneficiaryaddress> getBenDataWithinDates(@Param("userName") String userName,
-                                                         @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate, Pageable pageable);
+
+    @Query("SELECT t FROM RMNCHMBeneficiaryaddress t " +
+            "WHERE t.createdDate BETWEEN :fromDate AND :toDate " +
+            "AND t.createdBy = :userName")
+    Page<RMNCHMBeneficiaryaddress> getBenDataWithinDates(
+            @Param("userName") String userName,
+            @Param("fromDate") Timestamp fromDate,
+            @Param("toDate") Timestamp toDate,
+            Pageable pageable);
 
     @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE t.createdBy = :userName ")
     Page<RMNCHMBeneficiaryaddress> getBenDataByUser(@Param("userName") String userName, Pageable pageable);
 
     @Query(value = " SELECT t FROM RMNCHMBeneficiarymapping t WHERE t.benAddressId = :addressID")
-    RMNCHMBeneficiarymapping getByAddressID(@Param("addressID") BigInteger addressID);
+    List<RMNCHMBeneficiarymapping> getByAddressID(@Param("addressID") BigInteger addressID);
 
     @Query(value = " SELECT t FROM RMNCHMBeneficiarymapping t WHERE t.benRegId = :BenRegId")
     RMNCHMBeneficiarymapping getById(@Param("BenRegId") BigInteger BenRegId);
@@ -61,7 +72,7 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     BigInteger getBenIdFromRegID(@Param("benRegID") Long benRegID);
 
     @Query(value = " SELECT t FROM RMNCHBeneficiaryDetailsRmnch t WHERE t.BenRegId =:benRegID ")
-    RMNCHBeneficiaryDetailsRmnch getDetailsByRegID(@Param("benRegID") Long benRegID);
+    List<RMNCHBeneficiaryDetailsRmnch> getDetailsByRegID(@Param("benRegID") Long benRegID);
 
     @Query(value = " SELECT t FROM RMNCHBornBirthDetails t WHERE t.BenRegId =:benRegID ")
     RMNCHBornBirthDetails getBornBirthByRegID(@Param("benRegID") Long benRegID);
@@ -72,6 +83,9 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
 
     @Query(nativeQuery = true, value = " SELECT HealthIdNumber,HealthID  FROM db_iemr.m_benhealthidmapping WHERE BeneficiaryRegID = :benRegId ")
 	Object[] getBenHealthIdNumber(@Param("benRegId") BigInteger benRegId);
+
+    @Query(nativeQuery = true, value = " SELECT HealthIdNumber,HealthID  FROM db_iemr.m_benhealthidmapping WHERE HealthIdNumber = :HealthIdNumber ")
+    Object[] getHealthIdNumber(@Param("HealthIdNumber") String  HealthIdNumber);
     
     @Query(nativeQuery = true, value = " SELECT HealthID,HealthIdNumber,isNewAbha FROM db_iemr.t_healthid WHERE HealthIdNumber = :healthIdNumber ")
     ArrayList<Object[]> getBenHealthDetails(@Param("healthIdNumber") String healthIdNumber);
@@ -83,6 +97,24 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     RMNCHMBeneficiarydetail findByBeneficiaryDetailsId(@Param("beneficiaryDetailsId") BigInteger beneficiaryDetailsId);
 
 
+    // BeneficiaryRepo — replaces 3 separate queries per beneficiary
+    @Query(value = """
+    SELECT 
+        ibd.BeneficiaryId    AS benId,
+        bd.firstName         AS firstName,
+        bd.lastName          AS lastName
+    FROM db_identity.i_beneficiarydetails_rmnch ibd
+    JOIN db_identity.i_beneficiarymapping bm 
+        ON bm.BenRegId = ibd.BeneficiaryRegID
+    JOIN db_identity.i_beneficiarydetails bd 
+        ON bd.beneficiaryDetailsId = bm.BenDetailsId
+    WHERE ibd.BeneficiaryId IN :benIds
+    """, nativeQuery = true)
+    List<Object[]> findBenNamesByBenIds(@Param("benIds") List<Long> benIds);
 
-
+// BeneficiaryRepo — replaces the per-row getBenIdFromRegID call
+@Query("SELECT b.BenRegId, b.benficieryid " +
+        "FROM RMNCHBeneficiaryDetailsRmnch b " +
+        "WHERE b.BenRegId IN :regIds AND b.benficieryid IS NOT NULL")
+List<Object[]> getBenIdsFromRegIDs(@Param("regIds") List<Long> regIds);
 }

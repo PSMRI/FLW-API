@@ -28,4 +28,10 @@ public class IRSRound {
     @Column(name = "householdId")
     private Long householdId;
 
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "user_id")
+    private Integer userId;
+
 }

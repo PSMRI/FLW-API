@@ -36,13 +36,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping(value = "/forms/villageLevel", headers = "Authorization")
+@RequestMapping(value = "/forms/villageLevel")
 public class VillageLevelFormController {
 
     @Autowired
     private VillageLevelFormService villageLevelFormService;
 
-    @RequestMapping(value = "vhnd/saveAll", method = RequestMethod.POST, headers = "Authorization")
+    @RequestMapping(value = "vhnd/saveAll",method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> saveVhndForm(@RequestBody VhndDto dto) {
         Map<String, Object> response = new HashMap<>();
         if (!dto.getEntries().isEmpty()) {
@@ -64,7 +64,7 @@ public class VillageLevelFormController {
 
     }
 
-    @RequestMapping(value = "vhnc/saveAll", method = RequestMethod.POST, headers = "Authorization")
+    @RequestMapping(value = "vhnc/saveAll", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> saveVhncForm(@RequestBody VhncDto dto) {
         Map<String, Object> response = new HashMap<>();
 
@@ -87,7 +87,7 @@ public class VillageLevelFormController {
 
     }
 
-    @RequestMapping(value = "phc/saveAll", method = RequestMethod.POST, headers = "Authorization")
+    @RequestMapping(value = "phc/saveAll", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> savePhcForm(@RequestBody PhcReviewMeetingDTO dto) {
         Map<String, Object> response = new HashMap<>();
 
@@ -109,7 +109,7 @@ public class VillageLevelFormController {
 
     }
 
-    @RequestMapping(value = "ahd/saveAll", method = RequestMethod.POST, headers = "Authorization")
+    @RequestMapping(value = "ahd/saveAll", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> saveAhdForm(@RequestBody AhdMeetingDto dto) {
         Map<String, Object> response = new HashMap<>();
 
@@ -129,7 +129,7 @@ public class VillageLevelFormController {
 
     }
 
-    @RequestMapping(value = "deworming/saveAll", method = RequestMethod.POST, headers = "Authorization")
+    @RequestMapping(value = "deworming/saveAll", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> saveDewormingForm(@RequestBody DewormingDto dto) {
         Map<String, Object> response = new HashMap<>();
 
@@ -150,7 +150,7 @@ public class VillageLevelFormController {
     }
 
 
-    @RequestMapping(value = "getAll", method = RequestMethod.POST, headers = "Authorization")
+    @RequestMapping(value = "getAll", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> getVillageLevelFormData(@RequestBody GetVillageLevelRequestHandler getVillageLevelRequestHandler) {
         Map<String, Object> response = new LinkedHashMap<>();
 

@@ -34,11 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -67,12 +63,12 @@ public class DiseaseControlController {
                  response.put("data", diseaseControlService.saveMalaria(malariaDTO));
              }else {
                  response.put("message", "Invalid request");
-                 response.put("statusCode", 400);
+                 response.put("statusCode", 5000);
              }
 
         } catch (Exception e) {
             response.put("status", "Error" + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response);
 
@@ -90,12 +86,12 @@ public class DiseaseControlController {
                  response.put("data", diseaseControlService.saveKalaAzar(kalaAzarDTO));
              }else {
                  response.put("message", "Invalid request");
-                 response.put("statusCode", 400);
+                 response.put("statusCode", 5000);
              }
 
         } catch (Exception e) {
             response.put("status", "Error" + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response);
 
@@ -112,12 +108,12 @@ public class DiseaseControlController {
                 response.put("data", diseaseControlService.saveAES(aesJeDTO));
             }else {
                 response.put("message", "Invalid request");
-                response.put("statusCode", 400);
+                response.put("statusCode", 5000);
             }
 
         } catch (Exception e) {
             response.put("status", "Error" + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response);
 
@@ -134,12 +130,12 @@ public class DiseaseControlController {
                 response.put("data", diseaseControlService.saveFilaria(filariaDTO));
             }else {
                 response.put("message", "Invalid request");
-                response.put("statusCode", 400);
+                response.put("statusCode", 5000);
             }
 
         } catch (Exception e) {
             response.put("status", "Error" + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response);
 
@@ -155,12 +151,12 @@ public class DiseaseControlController {
                 response.put("data", diseaseControlService.saveLeprosy(leprosyDTO));
             }else {
                 response.put("message", "Invalid request");
-                response.put("statusCode", 400);
+                response.put("statusCode", 5000);
             }
 
         } catch (Exception e) {
             response.put("status", "Error" + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response);
 
@@ -179,11 +175,11 @@ public class DiseaseControlController {
                 response.put("message", "All follow-ups saved successfully");
             } else {
                 response.put("message", "Invalid request - no follow-up data");
-                response.put("statusCode", 400);
+                response.put("statusCode", 5000);
             }
         } catch (Exception e) {
             response.put("status", "Error: " + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response);
 
@@ -207,15 +203,17 @@ public class DiseaseControlController {
                     response.put("data", result); // ← Put list directly, no gson.toJson()
                 } else {
                     response.put("message", "No record found");
-                    response.put("statusCode", 404);
+                    response.put("statusCode", 5000);
                 }
             } else {
                 response.put("message", "Invalid request - userName required");
-                response.put("statusCode", 400);
+                response.put("statusCode", 5000);
             }
         } catch (Exception e) {
+            logger.info("Fail leprosy: "+e.getMessage());
+            logger.info("Fail leprosy full error: "+e);
             response.put("status", "Error: " + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response); // ← Spring serializes the whole map
     }
@@ -237,15 +235,17 @@ public class DiseaseControlController {
                     response.put("data", result); // ← Put list directly, no gson.toJson()
                 } else {
                     response.put("message", "No record found");
-                    response.put("statusCode", 404);
+                    response.put("statusCode", 5000);
                 }
             } else {
                 response.put("message", "Invalid request - userName required");
-                response.put("statusCode", 400);
+                response.put("statusCode", 5000);
             }
         } catch (Exception e) {
+            logger.info("Fail leprosy followUp: "+e.getMessage());
+            logger.info("Fail leprosy  full error: "+e);
             response.put("status", "Error: " + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response); // ← Spring serializes the whole map
     }
@@ -260,8 +260,10 @@ public class DiseaseControlController {
             response.put("data", diseaseControlService.getAllScreeningData(getDiseaseRequestHandler));
 
         } catch (Exception e) {
+            logger.info("getAllDisease "+e.getMessage());
+            logger.info("Fail getAllDisease  full error: "+e);
             response.put("status", "Error" + e.getMessage());
-            response.put("statusCode", 500);
+            response.put("statusCode", 5000);
         }
         return ResponseEntity.ok(response);
     }
@@ -314,5 +316,63 @@ public class DiseaseControlController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+    @RequestMapping(value = "cdtfVisit/saveAll", method = RequestMethod.POST)
+    public ResponseEntity<Map<String, Object>> saveVisit(
+            @RequestBody List<ChronicDiseaseVisitDTO> requestList,@RequestHeader(value = "JwtToken") String token) {
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        logger.info("Chronic Disease Visit Save Request: {}", requestList);
+
+        try {
+            List<ChronicDiseaseVisitDTO> savedList =
+                    diseaseControlService.saveChronicDiseaseVisit(requestList,token);
+
+            if (savedList != null && !savedList.isEmpty()) {
+                response.put("statusCode", HttpStatus.OK.value());
+                response.put("message", "Data saved successfully");
+                response.put("data", savedList);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("statusCode", HttpStatus.BAD_REQUEST.value());
+                response.put("message", "No data saved");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+        } catch (Exception e) {
+            logger.error("Error saving Chronic Disease Visit :", e);
+            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("errorMessage", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @RequestMapping(value = "cdtfVisit/getAll", method = RequestMethod.POST)
+    public ResponseEntity<Map<String, Object>> getVisitDetails(
+            @RequestBody GetBenRequestHandler getBenRequestHandler) {
+
+        Map<String, Object> response = new LinkedHashMap<>();
+
+        try {
+            List<ChronicDiseaseVisitDTO> result =
+                    diseaseControlService.getCdtfVisits(getBenRequestHandler);
+
+            if (result != null && !result.isEmpty()) {
+                response.put("statusCode", HttpStatus.OK.value());
+                response.put("data", result);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("statusCode", HttpStatus.NOT_FOUND.value());
+                response.put("message", "No records found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+        } catch (Exception e) {
+            logger.error("Error fetching Chronic Disease Visit :", e);
+            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("errorMessage", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 
 }

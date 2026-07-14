@@ -35,6 +35,11 @@ public class MaaMeetingResponseDTO {
             example = "[\"iVBORw0KGgoAAAANSUhEUgAA...\", \"iVBORw0KGgoAAAANSUhEUgBB...\"]")
     private List<String > meetingImages;
 
+    private String villageName;
+    private String noOfPragnentWomen;
+    private String noOfLactingMother;
+    private String mitaninActivityCheckList;
+
     @Column(name = "created_by")
     private String createdBy;
 

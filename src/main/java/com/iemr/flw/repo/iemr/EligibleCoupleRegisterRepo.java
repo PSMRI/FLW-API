@@ -14,7 +14,12 @@ public interface EligibleCoupleRegisterRepo extends JpaRepository<EligibleCouple
 
     EligibleCoupleRegister findEligibleCoupleRegisterByBenId(Long benId);
 
+    List<EligibleCoupleRegister> findByCreatedBy(String userName);
+
     @Query(" SELECT ecr FROM EligibleCoupleRegister ecr WHERE ecr.createdBy = :userId and ecr.createdDate >= :fromDate and ecr.createdDate <= :toDate")
     List<EligibleCoupleRegister> getECRegRecords(@Param("userId") String userId,
                                                  @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
+
+    @Query(" SELECT ecr FROM EligibleCoupleRegister ecr WHERE ecr.createdBy = :userId")
+    List<EligibleCoupleRegister> getECRegRecords(@Param("userId") String userId);
 }

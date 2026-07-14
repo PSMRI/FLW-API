@@ -24,7 +24,9 @@
 */
 package com.iemr.flw.service;
 
+import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
+import com.iemr.flw.utils.exception.IEMRException;
 
 import java.util.List;
 
@@ -44,4 +46,7 @@ public interface DiseaseControlService {
      public String saveLeprosyFollowUp(LeprosyFollowUpDTO leprosyDTO);
      List<LeprosyGetFollowUpDTO> getAllLeprosyFollowUpData(String createdBy);
 
+    List<ChronicDiseaseVisitDTO> saveChronicDiseaseVisit(List<ChronicDiseaseVisitDTO> requestList,String token) throws IEMRException;
+
+    List<ChronicDiseaseVisitDTO> getCdtfVisits(GetBenRequestHandler getBenRequestHandler);
 }

@@ -18,10 +18,33 @@ public interface ChildVaccinationRepo extends JpaRepository<ChildVaccination, Lo
 
     ChildVaccination findChildVaccinationByBeneficiaryRegIdAndCreatedDateAndVaccineName(Long benRegId, Timestamp createdDate, String vaccine);
 
-    @Query(value = "select count(*) from db_iemr.t_childvaccinedetail1 cv left outer join db_iemr.m_immunizationservicevaccination v on " +
-            "cv.VaccineName = v.VaccineName where cv.beneficiaryRegId = :benRegId and v.Currentimmunizationserviceid in (1,2,3,4,5) and " +
-            "v.category = 'CHILD'", nativeQuery = true)
+    @Query(value = """
+    SELECT COUNT(DISTINCT cv.VaccineName)
+    FROM db_iemr.t_childvaccinedetail1 cv
+    JOIN db_iemr.m_immunizationservicevaccination v
+         ON cv.VaccineName = v.VaccineName
+    WHERE cv.BeneficiaryRegID = :benRegId
+    AND v.Currentimmunizationserviceid IN (1,2,3,4,5)
+    AND v.category = 'CHILD'
+    """, nativeQuery = true)
     Integer getFirstYearVaccineCountForBenId(@Param("benRegId") Long benRegId);
+
+    @Query(value = """
+    SELECT COUNT(DISTINCT cv.VaccineName)
+    FROM db_iemr.t_childvaccinedetail1 cv
+    WHERE cv.BeneficiaryRegID = :benRegId
+    AND cv.VaccineName IN (
+        'BCG Vaccine',
+        'OPV-1',
+        'OPV-2',
+        'OPV-3',
+        'Pentavalent-1',
+        'Pentavalent-2',
+        'Pentavalent-3',
+        'Measles & Rubella (MR)-1'
+    )
+    """, nativeQuery = true)
+    Integer getEligibleFirstYearVaccines(@Param("benRegId") Long benRegId);
 
 
 
@@ -42,4 +65,16 @@ public interface ChildVaccinationRepo extends JpaRepository<ChildVaccination, Lo
             "cv.VaccineName = v.VaccineName where cv.beneficiaryRegId = :benRegId and v.Currentimmunizationserviceid = 8 and v.VaccineName = " +
             "'DPT Booster-2' and v.category = 'CHILD'), 1, 0);", nativeQuery = true)
     Integer checkDptVaccinatedUser(@Param("benRegId") Long benRegId);
+
+    @Query(value = """
+    SELECT COUNT(DISTINCT cv.VaccineName)
+    FROM db_iemr.t_childvaccinedetail1 cv
+    WHERE cv.BeneficiaryRegID = :benRegId
+    AND cv.VaccineName IN (
+        'DPT Booster-1',
+        'Measles & Rubella (MR)-2',
+        'OPV Booster'
+    )
+    """, nativeQuery = true)
+    Integer getEligibleSecondYearVaccines(@Param("benRegId") Long benRegId);
 }

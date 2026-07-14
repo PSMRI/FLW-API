@@ -98,7 +98,7 @@ public class InfantServiceImpl implements InfantService {
     }
 
     private void addIsSncuIncentive(IncentiveActivity activity, Long benId, String createdBy, Timestamp createdDate) {
-        IncentiveActivityRecord incentiveActivityRecord = incentiveRecordRepo.findRecordByActivityIdCreatedDateBenId(activity.getId(),createdDate,benId);
+        IncentiveActivityRecord incentiveActivityRecord = incentiveRecordRepo.findRecordByActivityIdCreatedDateBenId(activity.getId(),createdDate,benId,userServiceRoleRepo.getUserIdByName(createdBy));
 
         if(incentiveActivityRecord==null){
             incentiveActivityRecord = new IncentiveActivityRecord();

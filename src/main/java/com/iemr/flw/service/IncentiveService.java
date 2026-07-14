@@ -3,6 +3,7 @@ package com.iemr.flw.service;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.IncentiveActivityDTO;
 import com.iemr.flw.dto.iemr.IncentiveRequestDTO;
+import com.iemr.flw.dto.iemr.PendingActivityDTO;
 
 import java.util.List;
 
@@ -13,4 +14,12 @@ public interface IncentiveService {
     String getIncentiveMaster(IncentiveRequestDTO incentiveRequestDTO);
 
     String getAllIncentivesByUserId(GetBenRequestHandler requestDTO);
-}
+    String getAllIncentivesGroupedSummary(GetBenRequestHandler requestDTO);
+    String getAllIncentivesGroupedActivity(GetBenRequestHandler requestDTO);
+
+    String updateIncentive(PendingActivityDTO pendingActivityDTO);
+    public String updateClaimStatus(Integer ashaId,
+                                    Integer month,
+                                    Integer year,
+                                    Boolean isClaimed,
+                                    String token);}

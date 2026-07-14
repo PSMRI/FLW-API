@@ -1,0 +1,85 @@
+package com.iemr.flw.repo.iemr;
+
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.iemr.flw.domain.iemr.AshaSupervisorMapping;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface AshaSupervisorLoginRepo extends CrudRepository<AshaSupervisorMapping, Long> {
+
+	ArrayList<AshaSupervisorMapping> findBySupervisorUserIDAndDeletedFalse(Integer supervisorUserID);
+
+	// API 1: All ASHAs mapped to a supervisor with facility info
+	@Query(value = "SELECT DISTINCT asm.ashaUserID, u.FirstName, u.LastName, "
+			+ "f.FacilityID, f.FacilityName, "
+			+ "COALESCE(ft.FacilityTypeName,'') AS facilityTypeName "
+			+ "FROM asha_supervisor_mapping asm "
+			+ "JOIN m_User u ON u.UserID = asm.ashaUserID AND u.Deleted = false "
+			+ "JOIN m_facility f ON f.FacilityID = asm.facilityID AND f.Deleted = false "
+			+ "LEFT JOIN m_facilitytype ft ON ft.FacilityTypeID = f.FacilityTypeID "
+			+ "WHERE asm.supervisorUserID = :supervisorUserID "
+			+ "AND asm.deleted = false", nativeQuery = true)
+	List<Object[]> getAllMappedAshas(@Param("supervisorUserID") Integer supervisorUserID);
+
+	// API 2: ASHAs at a specific facility for a supervisor with user details
+	@Query(value = "SELECT DISTINCT asm.ashaUserID, u.FirstName, u.LastName, "
+			+ "COALESCE(u.AgentID,'') AS agentID, "
+			+ "COALESCE(u.EmergencyContactNo,'') AS mobile, "
+			+ "COALESCE(g.GenderName,'') AS gender "
+			+ "FROM asha_supervisor_mapping asm "
+			+ "JOIN m_User u ON u.UserID = asm.ashaUserID "
+			+ "AND u.Deleted = false "
+			+ "LEFT JOIN m_gender g ON g.GenderID = u.GenderID "
+			+ "JOIN incentive_activity_record iar "
+			+ "ON iar.asha_id = asm.ashaUserID "
+			+ "WHERE asm.supervisorUserID = :supervisorUserID "
+			+ "AND asm.facilityID = :facilityID "
+			+ "AND asm.deleted = false "
+			+ "AND iar.is_claimed = true "
+			+ "AND iar.start_date >= :startDate "
+			+ "AND iar.end_date < :endDate "
+			+ "AND (:approvalStatus = 0 "
+			+ "OR iar.approval_status = :approvalStatus)",
+			nativeQuery = true)
+	List<Object[]> getAshasAtFacility(
+			@Param("supervisorUserID") Integer supervisorUserID,
+			@Param("facilityID") Integer facilityID,
+			@Param("approvalStatus") Integer approvalStatus,
+			@Param("startDate") Timestamp startDate,
+			@Param("endDate") Timestamp endDate);
+
+
+	@Query(value = "SELECT DISTINCT asm.ashaUserID, "
+			+ "u.FirstName, "
+			+ "u.LastName, "
+			+ "COALESCE(u.AgentID,'') AS agentID, "
+			+ "COALESCE(u.EmergencyContactNo,'') AS mobile, "
+			+ "COALESCE(g.GenderName,'') AS gender "
+			+ "FROM asha_supervisor_mapping asm "
+			+ "JOIN m_User u "
+			+ "ON u.UserID = asm.ashaUserID "
+			+ "AND u.Deleted = false "
+			+ "LEFT JOIN m_gender g "
+			+ "ON g.GenderID = u.GenderID "
+			+ "JOIN incentive_activity_record iar "
+			+ "ON iar.asha_id = asm.ashaUserID "
+			+ "WHERE asm.supervisorUserID = :supervisorUserID "
+			+ "AND asm.deleted = false "
+			+ "AND iar.is_claimed = true "
+			+ "AND iar.start_date >= :startDate "
+			+ "AND iar.end_date < :endDate "
+			+ "AND ( :approvalStatus = 0 "
+			+ "OR iar.approval_status = :approvalStatus )",
+			nativeQuery = true)
+	List<Object[]> getAshasAtFacility(
+			@Param("supervisorUserID") Integer supervisorUserID,
+			@Param("approvalStatus") Integer approvalStatus,
+			@Param("startDate") Timestamp startDate,
+			@Param("endDate") Timestamp endDate);
+}

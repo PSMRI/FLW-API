@@ -24,7 +24,7 @@ public class CrashLogServiceImpl implements CrashLogService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-    @Value("${crash.logs.base.path}")
+   // @Value("${crash.logs.base.path}")
     private String crashLogsBasePath;
 
     @Override

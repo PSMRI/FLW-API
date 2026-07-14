@@ -24,11 +24,11 @@
 */
 package com.iemr.flw.service.impl;
 
-import com.iemr.flw.controller.CoupleController;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.repo.iemr.*;
+import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.VillageLevelFormService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +37,10 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -69,6 +71,9 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
     @Autowired
     private AHDFormRepo ahdFormRepo;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
 
 
     @Override
@@ -132,11 +137,20 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         vhncForm.setImage2(vhncFormDTO.getImage2());
         vhncForm.setImage1(vhncFormDTO.getImage1());
         vhncForm.setPlace(vhncFormDTO.getPlace());
+        vhncForm.setVillageName(vhncFormDTO.getVillageName());
+        vhncForm.setAnm(vhncFormDTO.getAnm());
+        vhncForm.setAww(vhncFormDTO.getAww());
+        vhncForm.setNoOfPragnentWoment(vhncFormDTO.getNoOfPragnentWoment());
+        vhncForm.setNoOfLactingMother(vhncFormDTO.getNoOfLactingMother());
+        vhncForm.setNoOfCommittee(vhncFormDTO.getNoOfCommittee());
+        vhncForm.setFollowupPrevius(vhncFormDTO.getFollowupPrevius());
+
         vhncForm.setNoOfBeneficiariesAttended(vhncFormDTO.getNoOfBeneficiariesAttended());
 
         vhncForm.setFormType("VHNC");
         vhncFormRepo.save(vhncForm);
-        checkAndAddIncentives(vhncForm.getVhncDate(), Math.toIntExact(vhncForm.getUserId()), "VHSNC_MEETING", vhncForm.getCreatedBy());
+
+        checkVhncIncentive(vhncForm.getCreatedDate(),Math.toIntExact(vhncForm.getUserId()));
 
         return true;
     }
@@ -149,10 +163,15 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         phcReviewForm.setPlace(dto.getPlace());
         phcReviewForm.setNoOfBeneficiariesAttended(dto.getNoOfBeneficiariesAttended());
         phcReviewForm.setImage1(dto.getImage1());
+        phcReviewForm.setVillageName(dto.getVillageName());
+        phcReviewForm.setMitaninActivityCheckList(dto.getMitaninActivityCheckList());
+        phcReviewForm.setPlaceId(dto.getPlaceId());
+        phcReviewForm.setMitaninHistory(dto.getMitaninHistory());
         phcReviewForm.setImage2(dto.getImage2());
         phcReviewForm.setFormType("PHC");
         phcReviewFormRepo.save(phcReviewForm);
-        checkAndAddIncentives(phcReviewForm.getPhcReviewDate(), Math.toIntExact(phcReviewForm.getUserId()), "CLUSTER_MEETING", phcReviewForm.getCreatedBy());
+
+        checkPhcMeetingIncentive(phcReviewForm.getCreatedDate(),Math.toIntExact(phcReviewForm.getUserId()));
 
         return true;
     }
@@ -198,17 +217,181 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         VHNDForm vhndForm = new VHNDForm();
         vhndForm.setUserId(userID);
         vhndForm.setVhndDate(vhndFormDTO.getVhndDate());
-        vhndForm.setImage2(vhndFormDTO.getImage2());
-        vhndForm.setImage1(vhndFormDTO.getImage1());
-        vhndForm.setPlace(vhndFormDTO.getPlace());
-        vhndForm.setNoOfBeneficiariesAttended(vhndFormDTO.getNoOfBeneficiariesAttended());
+        vhndForm.setImage2(vhndFormDTO.getImage2() != null ? vhndFormDTO.getImage2() : "");
+        vhndForm.setImage1(vhndFormDTO.getImage1() != null ? vhndFormDTO.getImage1() : "");
+        vhndForm.setPlace(vhndFormDTO.getPlace() != null ? vhndFormDTO.getPlace() : "");
+
+        vhndForm.setNoOfBeneficiariesAttended(
+                vhndFormDTO.getNoOfBeneficiariesAttended() != null
+                        ? vhndFormDTO.getNoOfBeneficiariesAttended()
+                        : 0);
+
+        vhndForm.setPregnantWomenAnc(
+                vhndFormDTO.getPregnantWomenAnc() != null
+                        ? vhndFormDTO.getPregnantWomenAnc()
+                        : null);
+
+        vhndForm.setLactatingMothersPnc(
+                vhndFormDTO.getLactatingMothersPnc() != null
+                        ? vhndFormDTO.getLactatingMothersPnc()
+                        : null);
+
+        vhndForm.setChildrenImmunization(
+                vhndFormDTO.getChildrenImmunization() != null
+                        ? vhndFormDTO.getChildrenImmunization()
+                        : null);
+
+        vhndForm.setSelectAllEducation(
+                vhndFormDTO.getSelectAllEducation() != null
+                        ? vhndFormDTO.getSelectAllEducation()
+                        : false);
+
+        vhndForm.setKnowledgeBalancedDiet(
+                vhndFormDTO.getKnowledgeBalancedDiet() != null
+                        ? vhndFormDTO.getKnowledgeBalancedDiet()
+                        : null);
+
+        vhndForm.setCareDuringPregnancy(
+                vhndFormDTO.getCareDuringPregnancy() != null
+                        ? vhndFormDTO.getCareDuringPregnancy()
+                        : null);
+
+        vhndForm.setImportanceBreastfeeding(
+                vhndFormDTO.getImportanceBreastfeeding() != null
+                        ? vhndFormDTO.getImportanceBreastfeeding()
+                        : null);
+
+        vhndForm.setComplementaryFeeding(
+                vhndFormDTO.getComplementaryFeeding() != null
+                        ? vhndFormDTO.getComplementaryFeeding()
+                        : null);
+
+        vhndForm.setHygieneSanitation(
+                vhndFormDTO.getHygieneSanitation() != null
+                        ? vhndFormDTO.getHygieneSanitation()
+                        : null);
+
+        vhndForm.setFamilyPlanningHealthcare(
+                vhndFormDTO.getFamilyPlanningHealthcare() != null
+                        ? vhndFormDTO.getFamilyPlanningHealthcare()
+                        : null);
         vhndForm.setFormType("VHND");
         vhndRepo.save(vhndForm);
-        checkAndAddIncentives(vhndForm.getVhndDate(), vhndForm.getUserId(), "VHND_PARTICIPATION", vhndForm.getCreatedBy());
+
+
+        checkVhndIncentive(vhndForm.getCreatedDate(),vhndForm.getUserId());
+
         return true;
 
 
     }
+
+    private void checkVhndIncentive(Timestamp startTimestamp, Integer userId){
+
+        try {
+            IncentiveActivity activity = incentivesRepo.findIncentiveMasterByNameAndGroup("VHND_PARTICIPATION", GroupName.ACTIVITY.getDisplayName());
+            if(activity!=null){
+                IncentiveActivityRecord record = recordRepo
+                        .findRecordByActivityIdCreatedDateBenId(activity.getId(), startTimestamp, 0L,userId);
+                if (record == null) {
+                    record = new IncentiveActivityRecord();
+                    record.setActivityId(activity.getId());
+                    record.setCreatedDate(startTimestamp);
+                    record.setCreatedBy(userRepo.getUserNamedByUserId(userId));
+                    record.setStartDate(startTimestamp);
+                    record.setEndDate(startTimestamp);
+                    record.setUpdatedDate(startTimestamp);
+                    record.setUpdatedBy(userRepo.getUserNamedByUserId(userId));
+                    record.setAshaId(userId);
+                    record.setBenId(0L);
+                    record.setAmount(Long.valueOf(activity.getRate()));
+                    record.setIsEligible(true);
+                    recordRepo.save(record);
+
+                }
+            }
+
+
+
+        } catch (Exception e) {
+            logger.error("Process Incentive Exception: ", e);
+
+
+        }
+
+    }
+
+    private void checkPhcMeetingIncentive(Timestamp startTimestamp, Integer userId){
+
+        try {
+            IncentiveActivity activity = incentivesRepo.findIncentiveMasterByNameAndGroup("CLUSTER_MEETING", GroupName.ACTIVITY.getDisplayName());
+            if(activity!=null){
+                IncentiveActivityRecord record = recordRepo
+                        .findRecordByActivityIdCreatedDateBenId(activity.getId(), startTimestamp, 0L,userId);
+                if (record == null) {
+                    record = new IncentiveActivityRecord();
+                    record.setActivityId(activity.getId());
+                    record.setCreatedDate(startTimestamp);
+                    record.setCreatedBy(userRepo.getUserNamedByUserId(userId));
+                    record.setStartDate(startTimestamp);
+                    record.setEndDate(startTimestamp);
+                    record.setUpdatedDate(startTimestamp);
+                    record.setUpdatedBy(userRepo.getUserNamedByUserId(userId));
+                    record.setAshaId(userId);
+                    record.setBenId(0L);
+                    record.setAmount(Long.valueOf(activity.getRate()));
+                    record.setIsEligible(true);
+                    recordRepo.save(record);
+
+                }
+            }
+
+
+
+        } catch (Exception e) {
+            logger.error("Process Incentive Exception: ", e);
+
+
+        }
+
+    }
+
+
+    private void checkVhncIncentive(Timestamp startTimestamp, Integer userId){
+
+        try {
+            IncentiveActivity activity = incentivesRepo.findIncentiveMasterByNameAndGroup("VHSNC_MEETING", GroupName.ACTIVITY.getDisplayName());
+            if(activity!=null){
+                IncentiveActivityRecord record = recordRepo
+                        .findRecordByActivityIdCreatedDateBenId(activity.getId(), startTimestamp, 0L,userId);
+                if (record == null) {
+                    record = new IncentiveActivityRecord();
+                    record.setActivityId(activity.getId());
+                    record.setCreatedDate(startTimestamp);
+                    record.setCreatedBy(userRepo.getUserNamedByUserId(userId));
+                    record.setStartDate(startTimestamp);
+                    record.setEndDate(startTimestamp);
+                    record.setUpdatedDate(startTimestamp);
+                    record.setUpdatedBy(userRepo.getUserNamedByUserId(userId));
+                    record.setAshaId(userId);
+                    record.setBenId(0L);
+                    record.setAmount(Long.valueOf(activity.getRate()));
+                    record.setIsEligible(true);
+                    recordRepo.save(record);
+
+                }
+            }
+
+
+
+        } catch (Exception e) {
+            logger.error("Process Incentive Exception: ", e);
+
+
+        }
+
+    }
+
 
     @Override
     public List<? extends Object> getAll(GetVillageLevelRequestHandler getVillageLevelRequestHandler) {
@@ -244,6 +427,8 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
 
     private void checkAndAddIncentives(String date, Integer userID, String formType, String createdBY) {
+        String userName = userRepo.getUserNamedByUserId(userID);
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
         // Parse to LocalDate
@@ -265,11 +450,11 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
                 record = new IncentiveActivityRecord();
                 record.setActivityId(villageFormEntryActivityAM.getId());
                 record.setCreatedDate(timestamp);
-                record.setCreatedBy(userRepo.getUserNamedByUserId(userID));
+                record.setCreatedBy(userName);
                 record.setStartDate(timestamp);
                 record.setEndDate(timestamp);
                 record.setUpdatedDate(timestamp);
-                record.setUpdatedBy(userRepo.getUserNamedByUserId(userID));
+                record.setUpdatedBy(userName);
                 record.setAshaId(userID);
                 record.setBenId(0L);
                 record.setAmount(Long.valueOf(villageFormEntryActivityAM.getRate()));
@@ -277,7 +462,6 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
             }
         }
-
         if (villageFormEntryActivityCH != null) {
             IncentiveActivityRecord record = recordRepo
                     .findRecordByActivityIdCreatedDateBenId(villageFormEntryActivityCH.getId(), timestamp, 0L,userID);
@@ -285,12 +469,12 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
                 record = new IncentiveActivityRecord();
                 record.setActivityId(villageFormEntryActivityCH.getId());
                 record.setCreatedDate(timestamp);
-                record.setCreatedBy(userRepo.getUserNamedByUserId(userID));
+                record.setCreatedBy(userName);
                 record.setStartDate(timestamp);
                 record.setEndDate(timestamp);
                 record.setBenId(0L);
                 record.setUpdatedDate(timestamp);
-                record.setUpdatedBy(userRepo.getUserNamedByUserId(userID));
+                record.setUpdatedBy(userName);
                 record.setAshaId(userID);
                 record.setAmount(Long.valueOf(villageFormEntryActivityCH.getRate()));
                 recordRepo.save(record);

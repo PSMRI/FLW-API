@@ -3,7 +3,10 @@ package com.iemr.flw.controller;
 import com.iemr.flw.domain.iemr.IRSRound;
 import com.iemr.flw.dto.iemr.IRSRoundDTO;
 import com.iemr.flw.dto.iemr.IRSRoundListDTO;
+import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.IRSRoundService;
+import com.iemr.flw.service.UserService;
+import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.response.OutputResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,12 +27,23 @@ public class IRSRoundController {
     @Autowired
     private IRSRoundService irsRoundService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private UserService userService;
+
     @PostMapping(value = "/add")
-    public ResponseEntity<Map<String, Object>> addRound(@RequestBody IRSRoundListDTO dto) {
+    public ResponseEntity<Map<String, Object>> addRound(@RequestBody IRSRoundListDTO dto,@RequestHeader("jwtToken") String token) {
         Map<String, Object> response = new LinkedHashMap<>();
         try {
             if (dto.getRounds().size() != 0) {
-                List<IRSRound> s = irsRoundService.addRounds(dto.getRounds());
+                if(token==null){
+                    response.put("statusCode", 401);
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response) ;
+                }
+                Integer userId = jwtUtil.extractUserId(token);
+                List<IRSRound> s = irsRoundService.addRounds(dto.getRounds(), userId, userService.getUserDetail(userId).getUserName());
                 if (s.size() != 0) {
                     Map<String, Object> data = new HashMap<>();
                                   data.put("entries", s);
