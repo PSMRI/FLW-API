@@ -83,6 +83,7 @@ public class AdolescentHealthServiceImpl implements AdolescentHealthService {
         existingAdolescentHealth.setSanitaryNapkinDistributed(adolescentHealth.getSanitaryNapkinDistributed());
         existingAdolescentHealth.setNoOfPacketsDistributed(adolescentHealth.getNoOfPacketsDistributed());
         existingAdolescentHealth.setPlace(adolescentHealth.getPlace());
+        existingAdolescentHealth.setIsSanitaryNapkinUsed(adolescentHealth.getIsSanitaryNapkinUsed());
         existingAdolescentHealth.setReferredToHealthFacility(adolescentHealth.getReferredToHealthFacility());
         existingAdolescentHealth.setCounselingProvided(adolescentHealth.getCounselingProvided());
         existingAdolescentHealth.setCounselingType(adolescentHealth.getCounselingType());
@@ -108,6 +109,7 @@ public class AdolescentHealthServiceImpl implements AdolescentHealthService {
         dto.setSanitaryNapkinDistributed(adolescentHealth.getSanitaryNapkinDistributed());
         dto.setNoOfPacketsDistributed(adolescentHealth.getNoOfPacketsDistributed());
         dto.setPlace(adolescentHealth.getPlace());
+        dto.setIsSanitaryNapkinUsed(adolescentHealth.getIsSanitaryNapkinUsed());
         dto.setReferredToHealthFacility(adolescentHealth.getReferredToHealthFacility());
         dto.setCounselingProvided(adolescentHealth.getCounselingProvided());
         dto.setCounselingType(adolescentHealth.getCounselingType());
