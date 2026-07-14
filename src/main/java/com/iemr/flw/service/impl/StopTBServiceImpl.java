@@ -70,9 +70,6 @@ public class StopTBServiceImpl implements StopTBService {
     private StopTBDiagnosticsRepo diagnosticsRepo;
 
     @Autowired
-    private NikshayLocationDerivationService nikshayLocationDerivationService;
-
-    @Autowired
     private TBStopVisitService tbStopVisitService;
 
     @Autowired
@@ -481,17 +478,6 @@ public class StopTBServiceImpl implements StopTBService {
             diag.setDeleted(false);
             if (diag.getVanID() == null && vanID != null) { diag.setVanID(vanID); diag.setParkingPlaceID(parkingPlaceID); }
             diag.setProcessed("N");
-
-            // Stop TB / Nikshay — auto-derive from the beneficiary's existing village.
-            // Additive only: if no match is found, the case still saves normally,
-            // just without a Nikshay tag until that gap is resolved.
-            NikshayLocationDerivationService.NikshayLocationScope nikshayScope =
-                    nikshayLocationDerivationService.deriveForBeneficiary(benRegID);
-            if (nikshayScope != null) {
-                diag.setNikshayVillageID(nikshayScope.villageID);
-                diag.setNikshayFacilityID(nikshayScope.facilityID);
-                diag.setNikshayTUID(nikshayScope.tuID);
-            }
 
             diagnosticsRepo.save(diag);
             if (isNew) diagnosticsRepo.updateVanSerialNo(diag.getId());
