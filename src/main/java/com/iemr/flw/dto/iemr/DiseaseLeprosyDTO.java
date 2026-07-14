@@ -72,4 +72,28 @@ public class DiseaseLeprosyDTO {
     private Timestamp createdDate;
     private String modifiedBy;
     private Timestamp lastModDate;
+    private Integer recurrentUlcerationId;
+    private Integer recurrentTinglingId;
+    private Integer hypopigmentedPatchId;
+    private Integer thickenedSkinId;
+    private Integer skinNodulesId;
+    private Integer skinPatchDiscolorationId;
+    private Integer recurrentNumbnessId;
+    private Integer clawingFingersId;
+    private Integer tinglingNumbnessExtremitiesId;
+    private Integer inabilityCloseEyelidId;
+    private Integer difficultyHoldingObjectsId;
+    private Integer weaknessFeetId;
+    private String recurrentUlceration;
+    private String recurrentTingling;
+    private String hypopigmentedPatch;
+    private String thickenedSkin;
+    private String skinNodules;
+    private String skinPatchDiscoloration;
+    private String recurrentNumbness;
+    private String clawingFingers;
+    private String tinglingNumbnessExtremities;
+    private String inabilityCloseEyelid;
+    private String difficultyHoldingObjects;
+    private String weaknessFeet;
 }

@@ -36,7 +36,6 @@ public class IncentiveActivity {
     @Column(name = "group_name")
     private String group;
 
-
     @Column(name = "fmr_code")
     private String fmrCode;
 
@@ -57,6 +56,10 @@ public class IncentiveActivity {
 
     @Column(name = "is_deleted")
     private Boolean isDeleted;
+
+
+    @Column(name = "state_activity_code")
+    private Integer stateActivityCode;
 
 
 }

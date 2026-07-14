@@ -1,35 +1,21 @@
 package com.iemr.flw.controller;
 
 import com.iemr.flw.domain.iemr.AshaWorker;
-import com.iemr.flw.domain.iemr.M_User;
-import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
-import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.AshaProfileService;
 import com.iemr.flw.service.EmployeeMasterInter;
-import com.iemr.flw.service.UserService;
 import io.lettuce.core.dynamic.annotation.Param;
 import com.iemr.flw.utils.JwtUtil;
-import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
-import com.iemr.flw.utils.JwtAuthenticationUtil;
-import com.iemr.flw.utils.JwtUtil;
-import com.iemr.flw.utils.exception.IEMRException;
-import io.jsonwebtoken.Claims;
-import io.swagger.v3.oas.annotations.Operation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 @RestController
 @RequestMapping(value = "/asha", produces = "application/json")
@@ -76,18 +62,18 @@ public class AshaProfileController {
         try {
             String jwtFromHeader = request.getHeader("JwtToken");
 
-            // Validate JWT header presence
-//            if (jwtFromHeader == null || jwtFromHeader.trim().isEmpty()) {
-//                response.put("statusCode", 401);
-//                response.put("status", "Unauthorized");
-//                response.put("errorMessage", "JWT token is missing");
-//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-//            }
+//             Validate JWT header presence
+            if (jwtFromHeader == null || jwtFromHeader.trim().isEmpty()) {
+                response.put("statusCode", 401);
+                response.put("status", "Unauthorized");
+                response.put("errorMessage", "JWT token is missing");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
 
             // Extract and validate user ID from JWT
-           // int userId = jwtUtil.extractUserId(jwtFromHeader); // Make sure this returns 0 or throws for invalid token
+            int userId = jwtUtil.extractUserId(jwtFromHeader); // Make sure this returns 0 or throws for invalid token
 
-            if (employeeId == 0) {
+            if (userId == 0) {
                 response.put("statusCode", 401);
                 response.put("status", "Unauthorized");
                 response.put("errorMessage", "Invalid JWT token");
@@ -95,7 +81,7 @@ public class AshaProfileController {
             }
 
             // Business logic
-            AshaWorker ashaWorker = ashaProfileService.getProfileData(employeeId);
+            AshaWorker ashaWorker = ashaProfileService.getProfileData(userId);
             logger.info("Asha Profile"+ashaWorker);
 
             response.put("statusCode", 200);

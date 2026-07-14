@@ -24,10 +24,14 @@ package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.BenReferDetails;
 
+import io.swagger.v3.oas.annotations.info.License;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
 
 
 @Repository
@@ -40,4 +44,19 @@ public interface BenReferDetailsRepo extends JpaRepository<BenReferDetails, Long
 
 	@Query("SELECT b.referralReason FROM BenReferDetails b WHERE b.beneficiaryRegID = :benRegID")
 	String findReasonByBeneficiaryRegID(@Param("benRegID") Long benRegID);
+
+	List<BenReferDetails> findByCreatedBy(String userName);
+
+	@Query(value = """
+        SELECT COUNT(*)
+        FROM db_iemr.t_benreferdetails
+        WHERE CreatedBy = :userName
+        AND MONTH(CreatedDate) = :month
+        AND YEAR(CreatedDate) = :year
+        """, nativeQuery = true)
+	Long countMonthlyReferrals(
+			@Param("userName") String userName,
+			@Param("month") Integer month,
+			@Param("year") Integer year);
+
 }

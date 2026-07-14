@@ -167,6 +167,12 @@ public class ANCVisit {
     @Column(name = "date_of_sterilisation")
     private Timestamp  dateSterilisation;
 
+    @Column (name = "place_of_anc")
+    private String placeOfAnc;
+
+    @Column(name = "place_of_ancId")
+    private Integer placeOfAncId;
+
 
 
 

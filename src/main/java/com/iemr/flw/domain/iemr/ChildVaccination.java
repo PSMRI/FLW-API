@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import org.checkerframework.checker.units.qual.C;
 
 @Entity
 @Table(name = "t_childvaccinedetail1", schema = "db_iemr", catalog = "")
@@ -17,6 +18,8 @@ public class ChildVaccination {
     private long id;
     private Long beneficiaryRegId;
     private Long benVisitId;
+
+    private Long ProviderServiceMapID;
     private String defaultReceivingAge;
     private Integer vaccineId;
     private String vaccineName;
@@ -313,5 +316,15 @@ public class ChildVaccination {
 
     public void setReservedForChange(String reservedForChange) {
         this.reservedForChange = reservedForChange;
+    }
+
+     @Basic
+     @Column(name = "ProviderServiceMapID")
+    public Long getProviderServiceMapID() {
+        return ProviderServiceMapID;
+    }
+
+    public void setProviderServiceMapID(Long providerServiceMapID) {
+        ProviderServiceMapID = providerServiceMapID;
     }
 }

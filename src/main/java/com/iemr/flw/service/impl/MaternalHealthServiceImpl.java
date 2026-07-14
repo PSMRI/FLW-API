@@ -5,19 +5,31 @@ import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
+import com.iemr.flw.service.IncentiveLogicService;
+import com.iemr.flw.service.IncentiveService;
 import com.iemr.flw.service.MaternalHealthService;
+import com.iemr.flw.utils.JwtUtil;
+import com.iemr.flw.utils.exception.IEMRException;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,6 +70,12 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     @Autowired
     private IncentiveRecordRepo recordRepo;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
+
 
     ObjectMapper mapper = new ObjectMapper();
 
@@ -67,9 +85,15 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     @Autowired
     private SMSServiceImpl smsServiceImpl;
 
+    @Autowired
+    private AncCounsellingCareRepo ancCounsellingCareRepo;
+
 
     public static final List<String> PNC_PERIODS =
             Arrays.asList("1st Day", "3rd Day", "7th Day", "14th Day", "21st Day", "28th Day", "42nd Day");
+
+    private final ConcurrentHashMap<String, Object> lockMap = new ConcurrentHashMap<>();
+
 
     @Override
     public String registerPregnantWoman(List<PregnantWomanDTO> pregnantWomanDTOs) {
@@ -122,39 +146,68 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<ANCVisit> ancVisits = ancVisitRepo.getANCForPW(user, dto.getFromDate(), dto.getToDate());
+            checkAndAddIncentives(ancVisits, dto.getAshaId());
+
             return ancVisits.stream()
                     .map(anc -> mapper.convertValue(anc, ANCVisitDTO.class))
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error("ANC VISIT :---------------------" + e.getMessage());
         }
         return null;
     }
 
     @Override
-    public String saveANCVisit(List<ANCVisitDTO> ancVisitDTOs) {
+    public String saveANCVisit(List<ANCVisitDTO> ancVisitDTOs, Integer userId) {
         try {
+
+            logger.info("ANC save process started. Total records: {}", ancVisitDTOs.size());
+
             List<ANCVisit> ancList = new ArrayList<>();
             List<AncCare> ancCareList = new ArrayList<>();
+
             ancVisitDTOs.forEach(it -> {
-                ANCVisit ancVisit =
+
+                logger.info("Processing Beneficiary Id: {} ANC Visit: {}", it.getBenId(), it.getAncVisit());
+                logger.info("Processing Beneficiary Id: {} ANC Visit: {}", it.getBenId(), it.getIsPaiucdId());
+
+                List<ANCVisit> ancVisitList =
                         ancVisitRepo.findANCVisitByBenIdAndAncVisitAndIsActive(it.getBenId(), it.getAncVisit(), true);
+                ANCVisit ancVisit = new ANCVisit();
+                if (!ancVisitList.isEmpty()) {
+                    ancVisit = ancVisitList.get(0);
+                }
+                logger.info("ANC visit fetch completed");
 
                 if (ancVisit != null) {
+
+                    logger.info("Existing ANC visit found for BenId: {}", it.getBenId());
+
                     Long id = ancVisit.getId();
                     modelMapper.map(it, ancVisit);
                     ancVisit.setId(id);
+
                 } else {
+
+                    logger.info("New ANC visit will be created for BenId: {}", it.getBenId());
+
                     ancVisit = new ANCVisit();
                     modelMapper.map(it, ancVisit);
                     ancVisit.setId(null);
 
                     Long benRegId = beneficiaryRepo.getRegIDFromBenId(it.getBenId());
 
+                    logger.info("Beneficiary Reg Id fetched: {}", benRegId);
+
                     // Saving data in BenVisitDetails table
-                    PregnantWomanRegister pwr = pregnantWomanRegisterRepo.findPregnantWomanRegisterByBenIdAndIsActive(it.getBenId(), true);
+                    PregnantWomanRegister pwr = pregnantWomanRegisterRepo
+                            .findPregnantWomanRegisterByBenIdAndIsActive(it.getBenId(), true);
+
+                    logger.info("PregnantWomanRegister fetched");
+
                     BenVisitDetail benVisitDetail = new BenVisitDetail();
                     modelMapper.map(it, benVisitDetail);
+
                     benVisitDetail.setBeneficiaryRegId(benRegId);
                     benVisitDetail.setVisitCategory("ANC");
                     benVisitDetail.setVisitReason("Follow Up");
@@ -163,37 +216,70 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     benVisitDetail.setModifiedBy(it.getUpdatedBy());
                     benVisitDetail.setLastModDate(it.getUpdatedDate());
                     benVisitDetail.setProviderServiceMapID(it.getProviderServiceMapID());
+
+                    logger.info("Saving BenVisitDetail");
+
                     benVisitDetail = benVisitDetailsRepo.save(benVisitDetail);
+
+                    logger.info("BenVisitDetail saved with id: {}", benVisitDetail.getBenVisitId());
 
                     // Saving Data in AncCare table
                     AncCare ancCare = new AncCare();
                     modelMapper.map(it, ancCare);
+
                     ancCare.setBenVisitId(benVisitDetail.getBenVisitId());
                     ancCare.setBeneficiaryRegId(benRegId);
+
                     if (pwr != null) {
+
+                        logger.info("LMP found calculating EDD");
+
                         ancCare.setLastMenstrualPeriodLmp(pwr.getLmpDate());
+
                         Calendar cal = Calendar.getInstance();
                         cal.setTime(pwr.getLmpDate());
                         cal.add(Calendar.DAY_OF_WEEK, 280);
+
                         ancCare.setExpectedDateofDelivery(new Timestamp(cal.getTime().getTime()));
                     }
+
                     ancCare.setTrimesterNumber(it.getAncVisit().shortValue());
                     ancCare.setModifiedBy(it.getUpdatedBy());
                     ancCare.setLastModDate(it.getUpdatedDate());
                     ancCare.setProcessed("N");
+
                     ancCareList.add(ancCare);
+
+                    logger.info("AncCare added to list");
                 }
+
                 ancList.add(ancVisit);
+                logger.info("ANCVisit added to list");
+
             });
 
+            logger.info("Saving ANCVisit list");
+
             ancVisitRepo.saveAll(ancList);
+
+            logger.info("ANCVisit saved successfully");
+
+            logger.info("Saving AncCare list");
+
             ancCareRepo.saveAll(ancCareList);
-            checkAndAddIncentives(ancList);
+
+            logger.info("AncCare saved successfully");
+
             logger.info("ANC visit details saved");
+            checkAndAddIncentives(ancList, userId);
+
             return "no of anc details saved: " + ancList.size();
+
         } catch (Exception e) {
-            logger.info("Saving ANC visit details failed with error : " + e.getMessage());
-            logger.info("Saving ANC visit details failed with error : " + e);
+
+            logger.error("Saving ANC visit details failed with error : {}", e.getMessage());
+            logger.error("Full exception : ", e);
+
         }
         return null;
     }
@@ -232,6 +318,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             });
             pmsmaRepo.saveAll(pmsmaList);
             logger.info("PMSMA details saved");
+
             checkAndAddHighRisk(pmsmaList);
 
             return "No. of PMSMA records saved: " + pmsmaList.size();
@@ -268,7 +355,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
     private void addIncentiveForHighRisk(IncentiveActivity incentiveActivity, PMSMA pmsma) {
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), pmsma.getCreatedDate(), pmsma.getBenId());
+                .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), pmsma.getCreatedDate(), pmsma.getBenId(),userRepo.getUserIdByName(pmsma.getCreatedBy()));
         // get bene details
 
         if (record == null) {
@@ -291,7 +378,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     public List<PNCVisitDTO> getPNCVisits(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
-            List<PNCVisit> pncVisits = pncVisitRepo.getPNCForPW(user, dto.getFromDate(), dto.getToDate());
+            List<PNCVisit> pncVisits = pncVisitRepo.getPNCForPW(user);
             return pncVisits.stream()
                     .map(pnc -> mapper.convertValue(pnc, PNCVisitDTO.class))
                     .collect(Collectors.toList());
@@ -343,7 +430,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     pncCare.setLastModDate(it.getUpdatedDate());
                     pncCare.setProcessed("N");
                     pncCareList.add(pncCare);
-                    checkAndAddAntaraIncentive(pncList, pncVisit);
+                    checkAndAddAntaraIncentive(pncVisit);
                 }
                 pncList.add(pncVisit);
             });
@@ -357,217 +444,430 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         return null;
     }
 
-    private void checkAndAddAntaraIncentive(List<PNCVisit> recordList, PNCVisit ect) {
+    @Override
+    @Transactional
+    public String saveANCVisitQuestions(List<AncCounsellingCareDTO> dtos, String authorization) throws IEMRException {
+        Integer userId = jwtUtil.extractUserId(authorization);
+        String userName = userRepo.getUserNamedByUserId(userId);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        List<AncCounsellingCare> entities = new ArrayList<>();
+
+        for (AncCounsellingCareDTO dto : dtos) {
+
+            if (!StringUtils.hasText(dto.getVisitDate())) {
+                throw new IllegalArgumentException("visitDate is mandatory");
+            }
+
+            AncCounsellingCareListDTO fields = dto.getFields();
+            if (fields == null) {
+                throw new IllegalArgumentException("fields object is mandatory");
+            }
+
+            LocalDate visitDate;
+            try {
+                visitDate = LocalDate.parse(dto.getVisitDate(), formatter);
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("Invalid visitDate format, expected dd-MM-yyyy");
+            }
+
+            LocalDate homeVisitDate;
+            try {
+                homeVisitDate = StringUtils.hasText(fields.getHomeVisitDate())
+                        ? LocalDate.parse(fields.getHomeVisitDate(), formatter)
+                        : visitDate; // ✅ fallback
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("Invalid home_visit_date format, expected dd-MM-yyyy");
+            }
+
+            AncCounsellingCare entity = new AncCounsellingCare();
+            entity.setBeneficiaryId(dto.getBeneficiaryId());
+            entity.setAncVisitId(0L);
+            entity.setVisitDate(visitDate);
+            entity.setHomeVisitDate(homeVisitDate);
+
+            entity.setSelectAll(yesNoToBoolean(fields.getSelectAll()));
+            entity.setSwelling(yesNoToBoolean(fields.getSwelling()));
+            entity.setHighBp(yesNoToBoolean(fields.getHighBp()));
+            entity.setConvulsions(yesNoToBoolean(fields.getConvulsions()));
+            entity.setAnemia(yesNoToBoolean(fields.getAnemia()));
+            entity.setReducedFetalMovement(yesNoToBoolean(fields.getReducedFetalMovement()));
+            entity.setAgeRisk(yesNoToBoolean(fields.getAgeRisk()));
+            entity.setChildGap(yesNoToBoolean(fields.getChildGap()));
+            entity.setShortHeight(yesNoToBoolean(fields.getShortHeight()));
+            entity.setPrePregWeight(yesNoToBoolean(fields.getPrePregWeight()));
+            entity.setBleeding(yesNoToBoolean(fields.getBleeding()));
+            entity.setMiscarriageHistory(yesNoToBoolean(fields.getMiscarriageHistory()));
+            entity.setFourPlusDelivery(yesNoToBoolean(fields.getFourPlusDelivery()));
+            entity.setFirstDelivery(yesNoToBoolean(fields.getFirstDelivery()));
+            entity.setTwinPregnancy(yesNoToBoolean(fields.getTwinPregnancy()));
+            entity.setCSectionHistory(yesNoToBoolean(fields.getCSectionHistory()));
+            entity.setPreExistingDisease(yesNoToBoolean(fields.getPreExistingDisease()));
+            entity.setFeverMalaria(yesNoToBoolean(fields.getFeverMalaria()));
+            entity.setJaundice(yesNoToBoolean(fields.getJaundice()));
+            entity.setSickleCell(yesNoToBoolean(fields.getSickleCell()));
+            entity.setProlongedLabor(yesNoToBoolean(fields.getProlongedLabor()));
+            entity.setMalpresentation(yesNoToBoolean(fields.getMalpresentation()));
+
+            entity.setUserId(userId);
+            entity.setCreatedBy(userName);
+            entity.setUpdatedBy(userName);
+
+            entities.add(entity);
+        }
+
+        ancCounsellingCareRepo.saveAll(entities);
+
+        return "ANC Counselling & Care data saved successfully";
+    }
+
+
+    @Override
+    public List<AncCounsellingCareResponseDTO> getANCCounselling(GetBenRequestHandler requestDTO) {
+
+        List<AncCounsellingCare> entities =
+                ancCounsellingCareRepo.findAllByUserId(requestDTO.getAshaId());
+
+        List<AncCounsellingCareResponseDTO> responseDTOList = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        for (AncCounsellingCare entity : entities) {
+
+            AncCounsellingCareResponseDTO responseDTO = new AncCounsellingCareResponseDTO();
+            responseDTO.setFormId("anc_form_001");
+            responseDTO.setBeneficiaryId(entity.getBeneficiaryId()); // Update with actual value
+            responseDTO.setVisitDate(entity.getVisitDate().format(formatter)); // Format visit.getVisitDate()
+
+            // 🔹 fields map
+            Map<String, Object> fields = new HashMap<>();
+
+            fields.put("home_visit_date",
+                    entity.getHomeVisitDate() != null
+                            ? entity.getHomeVisitDate().format(formatter)
+                            : null);
+
+            fields.put("select_all", booleanToYesNo(entity.getSelectAll()));
+            fields.put("swelling", booleanToYesNo(entity.getSwelling()));
+            fields.put("high_bp", booleanToYesNo(entity.getHighBp()));
+            fields.put("convulsions", booleanToYesNo(entity.getConvulsions()));
+            fields.put("anemia", booleanToYesNo(entity.getAnemia()));
+            fields.put("reduced_fetal_movement", booleanToYesNo(entity.getReducedFetalMovement()));
+            fields.put("age_risk", booleanToYesNo(entity.getAgeRisk()));
+            fields.put("child_gap", booleanToYesNo(entity.getChildGap()));
+            fields.put("short_height", booleanToYesNo(entity.getShortHeight()));
+            fields.put("pre_preg_weight", booleanToYesNo(entity.getPrePregWeight()));
+            fields.put("bleeding", booleanToYesNo(entity.getBleeding()));
+            fields.put("miscarriage_history", booleanToYesNo(entity.getMiscarriageHistory()));
+            fields.put("four_plus_delivery", booleanToYesNo(entity.getFourPlusDelivery()));
+            fields.put("first_delivery", booleanToYesNo(entity.getFirstDelivery()));
+            fields.put("twin_pregnancy", booleanToYesNo(entity.getTwinPregnancy()));
+            fields.put("c_section_history", booleanToYesNo(entity.getCSectionHistory()));
+            fields.put("pre_existing_disease", booleanToYesNo(entity.getPreExistingDisease()));
+            fields.put("fever_malaria", booleanToYesNo(entity.getFeverMalaria()));
+            fields.put("jaundice", booleanToYesNo(entity.getJaundice()));
+            fields.put("sickle_cell", booleanToYesNo(entity.getSickleCell()));
+            fields.put("prolonged_labor", booleanToYesNo(entity.getProlongedLabor()));
+            fields.put("malpresentation", booleanToYesNo(entity.getMalpresentation()));
+
+            responseDTO.setFields(fields);
+            responseDTOList.add(responseDTO);
+
+
+        }
+        return responseDTOList;
+
+    }
+
+    private String booleanToYesNo(Boolean value) {
+        return Boolean.TRUE.equals(value) ? "Yes" : "No";
+    }
+
+
+    private Boolean yesNoToBoolean(String value) {
+        return "Yes".equalsIgnoreCase(value);
+    }
+
+
+    private void checkAndAddAntaraIncentive(PNCVisit ect) {
         Integer userId = userRepo.getUserIdByName(ect.getCreatedBy());
+        Integer stateId = userRepo.getUserRole(userId).get(0).getStateId();
         logger.info("ContraceptionMethod:" + ect.getContraceptionMethod());
 
-        if (ect.getContraceptionMethod() != null && ect.getContraceptionMethod().equals("MALE STERILIZATION")) {
+        // logic for assam
+        if (stateId.equals(StateCode.AM.getStateCode())) {
+            if (ect.getContraceptionMethod() != null && ect.getContraceptionMethod().equals("MALE STERILIZATION")) {
 
-            IncentiveActivity maleSterilizationActivityAM =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("FP_MALE_STER", GroupName.FAMILY_PLANNING.getDisplayName());
+                IncentiveActivity maleSterilizationActivityAM =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("FP_MALE_STER", GroupName.FAMILY_PLANNING.getDisplayName());
 
-            IncentiveActivity maleSterilizationActivityCH =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("FP_MALE_STER", GroupName.ACTIVITY.getDisplayName());
-            if (maleSterilizationActivityAM != null) {
-                addIncenticeRecord(recordList, ect, userId, maleSterilizationActivityAM);
+                if (maleSterilizationActivityAM != null) {
+                    addIncenticeRecord(ect, userId, maleSterilizationActivityAM);
+                }
+
+
             }
-            if (maleSterilizationActivityCH != null) {
-                addIncenticeRecord(recordList, ect, userId, maleSterilizationActivityCH);
+            if (ect.getContraceptionMethod() != null && ect.getContraceptionMethod().equals("FEMALE STERILIZATION")) {
+
+                IncentiveActivity femaleSterilizationActivityAM =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("FP_FEMALE_STER", GroupName.FAMILY_PLANNING.getDisplayName());
+                if (femaleSterilizationActivityAM != null) {
+                    addIncenticeRecord(ect, userId, femaleSterilizationActivityAM);
+                }
+
             }
+            if (ect.getContraceptionMethod() != null && (ect.getContraceptionMethod().equals("MiniLap") || ect.getContraceptionMethod().equals("POST PARTUM STERILIZATION (PPS)"))) {
 
-        } else if (ect.getContraceptionMethod() != null && ect.getContraceptionMethod().equals("FEMALE STERILIZATION")) {
-
-            IncentiveActivity femaleSterilizationActivityAM =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("FP_FEMALE_STER", GroupName.FAMILY_PLANNING.getDisplayName());
-
-            IncentiveActivity femaleSterilizationActivityCH =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("FP_FEMALE_STER", GroupName.ACTIVITY.getDisplayName());
-            if (femaleSterilizationActivityAM != null) {
-                addIncenticeRecord(recordList, ect, userId, femaleSterilizationActivityAM);
+                IncentiveActivity miniLapActivity =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPS", GroupName.FAMILY_PLANNING.getDisplayName());
+                if (miniLapActivity != null) {
+                    addIncenticeRecord(ect, userId, miniLapActivity);
+                }
             }
+            if (ect.getContraceptionMethod() != null && ect.getContraceptionMethod().equals("Condom")) {
 
-            if (femaleSterilizationActivityCH != null) {
-                addIncenticeRecord(recordList, ect, userId, femaleSterilizationActivityCH);
+                IncentiveActivity comdomActivity =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("FP_CONDOM", GroupName.FAMILY_PLANNING.getDisplayName());
+                if (comdomActivity != null) {
+                    addIncenticeRecord(ect, userId, comdomActivity);
+                }
             }
-        } else if (ect.getContraceptionMethod() != null && ect.getContraceptionMethod().equals("MiniLap")) {
+            if (ect.getContraceptionMethod() != null && ect.getContraceptionMethod().equals("POST PARTUM IUCD (PPIUCD) WITHIN 48 HRS OF DELIVERY")) {
 
-            IncentiveActivity miniLapActivity =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("FP_MINILAP", GroupName.FAMILY_PLANNING.getDisplayName());
-            if (miniLapActivity != null) {
-                addIncenticeRecord(recordList, ect, userId, miniLapActivity);
-            }
-        } else if (ect.getContraceptionMethod() != null && ect.getContraceptionMethod().equals("Condom")) {
+                IncentiveActivity PPIUCDActivityAM =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPIUCD", GroupName.FAMILY_PLANNING.getDisplayName());
 
-            IncentiveActivity comdomActivity =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("FP_CONDOM", GroupName.FAMILY_PLANNING.getDisplayName());
-            if (comdomActivity != null) {
-                addIncenticeRecord(recordList, ect, userId, comdomActivity);
-            }
-        } else if (ect.getContraceptionMethod() != null && ect.getContraceptionMethod().equals("POST PARTUM IUCD (PPIUCD) WITHIN 48 HRS OF DELIVERY")) {
+                if (PPIUCDActivityAM != null) {
+                    addIncenticeRecord(ect, userId, PPIUCDActivityAM);
+                }
 
-            IncentiveActivity PPIUCDActivityAM =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPIUCD", GroupName.FAMILY_PLANNING.getDisplayName());
-
-            IncentiveActivity PPIUCDActivityCH =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPIUCD", GroupName.ACTIVITY.getDisplayName());
-            if (PPIUCDActivityAM != null) {
-                addIncenticeRecord(recordList, ect, userId, PPIUCDActivityAM);
             }
 
-            if (PPIUCDActivityCH != null) {
-                addIncenticeRecord(recordList, ect, userId, PPIUCDActivityCH);
-            }
-        } else if (ect.getContraceptionMethod() != null && ect.getContraceptionMethod().equals("POST PARTUM STERILIZATION (PPS)")) {
 
-            IncentiveActivity ppsActivityAM =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPS", GroupName.FAMILY_PLANNING.getDisplayName());
-
-            IncentiveActivity ppsActivityCH =
-                    incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPS", GroupName.ACTIVITY.getDisplayName());
-            if (ppsActivityAM != null) {
-                addIncenticeRecord(recordList, ect, userId, ppsActivityAM);
-            }
-
-            if (ppsActivityCH != null) {
-                addIncenticeRecord(recordList, ect, userId, ppsActivityCH);
-            }
         }
+        // logic for cg
+        if (stateId.equals(StateCode.CG.getStateCode())) {
+            if (ect.getAnyContraceptionMethod() != null) {
+                if (ect.getAnyContraceptionMethod()) {
+                    IncentiveActivity femaleSterilizationActivityCH =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_FEMALE_STER", GroupName.ACTIVITY.getDisplayName());
+
+
+                    IncentiveActivity PPIUCDActivityCH =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPIUCD", GroupName.ACTIVITY.getDisplayName());
+
+                    IncentiveActivity maleSterilizationActivityCH =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_MALE_STER", GroupName.ACTIVITY.getDisplayName());
+
+
+                    if (PPIUCDActivityCH != null) {
+                        if (ect.getContraceptionMethod().equals("POST PARTUM IUCD (PPIUCD)")) {
+                            addIncenticeRecord(ect, userId, PPIUCDActivityCH);
+
+                        }
+                    }
+
+
+                    if (femaleSterilizationActivityCH != null) {
+                        if (ect.getContraceptionMethod().equals("FEMALE STERILIZATION")) {
+                            addIncenticeRecord(ect, userId, femaleSterilizationActivityCH);
+
+                        }
+                    }
+
+
+                    if (maleSterilizationActivityCH != null) {
+                        if (ect.getContraceptionMethod().equals("MALE STERILIZATION")) {
+                            addIncenticeRecord(ect, userId, maleSterilizationActivityCH);
+
+                        }
+                    }
+                }
+
+            }
+
+            if (ect.getMotherDangerSign() != null
+                    && !ect.getMotherDangerSign().isEmpty()
+                    && ect.getPncPeriod() == 42) {
+                IncentiveActivity highRiskPostpartumCareActivityCH =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
+                if (highRiskPostpartumCareActivityCH != null) {
+                    addIncenticeRecord(ect, userId, highRiskPostpartumCareActivityCH);
+
+                }
+
+            }
+            if (ect.getPncPeriod() == 42) {
+                IncentiveActivity highRiskPostpartumHealthCareActivityCH =
+                        incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_HEALTH_CHECK", GroupName.ACTIVITY.getDisplayName());
+
+                if (highRiskPostpartumHealthCareActivityCH != null) {
+                    addIncenticeRecord(ect, userId, highRiskPostpartumHealthCareActivityCH);
+
+                }
+
+
+            }
+            if (ect.getPncPeriod() == 1 || ect.getPncPeriod() == 3 || ect.getPncPeriod() == 7) {
+
+                if ((ect.getContraceptionMethod().equals("POST PARTUM STERILIZATION (PPS)")
+                        || ect.getContraceptionMethod().equals("MiniLap"))
+                        && ect.getSterilisationDate() != null) {
+                    IncentiveActivity ppsActivityCH =
+                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPS", GroupName.ACTIVITY.getDisplayName());
+                    if (ppsActivityCH != null) {
+
+                        addIncenticeRecord(ect, userId, ppsActivityCH);
+
+                    }
+                }
+            }
+
+        }
+
 
     }
 
-    private void addIncenticeRecord(List<PNCVisit> recordList, PNCVisit ect, Integer userId, IncentiveActivity antaraActivity) {
-        IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(antaraActivity.getId(), ect.getCreatedDate(), ect.getBenId());
-        // get bene details
 
-        if (record == null) {
-            record = new IncentiveActivityRecord();
-            record.setActivityId(antaraActivity.getId());
-            record.setCreatedDate(ect.getPncDate());
-            record.setCreatedBy(ect.getCreatedBy());
-            record.setStartDate(ect.getPncDate());
-            record.setEndDate(ect.getPncDate());
-            record.setUpdatedDate(ect.getPncDate());
-            record.setUpdatedBy(ect.getCreatedBy());
-            record.setBenId(ect.getBenId());
-            record.setAshaId(userId);
-            record.setAmount(Long.valueOf(antaraActivity.getRate()));
-            recordRepo.save(record);
+    @Transactional
+    private void addIncenticeRecord(PNCVisit ect, Integer userId, IncentiveActivity antaraActivity) {
+
+        String lockKey = antaraActivity.getId() + "_" + ect.getBenId() + "_" + ect.getPncDate();
+
+        Object lock = lockMap.computeIfAbsent(lockKey, k -> new Object());
+
+        synchronized (lock) {
+            IncentiveActivityRecord record = recordRepo
+                    .findRecordByActivityIdCreatedDateBenId(antaraActivity.getId(), ect.getPncDate(), ect.getBenId(),userId);
+
+            if (record == null) {
+                record = new IncentiveActivityRecord();
+                record.setActivityId(antaraActivity.getId());
+                record.setCreatedDate(ect.getPncDate());
+                record.setCreatedBy(ect.getCreatedBy());
+                record.setStartDate(ect.getPncDate());
+                record.setEndDate(ect.getPncDate());
+                record.setUpdatedDate(ect.getPncDate());
+                record.setUpdatedBy(ect.getCreatedBy());
+                record.setBenId(ect.getBenId());
+                record.setAshaId(userId);
+                record.setAmount(Long.valueOf(antaraActivity.getRate()));
+                recordRepo.save(record);
+            }
         }
+
+        lockMap.remove(lockKey, lock);
     }
 
 
-    private void checkAndAddIncentives(List<ANCVisit> ancList) {
+    private void checkAndAddIncentives(List<ANCVisit> ancList, Integer userId) {
 
-        IncentiveActivity anc1Activity =
-                incentivesRepo.findIncentiveMasterByNameAndGroup("ANC_REGISTRATION_1ST_TRIM", GroupName.MATERNAL_HEALTH.getDisplayName());
+        Integer stateId = userRepo.getUserRole(userId).get(0).getStateId();
 
-        IncentiveActivity ancFullActivityAM =
-                incentivesRepo.findIncentiveMasterByNameAndGroup("FULL_ANC", GroupName.MATERNAL_HEALTH.getDisplayName());
 
-        IncentiveActivity ancFullActivityCH =
-                incentivesRepo.findIncentiveMasterByNameAndGroup("ANC_FOUR_CHECKUPS_SUPPORT", GroupName.ACTIVITY.getDisplayName());
+        // ✅ State 5 — Assam
+        if (stateId.equals(5)) {
+            IncentiveActivity anc1Activity = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "ANC_REGISTRATION_1ST_TRIM", GroupName.MATERNAL_HEALTH.getDisplayName());
+            IncentiveActivity ancFullActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "FULL_ANC", GroupName.MATERNAL_HEALTH.getDisplayName());
+            IncentiveActivity identifiedHrpActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("EPMSMA_HRP_IDENTIFIED", GroupName.MATERNAL_HEALTH.getDisplayName());
+            IncentiveActivity comprehensiveAbortionActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "COMPREHENSIVE_ABORTION_CARE", GroupName.MATERNAL_HEALTH.getDisplayName());
+            IncentiveActivity paiucdActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "FP_PAIUCD", GroupName.FAMILY_PLANNING.getDisplayName());
 
-        IncentiveActivity comprehensiveAbortionActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("COMPREHENSIVE_ABORTION_CARE", GroupName.MATERNAL_HEALTH.getDisplayName());
-        IncentiveActivity comprehensiveAbortionActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("COMPREHENSIVE_ABORTION_CARE", GroupName.ACTIVITY.getDisplayName());
-
-        IncentiveActivity identifiedHrpActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("EPMSMA_HRP_IDENTIFIED", GroupName.MATERNAL_HEALTH.getDisplayName());
-        IncentiveActivity identifiedHrpActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("EPMSMA_HRP_IDENTIFIED", GroupName.ACTIVITY.getDisplayName());
-
-        IncentiveActivity paiucdActivityAM =
-                incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PAIUCD", GroupName.FAMILY_PLANNING.getDisplayName());
-
-        IncentiveActivity paiucdActivityCH =
-                incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PAIUCD", GroupName.ACTIVITY.getDisplayName());
-
-        ancList.forEach(ancVisit -> {
-            if (paiucdActivityAM != null) {
-                if (ancVisit.getIsPaiucd()!= null) {
-                    if (ancVisit.getIsPaiucd().equals("Yes")) {
+            IncentiveActivity iucdActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "FP_IUCD", GroupName.FAMILY_PLANNING.getDisplayName());
+            ancList.forEach(ancVisit -> {
+                if(ancVisit.getIsAborted()){
+                    if (paiucdActivityAM != null &&  ancVisit.getIsPaiucdId() != null &&  ancVisit.getIsPaiucdId()==2 &&
+                            ancVisit.getIsPaiucd().toString().contains("Tubectomy")) {
                         recordAncRelatedIncentive(paiucdActivityAM, ancVisit);
-
+                    }
+                    if (iucdActivityAM != null &&  ancVisit.getIsPaiucdId() != null &&  ancVisit.getIsPaiucdId()==1 &&
+                             ancVisit.getIsPaiucd().toString().contains("Copper-T")) {
+                        recordAncRelatedIncentive(iucdActivityAM, ancVisit);
                     }
                 }
 
-            }
 
-            if (paiucdActivityCH != null) {
 
-                if (ancVisit.getIsPaiucd()!= null) {
-                    if (ancVisit.getIsPaiucd().equals("Yes")) {
+                if (anc1Activity != null && ancVisit.getAncVisit() != null
+                        && ancVisit.getAncVisit() == 1) {
+                    recordAncFirstTRIMIncentive(anc1Activity, ancVisit);
+                }
 
+                if (ancFullActivityAM != null && ancVisit.getAncVisit() != null
+                        && ancVisit.getAncVisit() == 4) {
+                    recordFullAncIncentive(ancFullActivityAM, ancVisit);
+                }
+
+
+                if (comprehensiveAbortionActivityAM != null && ancVisit.getIsAborted() != null
+                        && ancVisit.getIsAborted()) {
+                    recordAncRelatedIncentive(comprehensiveAbortionActivityAM, ancVisit);
+                }
+
+
+                if (identifiedHrpActivityAM != null && ancVisit.getIsHrpConfirmed() != null
+                        && ancVisit.getIsHrpConfirmed()) {
+                    recordAncRelatedIncentive(identifiedHrpActivityAM, ancVisit);
+                }
+
+
+            });
+        }
+
+        // ✅ State 8
+        if (stateId.equals(8)) {
+
+            IncentiveActivity ancFullActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "ANC_FOUR_CHECKUPS_SUPPORT", GroupName.ACTIVITY.getDisplayName());
+            IncentiveActivity comprehensiveAbortionActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "COMPREHENSIVE_ABORTION_CARE", GroupName.ACTIVITY.getDisplayName());
+            IncentiveActivity identifiedHrpActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "EPMSMA_HRP_IDENTIFIED", GroupName.ACTIVITY.getDisplayName());
+            IncentiveActivity paiucdActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "FP_PAIUCD", GroupName.ACTIVITY.getDisplayName());
+
+            IncentiveActivity iucdActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "FP_IUCD", GroupName.ACTIVITY.getDisplayName());
+
+            ancList.forEach(ancVisit -> {
+
+
+                if (ancVisit.getIsAborted()) {
+                    if (paiucdActivityCH != null &&  ancVisit.getIsPaiucdId() != null &&  ancVisit.getIsPaiucdId()==2 &&
+                            ancVisit.getIsPaiucd().toString().contains("Tubectomy")) {
                         recordAncRelatedIncentive(paiucdActivityCH, ancVisit);
-
+                    }
+                    if (iucdActivityCH != null && ancVisit.getIsPaiucdId() != null &&  ancVisit.getIsPaiucdId()==1
+                            && ancVisit.getIsPaiucd().toString().contains("Copper-T")) {
+                        recordAncRelatedIncentive(iucdActivityCH, ancVisit);
                     }
                 }
 
 
-            }
-            if (anc1Activity != null) {
-                if (ancVisit.getAncVisit() != null) {
-
-                    if (ancVisit.getAncVisit() == 1) {
-                        recordAncRelatedIncentive(anc1Activity, ancVisit);
-                    }
-                }
-            }
-            if (ancFullActivityAM != null) {
-                if (ancVisit.getAncVisit() == 4 || ancVisit.getAncVisit() == 2 || ancVisit.getAncVisit() == 3) {
-                    recordAncRelatedIncentive(ancFullActivityAM, ancVisit);
+                if (ancFullActivityCH != null && ancVisit.getAncVisit() != null
+                        && ancVisit.getAncVisit() == 4) {
+                    recordAncRelatedIncentive(ancFullActivityCH, ancVisit);
                 }
 
-            }
-            if (ancFullActivityCH != null) {
-                if (ancVisit.getAncVisit() != null) {
-                    if (ancVisit.getAncVisit() == 4) {
-                        recordAncRelatedIncentive(ancFullActivityCH, ancVisit);
-                    }
+
+                if (identifiedHrpActivityCH != null && ancVisit.getIsHrpConfirmed() != null
+                        && ancVisit.getIsHrpConfirmed()) {
+                    recordAncRelatedIncentive(identifiedHrpActivityCH, ancVisit);
                 }
-
-            }
-            if (comprehensiveAbortionActivityAM != null) {
-                if (ancVisit.getIsAborted() != null) {
-                    if (ancVisit.getIsAborted()) {
-                        recordAncRelatedIncentive(comprehensiveAbortionActivityAM, ancVisit);
-                    }
-                }
-
-            }
-
-            if (comprehensiveAbortionActivityCH != null) {
-                if (ancVisit.getIsAborted() != null) {
-                    if (ancVisit.getIsAborted()) {
-                        recordAncRelatedIncentive(comprehensiveAbortionActivityCH, ancVisit);
-                    }
-                }
-
-            }
-            if (identifiedHrpActivityAM != null) {
-                if (ancVisit.getIsHrpConfirmed() != null) {
-                    if (ancVisit.getIsHrpConfirmed()) {
-                        recordAncRelatedIncentive(identifiedHrpActivityAM, ancVisit);
-                    }
-                }
-
-            }
-
-            if (identifiedHrpActivityCH != null) {
-                if (ancVisit.getIsHrpConfirmed() != null) {
-                    if (ancVisit.getIsHrpConfirmed()) {
-                        recordAncRelatedIncentive(identifiedHrpActivityCH, ancVisit);
-                    }
-                }
-
-            }
-
-        });
+            });
+        }
 
 
     }
 
     private void recordAncRelatedIncentive(IncentiveActivity incentiveActivity, ANCVisit ancVisit) {
-        IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), ancVisit.getCreatedDate(), ancVisit.getBenId());
         Integer userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
+
+        IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), ancVisit.getCreatedDate(), ancVisit.getBenId(),userId);
 
         if (record == null) {
             record = new IncentiveActivityRecord();
@@ -586,6 +886,74 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
     }
 
+    private void recordAncFirstTRIMIncentive(IncentiveActivity incentiveActivity, ANCVisit ancVisit) {
+        Integer userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
+
+        if (ancVisit.getAncDate() == null || ancVisit.getLmpDate() == null) {
+            return;
+        }
+
+        LocalDate ancLocalDate = ancVisit.getAncDate().toLocalDateTime().toLocalDate();
+        LocalDate lmpLocalDate = ancVisit.getLmpDate().toLocalDateTime().toLocalDate();
+
+        long weeksBetween = ChronoUnit.WEEKS.between(lmpLocalDate, ancLocalDate);
+
+        if (weeksBetween < 0 || weeksBetween >= 12) {
+            return;
+        }
+
+        IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                incentiveActivity.getId(),
+                ancVisit.getCreatedDate(),
+                ancVisit.getBenId(),userId
+        );
+
+
+        if (record == null) {
+            record = new IncentiveActivityRecord();
+            record.setActivityId(incentiveActivity.getId());
+            record.setCreatedDate(ancVisit.getLmpDate());
+            record.setCreatedBy(ancVisit.getCreatedBy());
+            record.setUpdatedDate(ancVisit.getLmpDate());
+            record.setUpdatedBy(ancVisit.getCreatedBy());
+            record.setStartDate(ancVisit.getLmpDate());
+            record.setEndDate(ancVisit.getLmpDate());
+            record.setBenId(ancVisit.getBenId());
+            record.setAshaId(userId);
+            record.setAmount(Long.valueOf(incentiveActivity.getRate()));
+            recordRepo.save(record);
+        }
+    }
+
+    private void recordFullAncIncentive(IncentiveActivity incentiveActivity, ANCVisit ancVisit) {
+        Integer userId = userRepo.getUserIdByName(ancVisit.getCreatedBy());
+        if (userId == null) {
+            return;
+        }
+        IncentiveActivityRecord existRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                incentiveActivity.getId(),
+                ancVisit.getAncDate(),
+                ancVisit.getBenId(),userId
+        );
+
+
+        if (existRecord != null) {
+            return;
+        }
+
+        IncentiveActivityRecord record = new IncentiveActivityRecord();
+        record.setActivityId(incentiveActivity.getId());
+        record.setCreatedDate(ancVisit.getAncDate());
+        record.setCreatedBy(ancVisit.getCreatedBy());
+        record.setUpdatedDate(ancVisit.getAncDate());
+        record.setUpdatedBy(ancVisit.getCreatedBy());
+        record.setStartDate(ancVisit.getAncDate());
+        record.setEndDate(ancVisit.getAncDate());
+        record.setBenId(ancVisit.getBenId());
+        record.setAshaId(userId);
+        record.setAmount(Long.valueOf(incentiveActivity.getRate()));
+        recordRepo.save(record);
+    }
 
     public void sendAncDueTomorrowNotifications(String ashaId) {
         try {

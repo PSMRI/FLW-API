@@ -45,7 +45,7 @@ public class ScreeningKalaAzar {
     @Column(name = "house_hold_details_Id",nullable = false)
     private Long houseHoldDetailsId;
 
-    @Column(name = "userID")
+    @Column(name = "user_id")
     private Integer userId;
 
     @Temporal(TemporalType.DATE)
@@ -97,7 +97,7 @@ public class ScreeningKalaAzar {
     @Column(name = "created_by")
     private String createdBy;
 
-    @Column(name = "diseaseTypeID")
+    @Column(name = "disease_type_id")
     private Integer diseaseTypeId;
 
     @Column(name = "refer_to_name")

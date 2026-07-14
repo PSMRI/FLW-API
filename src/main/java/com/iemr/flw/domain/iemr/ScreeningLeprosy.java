@@ -26,7 +26,6 @@ package com.iemr.flw.domain.iemr;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.sql.Timestamp;
 import java.util.Date;
 
@@ -84,25 +83,25 @@ public class ScreeningLeprosy {
     @Column(name = "beneficiary_statusId")
     private Integer beneficiaryStatusId;
 
-    @Column(name = "beneficiary_status", length = 50)
+    @Column(name = "beneficiary_status")
     private String beneficiaryStatus;
 
     @Column(name = "date_of_death")
     private Date dateOfDeath;
 
-    @Column(name = "place_of_death", length = 50)
+    @Column(name = "place_of_death")
     private String placeOfDeath;
 
     @Column(name = "other_place_of_death", columnDefinition = "TEXT")
     private String otherPlaceOfDeath;
 
-    @Column(name = "reason_for_death", length = 50)
+    @Column(name = "reason_for_death")
     private String reasonForDeath;
 
     @Column(name = "other_reason_for_death", columnDefinition = "TEXT")
     private String otherReasonForDeath;
 
-    @Column(name = "leprosy_symptoms", length = 255)
+    @Column(name = "leprosy_symptoms")
     private String leprosySymptoms;
 
     @Column(name = "leprosy_symptoms_position")
@@ -114,7 +113,7 @@ public class ScreeningLeprosy {
     @Column(name = "current_visit_number")
     private Integer currentVisitNumber;
 
-    @Column(name = "visit_label", length = 50)
+    @Column(name = "visit_label")
     private String visitLabel;
 
     @Column(name = "visit_number")
@@ -123,7 +122,7 @@ public class ScreeningLeprosy {
     @Column(name = "is_confirmed")
     private Boolean isConfirmed;
 
-    @Column(name = "leprosy_state", length = 50)
+    @Column(name = "leprosy_state", length = 255)
     private String leprosyState;
 
     @Temporal(TemporalType.DATE)
@@ -142,6 +141,78 @@ public class ScreeningLeprosy {
 
     @Column(name = "treatment_status", length = 100)
     private String treatmentStatus;
+
+    @Column(name = "recurrent_ulceration_id")
+    private Integer recurrentUlcerationId;
+
+    @Column(name = "recurrent_tingling_id")
+    private Integer recurrentTinglingId;
+
+    @Column(name = "hypopigmented_patch_id")
+    private Integer hypopigmentedPatchId;
+
+    @Column(name = "thickened_skin_id")
+    private Integer thickenedSkinId;
+
+    @Column(name = "skin_nodules_id")
+    private Integer skinNodulesId;
+
+    @Column(name = "skin_patch_discoloration_id")
+    private Integer skinPatchDiscolorationId;
+
+    @Column(name = "recurrent_numbness_id")
+    private Integer recurrentNumbnessId;
+
+    @Column(name = "clawing_fingers_id")
+    private Integer clawingFingersId;
+
+    @Column(name = "tingling_numbness_extremities_id")
+    private Integer tinglingNumbnessExtremitiesId;
+
+    @Column(name = "inability_close_eyelid_id")
+    private Integer inabilityCloseEyelidId;
+
+    @Column(name = "difficulty_holding_objects_id")
+    private Integer difficultyHoldingObjectsId;
+
+    @Column(name = "weakness_feet_id")
+    private Integer weaknessFeetId;
+
+    @Column(name = "recurrent_ulceration")
+    private String recurrentUlceration;
+
+    @Column(name = "recurrent_tingling")
+    private String recurrentTingling;
+
+    @Column(name = "hypopigmented_patch")
+    private String hypopigmentedPatch;
+
+    @Column(name = "thickened_skin")
+    private String thickenedSkin;
+
+    @Column(name = "skin_nodules")
+    private String skinNodules;
+
+    @Column(name = "skin_patch_discoloration")
+    private String skinPatchDiscoloration;
+
+    @Column(name = "recurrent_numbness")
+    private String recurrentNumbness;
+
+    @Column(name = "clawing_fingers")
+    private String clawingFingers;
+
+    @Column(name = "tingling_numbness_extremities")
+    private String tinglingNumbnessExtremities;
+
+    @Column(name = "inability_close_eyelid")
+    private String inabilityCloseEyelid;
+
+    @Column(name = "difficulty_holding_objects")
+    private String difficultyHoldingObjects;
+
+    @Column(name = "weakness_feet")
+    private String weaknessFeet;
 
     @Column(name = "CreatedBy", length = 100)
     private String createdBy;

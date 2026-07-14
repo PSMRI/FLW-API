@@ -7,7 +7,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import com.iemr.flw.domain.iemr.M_User;
+import com.iemr.flw.domain.iemr.User;
 
 @Configuration
 public class RedisConfig {
@@ -20,7 +20,7 @@ public class RedisConfig {
 		template.setKeySerializer(new StringRedisSerializer());
 
 		// Use Jackson2JsonRedisSerializer for values (Users objects)
-		Jackson2JsonRedisSerializer<M_User> serializer = new Jackson2JsonRedisSerializer<>(M_User.class);
+		Jackson2JsonRedisSerializer<User> serializer = new Jackson2JsonRedisSerializer<>(User.class);
 		template.setValueSerializer(serializer);
 
 		return template;
