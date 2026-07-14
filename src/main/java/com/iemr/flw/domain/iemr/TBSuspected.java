@@ -33,6 +33,18 @@ public class TBSuspected {
     @Column(name = "nikshay_id")
     private String nikshayId;
 
+    // Snapshot of this case's Nikshay location, auto-derived from the beneficiary's
+    // village at the time of save (not re-derived later, so it stays fixed even if
+    // the beneficiary's own village record changes afterwards)
+    @Column(name = "nikshay_tu_id")
+    private Integer nikshayTUID;
+
+    @Column(name = "nikshay_facility_id")
+    private Integer nikshayFacilityID;
+
+    @Column(name = "nikshay_village_id")
+    private Integer nikshayVillageID;
+
     @Column(name = "sputum_test_result")
     private String sputumTestResult;
 
