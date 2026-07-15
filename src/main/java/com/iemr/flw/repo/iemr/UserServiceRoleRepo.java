@@ -33,14 +33,19 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
     // (NOT the shared v_userservicerolemapping view) so the view stays untouched
     // and no other service line's query is affected. Returns nothing for any
     // user whose rows don't have NikshayTUID set (i.e. every non-Stop-TB user).
+    // NikshayTUID/NikshayFacilityID are TEXT columns holding a comma-joined
+    // list of IDs per row (e.g. "12,45,78"), not a single ID, so the TU/Facility
+    // master tables are joined with FIND_IN_SET rather than plain equality —
+    // an equality join here would silently match only the first ID in the list
+    // (MySQL casts "12,45" to 12 for numeric comparison) and drop the rest.
     @Query(value = "SELECT " +
             "GROUP_CONCAT(DISTINCT usrm.NikshayTUID ORDER BY usrm.NikshayTUID), " +
-            "GROUP_CONCAT(DISTINCT nt.TUName ORDER BY usrm.NikshayTUID), " +
+            "GROUP_CONCAT(DISTINCT nt.TUName ORDER BY nt.NikshayTUID), " +
             "GROUP_CONCAT(DISTINCT usrm.NikshayFacilityID ORDER BY usrm.NikshayFacilityID), " +
-            "GROUP_CONCAT(DISTINCT nf.FacilityName ORDER BY usrm.NikshayFacilityID) " +
+            "GROUP_CONCAT(DISTINCT nf.FacilityName ORDER BY nf.NikshayFacilityID) " +
             "FROM m_userservicerolemapping usrm " +
-            "LEFT JOIN m_nikshay_tu nt ON nt.NikshayTUID = usrm.NikshayTUID " +
-            "LEFT JOIN m_nikshay_facility nf ON nf.NikshayFacilityID = usrm.NikshayFacilityID " +
+            "LEFT JOIN m_nikshay_tu nt ON FIND_IN_SET(nt.NikshayTUID, usrm.NikshayTUID) > 0 " +
+            "LEFT JOIN m_nikshay_facility nf ON FIND_IN_SET(nf.NikshayFacilityID, usrm.NikshayFacilityID) > 0 " +
             "WHERE usrm.UserID = :userId AND usrm.ProviderServiceMapID = :providerServiceMapId " +
             "AND usrm.Deleted = false AND usrm.NikshayTUID IS NOT NULL",
             nativeQuery = true)
