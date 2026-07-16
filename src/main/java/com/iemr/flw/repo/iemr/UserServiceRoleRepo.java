@@ -38,16 +38,25 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
     // master tables are joined with FIND_IN_SET rather than plain equality —
     // an equality join here would silently match only the first ID in the list
     // (MySQL casts "12,45" to 12 for numeric comparison) and drop the rest.
+    //
+    // DistrictID on this row is a Nikshay district ID, not an AMRIT one (see
+    // setWorkLocationObject in Admin-UI) - resolving its name against
+    // m_nikshay_district (the same ID space) is safe, unlike joining it
+    // against AMRIT's own m_district, which would silently match whatever
+    // AMRIT district happens to share that same numeric ID by coincidence.
     @Query(value = "SELECT " +
             "GROUP_CONCAT(DISTINCT usrm.NikshayTUID ORDER BY usrm.NikshayTUID), " +
             "GROUP_CONCAT(DISTINCT nt.TUName ORDER BY nt.NikshayTUID), " +
             "GROUP_CONCAT(DISTINCT usrm.NikshayFacilityID ORDER BY usrm.NikshayFacilityID), " +
-            "GROUP_CONCAT(DISTINCT nf.FacilityName ORDER BY nf.NikshayFacilityID) " +
+            "GROUP_CONCAT(DISTINCT nf.FacilityName ORDER BY nf.NikshayFacilityID), " +
+            "usrm.DistrictID, nd.DistrictName " +
             "FROM m_userservicerolemapping usrm " +
             "LEFT JOIN m_nikshay_tu nt ON FIND_IN_SET(nt.NikshayTUID, usrm.NikshayTUID) > 0 " +
             "LEFT JOIN m_nikshay_facility nf ON FIND_IN_SET(nf.NikshayFacilityID, usrm.NikshayFacilityID) > 0 " +
+            "LEFT JOIN m_nikshay_district nd ON nd.NikshayDistrictID = usrm.DistrictID " +
             "WHERE usrm.UserID = :userId AND usrm.ProviderServiceMapID = :providerServiceMapId " +
-            "AND usrm.Deleted = false AND usrm.NikshayTUID IS NOT NULL",
+            "AND usrm.Deleted = false AND usrm.NikshayTUID IS NOT NULL " +
+            "GROUP BY usrm.DistrictID, nd.DistrictName",
             nativeQuery = true)
     List<Object[]> getNikshayLocationScope(@Param("userId") Integer userId,
                                             @Param("providerServiceMapId") Integer providerServiceMapId);
