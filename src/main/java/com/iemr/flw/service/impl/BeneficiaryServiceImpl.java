@@ -293,6 +293,14 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         if (benDetailsOBJ.getLiteracyStatus() != null)
                             benDetailsRMNCH_OBJ.setLiteracyStatus(benDetailsOBJ.getLiteracyStatus());
 
+                        // current-living-details for the Non-HH mobile flow
+                        if (benDetailsOBJ.getPlaceOfCurrentLiving() != null)
+                            benDetailsRMNCH_OBJ.setPlaceOfCurrentLiving(benDetailsOBJ.getPlaceOfCurrentLiving());
+                        if (benDetailsOBJ.getOtherPlaceOfCurrentLiving() != null)
+                            benDetailsRMNCH_OBJ.setOtherPlaceOfCurrentLiving(benDetailsOBJ.getOtherPlaceOfCurrentLiving());
+                        if (benDetailsOBJ.getInstitutionName() != null)
+                            benDetailsRMNCH_OBJ.setInstitutionName(benDetailsOBJ.getInstitutionName());
+
                         // bank
                         if (benAccountOBJ.getNameOfBank() != null)
                             benDetailsRMNCH_OBJ.setNameOfBank(benAccountOBJ.getNameOfBank());
