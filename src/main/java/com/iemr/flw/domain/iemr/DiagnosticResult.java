@@ -38,6 +38,9 @@ public class DiagnosticResult {
     @Column(name = "tb_confidence")
     private Double tbConfidence;
 
+    @Column(name = "drug_resistance_presence")
+    private Boolean drugResistancePresence;
+
     @Column(name = "created_by")
     private String createdBy;
 

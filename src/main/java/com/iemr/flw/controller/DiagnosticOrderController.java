@@ -1,6 +1,7 @@
 package com.iemr.flw.controller;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.dto.DiagnosticOrderRequestDto;
 import com.iemr.flw.dto.DiagnosticOrderResultDto;
@@ -88,7 +89,7 @@ public class DiagnosticOrderController {
         OutputResponse response = new OutputResponse();
         try {
             DiagnosticOrderResultDto result = diagnosticOrderService.getOrderResult(benId, orderType);
-            response.setResponse(new Gson().toJson(result));
+            response.setResponse(new GsonBuilder().serializeNulls().create().toJson(result));
         } catch (Exception e) {
             logger.error("Error in getOrderResult: {}", e.getMessage());
             response.setError(5000, "Error fetching diagnostic result: " + e.getMessage());
@@ -102,7 +103,7 @@ public class DiagnosticOrderController {
         OutputResponse response = new OutputResponse();
         try {
             DiagnosticOrderResultDto result = diagnosticOrderService.triggerManualPoll(benRegID, orderType);
-            response.setResponse(new Gson().toJson(result));
+            response.setResponse(new GsonBuilder().serializeNulls().create().toJson(result));
         } catch (Exception e) {
             logger.error("Error in pollOrder: {}", e.getMessage());
             response.setError(5000, "Error triggering poll: " + e.getMessage());

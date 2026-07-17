@@ -8,4 +8,6 @@ import lombok.NoArgsConstructor;
 public class EmrLiteLoginResponse {
     private String accessToken;
     private String refreshToken;
+    private String tokenType;
+    private Integer expiresIn;
 }

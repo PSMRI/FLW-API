@@ -3,7 +3,6 @@ package com.iemr.flw.service.impl;
 import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.integration.provider.DiagnosticPollResult;
 import com.iemr.flw.masterEnum.DiagnosticOrderStatus;
-import com.iemr.flw.masterEnum.DiagnosticOrderType;
 import com.iemr.flw.repo.iemr.DiagnosticOrderRepo;
 import com.iemr.flw.service.DiagnosticOrderService;
 import org.slf4j.Logger;
@@ -18,6 +17,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+// Two independent schedulers, one per order family: XRAY_CHEST polls immediately on its own
+// cadence, while TrueNat waits truenatInitialDelayMinutes after test completion before polling
+// on its own (slower) cadence.
 @Service
 public class DiagnosticPollSchedulerService {
 
@@ -25,9 +27,6 @@ public class DiagnosticPollSchedulerService {
 
     @Value("${diagnostic.poll.give-up-minutes}")
     private int giveUpMinutes;
-
-    @Value("${diagnostic.poll.interval-seconds}")
-    private int pollIntervalSeconds;
 
     @Value("${diagnostic.poll.truenat.initial-delay-minutes}")
     private int truenatInitialDelayMinutes;
@@ -38,58 +37,59 @@ public class DiagnosticPollSchedulerService {
     @Autowired
     private DiagnosticOrderService diagnosticOrderService;
 
-    @Scheduled(fixedDelayString = "${diagnostic.poll.tick-ms:15000}")
-    public void pollPendingOrders() {
-        List<DiagnosticOrder> candidates = diagnosticOrderRepo.findDueForPoll();
-        logger.info("Diagnostic poll tick: {} order(s) in due-for-poll queue", candidates.size());
+    @Scheduled(fixedDelayString = "${diagnostic.poll.xray.tick-ms:15000}")
+    public void pollXrayOrders() {
+        List<DiagnosticOrder> candidates = diagnosticOrderRepo.findXrayDueForPoll();
+        logger.info("XRAY poll tick: {} order(s) in due-for-poll queue", candidates.size());
         if (candidates.isEmpty()) return;
 
         Instant now = Instant.now();
         int polled = 0;
         for (DiagnosticOrder order : candidates) {
-            if (isExpired(order, now)) {
+            Instant testCompletedAt = order.getTestCompletedAt().toInstant();
+            if (isExpired(testCompletedAt, now)) {
                 giveUp(order);
-            } else if (isDue(order, now)) {
+            } else {
                 pollSingle(order);
                 polled++;
             }
         }
         if (polled > 0) {
-            logger.info("Polled {} pending diagnostic orders", polled);
+            logger.info("Polled {} pending XRAY diagnostic orders", polled);
         }
     }
 
-    // XRAY_CHEST: polls from the moment the test is marked completed. TrueNat: waits
-    // truenatInitialDelayMinutes after that (the machine's own processing time) before polling
-    // starts. Both then poll at the same pollIntervalSeconds cadence.
-    private boolean isDue(DiagnosticOrder order, Instant now) {
-        Instant pollingStartedAt = pollingStartedAt(order);
-        if (pollingStartedAt.isAfter(now)) {
-            return false; // still inside TrueNat's initial delay window
+    @Scheduled(fixedDelayString = "${diagnostic.poll.truenat.tick-ms:60000}")
+    public void pollTrueNatOrders() {
+        List<DiagnosticOrder> candidates = diagnosticOrderRepo.findTrueNatDueForPoll();
+        logger.info("TrueNat poll tick: {} order(s) in due-for-poll queue", candidates.size());
+        if (candidates.isEmpty()) return;
+
+        Instant now = Instant.now();
+        int polled = 0;
+        for (DiagnosticOrder order : candidates) {
+            Instant pollingStartedAt = order.getTestCompletedAt().toInstant()
+                    .plus(truenatInitialDelayMinutes, ChronoUnit.MINUTES);
+            if (pollingStartedAt.isAfter(now)) {
+                continue;
+            }
+            if (isExpired(pollingStartedAt, now)) {
+                giveUp(order);
+            } else {
+                pollSingle(order);
+                polled++;
+            }
         }
-        Timestamp lastPolledAt = order.getLastPolledAt();
-        if (lastPolledAt == null) {
-            return true;
+        if (polled > 0) {
+            logger.info("Polled {} pending TrueNat diagnostic orders", polled);
         }
-        return !lastPolledAt.toInstant().plusSeconds(pollIntervalSeconds).isAfter(now);
     }
 
-    // Give-up window is measured from when polling actually starts for this order (immediately
-    // for X-ray, after the initial delay for TrueNat) - not from testCompletedAt directly for
-    // TrueNat - so a shared give-up-minutes value is meaningful for both types instead of
-    // auto-failing TrueNat orders before they're ever polled.
-    private boolean isExpired(DiagnosticOrder order, Instant now) {
-        Instant deadline = pollingStartedAt(order).plus(giveUpMinutes, ChronoUnit.MINUTES);
+    // Measured from when polling actually starts for this order (immediately for X-ray, after the
+    // initial delay for TrueNat), so one give-up-minutes value works for both families.
+    private boolean isExpired(Instant pollingStartedAt, Instant now) {
+        Instant deadline = pollingStartedAt.plus(giveUpMinutes, ChronoUnit.MINUTES);
         return !deadline.isAfter(now);
-    }
-
-    private Instant pollingStartedAt(DiagnosticOrder order) {
-        Instant testCompletedAt = order.getTestCompletedAt().toInstant();
-        DiagnosticOrderType type = DiagnosticOrderType.fromCode(order.getOrderType());
-        if (type == DiagnosticOrderType.XRAY_CHEST) {
-            return testCompletedAt;
-        }
-        return testCompletedAt.plus(truenatInitialDelayMinutes, ChronoUnit.MINUTES);
     }
 
     private void giveUp(DiagnosticOrder order) {
@@ -106,8 +106,6 @@ public class DiagnosticPollSchedulerService {
             diagnosticOrderService.processResult(order, result);
         } catch (Exception e) {
             logger.error("Poll failed for orderId={}: {}", order.getId(), e.getMessage());
-            // Purely an observability counter - does not gate future polling or mark the order
-            // FAILED; the give-up window above is what eventually closes out a stuck order.
             order.setRetryCount(order.getRetryCount() + 1);
             order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
             order.setErrorMessage(e.getMessage());

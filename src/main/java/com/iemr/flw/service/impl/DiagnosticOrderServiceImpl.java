@@ -50,7 +50,6 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     public DiagnosticOrder createAndPushOrder(DiagnosticOrderRequestDto request) throws Exception {
         Long benRegID                = request.getBenRegID();
         Long visitCode               = request.getVisitCode();
-        Integer providerServiceMapID = request.getProviderServiceMapID();
         DiagnosticOrderType orderType = DiagnosticOrderType.fromCode(request.getOrderType());
         String orderEvent            = request.getOrderEvent();
         String patientFirstName      = request.getPatient().getFirstName();
@@ -65,7 +64,6 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 diagnosticOrderRepo.findByBenRegIDAndVisitCodeAndOrderType(benRegID, visitCode, orderType.name());
 
         if (existing.isPresent() && !DiagnosticOrderStatus.FAILED.name().equals(existing.get().getStatus())) {
-            // Idempotent: already pushed (or in flight / completed) for this visit+orderType — don't push again.
             return existing.get();
         }
 
@@ -73,26 +71,21 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         order.setOrderEvent(orderEvent);
         order.setBenRegID(benRegID);
         order.setVisitCode(visitCode);
-        order.setProviderServiceMapID(providerServiceMapID);
+        order.setProviderServiceName(providerCode);
         order.setProviderCode(providerCode);
         order.setOrderType(orderType.name());
         order.setExternalOrderId(externalOrderId);
-        // Explicit reset required when reusing a previously-FAILED row: without this, a successful
-        // retry would leave status=FAILED (the push-success branch below only sets providerOrderId),
-        // and findDueForPoll only selects PENDING/IN_PROGRESS — so the order would be silently pushed
-        // to the real device queue but never polled again.
+        // Reset required when reusing a previously-FAILED row, otherwise a successful retry would
+        // leave status=FAILED and findDueForPoll (PENDING/IN_PROGRESS only) would never poll it.
         order.setStatus(DiagnosticOrderStatus.PENDING.name());
         order.setErrorMessage(null);
         order.setPatientFirstName(patientFirstName);
         order.setPatientLastName(patientLastName);
         order.setPatientDateOfBirth(patientDateOfBirth);
         order.setPatientSex(patientSex);
-//        order.setCreatedBy(createdBy);
         try {
             order = diagnosticOrderRepo.save(order);
         } catch (DataIntegrityViolationException dive) {
-            // Lost a create race to a concurrent identical request — return the winner idempotently
-            // instead of surfacing a 5000 error for what is, from the caller's perspective, a success.
             Optional<DiagnosticOrder> winner = diagnosticOrderRepo
                     .findByBenRegIDAndVisitCodeAndOrderType(benRegID, visitCode, orderType.name());
             if (winner.isPresent()) {
@@ -100,7 +93,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                         benRegID, visitCode, orderType, winner.get().getId());
                 return winner.get();
             }
-            throw dive; // not our natural-key constraint — genuinely unexpected, don't swallow
+            throw dive;
         }
 
         try {
@@ -125,12 +118,6 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     @Override
     public DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult pollResult) throws Exception {
-        // One DiagnosticResult per DiagnosticOrder — each poll updates the same row in place
-        // rather than accumulating a new row per attempt, since most intermediate polls before
-        // completion carry nothing new and DiagnosticOrder.lastPolledAt/status already tracks
-        // poll progress over time. The unique constraint on diagnostic_order_id also means a
-        // concurrent poll (e.g. this manual trigger racing the scheduler) safely loses to a
-        // DataIntegrityViolationException instead of creating a duplicate row.
         Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId());
         DiagnosticResult result = existingResult.orElseGet(DiagnosticResult::new);
         result.setDiagnosticOrderId(order.getId());
@@ -140,19 +127,15 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         result.setRawResponseJson(pollResult.getRawResponseJson());
         result.setTbPresence(pollResult.getTbPresence());
         result.setTbConfidence(pollResult.getTbConfidence());
+        result.setDrugResistancePresence(pollResult.getDrugResistancePresence());
         result.setCreatedBy("SYSTEM");
         try {
             diagnosticResultRepo.save(result);
         } catch (DataIntegrityViolationException dive) {
-            // Lost an upsert race to a concurrent poll for the same order — the winner already
-            // persisted an equivalent result; nothing further to do.
             logger.warn("Lost result upsert race for diagnosticOrderId={}", order.getId());
             result = diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId()).orElse(result);
         }
 
-        // Assets can arrive before the order is fully complete (e.g. the X-ray's PRIMARY_CAPTURE
-        // while CAD is still pending), so ingestion runs on every poll, not gated on status.
-        // ingestAsset() itself de-dupes re-sent assets, so this is safe to call repeatedly.
         if (pollResult.getAssets() != null) {
             for (DiagnosticDocumentAsset asset : pollResult.getAssets()) {
                 try {
@@ -174,7 +157,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         diagnosticOrderRepo.save(order);
 
         DiagnosticOrderResultDto dto = new DiagnosticOrderResultDto();
-        dto.setDiagnosticOrderId(order.getId());
+        dto.setExternalOrderId(order.getExternalOrderId());
         dto.setOrderType(order.getOrderType());
         dto.setStatus(order.getStatus());
         dto.setErrorMessage(order.getErrorMessage());
@@ -182,6 +165,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         dto.setResultSummary(result.getResultSummary());
         dto.setTbPresence(result.getTbPresence());
         dto.setTbConfidence(result.getTbConfidence());
+        dto.setDrugResistancePresence(result.getDrugResistancePresence());
         return dto;
     }
 
@@ -190,8 +174,6 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
         DiagnosticPollResult result = provider.pollResult(order, false);
         if (DiagnosticOrderStatus.COMPLETED.equals(result.getStatus())) {
-            // Order just resolved COMPLETED on a status-only check — make the one follow-up call
-            // that actually fetches the report/image content.
             result = provider.pollResult(order, true);
         }
         return result;
@@ -209,8 +191,6 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     public DiagnosticOrderResultDto triggerManualPoll(Long benRegID, String orderType) throws Exception {
         DiagnosticOrder order = findLatestOrder(benRegID, orderType);
         DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
-        // Ops-triggered manual poll: always fetch whatever is currently available, skip the
-        // status-then-assets optimization used by the scheduler.
         DiagnosticPollResult pollResult = provider.pollResult(order, true);
         return processResult(order, pollResult);
     }
@@ -218,10 +198,35 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     @Override
     public DiagnosticOrder markTestCompleted(Long benRegID, String orderType) throws Exception {
         DiagnosticOrder order = findLatestOrder(benRegID, orderType);
-        if (order.getTestCompletedAt() != null) {
-            return order; // idempotent — already flagged, don't reset the poll clock
-        }
         String status = order.getStatus();
+
+        if (order.getTestCompletedAt() != null) {
+            Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId());
+            boolean isTerminal = DiagnosticOrderStatus.COMPLETED.name().equals(status)
+                    || DiagnosticOrderStatus.FAILED.name().equals(status);
+            if (existingResult.isPresent() && isTerminal) {
+                // Re-test: the order already completed once and has a result on file, and the
+                // physical test was performed again — reopen it so the scheduler picks it back up
+                // and polls for the new result instead of leaving the stale one in place forever.
+                // Reset to PENDING (not IN_PROGRESS) so it mirrors a freshly-pushed order's
+                // starting state rather than looking like it's already mid-poll.
+                order.setTestCompletedAt(new Timestamp(System.currentTimeMillis()));
+                order.setStatus(DiagnosticOrderStatus.PENDING.name());
+                order.setErrorMessage(null);
+                DiagnosticOrder savedOrder = diagnosticOrderRepo.save(order);
+
+                // The stale result's own providerStatus also needs resetting - otherwise it keeps
+                // reporting the previous test's COMPLETED/FAILED status while the order itself
+                // shows PENDING, which is an inconsistent picture until the next poll overwrites it.
+                DiagnosticResult result = existingResult.get();
+                result.setProviderStatus(DiagnosticOrderStatus.PENDING.name());
+                diagnosticResultRepo.save(result);
+
+                return savedOrder;
+            }
+            return order; // idempotent — already flagged, no result yet, don't reset the poll clock
+        }
+
         if (DiagnosticOrderStatus.COMPLETED.name().equals(status)
                 || DiagnosticOrderStatus.FAILED.name().equals(status)
                 || DiagnosticOrderStatus.CANCELLED.name().equals(status)) {
@@ -255,7 +260,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         }
 
         DiagnosticOrder order = orderOpt.get();
-        dto.setDiagnosticOrderId(order.getId());
+        dto.setExternalOrderId(order.getExternalOrderId());
         dto.setStatus(order.getStatus());
         dto.setErrorMessage(order.getErrorMessage());
 
@@ -264,6 +269,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             dto.setResultSummary(result.getResultSummary());
             dto.setTbPresence(result.getTbPresence());
             dto.setTbConfidence(result.getTbConfidence());
+            dto.setDrugResistancePresence(result.getDrugResistancePresence());
         });
         return dto;
     }

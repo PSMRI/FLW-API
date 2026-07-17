@@ -1,6 +1,8 @@
 package com.iemr.flw.integration.provider.emrlite;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.integration.provider.DiagnosticDocumentAsset;
 import com.iemr.flw.integration.provider.DiagnosticPollResult;
@@ -8,6 +10,7 @@ import com.iemr.flw.integration.provider.DiagnosticProvider;
 import com.iemr.flw.integration.provider.DiagnosticPushResult;
 import com.iemr.flw.integration.provider.emrlite.dto.*;
 import com.iemr.flw.masterEnum.DiagnosticOrderStatus;
+import com.iemr.flw.masterEnum.DiagnosticOrderType;
 import com.iemr.flw.masterEnum.DiagnosticProviderCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,21 +38,14 @@ public class EmrLiteProvider implements DiagnosticProvider {
     private static final String CAD_COMPONENT_KEY = "cad";
     private static final String TUBERCULOSIS_FINDING_NAME = "Tuberculosis";
 
+    private static final String SUMMARY_TB_POSITIVE = "TB Positive";
+    private static final String SUMMARY_DR_TB = "DR TB";
+
     @Value("${diagnostic.emrlite.order-url}")
     private String orderUrl;
 
     @Value("${diagnostic.emrlite.result-url}")
     private String resultUrl;
-
-    // No longer used directly here — EmrLiteAuthInterceptor (wired into the emrLiteRestTemplate
-    // bean via EmrLiteRestTemplateConfig) now owns calling tokenManager.getValidToken()/forceRefresh().
-    // Kept commented for reference/rollback alongside postWithAuth(...) below.
-    // @Autowired
-    // private EmrLiteTokenManager tokenManager;
-
-    // Superseded by the interceptor-backed emrLiteRestTemplate bean below (EmrLiteAuthInterceptor
-    // now handles attaching/refreshing the bearer token for every call on this RestTemplate).
-    // private final RestTemplate restTemplate = new RestTemplate();
 
     @Autowired
     @Qualifier("emrLiteRestTemplate")
@@ -67,23 +63,24 @@ public class EmrLiteProvider implements DiagnosticProvider {
         EmrLiteOrderRequest request = buildOrderRequest(order);
         String responseBody;
         try {
-            // responseBody = postWithAuth(orderUrl, gson.toJson(request)); // superseded by EmrLiteAuthInterceptor
             responseBody = doPost(orderUrl, gson.toJson(request));
         } catch (HttpStatusCodeException e) {
             String body = e.getResponseBodyAsString();
             String providerMessage = null;
+            String errorDetail = "";
             try {
                 EmrLiteProviderResponse errorEnvelope = gson.fromJson(body, EmrLiteProviderResponse.class);
                 if (errorEnvelope != null) {
                     providerMessage = errorEnvelope.getMessage();
+                    errorDetail = describeErrorData(errorEnvelope.getData());
                 }
             } catch (Exception parseEx) {
                 logger.debug("Could not parse provider error body as envelope JSON for externalOrderId={}",
                         order.getExternalOrderId());
             }
             String errorMessage = (providerMessage != null && !providerMessage.isBlank())
-                    ? "HTTP " + e.getStatusCode() + ": " + providerMessage
-                    : "HTTP " + e.getStatusCode();
+                    ? "HTTP " + e.getStatusCode() + ": " + providerMessage + errorDetail
+                    : "HTTP " + e.getStatusCode() + errorDetail;
             logger.warn("Provider HTTP error on order push: externalOrderId={}, status={}, message={}",
                     order.getExternalOrderId(), e.getStatusCode(), providerMessage);
             return new DiagnosticPushResult(false, null, body, errorMessage);
@@ -99,30 +96,24 @@ public class EmrLiteProvider implements DiagnosticProvider {
         EmrLiteOrderResponse orderResponse = gson.fromJson(envelope.getData(), EmrLiteOrderResponse.class);
         logger.info("Order pushed: externalOrderId={}, status={}",
                 order.getExternalOrderId(), orderResponse.getStatus());
-        // Provider echoes our externalOrderId back; store it as providerOrderId for audit
         return new DiagnosticPushResult(true, orderResponse.getExternalOrderId(), responseBody, null);
     }
 
     @Override
     public DiagnosticPollResult pollResult(DiagnosticOrder order, boolean includeAssets) throws Exception {
-        // Always poll using our own externalOrderId per the API contract
         EmrLiteResultRequest request = new EmrLiteResultRequest(order.getExternalOrderId(), includeAssets);
         String responseBody;
         try {
-            // responseBody = postWithAuth(resultUrl, gson.toJson(request)); // superseded by EmrLiteAuthInterceptor
             responseBody = doPost(resultUrl, gson.toJson(request));
         } catch (HttpClientErrorException.NotFound e) {
-            // Permanent per the API contract ("does not exist or belongs to a different integration
-            // client") — return a normal FAILED result instead of throwing, so the poll scheduler
-            // stops immediately instead of retrying this on the transient exponential back-off schedule.
+            // Permanent per the API contract — return FAILED instead of throwing, so the scheduler
+            // stops instead of retrying on the transient back-off schedule.
             logger.warn("Provider returned 404 Not Found for externalOrderId={}", order.getExternalOrderId());
             return new DiagnosticPollResult(DiagnosticOrderStatus.FAILED, null, null,
                     e.getResponseBodyAsString(), null,
                     "Order not found on provider (404): externalOrderId=" + order.getExternalOrderId(),
-                    null, null);
+                    false, null, false);
         }
-        // Other HttpStatusCodeException subtypes (401 surviving the auth-interceptor retry, 5xx, etc.)
-        // are not caught here and propagate to the scheduler's existing transient-retry-with-backoff path.
 
         EmrLiteProviderResponse envelope = gson.fromJson(responseBody, EmrLiteProviderResponse.class);
         if (!envelope.isSuccess()) {
@@ -137,15 +128,31 @@ public class EmrLiteProvider implements DiagnosticProvider {
         EmrLiteCadRawJson.FindingDto tbFinding = extractTuberculosisFinding(result);
         Boolean tbPresence = tbFinding != null ? tbFinding.isPresence() : null;
         Double tbConfidence = tbFinding != null ? tbFinding.getConfidence() : null;
+        if (tbPresence == null) {
+            tbPresence = classifyTbPresenceFromSummary(order.getOrderType(), summary);
+        }
+        Boolean drugResistancePresence = classifyDrugResistanceFromSummary(order.getOrderType(), summary);
 
         return new DiagnosticPollResult(status, order.getExternalOrderId(), summary, responseBody, assets, null,
-                tbPresence, tbConfidence);
+                tbPresence, tbConfidence, drugResistancePresence);
     }
 
-    // The CAD (e.g. DRONGOAI) findings list lives inside rawJson.results.findings, which only
-    // exists once a "cad" component has run. Deliberately does not touch rawJson.results.image -
-    // that's an internal provider media path, not a URL or base64 payload we can use; the actual
-    // X-ray capture (when sent) arrives separately via result.assets, handled by mapAssets() above.
+    private Boolean classifyTbPresenceFromSummary(String orderType, String summary) {
+        if (!DiagnosticOrderType.MTB.name().equals(orderType) && !DiagnosticOrderType.MTB_PLUS.name().equals(orderType)) {
+            return false;
+        }
+        return SUMMARY_TB_POSITIVE.equalsIgnoreCase(summary);
+    }
+
+    // MDR_RIF's summary reports rifampicin drug-resistance, not raw TB presence — kept as its own
+    // field rather than folded into tbPresence.
+    private Boolean classifyDrugResistanceFromSummary(String orderType, String summary) {
+        if (!DiagnosticOrderType.MDR_RIF.name().equals(orderType)) {
+            return false;
+        }
+        return SUMMARY_DR_TB.equalsIgnoreCase(summary);
+    }
+
     private EmrLiteCadRawJson.FindingDto extractTuberculosisFinding(EmrLiteResultResponse result) {
         if (result.getComponents() == null || !result.getComponents().containsKey(CAD_COMPONENT_KEY)) {
             return null;
@@ -170,12 +177,8 @@ public class EmrLiteProvider implements DiagnosticProvider {
         }
     }
 
-    // The provider's top-level "status" is not reliable on its own: a real example response
-    // ("XRAY Completed with Assets, CAD Pending") shows status=COMPLETED while the cad component
-    // is still PENDING and the summary literally says "CAD Pending". Derive true completion from
-    // the components map instead - COMPLETED only when every component is COMPLETED, FAILED if any
-    // component is FAILED - falling back to the top-level status only for the PENDING/IN_PROGRESS
-    // distinction (or when the provider sends no components at all).
+    // Provider's top-level "status" is unreliable on its own (can report COMPLETED while a
+    // component is still PENDING), so true completion is derived from the components map instead.
     private DiagnosticOrderStatus deriveOrderStatus(EmrLiteResultResponse result) {
         Map<String, EmrLiteResultResponse.ComponentStatus> components = result.getComponents();
         if (components == null || components.isEmpty()) {
@@ -193,16 +196,36 @@ public class EmrLiteProvider implements DiagnosticProvider {
         }
         DiagnosticOrderStatus topLevelStatus = DiagnosticOrderStatus.fromString(result.getStatus());
         if (topLevelStatus == DiagnosticOrderStatus.COMPLETED || topLevelStatus == DiagnosticOrderStatus.FAILED) {
-            // Components contradict a terminal top-level status (e.g. xray COMPLETED, cad PENDING,
-            // top-level status still says COMPLETED) — only the components map may resolve to a
-            // terminal state; treat this as still in progress.
+            // Components contradict a terminal top-level status — only the components map may
+            // resolve to a terminal state; treat this as still in progress.
             return DiagnosticOrderStatus.IN_PROGRESS;
         }
         return topLevelStatus;
     }
 
-    // Assets can be present before the order is fully complete (e.g. the X-ray's PRIMARY_CAPTURE
-    // is returned while CAD is still PENDING), so this is extracted independently of order status.
+    private String describeErrorData(JsonElement data) {
+        if (data == null || !data.isJsonObject()) {
+            return "";
+        }
+        JsonObject dataObject = data.getAsJsonObject();
+        JsonElement code = dataObject.get("code");
+        JsonElement field = dataObject.get("field");
+        if (code == null && field == null) {
+            return "";
+        }
+        StringBuilder detail = new StringBuilder(" (");
+        if (code != null) {
+            detail.append("code=").append(code.getAsString());
+        }
+        if (field != null) {
+            if (code != null) {
+                detail.append(", ");
+            }
+            detail.append("field=").append(field.getAsString());
+        }
+        return detail.append(")").toString();
+    }
+
     private List<DiagnosticDocumentAsset> mapAssets(EmrLiteResultResponse result) {
         if (result.getResult() == null || result.getResult().getAssets() == null) {
             return new ArrayList<>();
@@ -214,28 +237,6 @@ public class EmrLiteProvider implements DiagnosticProvider {
         }
         return assets;
     }
-
-    // Superseded by EmrLiteAuthInterceptor, which now attaches/refreshes the bearer token
-    // for every call made on the emrLiteRestTemplate bean. Kept for reference/rollback.
-    // private String postWithAuth(String url, String jsonBody) throws Exception {
-    //     String token = tokenManager.getValidToken();
-    //     try {
-    //         return doPost(url, jsonBody, token);
-    //     } catch (HttpClientErrorException.Unauthorized e) {
-    //         logger.warn("Received 401 from provider, forcing token refresh and retrying");
-    //         token = tokenManager.forceRefresh();
-    //         return doPost(url, jsonBody, token);
-    //     }
-    // }
-    //
-    // private String doPost(String url, String jsonBody, String token) {
-    //     HttpHeaders headers = new HttpHeaders();
-    //     headers.setContentType(MediaType.APPLICATION_JSON);
-    //     headers.setBearerAuth(token);
-    //     HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-    //     ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-    //     return response.getBody();
-    // }
 
     private String doPost(String url, String jsonBody) {
         HttpHeaders headers = new HttpHeaders();

@@ -9,9 +9,6 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "tb_diagnostic_document", schema = "db_iemr",
-        // One row per (beneficiary, documentType) — always the latest of that kind for this
-        // beneficiary, regardless of which DiagnosticOrder produced it (mirrors the same
-        // "current state, not history" approach used for DiagnosticResult).
         uniqueConstraints = @UniqueConstraint(columnNames = {"ben_reg_id", "document_type"}),
         indexes = {
         @Index(name = "idx_diagnostic_document_ben_reg_id", columnList = "ben_reg_id"),
@@ -25,26 +22,19 @@ public class DiagnosticDocument {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Informational only — which order most recently (re-)produced this document. Not part of
-    // the uniqueness key since documents are tracked per beneficiary+type, not per order.
     @Column(name = "diagnostic_order_id")
     private Long diagnosticOrderId;
 
     @Column(name = "ben_reg_id")
     private Long benRegID;
 
-    // The parent DiagnosticOrder's own orderType (e.g. XRAY_CHEST) — always accurate, unrelated
-    // to documentType below.
     @Column(name = "order_type", length = 20)
     private String orderType;
 
-    // Raw provider asset type (e.g. PRIMARY_CAPTURE, REPORT) — kept for audit/debugging.
     @Column(name = "asset_type", length = 50)
     private String assetType;
 
-    // DiagnosticDocumentType classification (XRAY_CHEST vs CAD), derived from assetType at
-    // ingest time. This, not orderType/assetType, is the key used for storage and fetch.
-    @Column(name = "document_type", length = 20)
+    @Column(name = "document_type", length = 30)
     private String documentType;
 
     @Column(name = "epoch_time")

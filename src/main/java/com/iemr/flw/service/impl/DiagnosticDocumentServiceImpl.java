@@ -30,9 +30,6 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
     private static final Logger logger = LoggerFactory.getLogger(DiagnosticDocumentServiceImpl.class);
     private static final String DEFAULT_CONTENT_TYPE = "application/pdf";
 
-    // App-level encryption here protects against someone reading files directly off a
-    // live/mounted filesystem. It does NOT replace OS-level full-disk encryption (e.g. LUKS),
-    // which is what protects against physical theft of the drive - both should be in place.
     @Value("${diagnostic.documents.storage-root}")
     private String storageRoot;
 
@@ -54,14 +51,7 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         byte[] originalBytes = Base64.getDecoder().decode(asset.getBase64Content());
         String sha256Hash = sha256Hex(originalBytes);
 
-        // Classified automatically from the provider's asset.type - callers never pass "CAD"
-        // themselves. One DiagnosticDocument per (beneficiary, documentType) - always the latest
-        // of that kind, regardless of which order produced it, mirroring the same "current state,
-        // not history" approach used for DiagnosticResult. The provider resends the full current
-        // asset list on every poll (e.g. the X-ray's PRIMARY_CAPTURE is included again once CAD
-        // finishes, even though it's the same image), so skip re-writing when unchanged; a
-        // differing hash overwrites that type's file with the newer content.
-        DiagnosticDocumentType documentType = DiagnosticDocumentType.fromAssetType(asset.getType());
+        DiagnosticDocumentType documentType = DiagnosticDocumentType.from(orderType, asset.getType());
         Optional<DiagnosticDocument> existing =
                 diagnosticDocumentRepo.findByBenRegIDAndDocumentTypeAndDeletedFalse(benRegID, documentType.name());
         if (existing.isPresent() && sha256Hash.equals(existing.get().getSha256Hash())) {
@@ -74,11 +64,8 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         String storedFileName = documentType.name() + ".enc";
         String relativeDir = String.valueOf(benRegID);
 
-        // Documents must never touch disk unencrypted, not even briefly: encrypt in memory
-        // first, then write only the ciphertext.
+        // Documents must never touch disk unencrypted: encrypt in memory first, write only ciphertext.
         String base64Original = Base64.getEncoder().encodeToString(originalBytes);
-        // NOTE: reuses existing app-wide CryptoUtil (AES-128-ECB, hardcoded key) - known weaker-than-ideal
-        // scheme, tracked as follow-up tech debt, not addressed in this change.
         String encryptedPayload = cryptoUtil.encrypt(base64Original);
 
         Path dir = Paths.get(storageRoot, relativeDir);
@@ -102,13 +89,10 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         try {
             diagnosticDocumentRepo.save(document);
         } catch (DataIntegrityViolationException dive) {
-            // Lost an upsert race to a concurrent ingest for the same beneficiary+type (e.g. a
-            // manual poll racing the scheduler) — the winner already persisted equivalent content.
             logger.warn("Lost document upsert race for benRegID={}, documentType={}", benRegID, documentType);
             return;
         }
 
-        // Audit log: benRegID/orderType/timestamp only - never raw document content or the encryption key.
         logger.info("Diagnostic document ingested: benRegID={}, orderType={}, epochTime={}",
                 benRegID, orderType, epochTime);
     }
@@ -123,8 +107,6 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         Path filePath = Paths.get(storageRoot, document.getStoredPath());
         String encryptedPayload = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
 
-        // NOTE: reuses existing app-wide CryptoUtil (AES-128-ECB, hardcoded key) - known weaker-than-ideal
-        // scheme, tracked as follow-up tech debt, not addressed in this change.
         String base64Original = cryptoUtil.decrypt(encryptedPayload);
         if (base64Original == null) {
             throw new Exception("Failed to decrypt document for benRegID=" + benRegID + ", documentType=" + documentType);
@@ -137,7 +119,6 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
                     "Document integrity check failed for benRegID=" + benRegID + ", documentType=" + documentType);
         }
 
-        // Audit log: benRegID/documentType/timestamp only - never raw document content or the encryption key.
         logger.info("Diagnostic document fetched: benRegID={}, documentType={}, epochTime={}",
                 benRegID, documentType, document.getEpochTime());
 

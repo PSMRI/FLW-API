@@ -47,10 +47,10 @@ public class EmrLiteTokenManager {
     @Value("${diagnostic.emrlite.password}")
     private String encodedPassword;
 
-    @Value("${diagnostic.emrlite.token-ttl-seconds}")
+    @Value("${diagnostic.emrlite.token-ttl-seconds:3600}")
     private long tokenTtlSeconds;
 
-    @Value("${diagnostic.emrlite.refresh-ttl-seconds}")
+    @Value("${diagnostic.emrlite.refresh-ttl-seconds:82800}")
     private long refreshTtlSeconds;
 
     private String password;
@@ -82,7 +82,6 @@ public class EmrLiteTokenManager {
                 return cryptoUtil.decrypt(token.getTokenValue());
             }
         }
-        // No token in DB or token is expired — acquire lock to prevent parallel logins/refreshes
         synchronized (this) {
             Optional<DiagnosticProviderToken> recheck =
                     tokenRepo.findByProviderCodeAndTokenType(PROVIDER_CODE, TYPE_ACCESS);
@@ -118,9 +117,6 @@ public class EmrLiteTokenManager {
             throw new Exception("No refresh token in DB — need full login");
         }
         DiagnosticProviderToken refreshToken = refreshRecord.get();
-        // Same expiry-with-safety-buffer check already applied to the access token in
-        // getValidToken() — no point sending the provider a refresh token we already know has
-        // expired; fail fast so refreshOrLogin() falls back to a full login immediately.
         boolean refreshExpired = refreshToken.getExpiresAt() == null
                 || Instant.now().isAfter(refreshToken.getExpiresAt().toInstant().minusSeconds(60));
         if (refreshExpired) {
@@ -218,14 +214,16 @@ public class EmrLiteTokenManager {
             throw new Exception("Login returned null accessToken");
         }
 
+        long accessTtlSeconds = tokens.getExpiresIn() != null ? tokens.getExpiresIn() : tokenTtlSeconds;
         persistToken(TYPE_ACCESS, tokens.getAccessToken(),
-                Timestamp.from(Instant.now().plus(tokenTtlSeconds, ChronoUnit.SECONDS)));
+                Timestamp.from(Instant.now().plus(accessTtlSeconds, ChronoUnit.SECONDS)));
         if (tokens.getRefreshToken() != null) {
             persistToken(TYPE_REFRESH, tokens.getRefreshToken(),
                     Timestamp.from(Instant.now().plus(refreshTtlSeconds, ChronoUnit.SECONDS)));
         }
 
-        logger.info("EMR Lite login successful, access TTL {}s, refresh TTL {}s", tokenTtlSeconds, refreshTtlSeconds);
+        logger.info("EMR Lite login successful, access TTL {}s (from {}), refresh TTL {}s", accessTtlSeconds,
+                tokens.getExpiresIn() != null ? "provider" : "config", refreshTtlSeconds);
         return tokens.getAccessToken();
     }
 

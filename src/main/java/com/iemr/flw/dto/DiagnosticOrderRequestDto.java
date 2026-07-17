@@ -18,9 +18,6 @@ public class DiagnosticOrderRequestDto {
     private Long visitCode;
 
     @NotNull
-    private Integer providerServiceMapID;
-
-    @NotNull
     private String orderType;
 
     private String orderEvent;
@@ -37,6 +34,8 @@ public class DiagnosticOrderRequestDto {
         @NotBlank
         @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "dateOfBirth must be in yyyy-MM-dd format")
         private String dateOfBirth;
-        @NotBlank private String sex;
+        @NotBlank
+        @Pattern(regexp = "Male|Female|Others", message = "sex must be exactly one of Male, Female, Others")
+        private String sex;
     }
 }

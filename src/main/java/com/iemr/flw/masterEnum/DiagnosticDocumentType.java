@@ -1,18 +1,34 @@
 package com.iemr.flw.masterEnum;
 
-/**
- * Classifies a stored DiagnosticDocument independently of the parent DiagnosticOrder's own
- * orderType (which stays e.g. XRAY_CHEST regardless of which artifact this is). Derived
- * automatically from the provider's asset.type at ingest time - callers never pass a raw
- * "CAD" string, they just ask for this enum.
- */
+// XRAY_CHEST orders can carry up to three distinct artifacts (raw capture, AI-annotated capture,
+// CAD report), each needing its own value under the (benRegID, documentType) storage key.
 public enum DiagnosticDocumentType {
     XRAY_CHEST,
-    CAD;
+    XRAY_CHEST_ANNOTATED,
+    CAD,
+    MTB_REPORT,
+    MTB_PLUS_REPORT,
+    MDR_RIF_REPORT;
 
-    private static final String CAD_REPORT_ASSET_TYPE = "REPORT";
+    private static final String REPORT_ASSET_TYPE = "REPORT";
+    private static final String SECONDARY_CAPTURE_ASSET_TYPE = "SECONDARY_CAPTURE";
 
-    public static DiagnosticDocumentType fromAssetType(String assetType) {
-        return CAD_REPORT_ASSET_TYPE.equalsIgnoreCase(assetType) ? CAD : XRAY_CHEST;
+    public static DiagnosticDocumentType from(String orderType, String assetType) {
+        DiagnosticOrderType type = DiagnosticOrderType.fromCode(orderType);
+        if (type == DiagnosticOrderType.XRAY_CHEST) {
+            if (REPORT_ASSET_TYPE.equalsIgnoreCase(assetType)) {
+                return CAD;
+            }
+            if (SECONDARY_CAPTURE_ASSET_TYPE.equalsIgnoreCase(assetType)) {
+                return XRAY_CHEST_ANNOTATED;
+            }
+            return XRAY_CHEST;
+        }
+        switch (type) {
+            case MTB: return MTB_REPORT;
+            case MTB_PLUS: return MTB_PLUS_REPORT;
+            case MDR_RIF: return MDR_RIF_REPORT;
+            default: throw new IllegalArgumentException("Unknown orderType for document classification: " + orderType);
+        }
     }
 }

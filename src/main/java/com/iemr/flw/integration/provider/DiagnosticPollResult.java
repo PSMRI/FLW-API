@@ -19,4 +19,5 @@ public class DiagnosticPollResult {
     private String errorMessage;
     private Boolean tbPresence;
     private Double tbConfidence;
+    private Boolean drugResistancePresence;
 }

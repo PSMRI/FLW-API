@@ -28,10 +28,17 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
     @Query("SELECT o FROM DiagnosticOrder o WHERE o.benRegID = :benRegID AND o.deleted = false ORDER BY o.createdDate DESC")
     List<DiagnosticOrder> findByBenRegID(@Param("benRegID") Long benRegID);
 
-    @Query("SELECT o FROM DiagnosticOrder o WHERE o.status IN ('PENDING', 'IN_PROGRESS') " +
+    @Query("SELECT o FROM DiagnosticOrder o WHERE o.orderType = 'XRAY_CHEST' " +
+            "AND o.status IN ('PENDING', 'IN_PROGRESS') " +
             "AND o.deleted = false AND o.testCompletedAt IS NOT NULL " +
             "ORDER BY o.lastPolledAt ASC NULLS FIRST")
-    List<DiagnosticOrder> findDueForPoll();
+    List<DiagnosticOrder> findXrayDueForPoll();
+
+    @Query("SELECT o FROM DiagnosticOrder o WHERE o.orderType IN ('MTB', 'MTB_PLUS', 'MDR_RIF') " +
+            "AND o.status IN ('PENDING', 'IN_PROGRESS') " +
+            "AND o.deleted = false AND o.testCompletedAt IS NOT NULL " +
+            "ORDER BY o.lastPolledAt ASC NULLS FIRST")
+    List<DiagnosticOrder> findTrueNatDueForPoll();
 
     @Transactional
     @Modifying

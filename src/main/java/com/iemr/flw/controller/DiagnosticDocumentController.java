@@ -31,11 +31,9 @@ public class DiagnosticDocumentController {
         this.diagnosticDocumentService = diagnosticDocumentService;
     }
 
-    // Returns raw bytes with a real Content-Type header instead of this app's usual
-    // OutputResponse-wrapped-JSON-string, since the payload here is genuinely binary
-    // (a PDF/image), not JSON data.
     @GetMapping
-    @Operation(summary = "Fetch the most recent stored document for a beneficiary + document type (XRAY_CHEST or CAD)")
+    @Operation(summary = "Fetch the most recent stored document for a beneficiary + document type "
+            + "(XRAY_CHEST, XRAY_CHEST_ANNOTATED, CAD, MTB_REPORT, MTB_PLUS_REPORT, or MDR_RIF_REPORT)")
     public ResponseEntity<byte[]> getDocument(@RequestParam Long benId, @RequestParam DiagnosticDocumentType documentType) {
         try {
             DiagnosticDocumentContent content = diagnosticDocumentService.fetch(benId, documentType);

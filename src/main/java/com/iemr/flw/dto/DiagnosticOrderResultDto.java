@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class DiagnosticOrderResultDto {
 
-    private Long diagnosticOrderId;
+    private String externalOrderId;
     private String orderType;
     private String status;
     private String providerStatus;
@@ -15,4 +15,5 @@ public class DiagnosticOrderResultDto {
     private String errorMessage;
     private Boolean tbPresence;
     private Double tbConfidence;
+    private Boolean drugResistancePresence;
 }

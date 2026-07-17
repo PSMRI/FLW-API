@@ -23,8 +23,8 @@ public class DiagnosticOrder {
     @Column(name = "ben_reg_id")
     private Long benRegID;
 
-    @Column(name = "provider_service_map_id")
-    private Integer providerServiceMapID;
+    @Column(name = "provider_service_name", length = 50)
+    private String providerServiceName;
 
     @Column(name = "provider_code", length = 50)
     private String providerCode;
