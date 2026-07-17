@@ -380,6 +380,7 @@ public class StopTBServiceImpl implements StopTBService {
 
             Map<String, Object> result = new HashMap<>();
             result.put("beneficiaryRegID", beneficiaryRegID);
+            result.put("visitCode", visit.getVisitCode());
             result.put("referralToHWCNeeded", exam.getReferralToHWCNeeded());
             results.add(result);
         }
@@ -518,6 +519,7 @@ public class StopTBServiceImpl implements StopTBService {
 
             Map<String, Object> result = new HashMap<>();
             result.put("beneficiaryRegID", beneficiaryRegID);
+            result.put("visitCode", visit.getVisitCode());
             results.add(result);
         }
         return results;
@@ -628,6 +630,7 @@ public class StopTBServiceImpl implements StopTBService {
 
             Map<String, Object> result = new HashMap<>();
             result.put("beneficiaryRegID", beneficiaryRegID);
+            result.put("visitCode", visit.getVisitCode());
             results.add(result);
         }
         return results;
