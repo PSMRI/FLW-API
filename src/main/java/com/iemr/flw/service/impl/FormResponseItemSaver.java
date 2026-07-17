@@ -106,6 +106,10 @@ public class FormResponseItemSaver {
         // Step 1: Validate all section + question UUIDs BEFORE any writes or deletes
         validateRequest(req, version);
 
+        String responseStatus = consentRefusalEvaluator.isConsentRefused(req)
+                ? FormResponseStatus.REFUSED.name()
+                : FormResponseStatus.SUBMITTED.name();
+
         // Step 2: Check for an existing response for this beneficiary+form
         List<FormResponse> existing =
                 formResponseRepo.findByBeneficiaryIdAndFormId(req.getBeneficiaryId(), formId);
@@ -116,7 +120,7 @@ public class FormResponseItemSaver {
             Long responseId = formResponse.getResponseId();
 
             // Step 3: Update FormResponse header
-            formResponse.setStatus(FormResponseStatus.SUBMITTED.name());
+            formResponse.setStatus(responseStatus);
             formResponse.setSubmittedAt(now);
             formResponse.setUpdatedBy(actor);
             formResponse.setLastFollowUpAt(now);
@@ -124,7 +128,7 @@ public class FormResponseItemSaver {
             log.info("saveForBulk: overwriting responseId={} for beneficiaryId={}",
                     formResponse.getResponseId(), req.getBeneficiaryId());
         } else {
-            formResponse = createFormResponse(req, version, now, actor, vanID, parkingPlaceID);
+            formResponse = createFormResponse(req, version, now, actor, vanID, parkingPlaceID, responseStatus);
         }
 
         // Step 5: Insert fresh sections and answers
@@ -177,13 +181,13 @@ public class FormResponseItemSaver {
     }
 
     private FormResponse createFormResponse(FormResponseRequest req, FormVersion version, Timestamp now, String actor,
-            Integer vanID, Integer parkingPlaceID) {
+            Integer vanID, Integer parkingPlaceID, String status) {
         FormResponse formResponse = FormResponse.builder()
                 .beneficiaryId(req.getBeneficiaryId())
                 .formId(version.getDynamicForm().getFormId())
                 .versionId(version.getVersionId())
                 .officerId(req.getOfficerId())
-                .status(FormResponseStatus.SUBMITTED.name())
+                .status(status)
                 .createdBy(actor)
                 .updatedBy(actor)
                 .submittedAt(now)
