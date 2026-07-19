@@ -76,6 +76,7 @@ import java.util.stream.Collectors;
 public class FormResponseItemSaver {
 
     private static final String SECTION_STATUS_DONE = "DONE";
+    private static final String SECTION_STATUS_REFUSED = "REFUSED";
 
     private final FormResponseRepo formResponseRepo;
     private final SectionResponseRepo sectionResponseRepo;
@@ -86,6 +87,7 @@ public class FormResponseItemSaver {
     private final QuestionOptionRepo questionOptionRepo;
     private final JwtUtil jwtUtil;
     private final CampConfigService campConfigService;
+    private final ConsentRefusalEvaluator consentRefusalEvaluator;
 
     /**
      * Saves one form response in its own independent REQUIRES_NEW transaction.
@@ -104,6 +106,10 @@ public class FormResponseItemSaver {
         // Step 1: Validate all section + question UUIDs BEFORE any writes or deletes
         validateRequest(req, version);
 
+        String responseStatus = consentRefusalEvaluator.isConsentRefused(req)
+                ? FormResponseStatus.REFUSED.name()
+                : FormResponseStatus.SUBMITTED.name();
+
         // Step 2: Check for an existing response for this beneficiary+form
         List<FormResponse> existing =
                 formResponseRepo.findByBeneficiaryIdAndFormId(req.getBeneficiaryId(), formId);
@@ -114,7 +120,7 @@ public class FormResponseItemSaver {
             Long responseId = formResponse.getResponseId();
 
             // Step 3: Update FormResponse header
-            formResponse.setStatus(FormResponseStatus.SUBMITTED.name());
+            formResponse.setStatus(responseStatus);
             formResponse.setSubmittedAt(now);
             formResponse.setUpdatedBy(actor);
             formResponse.setLastFollowUpAt(now);
@@ -122,7 +128,7 @@ public class FormResponseItemSaver {
             log.info("saveForBulk: overwriting responseId={} for beneficiaryId={}",
                     formResponse.getResponseId(), req.getBeneficiaryId());
         } else {
-            formResponse = createFormResponse(req, version, now, actor, vanID, parkingPlaceID);
+            formResponse = createFormResponse(req, version, now, actor, vanID, parkingPlaceID, responseStatus);
         }
 
         // Step 5: Insert fresh sections and answers
@@ -175,13 +181,13 @@ public class FormResponseItemSaver {
     }
 
     private FormResponse createFormResponse(FormResponseRequest req, FormVersion version, Timestamp now, String actor,
-            Integer vanID, Integer parkingPlaceID) {
+            Integer vanID, Integer parkingPlaceID, String status) {
         FormResponse formResponse = FormResponse.builder()
                 .beneficiaryId(req.getBeneficiaryId())
                 .formId(version.getDynamicForm().getFormId())
                 .versionId(version.getVersionId())
                 .officerId(req.getOfficerId())
-                .status(FormResponseStatus.SUBMITTED.name())
+                .status(status)
                 .createdBy(actor)
                 .updatedBy(actor)
                 .submittedAt(now)
@@ -233,22 +239,14 @@ public class FormResponseItemSaver {
                         "' not found in form '" + req.getFormUuid() + "'");
             }
 
-            Optional<SectionResponse> existingSr = sectionResponseRepo.findByResponseIdAndSectionId(
-                    formResponse.getResponseId(), section.getSectionId());
-            if (existingSr.isPresent() && Boolean.FALSE.equals(section.getIsEditable())) {
-                log.info("saveForBulk: section '{}' is not editable — skipping update for responseId={}",
-                        section.getSectionUuid(), formResponse.getResponseId());
+            String desiredStatus = consentRefusalEvaluator.determineSectionStatus(
+                    section, sectionReq.getAnswers(), SECTION_STATUS_DONE, SECTION_STATUS_REFUSED);
+            Optional<SectionResponse> sectionResponseOpt = upsertSectionResponse(
+                    formResponse.getResponseId(), section, actor, desiredStatus, vanID, parkingPlaceID);
+            if (sectionResponseOpt.isEmpty()) {
                 continue;
             }
-
-            // Delete existing SectionResponse (and its QuestionResponses) for this section only
-            existingSr.ifPresent(sr -> {
-                questionResponseRepo.deleteBySectionResponseIdIn(Set.of(sr.getSectionResponseId()));
-                sectionResponseRepo.deleteById(sr.getSectionResponseId());
-            });
-
-            SectionResponse sectionResponse = upsertSectionResponse(
-                    formResponse.getResponseId(), section.getSectionId(), actor, vanID, parkingPlaceID);
+            SectionResponse sectionResponse = sectionResponseOpt.get();
 
             if (section.getSectionPhase() == SectionPhase.POST_SUBMIT) {
                 formResponse.setLastFollowUpAt(sectionResponse.getSavedAt());
@@ -274,29 +272,34 @@ public class FormResponseItemSaver {
         return buildFormResponseDTO(formResponse, sectionDTOs);
     }
 
-    private SectionResponse upsertSectionResponse(Long responseId, Long sectionId, String actor,
-            Integer vanID, Integer parkingPlaceID) {
+    private Optional<SectionResponse> upsertSectionResponse(Long responseId, FormSection section, String actor,
+            String status, Integer vanID, Integer parkingPlaceID) {
         Optional<SectionResponse> existing =
-                sectionResponseRepo.findByResponseIdAndSectionId(responseId, sectionId);
+                sectionResponseRepo.findByResponseIdAndSectionId(responseId, section.getSectionId());
         if (existing.isPresent()) {
+            if (Boolean.FALSE.equals(section.getIsEditable())) {
+                log.info("saveForBulk: section '{}' is not editable — skipping update for responseId={}",
+                        section.getSectionUuid(), responseId);
+                return Optional.empty();
+            }
             SectionResponse sr = existing.get();
-            sr.setStatus(SECTION_STATUS_DONE);
+            sr.setStatus(status);
             sr.setSavedAt(new Timestamp(System.currentTimeMillis()));
             sr.setUpdatedBy(actor);
             if (sr.getVanID() == null) { sr.setVanID(vanID); sr.setParkingPlaceID(parkingPlaceID); }
-            return sectionResponseRepo.save(sr);
+            return Optional.of(sectionResponseRepo.save(sr));
         }
         SectionResponse sr = SectionResponse.builder()
                 .responseId(responseId)
-                .sectionId(sectionId)
-                .status(SECTION_STATUS_DONE)
+                .sectionId(section.getSectionId())
+                .status(status)
                 .savedAt(new Timestamp(System.currentTimeMillis()))
                 .createdBy(actor)
                 .updatedBy(actor)
                 .vanID(vanID)
                 .parkingPlaceID(parkingPlaceID)
                 .build();
-        return sectionResponseRepo.save(sr);
+        return Optional.of(sectionResponseRepo.save(sr));
     }
 
     private List<QuestionResponse> processAnswers(

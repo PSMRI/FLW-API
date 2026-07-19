@@ -22,7 +22,10 @@
 package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.SectionResponse;
+import com.iemr.flw.masterEnum.SectionPhase;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -44,4 +47,11 @@ public interface SectionResponseRepo extends JpaRepository<SectionResponse, Long
     List<SectionResponse> findByResponseIdIn(Collection<Long> responseIds);
 
     void deleteByResponseId(Long responseId);
+
+    @Query("SELECT sr.responseId, COUNT(sr) FROM SectionResponse sr, FormSection fs " +
+           "WHERE sr.sectionId = fs.sectionId " +
+           "AND fs.sectionPhase = :sectionPhase " +
+           "AND sr.responseId IN :responseIds GROUP BY sr.responseId")
+    List<Object[]> countByResponseIdInAndSectionPhase(@Param("responseIds") Collection<Long> responseIds,
+                                                       @Param("sectionPhase") SectionPhase sectionPhase);
 }
