@@ -5,12 +5,16 @@ import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.dto.DiagnosticOrderRequestDto;
 import com.iemr.flw.dto.DiagnosticOrderResultDto;
+import com.iemr.flw.dto.DiagnosticOrderStatusSummaryDto;
+import com.iemr.flw.masterEnum.DiagnosticOrderType;
 import com.iemr.flw.service.DiagnosticOrderService;
+import com.iemr.flw.utils.ApiResponse;
 import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -109,5 +113,17 @@ public class DiagnosticOrderController {
             response.setError(5000, "Error triggering poll: " + e.getMessage());
         }
         return response.toString();
+    }
+
+    @GetMapping("/order/getBeneficiariesByStatus")
+    @Operation(summary = "Get beneficiary IDs bucketed by diagnostic order status for the given order type, "
+            + "optionally filtered by village and/or provider service map")
+    public ResponseEntity<ApiResponse> getBeneficiariesByStatus(
+            @RequestParam DiagnosticOrderType orderType,
+            @RequestParam(required = false) Integer villageId,
+            @RequestParam(required = false) Integer providerServiceMapId) {
+        DiagnosticOrderStatusSummaryDto result =
+                diagnosticOrderService.getOrderStatusSummary(orderType.name(), villageId, providerServiceMapId);
+        return ResponseEntity.ok(new ApiResponse(true, "Diagnostic order status summary fetched successfully", result));
     }
 }

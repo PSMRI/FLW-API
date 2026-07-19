@@ -44,4 +44,31 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
     @Modifying
     @Query("UPDATE DiagnosticOrder o SET o.vanSerialNo = o.id WHERE o.id = :id")
     void updateVanSerialNo(@Param("id") Long id);
+
+    // Beneficiary-status-summary queries, filtered the same way as
+    // FormResponseRepo.findBeneficiaryIdsByFormIdAndStatusFiltered - null-safe optional
+    // villageId/providerServiceMapId via a correlated BenFlowStatus subquery.
+    @Query("SELECT o.benRegID FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
+            "AND o.testCompletedAt IS NULL " +
+            "AND o.benRegID IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
+            "AND (:villageId IS NULL OR b.villageID = :villageId) " +
+            "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
+    List<Long> findBenRegIDsAwaitingTestCompletion(@Param("orderType") String orderType,
+            @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
+
+    @Query("SELECT o.benRegID FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
+            "AND o.testCompletedAt IS NOT NULL AND o.status <> 'COMPLETED' " +
+            "AND o.benRegID IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
+            "AND (:villageId IS NULL OR b.villageID = :villageId) " +
+            "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
+    List<Long> findBenRegIDsAwaitingProviderResult(@Param("orderType") String orderType,
+            @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
+
+    @Query("SELECT o.benRegID FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
+            "AND o.status = 'COMPLETED' " +
+            "AND o.benRegID IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
+            "AND (:villageId IS NULL OR b.villageID = :villageId) " +
+            "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
+    List<Long> findBenRegIDsCompleted(@Param("orderType") String orderType,
+            @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
 }
