@@ -337,4 +337,16 @@ public class RMNCHHouseHoldDetails {
 	@Column(name = "gpsLongitude")
 	private Double gpsLongitude;
 
+	@Expose
+	@Column(name = "totalHhMembers")
+	private Integer totalHhMembers;
+
+	@Expose
+	@Column(name = "registeredAtCampSite")
+	private String registeredAtCampSite;
+
+	@Expose
+	@Column(name = "registeredAtCampSiteId")
+	private Integer registeredAtCampSiteId;
+
 }
