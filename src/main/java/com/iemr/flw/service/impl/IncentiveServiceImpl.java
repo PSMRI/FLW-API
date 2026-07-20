@@ -34,6 +34,7 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -84,6 +85,9 @@ public class IncentiveServiceImpl implements IncentiveService {
     private IFAFormSubmissionRepository ifaFormSubmissionRepository;
 
     private final ConcurrentHashMap<String, Object> lockMap = new ConcurrentHashMap<>();
+
+    @Autowired
+    private NotificationService notificationService;
 
 
 
@@ -393,6 +397,32 @@ public class IncentiveServiceImpl implements IncentiveService {
             map.put("amount", activity.getRate());
 
             result.add(map);
+            Map<String, Object> data = new HashMap<>();
+            data.put("notification_type", "INCENTIVE_APPROVAL");
+            data.put("nav_id", "INCENTIVE_HISTORY");
+            data.put("sender_user_id", request.getUserId());
+            data.put("receiver_user_id", request.getUserId());
+            data.put("month", String.valueOf(start));
+            data.put("year", String.valueOf(start));
+            data.put("approval_status", "CLAIMED");
+            data.put("priority", "HIGH");
+
+
+            String title =null;
+            String body =null;
+            title = "Incentive Rejected";
+            body = "Your incentive claimed successfully ";
+
+
+
+            notificationService.sendNotification(
+                    "FLW",
+                    "user_" + request.getUserId(),   // ya user ka topic
+                    title,
+                    body+data,
+                    "","",request.getUserId()
+            );
+
         }
 
         return new Gson().toJson(result);

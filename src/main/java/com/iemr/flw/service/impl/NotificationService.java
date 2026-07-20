@@ -1,10 +1,12 @@
 package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
+import com.iemr.flw.utils.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -22,60 +24,83 @@ import java.util.Map;
 @Service
 public class NotificationService {
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+    @Value("${project-url}")
+    private String projectUrl;
 
+    @Value("${notificationurl}")
+    private String notificationurl;
 
-    private String NOTIFICATION_URL = "https://uatamrit.piramalswasthya.org/common-api/firebaseNotification/sendNotification";
+    @Autowired
+    private JwtUtil jwtUtil;
 
-    public String sendNotification(String appType, String topic, String title, String body, String redirect) {
-        String authHeader = null;
-        String jwtToken = null;
+    private String NOTIFICATION_URL = projectUrl+notificationurl;
 
-        // Check if we have HTTP request context
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes != null) {
-            HttpServletRequest httpServletRequest = attributes.getRequest();
+    public String sendNotification(String appType, String topic, String title, String body, String redirect,String notificationType,Integer reciverID) {
+        try {
+            String authHeader = null;
+            String jwtToken = null;
 
-            authHeader = httpServletRequest.getHeader("Authorization");
+            // Check if we have HTTP request context
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                HttpServletRequest httpServletRequest = attributes.getRequest();
 
-            if (httpServletRequest.getCookies() != null) {
-                for (Cookie cookie : httpServletRequest.getCookies()) {
-                    if ("Jwttoken".equals(cookie.getName())) {
-                        jwtToken = cookie.getValue();
+                authHeader = httpServletRequest.getHeader("Authorization");
+
+                if (httpServletRequest.getCookies() != null) {
+                    for (Cookie cookie : httpServletRequest.getCookies()) {
+                        if ("Jwttoken".equals(cookie.getName())) {
+                            jwtToken = cookie.getValue();
+                        }
                     }
                 }
             }
+
+            // If no request context, set default (for scheduler/startup use)
+            if (authHeader == null) {
+                authHeader = "Bearer DEFAULT_TOKEN_IF_REQUIRED"; // or leave null if API allows
+            }
+            if (jwtToken == null) {
+                jwtToken = "DEFAULT_JWT_IF_REQUIRED";
+            }
+
+            RestTemplate restTemplate = new RestTemplate();
+            MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+            headers.add("Content-Type", "application/json");
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("appType", appType);
+            requestBody.put("token", topic);
+            requestBody.put("title", title);
+            requestBody.put("body", body);
+
+            Map<String, Object> dataMap = new HashMap<>();
+
+            dataMap.put("notification_id", notificationType);
+            dataMap.put("notification_type", "INCENTIVE_CLAIMED");
+            dataMap.put("nav_id", "INCENTIVE_APPROVAL");
+
+            dataMap.put("sender_user_id", jwtUtil.extractUserId(jwtToken));
+            dataMap.put("receiver_user_id", reciverID);
+
+
+            dataMap.put("priority", "HIGH");
+
+            // Existing redirect field
+            dataMap.put("redirect", redirect);
+
+            requestBody.put("data", dataMap);
+
+            String jsonRequest = new Gson().toJson(requestBody);
+
+            HttpEntity<Object> request = new HttpEntity<>(jsonRequest, headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(NOTIFICATION_URL, HttpMethod.POST, request, String.class);
+
+            return response.getBody();
+        }catch (Exception e){
+            return e.getMessage();
         }
 
-        // If no request context, set default (for scheduler/startup use)
-        if (authHeader == null) {
-            authHeader = "Bearer DEFAULT_TOKEN_IF_REQUIRED"; // or leave null if API allows
-        }
-        if (jwtToken == null) {
-            jwtToken = "DEFAULT_JWT_IF_REQUIRED";
-        }
-
-        RestTemplate restTemplate = new RestTemplate();
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.add("Content-Type", "application/json");
-//        headers.add("AUTHORIZATION", authHeader);
-//        headers.add("Cookie", "Jwttoken=" + jwtToken);
-
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("appType", appType);
-        requestBody.put("token", topic);
-        requestBody.put("title", title);
-        requestBody.put("body", body);
-
-        Map<String, String> dataMap = new HashMap<>();
-        dataMap.put("NotificationTypeId", redirect);
-        requestBody.put("data", dataMap);
-
-        String jsonRequest = new Gson().toJson(requestBody);
-
-        HttpEntity<Object> request = new HttpEntity<>(jsonRequest, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(NOTIFICATION_URL, HttpMethod.POST, request, String.class);
-
-        return response.getBody();
     }
 }

@@ -3,6 +3,7 @@ package com.iemr.flw.service.impl;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,6 +50,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Override
     public String getSupervisorDashboard(Integer supervisorUserID, Integer month, Integer year) {
@@ -374,6 +378,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                     String otherReason,
                                     String token) {
         try {
+            String title = null;
+            String body = null;
             Timestamp approvalDate = Timestamp.valueOf(LocalDateTime.now());
 
             LocalDate startLocalDate = LocalDate.of(year, month, 1);
@@ -397,11 +403,39 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         approvalDate,
                         otherReason
                 );
+                if (totalUpdated > 0) {
 
+                    Map<String, String> data = new HashMap<>();
+                    data.put("notification_type", "INCENTIVE_APPROVAL");
+                    data.put("nav_id", "INCENTIVE_HISTORY");
+                    data.put("sender_user_id", String.valueOf(ashaSupervisorUserId));
+                    data.put("receiver_user_id", String.valueOf(ashaId));
+                    data.put("month", String.valueOf(month));
+                    data.put("year", String.valueOf(year));
+                    data.put("approval_status", String.valueOf(approvalStatus));
+                    data.put("priority", "HIGH");
+
+
+
+                    if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
+                        title = "Incentive Rejected";
+                        body = "Your incentive claim for " + Month.of(month).name() + " " + year + " has been rejected.";
+                        data.put("reason", reason == null ? "" : reason);
+                        data.put("other_reason", otherReason == null ? "" : otherReason);
+                    }
+
+
+                    notificationService.sendNotification(
+                            "FLW",
+                            "user_" + ashaId,   // ya user ka topic
+                            title,
+                            body+data,
+                            "","",ashaId
+                    );
+                }
                 return totalUpdated;
             }
-
-            return incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
+            int updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
                     ashaId,
                     approvalStatus,
                     startDate,
@@ -410,7 +444,33 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     ashaSupervisorUserId,
                     ashaSupervisorUsername
             );
+            if (updatedCount > 0) {
 
+                Map<String, String> data = new HashMap<>();
+                data.put("notification_type", "INCENTIVE_APPROVAL");
+                data.put("nav_id", "INCENTIVE_HISTORY");
+                data.put("sender_user_id", String.valueOf(ashaSupervisorUserId));
+                data.put("receiver_user_id", String.valueOf(ashaId));
+                data.put("month", String.valueOf(month));
+                data.put("year", String.valueOf(year));
+                data.put("approval_status", String.valueOf(approvalStatus));
+                data.put("priority", "HIGH");
+                title = "Incentive Approved";
+
+                if (approvalStatus.equals(IncentiveApprovalStatus.VERIFIED.getCode())) {
+                    body = "Your incentive claim for " + Month.of(month).name() + " " + year + " has been approved.";
+                }
+
+
+                notificationService.sendNotification(
+                        "FLW",
+                        "user_" + ashaId,   // ya user ka topic
+                        title,
+                        body,
+                        "","",ashaId
+                );
+            }
+             return updatedCount;
         } catch (Exception e) {
             logger.error("Update claim :" + e.getMessage());
             e.printStackTrace();
