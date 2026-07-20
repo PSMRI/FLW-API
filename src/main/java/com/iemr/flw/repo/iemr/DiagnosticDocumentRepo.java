@@ -9,5 +9,5 @@ import java.util.Optional;
 @Repository
 public interface DiagnosticDocumentRepo extends JpaRepository<DiagnosticDocument, Long> {
 
-    Optional<DiagnosticDocument> findByBenRegIDAndDocumentTypeAndDeletedFalse(Long benRegID, String documentType);
+    Optional<DiagnosticDocument> findByDiagnosticOrderIdAndDocumentTypeAndDeletedFalse(Long diagnosticOrderId, String documentType);
 }

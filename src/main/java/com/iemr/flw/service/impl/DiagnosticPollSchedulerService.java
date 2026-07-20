@@ -93,11 +93,11 @@ public class DiagnosticPollSchedulerService {
     }
 
     private void giveUp(DiagnosticOrder order) {
-        order.setStatus(DiagnosticOrderStatus.FAILED.name());
+        order.setStatus(DiagnosticOrderStatus.EXPIRED.name());
         order.setErrorMessage("Polling window exceeded (" + giveUpMinutes + " min) without a result");
         order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
         diagnosticOrderRepo.save(order);
-        logger.warn("Order {} exceeded give-up window of {} min, marked FAILED", order.getId(), giveUpMinutes);
+        logger.warn("Order {} exceeded give-up window of {} min, marked EXPIRED", order.getId(), giveUpMinutes);
     }
 
     private void pollSingle(DiagnosticOrder order) {

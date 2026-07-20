@@ -31,4 +31,21 @@ public enum DiagnosticDocumentType {
             default: throw new IllegalArgumentException("Unknown orderType for document classification: " + orderType);
         }
     }
+
+    public DiagnosticOrderType impliedOrderType() {
+        switch (this) {
+            case XRAY_CHEST:
+            case XRAY_CHEST_ANNOTATED:
+            case CAD:
+                return DiagnosticOrderType.XRAY_CHEST;
+            case MTB_REPORT:
+                return DiagnosticOrderType.MTB;
+            case MTB_PLUS_REPORT:
+                return DiagnosticOrderType.MTB_PLUS;
+            case MDR_RIF_REPORT:
+                return DiagnosticOrderType.MDR_RIF;
+            default:
+                throw new IllegalArgumentException("Unknown orderType for document type: " + this);
+        }
+    }
 }
