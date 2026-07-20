@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "tb_diagnostic_document", schema = "db_iemr",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"ben_reg_id", "document_type"}),
+        uniqueConstraints = @UniqueConstraint(columnNames = {"diagnostic_order_id", "document_type"}),
         indexes = {
         @Index(name = "idx_diagnostic_document_ben_reg_id", columnList = "ben_reg_id"),
         @Index(name = "idx_diagnostic_document_order_type", columnList = "order_type"),

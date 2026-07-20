@@ -1,10 +1,12 @@
 package com.iemr.flw.service.impl;
 
 import com.iemr.flw.domain.iemr.DiagnosticDocument;
+import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.dto.DiagnosticDocumentContent;
 import com.iemr.flw.integration.provider.DiagnosticDocumentAsset;
 import com.iemr.flw.masterEnum.DiagnosticDocumentType;
 import com.iemr.flw.repo.iemr.DiagnosticDocumentRepo;
+import com.iemr.flw.repo.iemr.DiagnosticOrderRepo;
 import com.iemr.flw.service.DiagnosticDocumentService;
 import com.iemr.flw.utils.CryptoUtil;
 import org.slf4j.Logger;
@@ -37,6 +39,9 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
     private DiagnosticDocumentRepo diagnosticDocumentRepo;
 
     @Autowired
+    private DiagnosticOrderRepo diagnosticOrderRepo;
+
+    @Autowired
     private CryptoUtil cryptoUtil;
 
     @Override
@@ -52,17 +57,17 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         String sha256Hash = sha256Hex(originalBytes);
 
         DiagnosticDocumentType documentType = DiagnosticDocumentType.from(orderType, asset.getType());
-        Optional<DiagnosticDocument> existing =
-                diagnosticDocumentRepo.findByBenRegIDAndDocumentTypeAndDeletedFalse(benRegID, documentType.name());
+        Optional<DiagnosticDocument> existing = diagnosticDocumentRepo
+                .findByDiagnosticOrderIdAndDocumentTypeAndDeletedFalse(diagnosticOrderId, documentType.name());
         if (existing.isPresent() && sha256Hash.equals(existing.get().getSha256Hash())) {
-            logger.info("Diagnostic document already stored, skipping duplicate: benRegID={}, documentType={}",
-                    benRegID, documentType);
+            logger.info("Diagnostic document already stored, skipping duplicate: diagnosticOrderId={}, documentType={}",
+                    diagnosticOrderId, documentType);
             return;
         }
 
         long epochTime = Instant.now().toEpochMilli();
         String storedFileName = documentType.name() + ".enc";
-        String relativeDir = String.valueOf(benRegID);
+        String relativeDir = benRegID + "/" + diagnosticOrderId;
 
         // Documents must never touch disk unencrypted: encrypt in memory first, write only ciphertext.
         String base64Original = Base64.getEncoder().encodeToString(originalBytes);
@@ -89,7 +94,7 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         try {
             diagnosticDocumentRepo.save(document);
         } catch (DataIntegrityViolationException dive) {
-            logger.warn("Lost document upsert race for benRegID={}, documentType={}", benRegID, documentType);
+            logger.warn("Lost document upsert race for diagnosticOrderId={}, documentType={}", diagnosticOrderId, documentType);
             return;
         }
 
@@ -98,11 +103,24 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
     }
 
     @Override
-    public DiagnosticDocumentContent fetch(Long benRegID, DiagnosticDocumentType documentType) throws Exception {
+    public DiagnosticDocumentContent fetch(Long benRegID, DiagnosticDocumentType documentType, Long visitCode) throws Exception {
+        String orderType = documentType.impliedOrderType().name();
+        DiagnosticOrder order;
+        if (visitCode != null) {
+            order = diagnosticOrderRepo.findByBenRegIDAndVisitCodeAndOrderType(benRegID, visitCode, orderType)
+                    .orElseThrow(() -> new Exception("No diagnostic order found for benRegID=" + benRegID
+                            + ", visitCode=" + visitCode + ", orderType=" + orderType));
+        } else {
+            order = diagnosticOrderRepo
+                    .findFirstByBenRegIDAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(benRegID, orderType)
+                    .orElseThrow(() -> new Exception(
+                            "No diagnostic order found for benRegID=" + benRegID + ", orderType=" + orderType));
+        }
+
         DiagnosticDocument document = diagnosticDocumentRepo
-                .findByBenRegIDAndDocumentTypeAndDeletedFalse(benRegID, documentType.name())
+                .findByDiagnosticOrderIdAndDocumentTypeAndDeletedFalse(order.getId(), documentType.name())
                 .orElseThrow(() -> new Exception(
-                        "No document found for benRegID=" + benRegID + ", documentType=" + documentType));
+                        "No document found for diagnosticOrderId=" + order.getId() + ", documentType=" + documentType));
 
         Path filePath = Paths.get(storageRoot, document.getStoredPath());
         String encryptedPayload = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);

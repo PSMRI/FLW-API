@@ -32,11 +32,13 @@ public class DiagnosticDocumentController {
     }
 
     @GetMapping
-    @Operation(summary = "Fetch the most recent stored document for a beneficiary + document type "
-            + "(XRAY_CHEST, XRAY_CHEST_ANNOTATED, CAD, MTB_REPORT, MTB_PLUS_REPORT, or MDR_RIF_REPORT)")
-    public ResponseEntity<byte[]> getDocument(@RequestParam Long benId, @RequestParam DiagnosticDocumentType documentType) {
+    @Operation(summary = "Fetch the stored document for a beneficiary + document type "
+            + "(XRAY_CHEST, XRAY_CHEST_ANNOTATED, CAD, MTB_REPORT, MTB_PLUS_REPORT, or MDR_RIF_REPORT). "
+            + "Defaults to the most recent order's document; pass visitCode to target a specific order/retest.")
+    public ResponseEntity<byte[]> getDocument(@RequestParam Long benId, @RequestParam DiagnosticDocumentType documentType,
+            @RequestParam(required = false) Long visitCode) {
         try {
-            DiagnosticDocumentContent content = diagnosticDocumentService.fetch(benId, documentType);
+            DiagnosticDocumentContent content = diagnosticDocumentService.fetch(benId, documentType, visitCode);
             MediaType mediaType;
             try {
                 mediaType = MediaType.parseMediaType(content.getContentType());

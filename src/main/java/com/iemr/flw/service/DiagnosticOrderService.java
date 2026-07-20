@@ -16,13 +16,13 @@ public interface DiagnosticOrderService {
 
     DiagnosticPollResult pollOnce(DiagnosticOrder order) throws Exception;
 
-    DiagnosticOrderResultDto triggerManualPoll(Long benRegID, String orderType) throws Exception;
+    DiagnosticOrderResultDto triggerManualPoll(Long benRegID, String orderType, Long visitCode) throws Exception;
 
-    DiagnosticOrder markTestCompleted(Long benRegID, String orderType) throws Exception;
+    DiagnosticOrder markTestCompleted(Long benRegID, String orderType, Long visitCode) throws Exception;
 
-    DiagnosticOrderResultDto getOrderResult(Long benRegID, String orderType);
+    DiagnosticOrderResultDto getOrderResult(Long benRegID, String orderType, Long visitCode);
 
-    DiagnosticOrder getOrder(Long benRegID, String orderType) throws Exception;
+    DiagnosticOrder getOrder(Long benRegID, String orderType, Long visitCode) throws Exception;
 
     List<DiagnosticOrder> getOrdersByBenRegId(Long benRegID) throws Exception;
 

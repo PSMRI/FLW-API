@@ -5,7 +5,8 @@ public enum DiagnosticOrderStatus {
     IN_PROGRESS,
     COMPLETED,
     FAILED,
-    CANCELLED;
+    CANCELLED,
+    EXPIRED;
 
     public static DiagnosticOrderStatus fromString(String value) {
         if (value == null) return PENDING;
