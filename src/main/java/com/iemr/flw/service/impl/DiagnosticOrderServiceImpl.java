@@ -188,23 +188,36 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                         "DiagnosticOrder not found for benRegID=" + benRegID + ", orderType=" + orderType));
     }
 
+    // Resolves a specific order by visitCode when given (retest disambiguation), otherwise
+    // falls back to "latest" - matching the pre-multi-order default callers already rely on.
+    private DiagnosticOrder resolveOrder(Long benRegID, String orderType, Long visitCode) throws Exception {
+        if (visitCode == null) {
+            return findLatestOrder(benRegID, orderType);
+        }
+        DiagnosticOrderType type = DiagnosticOrderType.fromCode(orderType);
+        return diagnosticOrderRepo.findByBenRegIDAndVisitCodeAndOrderType(benRegID, visitCode, type.name())
+                .orElseThrow(() -> new Exception("DiagnosticOrder not found for benRegID=" + benRegID
+                        + ", visitCode=" + visitCode + ", orderType=" + orderType));
+    }
+
     @Override
-    public DiagnosticOrderResultDto triggerManualPoll(Long benRegID, String orderType) throws Exception {
-        DiagnosticOrder order = findLatestOrder(benRegID, orderType);
+    public DiagnosticOrderResultDto triggerManualPoll(Long benRegID, String orderType, Long visitCode) throws Exception {
+        DiagnosticOrder order = resolveOrder(benRegID, orderType, visitCode);
         DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
         DiagnosticPollResult pollResult = provider.pollResult(order, true);
         return processResult(order, pollResult);
     }
 
     @Override
-    public DiagnosticOrder markTestCompleted(Long benRegID, String orderType) throws Exception {
-        DiagnosticOrder order = findLatestOrder(benRegID, orderType);
+    public DiagnosticOrder markTestCompleted(Long benRegID, String orderType, Long visitCode) throws Exception {
+        DiagnosticOrder order = resolveOrder(benRegID, orderType, visitCode);
         String status = order.getStatus();
 
         if (order.getTestCompletedAt() != null) {
             Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId());
             boolean isTerminal = DiagnosticOrderStatus.COMPLETED.name().equals(status)
-                    || DiagnosticOrderStatus.FAILED.name().equals(status);
+                    || DiagnosticOrderStatus.FAILED.name().equals(status)
+                    || DiagnosticOrderStatus.EXPIRED.name().equals(status);
             if (existingResult.isPresent() && isTerminal) {
                 // Re-test: the order already completed once and has a result on file, and the
                 // physical test was performed again — reopen it so the scheduler picks it back up
@@ -239,8 +252,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     }
 
     @Override
-    public DiagnosticOrder getOrder(Long benRegID, String orderType) throws Exception {
-        return findLatestOrder(benRegID, orderType);
+    public DiagnosticOrder getOrder(Long benRegID, String orderType, Long visitCode) throws Exception {
+        return resolveOrder(benRegID, orderType, visitCode);
     }
 
     @Override
@@ -249,12 +262,13 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     }
 
     @Override
-    public DiagnosticOrderResultDto getOrderResult(Long benRegID, String orderType) {
+    public DiagnosticOrderResultDto getOrderResult(Long benRegID, String orderType, Long visitCode) {
         DiagnosticOrderResultDto dto = new DiagnosticOrderResultDto();
         dto.setOrderType(orderType);
 
-        Optional<DiagnosticOrder> orderOpt =
-                diagnosticOrderRepo.findFirstByBenRegIDAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(benRegID, orderType);
+        Optional<DiagnosticOrder> orderOpt = visitCode != null
+                ? diagnosticOrderRepo.findByBenRegIDAndVisitCodeAndOrderType(benRegID, visitCode, orderType)
+                : diagnosticOrderRepo.findFirstByBenRegIDAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(benRegID, orderType);
         if (orderOpt.isEmpty()) {
             dto.setStatus("NOT_FOUND");
             return dto;
@@ -285,6 +299,10 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 .findBenRegIDsAwaitingProviderResult(type.name(), villageId, providerServiceMapId);
         List<Long> completed = diagnosticOrderRepo
                 .findBenRegIDsCompleted(type.name(), villageId, providerServiceMapId);
-        return new DiagnosticOrderStatusSummaryDto(awaitingTestCompletion, awaitingProviderResult, completed);
+        List<Long> pollingTimedOut = diagnosticOrderRepo
+                .findBenRegIDsPollingTimedOut(type.name(), villageId, providerServiceMapId);
+        List<Long> failed = diagnosticOrderRepo
+                .findBenRegIDsFailed(type.name(), villageId, providerServiceMapId);
+        return new DiagnosticOrderStatusSummaryDto(awaitingTestCompletion, awaitingProviderResult, completed, pollingTimedOut, failed);
     }
 }
