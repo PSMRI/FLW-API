@@ -899,8 +899,6 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     private void checkAndAddHbncIncentives(List<HbncVisit> hbncVisits, Integer userId) {
         Integer stateCode = userService.getUserDetail(userId).getStateId();
-        List<PNCVisit> pncVisits = pncVisitRepo.getPNCForPW(userRepo.getUserNamedByUserId(userId));
-        List<ANCVisit> ancVisits = ancVisitRepo.getANCForPW(userRepo.getUserNamedByUserId(userId));
         hbncVisits.forEach(hbncVisit -> {
             Long benId = hbncVisit.getBeneficiaryId();
             if (stateCode.equals(StateCode.AM.getStateCode())) {
@@ -932,7 +930,7 @@ public class ChildCareServiceImpl implements ChildCareService {
             }
 
             if (stateCode.equals(StateCode.CG.getStateCode())) {
-                if (hbncVisit.getVisit_day().equals("42th Day")) {
+                if (hbncVisit.getVisit_day().equals("42nd Day")) {
                     IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.ACTIVITY.getDisplayName());
                     createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HBNC_0_42_DAYS");
 
