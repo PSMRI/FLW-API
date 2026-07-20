@@ -338,6 +338,10 @@ public class RMNCHHouseHoldDetails {
 	private Double gpsLongitude;
 
 	@Expose
+	@Transient
+	private String address;
+
+	@Expose
 	@Column(name = "totalHhMembers")
 	private Integer totalHhMembers;
 
