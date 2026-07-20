@@ -519,8 +519,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
                         resultMap = new HashMap<>();
                         if (benHouseHoldRMNCH_ROBJ != null) {
-                            if (benAddressOBJ.getPermAddressValue() != null)
-                                benHouseHoldRMNCH_ROBJ.setAddress(benAddressOBJ.getPermAddressValue());
+                            if (benAddressOBJ.getPermAddrLine1() != null)
+                                benHouseHoldRMNCH_ROBJ.setAddress(benAddressOBJ.getPermAddrLine1());
                             resultMap.put("householdDetails", benHouseHoldRMNCH_ROBJ);
                         } else
                             resultMap.put("householdDetails", new HashMap<String, Object>());
