@@ -518,9 +518,12 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             benDetailsRMNCH_OBJ.setAge_unit(ageUnit);
 
                         resultMap = new HashMap<>();
-                        if (benHouseHoldRMNCH_ROBJ != null)
+                        if (benHouseHoldRMNCH_ROBJ != null) {
+                            if (benHouseHoldRMNCH_ROBJ.getAddress() == null
+                                    && benAddressOBJ.getPermAddrLine1() != null)
+                                benHouseHoldRMNCH_ROBJ.setAddress(benAddressOBJ.getPermAddrLine1());
                             resultMap.put("householdDetails", benHouseHoldRMNCH_ROBJ);
-                        else
+                        } else
                             resultMap.put("householdDetails", new HashMap<String, Object>());
 
                         if (benBotnBirthRMNCH_ROBJ != null)
