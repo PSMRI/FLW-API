@@ -4,6 +4,7 @@ import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.domain.iemr.DiagnosticResult;
 import com.iemr.flw.dto.DiagnosticOrderRequestDto;
 import com.iemr.flw.dto.DiagnosticOrderResultDto;
+import com.iemr.flw.dto.DiagnosticOrderStatusSummaryDto;
 import com.iemr.flw.integration.provider.DiagnosticDocumentAsset;
 import com.iemr.flw.integration.provider.DiagnosticPollResult;
 import com.iemr.flw.integration.provider.DiagnosticProvider;
@@ -272,5 +273,18 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             dto.setDrugResistancePresence(result.getDrugResistancePresence());
         });
         return dto;
+    }
+
+    @Override
+    public DiagnosticOrderStatusSummaryDto getOrderStatusSummary(String orderType, Integer villageId,
+            Integer providerServiceMapId) {
+        DiagnosticOrderType type = DiagnosticOrderType.fromCode(orderType);
+        List<Long> awaitingTestCompletion = diagnosticOrderRepo
+                .findBenRegIDsAwaitingTestCompletion(type.name(), villageId, providerServiceMapId);
+        List<Long> awaitingProviderResult = diagnosticOrderRepo
+                .findBenRegIDsAwaitingProviderResult(type.name(), villageId, providerServiceMapId);
+        List<Long> completed = diagnosticOrderRepo
+                .findBenRegIDsCompleted(type.name(), villageId, providerServiceMapId);
+        return new DiagnosticOrderStatusSummaryDto(awaitingTestCompletion, awaitingProviderResult, completed);
     }
 }

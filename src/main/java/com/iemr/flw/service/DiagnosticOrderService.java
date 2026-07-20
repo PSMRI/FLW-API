@@ -3,6 +3,7 @@ package com.iemr.flw.service;
 import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.dto.DiagnosticOrderRequestDto;
 import com.iemr.flw.dto.DiagnosticOrderResultDto;
+import com.iemr.flw.dto.DiagnosticOrderStatusSummaryDto;
 import com.iemr.flw.integration.provider.DiagnosticPollResult;
 
 import java.util.List;
@@ -24,4 +25,6 @@ public interface DiagnosticOrderService {
     DiagnosticOrder getOrder(Long benRegID, String orderType) throws Exception;
 
     List<DiagnosticOrder> getOrdersByBenRegId(Long benRegID) throws Exception;
+
+    DiagnosticOrderStatusSummaryDto getOrderStatusSummary(String orderType, Integer villageId, Integer providerServiceMapId);
 }
