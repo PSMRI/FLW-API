@@ -301,20 +301,18 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     diseaseControlData.setUserId(diseaseControlDTO.getUserId());
                 }
                 ScreeningLeprosy screeningLeprosy = diseaseLeprosyRepository.save(saveLeprosyData(diseaseControlData));
-                if(screeningLeprosy.getIsConfirmed()){
-                    IncentiveActivityRecord incentiveActivityRecord =
-                            incentiveLogicService.incentiveForIdentificationLeprosy(
-                                    screeningLeprosy.getBenId(),
-                                    screeningLeprosy.getHomeVisitDate(),
-                                    screeningLeprosy.getHomeVisitDate(),
-                                    diseaseControlDTO.getUserId());
+                IncentiveActivityRecord incentiveActivityRecord =
+                        incentiveLogicService.incentiveForIdentificationLeprosy(
+                                screeningLeprosy.getBenId(),
+                                screeningLeprosy.getHomeVisitDate(),
+                                screeningLeprosy.getHomeVisitDate(),
+                                diseaseControlDTO.getUserId());
 
-                    if (incentiveActivityRecord != null) {
-                        logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                                incentiveActivityRecord.getId());
-                    } else {
-                        logger.info("Incentive not created");
-                    }
+                if (incentiveActivityRecord != null) {
+                    logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                            incentiveActivityRecord.getId());
+                } else {
+                    logger.info("Incentive not created");
                 }
 
                 return "Data add successfully";
