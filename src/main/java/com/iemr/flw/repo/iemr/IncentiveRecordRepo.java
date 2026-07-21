@@ -3,6 +3,8 @@ package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
 import jakarta.persistence.Column;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,40 +20,50 @@ import java.util.Optional;
 public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityRecord, Long> {
 
     @Query(value = """
-        SELECT *
-        FROM db_iemr.incentive_activity_record r
-        WHERE r.activity_id = :id
-        AND r.ben_id = :benId
-        AND MONTH(r.created_date) = MONTH(:createdDate)
-        AND YEAR(r.created_date) = YEAR(:createdDate)
-        LIMIT 1
-        """, nativeQuery = true)
-    IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(@Param("id") Long id, @Param("createdDate") Timestamp createdDate, @Param("benId") Long benId);
+            SELECT *
+            FROM db_iemr.incentive_activity_record r
+            WHERE r.activity_id = :id
+              AND r.ben_id = :benId
+              AND r.asha_id = :ashaId
+              AND MONTH(r.start_date) = MONTH(:createdDate)
+              AND YEAR(r.start_date) = YEAR(:createdDate)
+            LIMIT 1
+            """, nativeQuery = true)
+    IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(
+            @Param("id") Long id,
+            @Param("createdDate") Timestamp createdDate,
+            @Param("benId") Long benId,
+            @Param("ashaId") Integer ashaId);
 
 
     Optional<IncentiveActivityRecord> findById(Long id);
 
 
-    @Query("select record from IncentiveActivityRecord record where record.activityId = :id and record.createdDate = :createdDate and record.benId = :benId and record.ashaId = :ashaId")
-    IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(@Param("id") Long id, @Param("createdDate") Timestamp createdDate, @Param("benId") Long benId, @Param("ashaId") Integer ashaId);
-
-
-    @Query("SELECT record FROM IncentiveActivityRecord record " +
-            "WHERE record.activityId = :id " +
-            "AND record.createdDate BETWEEN :startDate AND :endDate " +
-            "AND record.benId = :benId " +   // ← space added here
-            "AND record.ashaId = :ashaId")
+    @Query(value = """
+            SELECT *
+            FROM incentive_activity_record
+            WHERE activity_id = :activityId
+              AND ben_id = :benId
+              AND asha_id = :ashaId
+              AND created_date >= :startOfMonth
+              AND created_date < :startOfNextMonth
+            ORDER BY created_date DESC
+            LIMIT 1
+            """, nativeQuery = true)
     IncentiveActivityRecord findRecordByActivityIdCreatedDateBenId(
-            @Param("id") Long id,
-            @Param("startDate") Timestamp startDate,
-            @Param("endDate") Timestamp endDate,
+            @Param("activityId") Long activityId,
             @Param("benId") Long benId,
-            @Param("ashaId") Integer ashaId
+            @Param("ashaId") Integer ashaId,
+            @Param("startOfMonth") Timestamp startOfMonth,
+            @Param("startOfNextMonth") Timestamp startOfNextMonth
     );
 
     @Query("select record from IncentiveActivityRecord record where record.ashaId = :ashaId and record.startDate >= :fromDate and record.startDate <= :toDate and record.endDate >= :fromDate and record.endDate <= :toDate ")
     List<IncentiveActivityRecord> findRecordsByAsha(@Param("ashaId") Integer ashaId, @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
+
+    @Query("SELECT DISTINCT record FROM IncentiveActivityRecord record WHERE record.ashaId = :ashaId")
+    Page<IncentiveActivityRecord> findRecordsByAsha(@Param("ashaId") Integer ashaId, Pageable pageable);
 
     @Query("SELECT DISTINCT record FROM IncentiveActivityRecord record WHERE record.ashaId = :ashaId")
     List<IncentiveActivityRecord> findRecordsByAsha(@Param("ashaId") Integer ashaId);

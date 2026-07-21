@@ -301,58 +301,18 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     diseaseControlData.setUserId(diseaseControlDTO.getUserId());
                 }
                 ScreeningLeprosy screeningLeprosy = diseaseLeprosyRepository.save(saveLeprosyData(diseaseControlData));
-                if(screeningLeprosy.getIsConfirmed()){
-                    IncentiveActivityRecord incentiveActivityRecord =
-                            incentiveLogicService.incentiveForIdentificationLeprosy(
-                                    screeningLeprosy.getBenId(),
-                                    screeningLeprosy.getTreatmentStartDate(),
-                                    screeningLeprosy.getTreatmentEndDate(),
-                                    diseaseControlDTO.getUserId());
+                IncentiveActivityRecord incentiveActivityRecord =
+                        incentiveLogicService.incentiveForIdentificationLeprosy(
+                                screeningLeprosy.getBenId(),
+                                screeningLeprosy.getHomeVisitDate(),
+                                screeningLeprosy.getHomeVisitDate(),
+                                diseaseControlDTO.getUserId());
 
-                    if (incentiveActivityRecord != null) {
-                        logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                                incentiveActivityRecord.getId());
-                    } else {
-                        logger.info("Incentive not created");
-                    }
-                }
-                if (screeningLeprosy.getIsConfirmed()) {
-                    if(screeningLeprosy.getTypeOfLeprosy()!=null){
-                        if (screeningLeprosy.getTypeOfLeprosy().equals("PB (Paucibacillary)")) {
-                            IncentiveActivityRecord incentiveActivityRecord =
-                                    incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
-                                            screeningLeprosy.getBenId(),
-                                            screeningLeprosy.getTreatmentStartDate(),
-                                            screeningLeprosy.getTreatmentEndDate(),
-                                            diseaseControlDTO.getUserId());
-
-                            if (incentiveActivityRecord != null) {
-                                logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                                        incentiveActivityRecord.getId());
-                            } else {
-                                logger.info("Incentive not created");
-                            }
-
-                        }
-                        if (screeningLeprosy.getTypeOfLeprosy().equals("MB (Multibacillary)")) {
-                            IncentiveActivityRecord incentiveActivityRecord =
-                                    incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
-                                            screeningLeprosy.getBenId(),
-                                            screeningLeprosy.getTreatmentStartDate(),
-                                            screeningLeprosy.getTreatmentEndDate(),
-                                            diseaseControlDTO.getUserId());
-
-                            if (incentiveActivityRecord != null) {
-                                logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                                        incentiveActivityRecord.getId());
-                            } else {
-                                logger.info("Incentive not created");
-                            }
-
-                        }
-                    }
-
-
+                if (incentiveActivityRecord != null) {
+                    logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                            incentiveActivityRecord.getId());
+                } else {
+                    logger.info("Incentive not created");
                 }
 
                 return "Data add successfully";
@@ -391,36 +351,44 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         entity.setModifiedBy(data.getModifiedBy());
         entity.setLastModDate(
                 data.getLastModDate() != null ? data.getLastModDate() : new Timestamp(System.currentTimeMillis()));
+         if(!leprosyFollowUpRepository.findByBenId(entity.getBenId()).isEmpty()){
+             if(leprosyFollowUpRepository.findByBenId(entity.getBenId()).size()>=6 && leprosyFollowUpRepository.findByBenId(entity.getBenId()).size()<=12){
+                 Integer userId = userRepo.getUserIdByName(entity.getCreatedBy());
+                 IncentiveActivityRecord incentiveActivityRecord =
+                         incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
+                                 entity.getBenId(),
+                                 entity.getTreatmentEndDate(),
+                                 entity.getTreatmentEndDate(),
+                                 userId);
 
+                 if (incentiveActivityRecord != null) {
+                     logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                             incentiveActivityRecord.getId());
+                 } else {
+                     logger.info("Incentive not created");
+                 }
+             }
+         }
+
+        if(!leprosyFollowUpRepository.findByBenId(entity.getBenId()).isEmpty()){
+            if(leprosyFollowUpRepository.findByBenId(entity.getBenId()).size()>=12){
+                Integer userId = userRepo.getUserIdByName(entity.getCreatedBy());
+                IncentiveActivityRecord incentiveActivityRecord =
+                        incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
+                                entity.getBenId(),
+                                entity.getTreatmentEndDate(),
+                                entity.getTreatmentEndDate(),
+                                userId);
+
+                if (incentiveActivityRecord != null) {
+                    logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                            incentiveActivityRecord.getId());
+                } else {
+                    logger.info("Incentive not created");
+                }
+            }
+        }
         return entity;
-    }
-
-    private String updateLeprosyFollowUpData(LeprosyFollowUpDTO data, LeprosyFollowUp entity) {
-        entity.setVisitNumber(data.getVisitNumber());
-        entity.setFollowUpDate(data.getFollowUpDate());
-        entity.setTreatmentStatus(data.getTreatmentStatus());
-        entity.setMdtBlisterPackReceived(data.getMdtBlisterPackReceived());
-        entity.setTreatmentCompleteDate(data.getTreatmentCompleteDate());
-        entity.setRemarks(data.getRemarks());
-        entity.setHomeVisitDate(data.getHomeVisitDate());
-        entity.setLeprosySymptoms(data.getLeprosySymptoms());
-        entity.setTypeOfLeprosy(data.getTypeOfLeprosy());
-        entity.setLeprosySymptomsPosition(data.getLeprosySymptomsPosition());
-        entity.setVisitLabel(data.getVisitLabel());
-        entity.setLeprosyStatus(data.getLeprosyStatus());
-        entity.setReferredTo(data.getReferredTo());
-        entity.setReferToName(data.getReferToName());
-        entity.setTreatmentEndDate(data.getTreatmentEndDate());
-        entity.setMdtBlisterPackRecived(data.getMdtBlisterPackRecived());
-        entity.setTreatmentStartDate(data.getTreatmentStartDate());
-
-        // Update audit info
-        entity.setModifiedBy(data.getModifiedBy());
-        entity.setLastModDate(
-                data.getLastModDate() != null ? data.getLastModDate() : new Timestamp(System.currentTimeMillis()));
-
-        leprosyFollowUpRepository.save(entity);
-        return "Follow-up data updated successfully";
     }
 
     @Override
@@ -443,68 +411,10 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         List<DiseaseGetLeprosyDTO> dtos = new ArrayList<>();
         leprosyList.forEach(leprosy -> {
             dtos.add(modelMapper.map(leprosy, DiseaseGetLeprosyDTO.class));
-            checkAndIncentive(leprosy,leprosy.getUserId());
         });
 
         return dtos;
     }
-    private void checkAndIncentive(ScreeningLeprosy screeningLeprosy,Integer userId){
-        if(screeningLeprosy.getIsConfirmed()){
-            IncentiveActivityRecord incentiveActivityRecord =
-                    incentiveLogicService.incentiveForIdentificationLeprosy(
-                            screeningLeprosy.getBenId(),
-                            screeningLeprosy.getTreatmentStartDate(),
-                            screeningLeprosy.getTreatmentEndDate(),
-                            userId);
-
-            if (incentiveActivityRecord != null) {
-                logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                        incentiveActivityRecord.getId());
-            } else {
-                logger.info("Incentive not created");
-            }
-        }
-        if (screeningLeprosy.getIsConfirmed()) {
-            if(screeningLeprosy.getTypeOfLeprosy()!=null){
-                if (screeningLeprosy.getTypeOfLeprosy().equals("PB (Paucibacillary)")) {
-                    IncentiveActivityRecord incentiveActivityRecord =
-                            incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
-                                    screeningLeprosy.getBenId(),
-                                    screeningLeprosy.getTreatmentStartDate(),
-                                    screeningLeprosy.getTreatmentEndDate(),
-                                    userId);
-
-                    if (incentiveActivityRecord != null) {
-                        logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                                incentiveActivityRecord.getId());
-                    } else {
-                        logger.info("Incentive not created");
-                    }
-
-                }
-                if (screeningLeprosy.getTypeOfLeprosy().equals("MB (Multibacillary)")) {
-                    IncentiveActivityRecord incentiveActivityRecord =
-                            incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
-                                    screeningLeprosy.getBenId(),
-                                    screeningLeprosy.getTreatmentStartDate(),
-                                    screeningLeprosy.getTreatmentEndDate(),
-                                    userId);
-
-                    if (incentiveActivityRecord != null) {
-                        logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                                incentiveActivityRecord.getId());
-                    } else {
-                        logger.info("Incentive not created");
-                    }
-
-                }
-            }
-
-
-
-        }
-    }
-
     @Override
     public List<LeprosyGetFollowUpDTO> getAllLeprosyFollowUpData(String createdBy) {
         logger.info("Fetching leprosy data for createdBy: " + createdBy);
@@ -1368,7 +1278,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 .findRecordByActivityIdCreatedDateBenId(
                         diseaseScreeningActivity.getId(),
                         visitTimestamp,
-                        diseaseScreening.getBeneficiaryId());
+                        diseaseScreening.getBeneficiaryId(),diseaseScreening.getUserId());
 
         if (record == null) {
 
@@ -1394,16 +1304,19 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     private void addIncentive(IncentiveActivity diseaseScreeningActivity, ScreeningMalaria diseaseScreening) {
         try {
+            Timestamp screeningTimestamp = diseaseScreening.getScreeningDate() != null
+                    ? new Timestamp(diseaseScreening.getScreeningDate().getTime())
+                    : null;
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(diseaseScreeningActivity.getId(), Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()), diseaseScreening.getBenId().longValue());
+                    .findRecordByActivityIdCreatedDateBenId(diseaseScreeningActivity.getId(), Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()), diseaseScreening.getBenId().longValue(),diseaseScreening.getUserId());
             if (record == null) {
                 record = new IncentiveActivityRecord();
                 record.setActivityId(diseaseScreeningActivity.getId());
-                record.setCreatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+                record.setCreatedDate(screeningTimestamp);
                 record.setCreatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
-                record.setStartDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-                record.setEndDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
-                record.setUpdatedDate(Timestamp.valueOf(diseaseScreening.getCreatedDate().toString()));
+                record.setStartDate(screeningTimestamp);
+                record.setEndDate(screeningTimestamp);
+                record.setUpdatedDate(screeningTimestamp);
                 record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
                 record.setUpdatedBy(userService.getUserDetail(diseaseScreening.getUserId()).getUserName());
                 record.setBenId(diseaseScreening.getBenId().longValue());
@@ -1475,8 +1388,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         Integer stateId = userService.getUserDetail(ashaId).getStateId();
         IncentiveActivity incentiveActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.NCD.getDisplayName());
         IncentiveActivity incentiveActivityCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_FOLLOWUP_TREATMENT", GroupName.ACTIVITY.getDisplayName());
+        IncentiveActivity incentiveActivityCGForNCDnewPatient = incentivesRepo.findIncentiveMasterByNameAndGroup("NCD_NEW_PATIENT_MEDICATION_SUPPORT", GroupName.ACTIVITY.getDisplayName());
         logger.info("incentiveActivity:" + incentiveActivity.getId());
-        if (incentiveActivity != null) {
+
             if (chronicDiseaseVisitEntity.getFollowUpNo() != null
                     && chronicDiseaseVisitEntity.getCreatedDate() != null
                     && chronicDiseaseVisitEntity.getDiagnosisCodes() != null) {
@@ -1487,6 +1401,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                         "Cancer"
                 );
 
+
                 List<String> diagnosisList = Arrays.asList(
                         chronicDiseaseVisitEntity.getDiagnosisCodes().split(",")
                 );
@@ -1494,7 +1409,18 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 boolean matchFound = diagnosisList.stream()
                         .map(String::trim)
                         .anyMatch(targetDiseases::contains);
+                if(matchFound & Integer.valueOf(0).equals(chronicDiseaseVisitEntity.getFollowUpNo()) ){
+                    LocalDateTime localDateTime = chronicDiseaseVisitEntity.getTreatmentStartDate().atStartOfDay();
 
+                    Timestamp treatmentStartDate = Timestamp.valueOf(localDateTime);
+                    addNCDFolloupIncentiveRecord(
+                            incentiveActivityCGForNCDnewPatient,
+                            ashaId,
+                            chronicDiseaseVisitEntity.getBenId(),
+                            treatmentStartDate,
+                            userName
+                    );
+                }
                 if (matchFound && Integer.valueOf(6).equals(chronicDiseaseVisitEntity.getFollowUpNo())) {
                     LocalDateTime localDateTime = chronicDiseaseVisitEntity.getFollowUpDate().atStartOfDay();
 
@@ -1520,7 +1446,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
                 }
             }
-        }
+
 
 
     }
@@ -1529,7 +1455,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                                               Long benId, Timestamp createdDate, String userName) {
         try {
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), createdDate, benId);
+                    .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), createdDate, benId,ashaId);
 
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
             if (record == null) {

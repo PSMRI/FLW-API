@@ -121,7 +121,7 @@ public class IFAFormSubmissionServiceImpl implements IFAFormSubmissionService {
 
         Timestamp ifaVisitDateTimestamp = Timestamp.valueOf(ifaVisitDate.atStartOfDay());
 
-        IncentiveActivityRecord incentiveActivityRecord = incentiveRecordRepo.findRecordByActivityIdCreatedDateBenId(incentiveActivityAM.getId(),ifaVisitDateTimestamp,ifaFormSubmissionData.getBeneficiaryId());
+        IncentiveActivityRecord incentiveActivityRecord = incentiveRecordRepo.findRecordByActivityIdCreatedDateBenId(incentiveActivityAM.getId(),ifaVisitDateTimestamp,ifaFormSubmissionData.getBeneficiaryId(),userServiceRoleRepo.getUserIdByName(ifaFormSubmissionData.getUserName()));
         if(incentiveActivityRecord==null){
             incentiveActivityRecord = new IncentiveActivityRecord();
             incentiveActivityRecord.setActivityId(incentiveActivityAM.getId());

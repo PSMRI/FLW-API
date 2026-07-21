@@ -70,4 +70,5 @@ public class TBConfirmedCase {
     @Column(name = "updated_at")
     private LocalDate updatedAt;
 
+
 }

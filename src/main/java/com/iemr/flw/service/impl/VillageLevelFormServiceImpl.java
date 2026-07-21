@@ -24,7 +24,6 @@
 */
 package com.iemr.flw.service.impl;
 
-import com.iemr.flw.controller.CoupleController;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
@@ -150,12 +149,8 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
         vhncForm.setFormType("VHNC");
         vhncFormRepo.save(vhncForm);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-        LocalDate localDate = LocalDate.parse(vhncForm.getVhncDate(), formatter);
-
-        Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        incentiveLogicService.incentiveForAttendingVhsnc(0L,date,date,Math.toIntExact(vhncForm.getUserId()));
+        checkVhncIncentive(vhncForm.getCreatedDate(),Math.toIntExact(vhncForm.getUserId()));
 
         return true;
     }
@@ -175,12 +170,8 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         phcReviewForm.setImage2(dto.getImage2());
         phcReviewForm.setFormType("PHC");
         phcReviewFormRepo.save(phcReviewForm);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-        LocalDate localDate = LocalDate.parse(phcReviewForm.getPhcReviewDate(), formatter);
-
-        Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        incentiveLogicService.incentiveForClusterMeeting(0L,date,date,Math.toIntExact(phcReviewForm.getUserId()));
+        checkPhcMeetingIncentive(phcReviewForm.getCreatedDate(),Math.toIntExact(phcReviewForm.getUserId()));
 
         return true;
     }
@@ -286,15 +277,118 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
                         : null);
         vhndForm.setFormType("VHND");
         vhndRepo.save(vhndForm);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-        LocalDate localDate = LocalDate.parse(vhndForm.getVhndDate(), formatter);
 
-        Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        incentiveLogicService.incentiveForVhndMeeting(0L,date,date,vhndForm.getUserId());
+        checkVhndIncentive(vhndForm.getCreatedDate(),vhndForm.getUserId());
 
         return true;
 
+
+    }
+
+    private void checkVhndIncentive(Timestamp startTimestamp, Integer userId){
+
+        try {
+            IncentiveActivity activity = incentivesRepo.findIncentiveMasterByNameAndGroup("VHND_PARTICIPATION", GroupName.ACTIVITY.getDisplayName());
+            if(activity!=null){
+                IncentiveActivityRecord record = recordRepo
+                        .findRecordByActivityIdCreatedDateBenId(activity.getId(), startTimestamp, 0L,userId);
+                if (record == null) {
+                    record = new IncentiveActivityRecord();
+                    record.setActivityId(activity.getId());
+                    record.setCreatedDate(startTimestamp);
+                    record.setCreatedBy(userRepo.getUserNamedByUserId(userId));
+                    record.setStartDate(startTimestamp);
+                    record.setEndDate(startTimestamp);
+                    record.setUpdatedDate(startTimestamp);
+                    record.setUpdatedBy(userRepo.getUserNamedByUserId(userId));
+                    record.setAshaId(userId);
+                    record.setBenId(0L);
+                    record.setAmount(Long.valueOf(activity.getRate()));
+                    record.setIsEligible(true);
+                    recordRepo.save(record);
+
+                }
+            }
+
+
+
+        } catch (Exception e) {
+            logger.error("Process Incentive Exception: ", e);
+
+
+        }
+
+    }
+
+    private void checkPhcMeetingIncentive(Timestamp startTimestamp, Integer userId){
+
+        try {
+            IncentiveActivity activity = incentivesRepo.findIncentiveMasterByNameAndGroup("CLUSTER_MEETING", GroupName.ACTIVITY.getDisplayName());
+            if(activity!=null){
+                IncentiveActivityRecord record = recordRepo
+                        .findRecordByActivityIdCreatedDateBenId(activity.getId(), startTimestamp, 0L,userId);
+                if (record == null) {
+                    record = new IncentiveActivityRecord();
+                    record.setActivityId(activity.getId());
+                    record.setCreatedDate(startTimestamp);
+                    record.setCreatedBy(userRepo.getUserNamedByUserId(userId));
+                    record.setStartDate(startTimestamp);
+                    record.setEndDate(startTimestamp);
+                    record.setUpdatedDate(startTimestamp);
+                    record.setUpdatedBy(userRepo.getUserNamedByUserId(userId));
+                    record.setAshaId(userId);
+                    record.setBenId(0L);
+                    record.setAmount(Long.valueOf(activity.getRate()));
+                    record.setIsEligible(true);
+                    recordRepo.save(record);
+
+                }
+            }
+
+
+
+        } catch (Exception e) {
+            logger.error("Process Incentive Exception: ", e);
+
+
+        }
+
+    }
+
+
+    private void checkVhncIncentive(Timestamp startTimestamp, Integer userId){
+
+        try {
+            IncentiveActivity activity = incentivesRepo.findIncentiveMasterByNameAndGroup("VHSNC_MEETING", GroupName.ACTIVITY.getDisplayName());
+            if(activity!=null){
+                IncentiveActivityRecord record = recordRepo
+                        .findRecordByActivityIdCreatedDateBenId(activity.getId(), startTimestamp, 0L,userId);
+                if (record == null) {
+                    record = new IncentiveActivityRecord();
+                    record.setActivityId(activity.getId());
+                    record.setCreatedDate(startTimestamp);
+                    record.setCreatedBy(userRepo.getUserNamedByUserId(userId));
+                    record.setStartDate(startTimestamp);
+                    record.setEndDate(startTimestamp);
+                    record.setUpdatedDate(startTimestamp);
+                    record.setUpdatedBy(userRepo.getUserNamedByUserId(userId));
+                    record.setAshaId(userId);
+                    record.setBenId(0L);
+                    record.setAmount(Long.valueOf(activity.getRate()));
+                    record.setIsEligible(true);
+                    recordRepo.save(record);
+
+                }
+            }
+
+
+
+        } catch (Exception e) {
+            logger.error("Process Incentive Exception: ", e);
+
+
+        }
 
     }
 

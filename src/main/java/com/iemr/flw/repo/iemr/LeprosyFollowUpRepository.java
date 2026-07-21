@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @Repository
 public interface LeprosyFollowUpRepository extends JpaRepository<LeprosyFollowUp, Long> {
-    Optional<LeprosyFollowUp> findByBenId(Long benId);
+    List<LeprosyFollowUp> findByBenId(Long benId);
 
     // Custom queries can be added here if needed
     @Query("SELECT s FROM LeprosyFollowUp s WHERE s.createdBy = :createdBy")
