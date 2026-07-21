@@ -101,4 +101,24 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
             "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
     List<Long> findBeneficiaryIdsFailed(@Param("orderType") String orderType,
             @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
+
+    @Query("SELECT o.benRegID FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
+            "AND o.status = 'EXPIRED' " +
+            "AND o.id = (SELECT MAX(o2.id) FROM DiagnosticOrder o2 " +
+            "WHERE o2.benRegID = o.benRegID AND o2.orderType = :orderType AND o2.deleted = false) " +
+            "AND o.benRegID IN (SELECT b.beneficiaryRegID FROM BenFlowStatus b WHERE b.deleted = false " +
+            "AND (:villageId IS NULL OR b.villageID = :villageId) " +
+            "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
+    List<Long> findBenRegIDsPollingTimedOut(@Param("orderType") String orderType,
+            @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
+
+    @Query("SELECT o.benRegID FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
+            "AND o.status = 'FAILED' " +
+            "AND o.id = (SELECT MAX(o2.id) FROM DiagnosticOrder o2 " +
+            "WHERE o2.benRegID = o.benRegID AND o2.orderType = :orderType AND o2.deleted = false) " +
+            "AND o.benRegID IN (SELECT b.beneficiaryRegID FROM BenFlowStatus b WHERE b.deleted = false " +
+            "AND (:villageId IS NULL OR b.villageID = :villageId) " +
+            "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
+    List<Long> findBenRegIDsFailed(@Param("orderType") String orderType,
+            @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
 }
