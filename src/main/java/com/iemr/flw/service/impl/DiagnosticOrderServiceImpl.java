@@ -294,15 +294,15 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             Integer providerServiceMapId) {
         DiagnosticOrderType type = DiagnosticOrderType.fromCode(orderType);
         List<Long> awaitingTestCompletion = diagnosticOrderRepo
-                .findBenRegIDsAwaitingTestCompletion(type.name(), villageId, providerServiceMapId);
+                .findBeneficiaryIdsAwaitingTestCompletion(type.name(), villageId, providerServiceMapId);
         List<Long> awaitingProviderResult = diagnosticOrderRepo
-                .findBenRegIDsAwaitingProviderResult(type.name(), villageId, providerServiceMapId);
+                .findBeneficiaryIdsAwaitingProviderResult(type.name(), villageId, providerServiceMapId);
         List<Long> completed = diagnosticOrderRepo
-                .findBenRegIDsCompleted(type.name(), villageId, providerServiceMapId);
+                .findBeneficiaryIdsCompleted(type.name(), villageId, providerServiceMapId);
         List<Long> pollingTimedOut = diagnosticOrderRepo
-                .findBenRegIDsPollingTimedOut(type.name(), villageId, providerServiceMapId);
+                .findBeneficiaryIdsPollingTimedOut(type.name(), villageId, providerServiceMapId);
         List<Long> failed = diagnosticOrderRepo
-                .findBenRegIDsFailed(type.name(), villageId, providerServiceMapId);
+                .findBeneficiaryIdsFailed(type.name(), villageId, providerServiceMapId);
         return new DiagnosticOrderStatusSummaryDto(awaitingTestCompletion, awaitingProviderResult, completed, pollingTimedOut, failed);
     }
 }
