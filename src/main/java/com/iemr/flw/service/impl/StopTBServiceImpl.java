@@ -1,8 +1,6 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
 import com.iemr.flw.domain.identity.RMNCHMBeneficiarymapping;
 import com.iemr.flw.domain.iemr.BenAnthropometryDetail;
@@ -18,7 +16,6 @@ import com.iemr.flw.domain.iemr.StopTBDiagnostics;
 import com.iemr.flw.domain.iemr.StopTBGeneralExamination;
 import com.iemr.flw.domain.iemr.StopTBGeneralOpd;
 import com.iemr.flw.domain.iemr.TBScreening;
-import com.iemr.flw.dto.iemr.StopTBRegistrationDto;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.BenAnthropometryRepo;
 import com.iemr.flw.repo.iemr.BenChiefComplaintRepo;
@@ -38,12 +35,9 @@ import com.iemr.flw.service.TBStopVisitService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import java.math.BigInteger;
 import java.sql.Timestamp;
@@ -98,227 +92,6 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Autowired
     private BenReferDetailsRepo benReferDetailsRepo;
-
-    @Value("${tm-url}")
-    private String tmUrl;
-
-    // ── Registration ──────────────────────────────────────────────────────────
-
-    @Override
-    @Transactional
-    public Map<String, Object> saveRegistration(String requestBody, String authorization) throws Exception {
-        JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
-
-        // Extract fields for BenFlowStatus — do NOT remove from jsonObject
-        // All fields (including Stop TB extras) forward to TM-API → ExtraFields via checkExtraFields
-        String firstName  = getStringField(jsonObject, "firstName");
-        String lastName   = getStringField(jsonObject, "lastName");
-        String benName    = ((firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "")).trim();
-
-        Integer genderID  = getIntField(jsonObject, "genderID");
-        String genderName = getStringField(jsonObject, "genderName");
-        if (genderName == null) genderName = getStringField(jsonObject, "gender");
-
-        String  createdBy          = getStringField(jsonObject, "createdBy");
-        Integer providerServiceMapID = getIntField(jsonObject, "providerServiceMapID");
-
-        Timestamp dob = parseDob(jsonObject);
-
-        String phoneNo = null;
-        if (jsonObject.has("i_bencontacts") && !jsonObject.get("i_bencontacts").isJsonNull()) {
-            JsonObject contacts = jsonObject.getAsJsonObject("i_bencontacts");
-            phoneNo = getStringField(contacts, "phoneNo1");
-        }
-        if (phoneNo == null) phoneNo = getStringField(jsonObject, "phoneNo1");
-        if (phoneNo == null && jsonObject.has("benPhoneMaps") && jsonObject.get("benPhoneMaps").isJsonArray()) {
-            com.google.gson.JsonArray phoneMaps = jsonObject.getAsJsonArray("benPhoneMaps");
-            if (phoneMaps.size() > 0 && !phoneMaps.get(0).isJsonNull())
-                phoneNo = getStringField(phoneMaps.get(0).getAsJsonObject(), "phoneNo");
-        }
-
-        Integer villageId   = null;
-        String  villageName = null;
-        Integer districtID  = null;
-        String  districtName = null;
-        if (jsonObject.has("i_bendemographics") && !jsonObject.get("i_bendemographics").isJsonNull()) {
-            JsonObject demo = jsonObject.getAsJsonObject("i_bendemographics");
-            villageId    = getIntField(demo, "districtBranchID");
-            villageName  = getStringField(demo, "districtBranchName");
-            districtID   = getIntField(demo, "districtID");
-            districtName = getStringField(demo, "districtName");
-            // promote to top-level so Identity-API saves them in ExtraFields
-            if (demo.has("economicStatus"))    jsonObject.addProperty("economicStatus", getStringField(demo, "economicStatus"));
-            if (demo.has("economicStatusId"))  jsonObject.addProperty("economicStatusId", getIntField(demo, "economicStatusId"));
-            if (demo.has("residentialArea"))   jsonObject.addProperty("residentialArea", getStringField(demo, "residentialArea"));
-            if (demo.has("residentialAreaId")) jsonObject.addProperty("residentialAreaId", getIntField(demo, "residentialAreaId"));
-        }
-
-        // isMobile=true tells TM-API to skip its own BenFlowStatus creation — FLW-API owns it
-        jsonObject.addProperty("isMobile", true);
-
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", authorization);
-        headers.set("User-Agent", "okhttp");
-
-        HttpEntity<String> request = new HttpEntity<>(jsonObject.toString(), headers);
-        ResponseEntity<Map> response = restTemplate.exchange(
-                tmUrl + "/registrar/registrarBeneficaryRegistrationNew",
-                HttpMethod.POST, request, Map.class);
-
-        if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null)
-            throw new Exception("Beneficiary registration failed in TM-API");
-
-        Object dataObj = response.getBody().get("data");
-        JsonObject dataJson = dataObj instanceof String
-                ? JsonParser.parseString((String) dataObj).getAsJsonObject()
-                : JsonParser.parseString(new com.google.gson.Gson().toJson(dataObj)).getAsJsonObject();
-
-        Long benRegID       = dataJson.get("benRegId").getAsLong();
-        Long beneficiaryID  = dataJson.get("benGenId").getAsLong();
-
-        BenFlowStatus flow = new BenFlowStatus();
-        flow.setBeneficiaryRegID(benRegID);
-        flow.setBeneficiaryID(beneficiaryID);
-        flow.setBenName(benName.isEmpty() ? null : benName);
-        flow.setDob(dob);
-        flow.setGenderID(genderID != null ? genderID.shortValue() : null);
-        flow.setGenderName(genderName);
-        flow.setPreferredPhoneNum(phoneNo);
-        flow.setNurseFlag((short) 1);
-        flow.setDoctorFlag((short) 0);
-        flow.setPharmacistFlag((short) 0);
-        flow.setProviderServiceMapId(providerServiceMapID);
-        flow.setVillageID(villageId);
-        flow.setVillageName(villageName);
-        flow.setDistrictID(districtID);
-        flow.setDistrictName(districtName);
-        flow.setAgentId(createdBy);
-        flow.setRegistrationDate(new Timestamp(System.currentTimeMillis()));
-        flow.setDeleted(false);
-        benFlowStatusRepo.save(flow);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("beneficiaryRegID", benRegID);
-        result.put("beneficiaryID", beneficiaryID);
-        return result;
-    }
-
-    // ── Worklists ─────────────────────────────────────────────────────────────
-
-    @Override
-    public Map<String, Object> getRegistrarWorklist(StopTBRegistrationDto dto) throws Exception {
-        List<BenFlowStatus> flowList = benFlowStatusRepo.getRegistrarWorklist(
-                dto.getProviderServiceMapID(), dto.getVillageId());
-
-        List<Map<String, Object>> worklist = new ArrayList<>();
-        for (BenFlowStatus flow : flowList)
-            worklist.add(buildWorklistItem(flow));
-
-        return wrapWorklist(worklist);
-    }
-
-    @Override
-    public Map<String, Object> getNurseWorklist(StopTBRegistrationDto dto) throws Exception {
-        List<BenFlowStatus> flowList = benFlowStatusRepo.getNurseWorklist(
-                dto.getProviderServiceMapID(), dto.getVillageId());
-
-        List<Map<String, Object>> worklist = new ArrayList<>();
-        for (BenFlowStatus flow : flowList) {
-            Map<String, Object> item = buildWorklistItem(flow);
-            Long benRegID = flow.getBeneficiaryRegID();
-
-            List<StopTBGeneralExamination> examList = generalExaminationRepo.findLatestByBeneficiaryRegID(benRegID, PageRequest.of(0, 1));
-            item.put("generalExamination", !examList.isEmpty() ? examToMap(examList.get(0)) : null);
-
-            List<TBScreening> screeningList = tbScreeningRepo.findLatestByBenRegID(benRegID, PageRequest.of(0, 1));
-            item.put("tbScreening", !screeningList.isEmpty() ? screeningToMap(screeningList.get(0)) : null);
-
-            List<StopTBGeneralOpd> opdList = generalOpdRepo.findLatestByBenRegID(benRegID, PageRequest.of(0, 1));
-            item.put("generalOpd", !opdList.isEmpty() ? opdToMap(opdList.get(0)) : null);
-
-            worklist.add(item);
-        }
-
-        return wrapWorklist(worklist);
-    }
-
-    // getBeneficiaryData-style item — BenFlowStatus + db_identity detail + ExtraFields
-    private Map<String, Object> buildWorklistItem(BenFlowStatus flow) {
-        Map<String, Object> item = new LinkedHashMap<>();
-        item.put("benficieryid", flow.getBeneficiaryID());
-        item.put("BenRegId",     flow.getBeneficiaryRegID());
-        item.put("benFlowID",    flow.getBenFlowID());
-        item.put("nurseFlag",    flow.getNurseFlag());
-        item.put("doctorFlag",   flow.getDoctorFlag());
-
-        Map<String, Object> benDetails = new LinkedHashMap<>();
-        benDetails.put("benName",          flow.getBenName());
-        benDetails.put("dob",              flow.getDob());
-        benDetails.put("genderId",         flow.getGenderID());
-        benDetails.put("gender",           flow.getGenderName());
-        benDetails.put("contact_number",   flow.getPreferredPhoneNum());
-        benDetails.put("villageId",        flow.getVillageID());
-        benDetails.put("villageName",      flow.getVillageName());
-        benDetails.put("districtid",       flow.getDistrictID());
-        benDetails.put("districtname",     flow.getDistrictName());
-        benDetails.put("registrationDate", flow.getRegistrationDate());
-
-        try {
-            RMNCHMBeneficiarymapping mapping = beneficiaryRepo.getById(
-                    BigInteger.valueOf(flow.getBeneficiaryRegID()));
-            RMNCHMBeneficiarydetail detail = (mapping != null && mapping.getBenDetailsId() != null)
-                    ? beneficiaryRepo.getDetailsById(mapping.getBenDetailsId())
-                    : null;
-            if (detail != null) {
-                benDetails.put("fatherName",    detail.getFatherName());
-                benDetails.put("motherName",    detail.getMotherName());
-                benDetails.put("community",     detail.getCommunity());
-                benDetails.put("communityId",   detail.getCommunityId());
-                benDetails.put("education",     detail.getEducation());
-                benDetails.put("maritalStatus", detail.getMaritalstatus());
-
-                if (detail.getOtherFields() != null && !detail.getOtherFields().isEmpty()) {
-                    try {
-                        Map<String, Object> extra = new ObjectMapper().readValue(detail.getOtherFields(), Map.class);
-
-                        Map<String, Object> anthropometry = new LinkedHashMap<>();
-                        anthropometry.put("weight",           extra.get("weight"));
-                        anthropometry.put("height",           extra.get("height"));
-                        anthropometry.put("bmi",              extra.get("bmi"));
-                        anthropometry.put("temperatureValue", extra.get("temperatureValue"));
-                        item.put("anthropometry", anthropometry);
-
-                        Map<String, Object> stopTBDetails = new LinkedHashMap<>();
-                        stopTBDetails.put("personFrom",         extra.get("personFrom"));
-                        stopTBDetails.put("caseFindingType",    extra.get("caseFindingType"));
-                        stopTBDetails.put("tuId",               extra.get("tuId"));
-                        stopTBDetails.put("tuName",             extra.get("tuName"));
-                        stopTBDetails.put("healthFacilityId",   extra.get("healthFacilityId"));
-                        stopTBDetails.put("healthFacilityName", extra.get("healthFacilityName"));
-                        item.put("stopTBDetails", stopTBDetails);
-                    } catch (Exception e) {
-                        logger.warn("Cannot parse otherFields for benRegID: " + flow.getBeneficiaryRegID());
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Cannot fetch identity detail for benRegID: " + flow.getBeneficiaryRegID() + " — " + e.getClass().getName() + ": " + e.getMessage());
-        }
-
-        item.put("beneficiaryDetails", benDetails);
-        return item;
-    }
-
-    private Map<String, Object> wrapWorklist(List<Map<String, Object>> worklist) {
-        Map<String, Object> inner = new LinkedHashMap<>();
-        inner.put("totalPage", 1);
-        inner.put("data", worklist);
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("data", inner);
-        return result;
-    }
 
     // ── Nurse: General Examination ────────────────────────────────────────────
 
@@ -392,13 +165,6 @@ public class StopTBServiceImpl implements StopTBService {
         if (e.getDiastolicBP() != null && (e.getDiastolicBP() >= 90 || e.getDiastolicBP() < 60)) return true;
         if (e.getRandomBloodSugar() != null && e.getRandomBloodSugar() >= 100) return true;
         return false;
-    }
-
-    @Override
-    public Map<String, Object> getGeneralExamination(Long beneficiaryRegID) throws Exception {
-        List<StopTBGeneralExamination> examList = generalExaminationRepo.findLatestByBeneficiaryRegID(beneficiaryRegID, PageRequest.of(0, 1));
-        if (examList.isEmpty()) throw new Exception("No general examination found for beneficiaryRegID: " + beneficiaryRegID);
-        return examToMap(examList.get(0));
     }
 
     @Override
@@ -524,13 +290,6 @@ public class StopTBServiceImpl implements StopTBService {
     }
 
     @Override
-    public Map<String, Object> getNurseTBScreening(Long beneficiaryRegID) throws Exception {
-        List<TBScreening> screeningList = tbScreeningRepo.findLatestByBenRegID(beneficiaryRegID, PageRequest.of(0, 1));
-        if (screeningList.isEmpty()) throw new Exception("No TB screening found for beneficiaryRegID: " + beneficiaryRegID);
-        return screeningToMap(screeningList.get(0));
-    }
-
-    @Override
     public Map<String, Object> getAllNurseTBScreenings(Integer providerServiceMapID, Integer villageID) throws Exception {
         List<TBScreening> list = (villageID != null)
                 ? tbScreeningRepo.findAllByProviderServiceMapIDAndVillageID(providerServiceMapID, villageID)
@@ -634,13 +393,6 @@ public class StopTBServiceImpl implements StopTBService {
     }
 
     @Override
-    public Map<String, Object> getGeneralOpd(Long beneficiaryRegID) throws Exception {
-        List<StopTBGeneralOpd> opdList = generalOpdRepo.findLatestByBenRegID(beneficiaryRegID, PageRequest.of(0, 1));
-        if (opdList.isEmpty()) throw new Exception("No general OPD record found for beneficiaryRegID: " + beneficiaryRegID);
-        return opdToMap(opdList.get(0));
-    }
-
-    @Override
     public Map<String, Object> getAllGeneralOpd(Integer providerServiceMapID, Integer villageID) throws Exception {
         List<StopTBGeneralOpd> list = (villageID != null)
                 ? generalOpdRepo.findAllByProviderServiceMapIDAndVillageID(providerServiceMapID, villageID)
@@ -738,13 +490,6 @@ public class StopTBServiceImpl implements StopTBService {
     }
 
     @Override
-    public Map<String, Object> getDiagnostics(Long benRegID) throws Exception {
-        StopTBDiagnostics diag = diagnosticsRepo.findByBenRegID(benRegID);
-        if (diag == null) throw new Exception("No diagnostics record found for benRegID: " + benRegID);
-        return diagnosticsToMap(diag);
-    }
-
-    @Override
     public Map<String, Object> getAllDiagnostics(Integer providerServiceMapID, Integer villageID) throws Exception {
         List<StopTBDiagnostics> list = (villageID != null)
                 ? diagnosticsRepo.findAllByProviderServiceMapIDAndVillageID(providerServiceMapID, villageID)
@@ -786,23 +531,6 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("updateDate", d.getLastModDate());
         m.put("updatedBy", d.getModifiedBy());
         return m;
-    }
-
-    // ── Nurse: Submit ─────────────────────────────────────────────────────────
-
-    @Override
-    @Transactional
-    public Map<String, Object> submitNurseData(Map<String, Object> data) throws Exception {
-        Long benFlowID = getLong(data, "benFlowID");
-        if (benFlowID == null) throw new Exception("benFlowID is required");
-
-        int updated = benFlowStatusRepo.updateStopTBAfterNurseSubmit(benFlowID);
-        if (updated == 0) throw new Exception("Flow record not found for benFlowID: " + benFlowID);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("benFlowID", benFlowID);
-        result.put("status", "nurse_done");
-        return result;
     }
 
     // ── Standard table dual-writes ────────────────────────────────────────────
@@ -990,13 +718,6 @@ public class StopTBServiceImpl implements StopTBService {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private Timestamp parseDob(JsonObject obj) {
-        if (!obj.has("dob") || obj.get("dob").isJsonNull()) return null;
-        try { return new Timestamp(obj.get("dob").getAsLong()); } catch (Exception ignored) {}
-        try { return Timestamp.valueOf(obj.get("dob").getAsString().replace("T", " ").replace("Z", "").trim()); } catch (Exception ignored) {}
-        return null;
-    }
-
     private String toJsonString(Object value) {
         if (value == null) return null;
         if (value instanceof String) return (String) value;
@@ -1043,14 +764,4 @@ public class StopTBServiceImpl implements StopTBService {
         try { return new Timestamp(Long.parseLong(v.toString())); } catch (Exception e) { return null; }
     }
 
-    private String getStringField(JsonObject obj, String field) {
-        return obj.has(field) && !obj.get(field).isJsonNull() ? obj.get(field).getAsString() : null;
-    }
-
-    private Integer getIntField(JsonObject obj, String field) {
-        if (!obj.has(field) || obj.get(field).isJsonNull()) return null;
-        try { return obj.get(field).getAsInt(); } catch (Exception e) {
-            try { return Integer.parseInt(obj.get(field).getAsString().trim()); } catch (Exception ex) { return null; }
-        }
-    }
 }
