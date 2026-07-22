@@ -83,6 +83,23 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             @Param("endDate") Timestamp endDate);
 
 
+    @Query("SELECT " +
+            "SUM(CASE WHEN record.approvalStatus = 101 THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN record.approvalStatus = 102 THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END) " +
+            "FROM IncentiveActivityRecord record " +
+            "WHERE record.ashaId = :ashaId " +
+            "AND record.isClaimed = true " +
+            "AND record.isDefaultActivity= true" +
+            "AND record.createdDate >= :startDate " +
+            "AND record.createdDate < :endDate")
+    List<Object[]> getStatusCountByAshaIdOfDefaultActivity(
+            @Param("ashaId") Integer ashaId,
+            @Param("startDate") Timestamp startDate,
+            @Param("endDate") Timestamp endDate);
+
+
+
     @Query("SELECT COALESCE(SUM(record.amount), 0) " +
             "FROM IncentiveActivityRecord record " +
             "JOIN IncentiveActivity master ON record.activityId = master.id " +
@@ -99,6 +116,18 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             @Param("approvalStatus") Integer approvalStatus,
             @Param("stateCode") Integer stateCode);
 
+
+    @Query("SELECT record " +
+            "FROM IncentiveActivityRecord record " +
+            "WHERE record.ashaId = :ashaId " +
+            "AND record.isClaimed = true " +
+            "AND record.startDate <= :toDate " +
+            "AND record.isDefaultActivity= true" +
+            "AND record.endDate >= :fromDate")
+    List<IncentiveActivityRecord> getDeRecordsByAsha(
+            @Param("ashaId") Integer ashaId,
+            @Param("fromDate") Timestamp fromDate,
+            @Param("toDate") Timestamp toDate);
 
     @Query("SELECT record " +
             "FROM IncentiveActivityRecord record " +

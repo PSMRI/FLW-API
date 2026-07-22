@@ -1,4 +1,4 @@
-package com.iemr.flw.dto;
+package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
 

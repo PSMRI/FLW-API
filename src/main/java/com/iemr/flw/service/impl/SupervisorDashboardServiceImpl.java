@@ -15,7 +15,9 @@ import java.util.stream.Collectors;
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
 import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
 import com.iemr.flw.masterEnum.IncentiveApprovalStatus;
+import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.iemr.*;
+import com.iemr.flw.service.NotificationService;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import org.json.JSONArray;
@@ -225,6 +227,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
     @Override
     public Map<String, Object> getAshasAtFacility(Integer supervisorId, Integer facilityId,
                                                   Integer month, Integer year, Integer approvalStatusID) {
+        Integer supervisorstateCode = userService.getUserDetail(supervisorId).getStateId();
         List<Object[]> rows;
         logger.info("approvalStatusID:" + approvalStatusID);
 
@@ -263,8 +266,15 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             Map<String, Object> asha = new HashMap<>();
 
             Integer ashaId = ((Number) row[0]).intValue();
+            List<Object[]> countList =null;
 
-            List<Object[]> countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
+            if(supervisorstateCode.equals(StateCode.CG.getStateCode())){
+                 countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate);
+
+            }else  if(supervisorstateCode.equals(StateCode.AM.getStateCode())){
+                countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
+
+            }
             Long totalAmount = null;
             if (userService.getUserDetail(ashaId) != null) {
                 Integer stateCode = userService.getUserDetail(ashaId).getStateId();
@@ -358,6 +368,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         return response;
     }
+
+
 
     private String getGroupNameByState(Integer stateCode) {
         switch (stateCode) {
