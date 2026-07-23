@@ -64,8 +64,15 @@ public class NotificationServiceImpl implements NotificationService {
 
         try {
             String authHeader = null;
-            String jwtToken = null;
-            Integer senderId = jwtUtil.extractUserId(jwtToken);
+            ServletRequestAttributes attributes =
+                    (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                authHeader = request.getHeader("jwtToken");
+            }
+
+            Integer senderId = jwtUtil.extractUserId(authHeader);
 
             logger.debug("Sender Id: {}", senderId);
 
@@ -78,13 +85,7 @@ public class NotificationServiceImpl implements NotificationService {
 
             String token = tokenData.getToken();
 
-            ServletRequestAttributes attributes =
-                    (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-                authHeader = request.getHeader("jwtToken");
-            }
 
             RestTemplate restTemplate = new RestTemplate();
 
