@@ -90,7 +90,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             "FROM IncentiveActivityRecord record " +
             "WHERE record.ashaId = :ashaId " +
             "AND record.isClaimed = true " +
-            "AND record.isDefaultActivity= true" +
+            "AND record.isDefaultActivity = true " +
             "AND record.createdDate >= :startDate " +
             "AND record.createdDate < :endDate")
     List<Object[]> getStatusCountByAshaIdOfDefaultActivity(
@@ -122,7 +122,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             "WHERE record.ashaId = :ashaId " +
             "AND record.isClaimed = true " +
             "AND record.startDate <= :toDate " +
-            "AND record.isDefaultActivity= true" +
+            "AND record.isDefaultActivity = true " +
             "AND record.endDate >= :fromDate")
     List<IncentiveActivityRecord> getDefalutRecordsByAsha(
             @Param("ashaId") Integer ashaId,
