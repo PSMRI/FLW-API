@@ -2,6 +2,7 @@ package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
 import com.iemr.flw.domain.iemr.Notification;
+import com.iemr.flw.domain.iemr.UserFcmTokenData;
 import com.iemr.flw.dto.iemr.NotificationListDTO;
 import com.iemr.flw.repo.iemr.NotificationRepository;
 import com.iemr.flw.repo.iemr.UserFcmTokenRepo;
@@ -23,6 +24,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -52,40 +55,42 @@ public class NotificationServiceImpl implements NotificationService {
 
     private String NOTIFICATION_URL = commonApiBaseUrl+notificationurl;
 
-    public String sendNotification(String appType, String topic, String title, String body, String redirect,String notificationType,Integer reciverID) {
+    public String sendNotification(String appType, String topic, String title,
+                                   String body, String redirect,
+                                   String notificationType, Integer receiverId) {
+
+        logger.info("Initiating notification. appType={}, receiverId={}, type={}",
+                appType, receiverId, notificationType);
+
         try {
             String authHeader = null;
             String jwtToken = null;
             Integer senderId = jwtUtil.extractUserId(jwtToken);
-            String token = userFcmTokenRepo.findByUserId(984).getToken();
 
-            // Check if we have HTTP request context
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            logger.debug("Sender Id: {}", senderId);
+
+            UserFcmTokenData tokenData = userFcmTokenRepo.findByUserId(receiverId);
+
+            if (tokenData == null) {
+                logger.warn("FCM token not found for receiverId={}", receiverId);
+                return "FCM token not found.";
+            }
+
+            String token = tokenData.getToken();
+
+            ServletRequestAttributes attributes =
+                    (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
             if (attributes != null) {
-                HttpServletRequest httpServletRequest = attributes.getRequest();
-
-                authHeader = httpServletRequest.getHeader("Authorization");
-
-                if (httpServletRequest.getCookies() != null) {
-                    for (Cookie cookie : httpServletRequest.getCookies()) {
-                        if ("Jwttoken".equals(cookie.getName())) {
-                            jwtToken = cookie.getValue();
-                        }
-                    }
-                }
-            }
-
-            // If no request context, set default (for scheduler/startup use)
-            if (authHeader == null) {
-                authHeader = "Bearer DEFAULT_TOKEN_IF_REQUIRED"; // or leave null if API allows
-            }
-            if (jwtToken == null) {
-                jwtToken = "DEFAULT_JWT_IF_REQUIRED";
+                HttpServletRequest request = attributes.getRequest();
+                authHeader = request.getHeader("jwtToken");
             }
 
             RestTemplate restTemplate = new RestTemplate();
+
             MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
             headers.add("Content-Type", "application/json");
+            headers.add("jwtToken", authHeader);
 
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("appType", appType);
@@ -94,37 +99,57 @@ public class NotificationServiceImpl implements NotificationService {
             requestBody.put("body", body);
 
             Map<String, Object> dataMap = new HashMap<>();
-
             dataMap.put("notification_id", notificationType);
             dataMap.put("notification_type", notificationType);
             dataMap.put("nav_id", "INCENTIVE_SCREEN");
-
             dataMap.put("sender_user_id", senderId);
-            dataMap.put("receiver_user_id", reciverID);
-
-
+            dataMap.put("receiver_user_id", receiverId);
             dataMap.put("priority", "HIGH");
-
-            // Existing redirect field
             dataMap.put("redirect", redirect);
 
             requestBody.put("data", dataMap);
 
             String jsonRequest = new Gson().toJson(requestBody);
 
+            logger.debug("Notification request payload: {}", jsonRequest);
+
             HttpEntity<Object> request = new HttpEntity<>(jsonRequest, headers);
 
-            ResponseEntity<String> response = restTemplate.exchange(NOTIFICATION_URL, HttpMethod.POST, request, String.class);
-            // Persist locally regardless of downstream push result, so the
-            // in-app notification list stays accurate even if push delivery
-            // to a device fails.
-            saveNotificationRecord(appType, senderId, reciverID, title, body,
-                    notificationType, "INCENTIVE_APPROVAL", redirect, "HIGH");
-            return response.getBody();
-        }catch (Exception e){
-            return e.getMessage();
-        }
+            ResponseEntity<String> response = restTemplate.exchange(
+                    NOTIFICATION_URL,
+                    HttpMethod.POST,
+                    request,
+                    String.class);
 
+            logger.info("Notification API response. Status={}, Body={}",
+                    response.getStatusCode(),
+                    response.getBody());
+
+            saveNotificationRecord(appType, senderId, receiverId, title, body,
+                    notificationType, "INCENTIVE_APPROVAL", redirect, "HIGH");
+
+            logger.info("Notification record saved successfully. receiverId={}", receiverId);
+
+            return response.getBody();
+
+        } catch (HttpClientErrorException | HttpServerErrorException ex) {
+
+            logger.error("Notification API failed. Status={}, Response={}",
+                    ex.getStatusCode(),
+                    ex.getResponseBodyAsString(),
+                    ex);
+
+            throw ex;
+
+        } catch (Exception ex) {
+
+            logger.error("Unexpected error while sending notification. receiverId={}, type={}",
+                    receiverId,
+                    notificationType,
+                    ex);
+
+            throw new RuntimeException("Failed to send notification.", ex);
+        }
     }
 
         private void saveNotificationRecord(String appType, Integer senderUserId, Integer receiverUserId,
