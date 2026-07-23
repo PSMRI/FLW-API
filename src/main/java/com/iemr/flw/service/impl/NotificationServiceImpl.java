@@ -39,10 +39,6 @@ public class NotificationServiceImpl implements NotificationService {
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     @Value("${common-api-base-url}")
     private String commonApiBaseUrl;
-
-    @Value("${notificationurl}")
-    private String notificationurl;
-
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -53,7 +49,7 @@ public class NotificationServiceImpl implements NotificationService {
     private UserFcmTokenRepo userFcmTokenRepo;
 
 
-    private String NOTIFICATION_URL = commonApiBaseUrl+notificationurl;
+    private String NOTIFICATION_URL = commonApiBaseUrl+"firebaseNotification/sendNotification";
 
     public String sendNotification(String appType, String topic, String title,
                                    String body, String redirect,
@@ -112,8 +108,7 @@ public class NotificationServiceImpl implements NotificationService {
 
             String jsonRequest = new Gson().toJson(requestBody);
 
-            logger.debug("Notification request payload: {}", jsonRequest);
-
+            logger.debug("Notification request payload: {}", NOTIFICATION_URL);
             HttpEntity<Object> request = new HttpEntity<>(jsonRequest, headers);
 
             ResponseEntity<String> response = restTemplate.exchange(
