@@ -282,14 +282,23 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         ashaId, startDate, endDate, approvalStatusID, stateCode);
 
             }
+            Integer stateCode = userService.getUserDetail(ashaId).getStateId();
 
 
-            List<IncentiveActivityRecord> incentiveActivityRecord =
-                    incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate)
-                            .stream()
-                            .filter(r -> approvalStatusID == 0 ||
-                                    approvalStatusID.equals(r.getApprovalStatus()))
-                            .collect(Collectors.toList());
+            List<IncentiveActivityRecord> incentiveActivityRecord = null;
+             if(stateCode.equals(StateCode.AM.getStateCode())){
+                 incentiveActivityRecord=   incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate)
+                         .stream()
+                         .filter(r -> approvalStatusID == 0 ||
+                                 approvalStatusID.equals(r.getApprovalStatus()))
+                         .collect(Collectors.toList());
+             }else if(stateCode.equals(StateCode.CG.getStateCode())){
+                 incentiveActivityRecord=   incentiveRecordRepo.getDefalutRecordsByAsha(ashaId, startDate, endDate)
+                         .stream()
+                         .filter(r -> approvalStatusID == 0 ||
+                                 approvalStatusID.equals(r.getApprovalStatus()))
+                         .collect(Collectors.toList());
+             }
             List<Map<String, Object>> activityList = new ArrayList<>();
             for (IncentiveActivityRecord record : incentiveActivityRecord) {
                 Map<String, Object> activity = new HashMap<>();
@@ -442,7 +451,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                             "user_" + ashaId,   // ya user ka topic
                             title,
                             body+data,
-                            "","",ashaId
+                            "","INCENTIVE_CLAIMED",ashaId
                     );
                 }
                 return totalUpdated;
@@ -479,7 +488,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         "user_" + ashaId,   // ya user ka topic
                         title,
                         body,
-                        "","",ashaId
+                        "","INCENTIVE_CLAIMED",ashaId
                 );
             }
              return updatedCount;

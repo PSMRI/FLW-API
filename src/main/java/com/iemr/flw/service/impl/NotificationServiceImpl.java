@@ -33,8 +33,8 @@ import java.util.Map;
 @Service
 public class NotificationServiceImpl implements NotificationService {
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-    @Value("${project-url}")
-    private String projectUrl;
+    @Value("${common-api-base-url}")
+    private String commonApiBaseUrl;
 
     @Value("${notificationurl}")
     private String notificationurl;
@@ -46,7 +46,7 @@ public class NotificationServiceImpl implements NotificationService {
     private NotificationRepository notificationRepository;
 
 
-    private String NOTIFICATION_URL = "https://uatamrit.piramalswasthya.org"+notificationurl;
+    private String NOTIFICATION_URL = commonApiBaseUrl+notificationurl;
 
     public String sendNotification(String appType, String topic, String title, String body, String redirect,String notificationType,Integer reciverID) {
         try {
@@ -91,8 +91,8 @@ public class NotificationServiceImpl implements NotificationService {
             Map<String, Object> dataMap = new HashMap<>();
 
             dataMap.put("notification_id", notificationType);
-            dataMap.put("notification_type", "INCENTIVE_CLAIMED");
-            dataMap.put("nav_id", "INCENTIVE_APPROVAL");
+            dataMap.put("notification_type", notificationType);
+            dataMap.put("nav_id", "INCENTIVE_SCREEN");
 
             dataMap.put("sender_user_id", senderId);
             dataMap.put("receiver_user_id", reciverID);

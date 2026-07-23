@@ -6,11 +6,13 @@ import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.masterEnum.IncentiveApprovalStatus;
 import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.IncentiveService;
 import com.iemr.flw.service.MaaMeetingService;
+import com.iemr.flw.service.NotificationService;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import org.modelmapper.ModelMapper;
@@ -28,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -79,7 +82,7 @@ public class IncentiveServiceImpl implements IncentiveService {
     private final ConcurrentHashMap<String, Object> lockMap = new ConcurrentHashMap<>();
 
     @Autowired
-    private NotificationServiceImpl notificationService;
+    private NotificationService notificationService;
 
 
 
@@ -389,31 +392,8 @@ public class IncentiveServiceImpl implements IncentiveService {
             map.put("amount", activity.getRate());
 
             result.add(map);
-            Map<String, Object> data = new HashMap<>();
-            data.put("notification_type", "INCENTIVE_APPROVAL");
-            data.put("nav_id", "INCENTIVE_HISTORY");
-            data.put("sender_user_id", request.getUserId());
-            data.put("receiver_user_id", request.getUserId());
-            data.put("month", String.valueOf(start));
-            data.put("year", String.valueOf(start));
-            data.put("approval_status", "CLAIMED");
-            data.put("priority", "HIGH");
 
 
-            String title =null;
-            String body =null;
-            title = "Incentive Rejected";
-            body = "Your incentive claimed successfully ";
-
-
-
-            notificationService.sendNotification(
-                    "FLW",
-                    "user_" + request.getUserId(),   // ya user ka topic
-                    title,
-                    body+data,
-                    "","",request.getUserId()
-            );
 
         }
 
@@ -576,6 +556,8 @@ public class IncentiveServiceImpl implements IncentiveService {
     // ================= UPDATE CLAIM =================
     @Transactional
     public String updateClaimStatus(Integer ashaId, Integer month, Integer year, Boolean isClaimed, String token) {
+        String title = null;
+        String body = null;
         try {
             LocalDate start = LocalDate.of(year, month, 1);
             LocalDate end = start.plusMonths(1);
@@ -587,6 +569,31 @@ public class IncentiveServiceImpl implements IncentiveService {
                     Timestamp.valueOf(start.atStartOfDay()),
                     Timestamp.valueOf(end.atStartOfDay())
             );
+            if(updated>0){
+                Map<String, String> data = new HashMap<>();
+                data.put("notification_type", "INCENTIVE_APPROVAL");
+                data.put("nav_id", "INCENTIVE_HISTORY");
+                data.put("sender_user_id", String.valueOf(ashaId));
+                data.put("receiver_user_id", String.valueOf(ashaId));
+                data.put("month", String.valueOf(month));
+                data.put("year", String.valueOf(year));
+                data.put("approval_status", String.valueOf(102));
+                data.put("priority", "HIGH");
+                title = "Incentive Approved";
+
+                if (isClaimed) {
+                    body = "Your incentive claimed for " + Month.of(month).name() + " " + year;
+                }
+
+
+                notificationService.sendNotification(
+                        "FLW",
+                        "user_" + ashaId,   // ya user ka topic
+                        title,
+                        body,
+                        "","INCENTIVE_CLAIMED",ashaId
+                );
+            }
 
             return updated > 0 ? "Success" : "No records";
 

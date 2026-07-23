@@ -124,7 +124,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             "AND record.startDate <= :toDate " +
             "AND record.isDefaultActivity= true" +
             "AND record.endDate >= :fromDate")
-    List<IncentiveActivityRecord> getDeRecordsByAsha(
+    List<IncentiveActivityRecord> getDefalutRecordsByAsha(
             @Param("ashaId") Integer ashaId,
             @Param("fromDate") Timestamp fromDate,
             @Param("toDate") Timestamp toDate);
