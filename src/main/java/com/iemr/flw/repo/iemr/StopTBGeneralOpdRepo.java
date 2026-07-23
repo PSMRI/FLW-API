@@ -1,0 +1,42 @@
+package com.iemr.flw.repo.iemr;
+
+import com.iemr.flw.domain.iemr.StopTBGeneralOpd;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Repository
+public interface StopTBGeneralOpdRepo extends JpaRepository<StopTBGeneralOpd, Long> {
+
+    @Query("SELECT o FROM StopTBGeneralOpd o WHERE o.benRegID = :benRegID AND o.deleted = false")
+    StopTBGeneralOpd findByBenRegID(@Param("benRegID") Long benRegID);
+
+    // Read-side fix: same NonUniqueResultException risk once a beneficiary has more than one
+    // visit. Pass PageRequest.of(0, 1) for the latest only.
+    @Query("SELECT o FROM StopTBGeneralOpd o WHERE o.benRegID = :benRegID " +
+            "AND o.deleted = false ORDER BY o.createdDate DESC")
+    List<StopTBGeneralOpd> findLatestByBenRegID(@Param("benRegID") Long benRegID, Pageable pageable);
+
+    @Query("SELECT o FROM StopTBGeneralOpd o WHERE o.benRegID = :benRegID " +
+            "AND o.visitCode = :visitCode AND o.deleted = false")
+    StopTBGeneralOpd findByBenRegIDAndVisitCode(@Param("benRegID") Long benRegID, @Param("visitCode") Long visitCode);
+
+    @Query("SELECT o FROM StopTBGeneralOpd o WHERE o.providerServiceMapID = :psmId AND o.deleted = false ORDER BY o.createdDate DESC")
+    List<StopTBGeneralOpd> findAllByProviderServiceMapID(@Param("psmId") Integer psmId);
+
+    @Query("SELECT o FROM StopTBGeneralOpd o WHERE o.benRegID IN " +
+            "(SELECT b.beneficiaryRegID FROM BenFlowStatus b WHERE b.providerServiceMapId = :psmId AND b.villageID = :villageId) " +
+            "AND o.deleted = false ORDER BY o.createdDate DESC")
+    List<StopTBGeneralOpd> findAllByProviderServiceMapIDAndVillageID(@Param("psmId") Integer psmId, @Param("villageId") Integer villageId);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE StopTBGeneralOpd t SET t.vanSerialNo = t.id WHERE t.id = :id")
+    void updateVanSerialNo(@Param("id") Long id);
+}

@@ -1,5 +1,6 @@
 package com.iemr.flw.service.impl;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -21,6 +22,7 @@ import com.iemr.flw.domain.iemr.IncentiveActivity;
 import com.iemr.flw.dto.iemr.EyeCheckupListDTO;
 import com.iemr.flw.dto.iemr.EyeCheckupRequestDTO;
 import com.iemr.flw.masterEnum.GroupName;
+import com.iemr.flw.domain.iemr.BenFlowStatus;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.UserService;
@@ -54,8 +56,12 @@ import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
 import com.iemr.flw.domain.identity.RMNCHMBeneficiarymapping;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.mapper.InputMapper;
+import com.iemr.flw.domain.iemr.BenAnthropometryDetail;
+import com.iemr.flw.domain.iemr.BenPhysicalVitalDetail;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.identity.HouseHoldRepo;
+import com.iemr.flw.repo.iemr.BenAnthropometryRepo;
+import com.iemr.flw.repo.iemr.BenPhysicalVitalRepo;
 import com.iemr.flw.service.BeneficiaryService;
 import com.iemr.flw.utils.config.ConfigProperties;
 import com.iemr.flw.utils.http.HttpUtils;
@@ -101,18 +107,66 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     @Autowired
     private IncentiveLogicService incentiveLogicService;
 
+    @Autowired
+    private BenFlowStatusRepo benFlowStatusRepo;
+
+    @Autowired
+    private UserServiceRoleRepo userRepo;
+
+    @Autowired
+    private BenAnthropometryRepo benAnthropometryRepo;
+
+    @Autowired
+    private BenPhysicalVitalRepo benPhysicalVitalRepo;
+
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
 
     @Override
     public String getBenData(GetBenRequestHandler request, String authorisation) throws Exception {
 
-        if (request == null || request.getAshaId() == null) {
-            throw new Exception("Invalid/missing asha details");
+        if (request == null) {
+            throw new Exception("Invalid request");
         }
 
         if (request.getPageNo() == null || request.getPageNo() < 0) {
             throw new Exception("Invalid page number");
+        }
+
+        int pageSize = Integer.parseInt(door_to_door_page_size);
+
+        // Stop TB path: filter by providerServiceMapID + villageID
+        if (request.getProviderServiceMapID() != null && request.getVillageID() != null) {
+            List<BenFlowStatus> flows = benFlowStatusRepo.getRegistrarWorklist(
+                    request.getProviderServiceMapID(), request.getVillageID());
+
+            if (flows == null || flows.isEmpty()) return null;
+
+            List<RMNCHMBeneficiaryaddress> allAddresses = new ArrayList<>();
+            for (BenFlowStatus flow : flows) {
+                if (flow.getBeneficiaryRegID() == null) continue;
+                List<RMNCHMBeneficiarymapping> mappings = beneficiaryRepo.findByBenRegIdFromMapping(
+                        BigInteger.valueOf(flow.getBeneficiaryRegID()));
+                if (mappings.isEmpty()) continue;
+                RMNCHMBeneficiarymapping mapping = mappings.get(0);
+                if (mapping.getBenAddressId() == null) continue;
+                RMNCHMBeneficiaryaddress address = beneficiaryRepo.getAddressById(mapping.getBenAddressId());
+                if (address != null) allAddresses.add(address);
+            }
+
+            if (allAddresses.isEmpty()) return null;
+
+            int totalPage = (int) Math.ceil((double) allAddresses.size() / pageSize);
+            int start = request.getPageNo() * pageSize;
+            int end = Math.min(start + pageSize, allAddresses.size());
+            if (start >= allAddresses.size()) return null;
+
+            return getMappingsForAddressIDs(allAddresses.subList(start, end), totalPage, authorisation);
+        }
+
+        // Normal FLW/ASHA path
+        if (request.getAshaId() == null) {
+            throw new Exception("Invalid/missing asha details");
         }
 
         String userName = beneficiaryRepo.getUserName(request.getAshaId());
@@ -123,12 +177,10 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
         request.setUserName(userName);
 
-        int pageSize = Integer.parseInt(door_to_door_page_size);
         PageRequest pageRequest = PageRequest.of(request.getPageNo(), pageSize);
 
         Page<RMNCHMBeneficiaryaddress> pageResult;
 
-        // ✅ Date Filter Handling
         if (request.getFromDate() != null && request.getToDate() != null) {
 
             if (request.getFromDate().after(request.getToDate())) {
@@ -143,7 +195,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
             );
 
         } else {
-
             pageResult = beneficiaryRepo.getBenDataByUser(userName, pageRequest);
         }
 
@@ -215,10 +266,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                                     .getDetailsByRegID((m.getBenRegId()).longValue()).isEmpty()){
                                 benDetailsRMNCH_OBJ = beneficiaryRepo
                                         .getDetailsByRegID((m.getBenRegId()).longValue()).get(0);
-
                             }
                             benBotnBirthRMNCH_ROBJ = beneficiaryRepo.getBornBirthByRegID((m.getBenRegId()).longValue());
-
 
                             if (benDetailsRMNCH_OBJ != null && benDetailsRMNCH_OBJ.getHouseoldId() != null)
                                 if(!houseHoldRepo
@@ -294,6 +343,29 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             benDetailsRMNCH_OBJ.setAddressLine2(benAddressOBJ.getPermAddrLine2());
                         if (benAddressOBJ.getPermAddrLine3() != null)
                             benDetailsRMNCH_OBJ.setAddressLine3(benAddressOBJ.getPermAddrLine3());
+                        if (benAddressOBJ.getPermPinCode() != null)
+                            benDetailsRMNCH_OBJ.setPinCode(benAddressOBJ.getPermPinCode());
+
+                        // GPS fallback: if not in RMNCH details (syncdatatoamrti not yet called),
+                        // pull from i_beneficiaryaddress (saved during TM-API registration)
+                        if (benDetailsRMNCH_OBJ.getGpsLatitude() == null && benAddressOBJ.getGpsLatitude() != null)
+                            benDetailsRMNCH_OBJ.setGpsLatitude(benAddressOBJ.getGpsLatitude());
+                        if (benDetailsRMNCH_OBJ.getGpsLongitude() == null && benAddressOBJ.getGpsLongitude() != null)
+                            benDetailsRMNCH_OBJ.setGpsLongitude(benAddressOBJ.getGpsLongitude());
+                        if (benDetailsRMNCH_OBJ.getDigipin() == null && benAddressOBJ.getDigipin() != null)
+                            benDetailsRMNCH_OBJ.setDigipin(benAddressOBJ.getDigipin());
+                        if (benDetailsRMNCH_OBJ.getGpsTimestamp() == null && benAddressOBJ.getGpsTimestamp() != null)
+                            benDetailsRMNCH_OBJ.setGpsTimestamp(benAddressOBJ.getGpsTimestamp());
+                        if (benDetailsRMNCH_OBJ.getIsGpsUnavailable() == null && benAddressOBJ.getIsGpsUnavailable() != null)
+                            benDetailsRMNCH_OBJ.setIsGpsUnavailable(benAddressOBJ.getIsGpsUnavailable());
+                        if (benDetailsRMNCH_OBJ.getGpsUnavailableReason() == null && benAddressOBJ.getGpsUnavailableReason() != null)
+                            benDetailsRMNCH_OBJ.setGpsUnavailableReason(benAddressOBJ.getGpsUnavailableReason());
+
+                        // Map GPS double fields to the exposed latitude/longitude BigDecimal fields for response
+                        if (benDetailsRMNCH_OBJ.getGpsLatitude() != null)
+                            benDetailsRMNCH_OBJ.setLatitude(BigDecimal.valueOf(benDetailsRMNCH_OBJ.getGpsLatitude()));
+                        if (benDetailsRMNCH_OBJ.getGpsLongitude() != null)
+                            benDetailsRMNCH_OBJ.setLongitude(BigDecimal.valueOf(benDetailsRMNCH_OBJ.getGpsLongitude()));
 
                         // -----------------------------------------------------------------------------
 
@@ -319,8 +391,15 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         if (benContactOBJ.getPreferredPhoneNum() != null)
                             benDetailsRMNCH_OBJ.setContact_number(benContactOBJ.getPreferredPhoneNum());
 
-                        if (benDetailsOBJ.getDob() != null)
+                        if (benDetailsOBJ.getDob() != null) {
                             benDetailsRMNCH_OBJ.setDob(benDetailsOBJ.getDob());
+                        } else {
+                            // i_beneficiarydetails.dob is null for Stop TB mobile registrations
+                            // (Identity-API mapper commented out) — fall back to i_ben_flow_outreach.ben_dob
+                            List<BenFlowStatus> flows = benFlowStatusRepo.findByBeneficiaryRegID(m.getBenRegId().longValue());
+                            if (!flows.isEmpty() && flows.get(0).getDob() != null)
+                                benDetailsRMNCH_OBJ.setDob(flows.get(0).getDob());
+                        }
                         if (benDetailsOBJ.getFatherName() != null)
                             benDetailsRMNCH_OBJ.setFatherName(benDetailsOBJ.getFatherName());
                         if (benDetailsOBJ.getFirstName() != null)
@@ -363,9 +442,9 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         String ageDetails = "";
                         int age_val = 0;
                         String ageUnit = null;
-                        if (benDetailsOBJ.getDob() != null) {
+                        if (benDetailsRMNCH_OBJ.getDob() != null) {
 
-                            Date date = new Date(benDetailsOBJ.getDob().getTime());
+                            Date date = new Date(benDetailsRMNCH_OBJ.getDob().getTime());
                             Calendar cal = Calendar.getInstance();
 
                             cal.setTime(date);
@@ -438,7 +517,81 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                                 ? benDetailsRMNCH_OBJ.getIsDeactivate()
                                 : false
                         );
+                        resultMap.put("economicStatus",benDetailsOBJ.getEconomicStatus());
+                        resultMap.put("economicStatusId",benDetailsOBJ.getEconomicStatusId());
+                        resultMap.put("residentialAreaId",benDetailsOBJ.getResidentialAreaId());
+                        resultMap.put("residentialArea",benDetailsOBJ.getResidentialArea());
+                        resultMap.put("address",benDetailsOBJ.getAddress());
+                        resultMap.put("updateDate", benDetailsOBJ.getLastModDate());
+                        resultMap.put("updatedBy", benDetailsOBJ.getModifiedBy());
                         resultMap.put("BenRegId", m.getBenRegId());
+
+                        // occupation from i_beneficiarydetails
+                        if (benDetailsOBJ != null && benDetailsOBJ.getOccupation() != null)
+                            benDetailsRMNCH_OBJ.setOccupation(benDetailsOBJ.getOccupation());
+
+                        // anthropometry from t_phy_anthropometry, vitals from t_phy_vitals
+                        // fallback to otherFields if exam not yet saved for this beneficiary
+                        Long benRegIdLong = m.getBenRegId() != null ? m.getBenRegId().longValue() : null;
+                        if (benRegIdLong != null) {
+                            List<BenAnthropometryDetail> anthroList =
+                                    benAnthropometryRepo.findByBeneficiaryRegIDOrderByCreatedDateDesc(benRegIdLong);
+                            List<BenPhysicalVitalDetail> vitalList =
+                                    benPhysicalVitalRepo.findByBeneficiaryRegIDOrderByCreatedDateDesc(benRegIdLong);
+
+                            Map<String, Object> anthropometry = new HashMap<>();
+                            if (!anthroList.isEmpty()) {
+                                BenAnthropometryDetail anthro = anthroList.get(0);
+                                if (anthro.getHeightCm() != null) anthropometry.put("height", anthro.getHeightCm());
+                                if (anthro.getWeightKg() != null) anthropometry.put("weight", anthro.getWeightKg());
+                                if (anthro.getBmi()      != null) anthropometry.put("bmi",    anthro.getBmi());
+                            }
+                            if (!vitalList.isEmpty()) {
+                                BenPhysicalVitalDetail vital = vitalList.get(0);
+                                if (vital.getTemperature()        != null) anthropometry.put("temperatureValue",    vital.getTemperature());
+                                if (vital.getPulseRate()          != null) anthropometry.put("pulseRate",           vital.getPulseRate());
+                                if (vital.getSystolicBP()         != null) anthropometry.put("systolicBP",          vital.getSystolicBP());
+                                if (vital.getDiastolicBP()        != null) anthropometry.put("diastolicBP",         vital.getDiastolicBP());
+                                if (vital.getBloodGlucoseRandom() != null) anthropometry.put("bloodGlucoseRandom",  vital.getBloodGlucoseRandom());
+                            }
+
+                            // fallback: if no exam saved yet, read from registration otherFields
+                            if (anthropometry.isEmpty() && benDetailsOBJ != null && benDetailsOBJ.getOtherFields() != null) {
+                                try {
+                                    Map<?, ?> extraFields = new Gson().fromJson(benDetailsOBJ.getOtherFields(), Map.class);
+                                    if (extraFields.containsKey("weight")) anthropometry.put("weight", extraFields.get("weight"));
+                                    if (extraFields.containsKey("height")) anthropometry.put("height", extraFields.get("height"));
+                                    if (extraFields.containsKey("bmi"))    anthropometry.put("bmi",    extraFields.get("bmi"));
+                                    if (extraFields.containsKey("temperatureValue")) anthropometry.put("temperatureValue", extraFields.get("temperatureValue"));
+                                } catch (Exception ex) {
+                                    logger.warn("Could not parse otherFields for fallback anthropometry: " + benDetailsOBJ.getBeneficiaryDetailsId());
+                                }
+                            }
+                            if (!anthropometry.isEmpty()) resultMap.put("anthropometry", anthropometry);
+                        }
+
+                        // Stop TB fields from ExtraFields
+                        Map<String, Object> stopTBDetails = new HashMap<>();
+                        if (benDetailsOBJ != null && benDetailsOBJ.getOtherFields() != null) {
+                            try {
+                                Map<?, ?> extraFields = new Gson().fromJson(benDetailsOBJ.getOtherFields(), Map.class);
+
+                                if (extraFields.containsKey("personFrom")) stopTBDetails.put("personFrom", extraFields.get("personFrom"));
+                                if (extraFields.containsKey("caseFindingType")) stopTBDetails.put("caseFindingType", extraFields.get("caseFindingType"));
+                                if (extraFields.containsKey("isMobileAvailable")) stopTBDetails.put("isMobileAvailable", extraFields.get("isMobileAvailable"));
+                                if (extraFields.containsKey("tuId")) stopTBDetails.put("tuId", extraFields.get("tuId"));
+                                if (extraFields.containsKey("tuName")) stopTBDetails.put("tuName", extraFields.get("tuName"));
+
+                                // economicStatus and residentialArea into beneficiaryDetails
+                                if (extraFields.containsKey("economicStatus")) benDetailsRMNCH_OBJ.setEconomicStatus((String) extraFields.get("economicStatus"));
+                                if (extraFields.containsKey("economicStatusId")) benDetailsRMNCH_OBJ.setEconomicStatusId(((Number) extraFields.get("economicStatusId")).intValue());
+                                if (extraFields.containsKey("residentialArea")) benDetailsRMNCH_OBJ.setResidentialArea((String) extraFields.get("residentialArea"));
+                                if (extraFields.containsKey("residentialAreaId")) benDetailsRMNCH_OBJ.setResidentialAreaId(((Number) extraFields.get("residentialAreaId")).intValue());
+                            } catch (Exception ex) {
+                                logger.warn("Could not parse ExtraFields for benDetailsId: " + benDetailsOBJ.getBeneficiaryDetailsId());
+                            }
+                        }
+                        if (!stopTBDetails.isEmpty()) resultMap.put("stopTBDetails", stopTBDetails);
 
                         // adding asha id / created by - user id
                         if (benAddressOBJ.getCreatedBy() != null) {

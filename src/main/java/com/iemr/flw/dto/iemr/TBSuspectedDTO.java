@@ -8,6 +8,8 @@ import java.sql.Timestamp;
 public class TBSuspectedDTO {
 
     private Long id;
+    private Timestamp updateDate;
+    private String updatedBy;
 
     private Long benId;
     private String visitLabel;

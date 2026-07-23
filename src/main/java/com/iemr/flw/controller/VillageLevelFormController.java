@@ -45,108 +45,132 @@ public class VillageLevelFormController {
     @RequestMapping(value = "vhnd/saveAll",method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> saveVhndForm(@RequestBody VhndDto dto) {
         Map<String, Object> response = new HashMap<>();
-        if (!dto.getEntries().isEmpty()) {
-            Boolean isSaved = villageLevelFormService.saveForm(dto);
-            boolean ok = isSaved;
-            response.put("status", ok ? "Success" : "Fail");
-            response.put("statusCode", ok ? 200 : 500);
-            response.put("message", "Save Successfully");
-            return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+        try {
+            if (!dto.getEntries().isEmpty()) {
+                Boolean isSaved = villageLevelFormService.saveForm(dto);
+                boolean ok = isSaved;
+                response.put("status", ok ? "Success" : "Fail");
+                response.put("statusCode", ok ? 200 : 500);
+                response.put("message", "Save Successfully");
+                return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
 
-        } else {
+            } else {
+                response.put("status", "Fail");
+                response.put("statusCode", 400);
+                response.put("message", "Invalid Request Object");
+                return ResponseEntity.ok(response);
+
+            }
+        } catch (Exception e) {
             response.put("status", "Fail");
-            response.put("statusCode", 400);
-            response.put("message", "Invalid Request Object");
-            return ResponseEntity.ok(response);
-
+            response.put("statusCode", 500);
+            response.put("errorMessage", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-
     }
 
     @RequestMapping(value = "vhnc/saveAll", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> saveVhncForm(@RequestBody VhncDto dto) {
         Map<String, Object> response = new HashMap<>();
 
-        if (!dto.getEntries().isEmpty()) {
-            Boolean isSaved = villageLevelFormService.saveVhncForm(dto);
-            boolean ok = isSaved;
-            response.put("status", ok ? "Success" : "Fail");
-            response.put("statusCode", ok ? 200 : 500);
-            response.put("message", "Save Successfully");
-            return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
-        } else {
+        try {
+            if (!dto.getEntries().isEmpty()) {
+                Boolean isSaved = villageLevelFormService.saveVhncForm(dto);
+                boolean ok = isSaved;
+                response.put("status", ok ? "Success" : "Fail");
+                response.put("statusCode", ok ? 200 : 500);
+                response.put("message", "Save Successfully");
+                return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+            } else {
+                response.put("status", "Fail");
+                response.put("statusCode", 400);
+                response.put("message", "Invalid Request Object");
+                return ResponseEntity.ok(response);
+            }
+        } catch (Exception e) {
             response.put("status", "Fail");
-            response.put("statusCode", 400);
-            response.put("message", "Invalid Request Object");
-            return ResponseEntity.ok(response);
-
-
+            response.put("statusCode", 500);
+            response.put("errorMessage", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-
     }
 
     @RequestMapping(value = "phc/saveAll", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> savePhcForm(@RequestBody PhcReviewMeetingDTO dto) {
         Map<String, Object> response = new HashMap<>();
 
-        if (!dto.getEntries().isEmpty()) {
-            Boolean isSaved = villageLevelFormService.savePhcForm(dto);
-            boolean ok = isSaved;
-            response.put("status", ok ? "Success" : "Fail");
-            response.put("statusCode", ok ? 200 : 500);
-            response.put("message", "Save Successfully");
-            return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
-        } else {
+        try {
+            if (!dto.getEntries().isEmpty()) {
+                Boolean isSaved = villageLevelFormService.savePhcForm(dto);
+                boolean ok = isSaved;
+                response.put("status", ok ? "Success" : "Fail");
+                response.put("statusCode", ok ? 200 : 500);
+                response.put("message", "Save Successfully");
+                return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+            } else {
+                response.put("status", "Fail");
+                response.put("statusCode", 400);
+                response.put("message", "Invalid Request Object");
+                return ResponseEntity.ok(response);
+            }
+        } catch (Exception e) {
             response.put("status", "Fail");
-            response.put("statusCode", 400);
-            response.put("message", "Invalid Request Object");
-            return ResponseEntity.ok(response);
-
+            response.put("statusCode", 500);
+            response.put("errorMessage", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-
     }
 
     @RequestMapping(value = "ahd/saveAll", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> saveAhdForm(@RequestBody AhdMeetingDto dto) {
         Map<String, Object> response = new HashMap<>();
 
-        if(!dto.getEntries().isEmpty()){
-            Boolean isSaved = villageLevelFormService.saveAhdForm(dto);
-            boolean ok = isSaved;
-            response.put("status", ok ? "Success" : "Fail");
-            response.put("statusCode", ok ? 200 : 500);
-            response.put("message", "Save Successfully");
-            return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
-        }else {
+        try {
+            if(!dto.getEntries().isEmpty()){
+                Boolean isSaved = villageLevelFormService.saveAhdForm(dto);
+                boolean ok = isSaved;
+                response.put("status", ok ? "Success" : "Fail");
+                response.put("statusCode", ok ? 200 : 500);
+                response.put("message", "Save Successfully");
+                return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+            }else {
+                response.put("status", "Fail");
+                response.put("statusCode", 400);
+                response.put("message", "Invalid Request Object");
+                return ResponseEntity.ok(response);
+            }
+        } catch (Exception e) {
             response.put("status", "Fail");
-            response.put("statusCode", 400);
-            response.put("message", "Invalid Request Object");
-            return ResponseEntity.ok(response);
+            response.put("statusCode", 500);
+            response.put("errorMessage", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
     }
 
     @RequestMapping(value = "deworming/saveAll", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> saveDewormingForm(@RequestBody DewormingDto dto) {
         Map<String, Object> response = new HashMap<>();
 
-        if(!dto.getEntries().isEmpty()){
-            Boolean isSaved = villageLevelFormService.saveDewormingForm(dto);
-            boolean ok = isSaved;
-            response.put("status", ok ? "Success" : "Fail");
-            response.put("statusCode", ok ? 200 : 500);
-            response.put("message", "Save Successfully");
-            return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
-        }else {
+        try {
+            if(!dto.getEntries().isEmpty()){
+                Boolean isSaved = villageLevelFormService.saveDewormingForm(dto);
+                boolean ok = isSaved;
+                response.put("status", ok ? "Success" : "Fail");
+                response.put("statusCode", ok ? 200 : 500);
+                response.put("message", "Save Successfully");
+                return new ResponseEntity<>(response, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+            }else {
+                response.put("status", "Fail");
+                response.put("statusCode", 400);
+                response.put("message", "Invalid Request Object");
+                return ResponseEntity.ok(response);
+            }
+        } catch (Exception e) {
             response.put("status", "Fail");
-            response.put("statusCode", 400);
-            response.put("message", "Invalid Request Object");
-            return ResponseEntity.ok(response);
+            response.put("statusCode", 500);
+            response.put("errorMessage", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
     }
 
 

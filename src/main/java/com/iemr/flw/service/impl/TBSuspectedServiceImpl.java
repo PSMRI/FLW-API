@@ -2,12 +2,16 @@ package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.iemr.flw.domain.iemr.BenVisitDetail;
 import com.iemr.flw.domain.iemr.TBSuspected;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.TBSuspectedDTO;
 import com.iemr.flw.dto.iemr.TBSuspectedRequestDTO;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.TBSuspectedRepo;
 import com.iemr.flw.service.IncentiveLogicService;
+import com.iemr.flw.service.CampConfigService;
+import com.iemr.flw.service.TBStopVisitService;
 import com.iemr.flw.service.TBSuspectedService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -25,6 +29,12 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
     private final ModelMapper modelMapper = new ModelMapper();
     @Autowired
     private TBSuspectedRepo tbSuspectedRepo;
+    @Autowired
+    private CampConfigService campConfigService;
+    @Autowired
+    private TBStopVisitService tbStopVisitService;
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
 
     @Autowired
     private IncentiveLogicService incentiveLogicService;
@@ -36,10 +46,15 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
 
     @Override
     public String save(TBSuspectedRequestDTO requestDTO) throws Exception {
-        requestDTO.getTbSuspectedList().forEach(tbSuspectedDTO ->
-        {
+        Integer vanID = campConfigService.getVanID();
+        Integer parkingPlaceID = campConfigService.getParkingPlaceID();
+        for (TBSuspectedDTO tbSuspectedDTO : requestDTO.getTbSuspectedList()) {
+            Long beneficiaryRegID = beneficiaryRepo.getRegIDFromBenId(tbSuspectedDTO.getBenId());
+            BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, null,
+                    requestDTO.getUserId() != null ? requestDTO.getUserId().toString() : null, vanID, parkingPlaceID);
+
             TBSuspected tbSuspected =
-                    tbSuspectedRepo.getByUserIdAndBenId(tbSuspectedDTO.getBenId(), requestDTO.getUserId());
+                    tbSuspectedRepo.getByUserIdAndBenIdAndVisitCode(tbSuspectedDTO.getBenId(), requestDTO.getUserId(), visit.getVisitCode());
 
             if (tbSuspected == null) {
                 tbSuspected = new TBSuspected();
@@ -52,7 +67,11 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
             }
 
             tbSuspected.setUserId(requestDTO.getUserId());
+            tbSuspected.setVisitCode(visit.getVisitCode());
+            if (tbSuspected.getVanID() == null && vanID != null) { tbSuspected.setVanID(vanID); tbSuspected.setParkingPlaceID(parkingPlaceID); }
+            tbSuspected.setProcessed("N");
             tbSuspectedRepo.save(tbSuspected);
+            tbSuspectedRepo.updateVanSerialNo(tbSuspected.getId());
             if(tbSuspected!=null){
                 if(tbSuspected.getIsConfirmed()){
                     incentiveLogicService.incentiveForTbSuspected(tbSuspected.getBenId(),tbSuspected.getVisitDate(),tbSuspected.getVisitDate(),tbSuspected.getUserId());
@@ -60,17 +79,21 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
                 }
 
             }
-
-        });
+        }
         return "no of tb suspected items saved:" + requestDTO.getTbSuspectedList().size();
     }
 
     @Override
     public String getByUserId(GetBenRequestHandler request) {
         List<TBSuspectedDTO> dtos = new ArrayList<>();
-        List<TBSuspected> tbSuspectedList = tbSuspectedRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
-        tbSuspectedList.forEach(tbSuspected -> {
-            dtos.add(modelMapper.map(tbSuspected, TBSuspectedDTO.class));
+        List<TBSuspected> tbSuspectedList = request.getProviderServiceMapID() != null
+                ? tbSuspectedRepo.getByProviderServiceMapIdAndVillageId(request.getProviderServiceMapID(), request.getVillageID())
+                : tbSuspectedRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
+        for (TBSuspected tbSuspected : tbSuspectedList) {
+            TBSuspectedDTO dto = modelMapper.map(tbSuspected, TBSuspectedDTO.class);
+            dto.setUpdateDate(tbSuspected.getLastModDate());
+            dto.setUpdatedBy(tbSuspected.getModifiedBy());
+            dtos.add(dto);
 
             if (tbSuspected != null && Boolean.TRUE.equals(tbSuspected.getIsConfirmed())) {
                 incentiveLogicService.incentiveForTbSuspected(
@@ -80,7 +103,7 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
                         tbSuspected.getUserId()
                 );
             }
-        });
+        }
         TBSuspectedRequestDTO tbSuspectedRequestDTO = new TBSuspectedRequestDTO();
         tbSuspectedRequestDTO.setTbSuspectedList(dtos);
         tbSuspectedRequestDTO.setUserId(request.getAshaId());

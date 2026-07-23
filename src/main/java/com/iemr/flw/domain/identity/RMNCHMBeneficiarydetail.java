@@ -190,4 +190,27 @@ public class RMNCHMBeneficiarydetail {
 	@Column(name = "familyid")
 	private String familyId;
 
+	@Column(name = "ExtraFields")
+	private String otherFields;
+
+	@Expose
+	@Column(name = "economicStatus")
+	private String economicStatus;
+
+	@Expose
+	@Column(name = "economicStatusId")
+	private Integer economicStatusId;
+
+	@Expose
+	@Column(name = "residentialArea")
+	private String  residentialArea;
+
+	@Expose
+	@Column(name = "residentialAreaId")
+	private Integer  residentialAreaId;
+
+	@Expose
+	@Column(name = "address")
+	private String address;
+
 }

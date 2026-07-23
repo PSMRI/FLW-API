@@ -3,6 +3,7 @@ package com.iemr.flw.service.impl;
 import com.google.gson.Gson;
 import com.iemr.flw.controller.AbhaBeneficiaryController;
 import com.iemr.flw.domain.iemr.AbhaApiResponse;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiarymapping;
 import com.iemr.flw.dto.abhaBeneficiary.AbhaBeneficiaryDTO;
 import com.iemr.flw.dto.iemr.AbhaRequestDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
@@ -55,7 +56,10 @@ public class AbhaBeneficiaryServiceImpl implements AbhaBeneficiaryService {
             if(request.getHouseHoldId()!=null){
                 benRedId = beneficiaryRepo.findByHouseoldId(request.getHouseHoldId()).get(0).getBenRegId();
                 if(benRedId!=null){
-                    benDetailsdId = beneficiaryRepo.findByBenRegIdFromMapping(BigInteger.valueOf(benRedId)).getBenDetailsId();
+                    List<RMNCHMBeneficiarymapping> mappings = beneficiaryRepo.findByBenRegIdFromMapping(BigInteger.valueOf(benRedId));
+                    if (!mappings.isEmpty()) {
+                        benDetailsdId = mappings.get(0).getBenDetailsId();
+                    }
 
                 }
                 if(benDetailsdId!=null){

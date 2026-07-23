@@ -2,12 +2,20 @@ package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.iemr.flw.domain.iemr.DynamicForm;
 import com.iemr.flw.domain.iemr.TBConfirmedCaseDTO;
 import com.iemr.flw.domain.iemr.TBConfirmedCase;
+import com.iemr.flw.domain.iemr.BenVisitDetail;
 import com.iemr.flw.dto.iemr.TBConfirmedCasesResponseDTO;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
+import com.iemr.flw.repo.iemr.DynamicFormRepo;
+import com.iemr.flw.repo.iemr.FormResponseRepo;
 import com.iemr.flw.repo.iemr.TBConfirmedTreatmentRepository;
+import com.iemr.flw.seeder.TbCounsellingFormSeeder;
 import com.iemr.flw.service.IncentiveLogicService;
+import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.TBConfirmedCaseService;
+import com.iemr.flw.service.TBStopVisitService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.LocalDateAdapter;
 import com.iemr.flw.utils.response.OutputResponse;
@@ -18,7 +26,12 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +40,8 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
     private static final Logger logger = LoggerFactory.getLogger(TBConfirmedCaseServiceImpl.class);
 
     private final TBConfirmedTreatmentRepository repository;
+    private final FormResponseRepo formResponseRepo;
+    private final DynamicFormRepo dynamicFormRepo;
 
     @Autowired
     private IncentiveLogicService incentiveLogicService;
@@ -34,8 +49,22 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
     @Autowired
     private JwtUtil jwtUtil;
-    public TBConfirmedCaseServiceImpl(TBConfirmedTreatmentRepository repository) {
+
+    @Autowired
+    private CampConfigService campConfigService;
+
+    @Autowired
+    private TBStopVisitService tbStopVisitService;
+
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
+
+    public TBConfirmedCaseServiceImpl(TBConfirmedTreatmentRepository repository,
+                                      FormResponseRepo formResponseRepo,
+                                      DynamicFormRepo dynamicFormRepo) {
         this.repository = repository;
+        this.formResponseRepo = formResponseRepo;
+        this.dynamicFormRepo = dynamicFormRepo;
     }
 
     @Override
@@ -45,11 +74,22 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         try {
             if (request != null) {
                 logger.info("Saving TB confirmed case: " + request);
+                Integer vanID = campConfigService.getVanID();
+                Integer parkingPlaceID = campConfigService.getParkingPlaceID();
 
-                TBConfirmedCase entity = new TBConfirmedCase();
                 for(TBConfirmedCaseDTO dto:request){
+                    String modifiedBy = jwtUtil.extractUsername(authorisation);
+                    Long beneficiaryRegID = beneficiaryRepo.getRegIDFromBenId(dto.getBenId());
+                    BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, null,
+                            modifiedBy, vanID, parkingPlaceID);
+
+                    List<TBConfirmedCase> existing = repository.findByBenIdAndVisitCode(dto.getBenId(), visit.getVisitCode());
+                    boolean isNew = existing.isEmpty();
+                    TBConfirmedCase entity = isNew ? new TBConfirmedCase() : existing.get(0);
                     entity.setBenId(dto.getBenId());
+                    entity.setVisitCode(visit.getVisitCode());
                     entity.setUserId(jwtUtil.extractUserId(authorisation));
+                    entity.setModifiedBy(modifiedBy);
                     entity.setRegimenType(dto.getRegimenType());
                     entity.setTreatmentStartDate(dto.getTreatmentStartDate());
                     entity.setExpectedTreatmentCompletionDate(dto.getExpectedTreatmentCompletionDate());
@@ -64,10 +104,12 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     entity.setPlaceOfDeath(dto.getPlaceOfDeath());
                     entity.setReasonForDeath(dto.getReasonForDeath());
                     entity.setReasonForNotCompleting(dto.getReasonForNotCompleting());
+                    if (entity.getVanID() == null && vanID != null) { entity.setVanID(vanID); entity.setParkingPlaceID(parkingPlaceID); }
+                    entity.setProcessed("N");
                     if(entity!=null){
-                        repository.save(entity);
+                        TBConfirmedCase saved = repository.save(entity);
+                        if (isNew) repository.updateVanSerialNo(saved.getId());
                         checkIncentive(entity);
-
                     }
                 }
 
@@ -144,22 +186,46 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
     @Override
     public String getByUserId(String authorisation) throws Exception {
-        TBConfirmedCasesResponseDTO tbConfirmedCasesResponseDTO = new TBConfirmedCasesResponseDTO();
         Integer userId = jwtUtil.extractUserId(authorisation);
         List<TBConfirmedCase> list = repository.findByUserId(userId);
-        tbConfirmedCasesResponseDTO.setUserId(userId);
-        tbConfirmedCasesResponseDTO.setTbConfirmedCases(list);
+        return buildTbConfirmedCasesResponse(userId, list);
+    }
+
+    @Override
+    public String getByProviderServiceMapId(Integer providerServiceMapID, Integer villageID) throws Exception {
+        List<TBConfirmedCase> list = repository.getByProviderServiceMapIdAndVillageId(providerServiceMapID, villageID);
+        return buildTbConfirmedCasesResponse(null, list);
+    }
+
+    private String buildTbConfirmedCasesResponse(Integer userId, List<TBConfirmedCase> list) {
+        List<TBConfirmedCaseDTO> dtoList = list.stream().map(this::toDTO).collect(Collectors.toList());
+
+        List<Long> benIds = dtoList.stream().map(TBConfirmedCaseDTO::getBenId).collect(Collectors.toList());
+        Set<Long> counselledBenIds = Collections.emptySet();
+        if (!benIds.isEmpty()) {
+            Optional<DynamicForm> counsellingForm = dynamicFormRepo.findByFormUuid(TbCounsellingFormSeeder.FORM_UUID);
+            if (counsellingForm.isPresent()) {
+                counselledBenIds = new HashSet<>(formResponseRepo.findCounselledBenIds(benIds, counsellingForm.get().getFormId(), "COMPLETE"));
+            }
+        }
+        final Set<Long> counselled = counselledBenIds;
+        dtoList.forEach(dto -> dto.setCounselled(counselled.contains(dto.getBenId())));
+
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("userId", userId);
+        response.put("tbConfirmedCases", dtoList);
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
+                .setDateFormat("MMM dd, yyyy h:mm:ss a")
                 .create();
-
-        return gson.toJson(tbConfirmedCasesResponseDTO);
+        return gson.toJson(response);
     }
 
     // Utility: convert entity -> DTO
     private TBConfirmedCaseDTO toDTO(TBConfirmedCase entity) {
         TBConfirmedCaseDTO dto = new TBConfirmedCaseDTO();
 
+        dto.setId(entity.getId());
         dto.setBenId(entity.getBenId());
         dto.setUserId(entity.getUserId());
         dto.setRegimenType(entity.getRegimenType());
@@ -176,6 +242,8 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         dto.setPlaceOfDeath(entity.getPlaceOfDeath());
         dto.setReasonForDeath(entity.getReasonForDeath());
         dto.setReasonForNotCompleting(entity.getReasonForNotCompleting());
+        dto.setUpdateDate(entity.getLastModDate());
+        dto.setUpdatedBy(entity.getModifiedBy());
 
         return dto;
     }

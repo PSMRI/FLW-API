@@ -102,6 +102,28 @@ public class RMNCHBeneficiaryDetailsRmnch {
 	@Column(name = "longitude")
 	private BigDecimal longitude;
 
+	@Column(name = "gpsLatitude")
+	private Double gpsLatitude;
+
+	@Column(name = "gpsLongitude")
+	private Double gpsLongitude;
+
+	@Expose
+	@Column(name = "digipin")
+	private String digipin;
+
+	@Expose
+	@Column(name = "gpsTimestamp")
+	private Timestamp gpsTimestamp;
+
+	@Expose
+	@Column(name = "isGpsUnavailable", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+	private Boolean isGpsUnavailable = false;
+
+	@Expose
+	@Column(name = "gpsUnavailableReason")
+	private String gpsUnavailableReason;
+
 	@Expose
 	@Column(name = "menstrualBFDId")
 	private Integer menstrualBFDId;
@@ -412,6 +434,9 @@ public class RMNCHBeneficiaryDetailsRmnch {
 	@Expose
 	@Transient
 	private String addressLine3;
+	@Expose
+	@Transient
+	private String pinCode;
 
 	// ----------------------------------------------
 
@@ -520,5 +545,32 @@ public class RMNCHBeneficiaryDetailsRmnch {
 	@Expose
 	@Column(name = "noOfDaysForDelivery")
 	private Integer noOfDaysForDelivery;
+
+	@Expose
+	@Transient
+	private String occupation;
+	@Expose
+	@Transient
+	private String economicStatus;
+	@Expose
+	@Transient
+	private Integer economicStatusId;
+	@Expose
+	@Transient
+	private String residentialArea;
+	@Expose
+	@Transient
+	private Integer residentialAreaId;
+
+	public String getOccupation() { return occupation; }
+	public void setOccupation(String occupation) { this.occupation = occupation; }
+	public String getEconomicStatus() { return economicStatus; }
+	public void setEconomicStatus(String economicStatus) { this.economicStatus = economicStatus; }
+	public Integer getEconomicStatusId() { return economicStatusId; }
+	public void setEconomicStatusId(Integer economicStatusId) { this.economicStatusId = economicStatusId; }
+	public String getResidentialArea() { return residentialArea; }
+	public void setResidentialArea(String residentialArea) { this.residentialArea = residentialArea; }
+	public Integer getResidentialAreaId() { return residentialAreaId; }
+	public void setResidentialAreaId(Integer residentialAreaId) { this.residentialAreaId = residentialAreaId; }
 
 }

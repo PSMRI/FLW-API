@@ -12,6 +12,16 @@
 
 		private Integer ashaId;
 
+	private Integer providerServiceMapID;
+
+	public Integer getProviderServiceMapID() {
+		return providerServiceMapID;
+	}
+
+	public void setProviderServiceMapID(Integer providerServiceMapID) {
+		this.providerServiceMapID = providerServiceMapID;
+	}
+
 		private Long activityId;
 
 		private Integer month;
@@ -80,6 +90,10 @@
 
 		public void setVillageID(Integer villageID) {
 			this.villageID = villageID;
+		}
+
+		public void setVillageId(Integer villageId) {
+			this.villageID = villageId;
 		}
 
 		public Timestamp getFromDate() {
