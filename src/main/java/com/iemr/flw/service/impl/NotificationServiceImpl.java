@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.iemr.flw.domain.iemr.Notification;
 import com.iemr.flw.dto.iemr.NotificationListDTO;
 import com.iemr.flw.repo.iemr.NotificationRepository;
+import com.iemr.flw.repo.iemr.UserFcmTokenRepo;
 import com.iemr.flw.service.NotificationService;
 import com.iemr.flw.utils.JwtUtil;
 import jakarta.servlet.http.Cookie;
@@ -45,6 +46,9 @@ public class NotificationServiceImpl implements NotificationService {
     @Autowired
     private NotificationRepository notificationRepository;
 
+    @Autowired
+    private UserFcmTokenRepo userFcmTokenRepo;
+
 
     private String NOTIFICATION_URL = commonApiBaseUrl+notificationurl;
 
@@ -53,6 +57,7 @@ public class NotificationServiceImpl implements NotificationService {
             String authHeader = null;
             String jwtToken = null;
             Integer senderId = jwtUtil.extractUserId(jwtToken);
+            String token = userFcmTokenRepo.findByUserId(reciverID).getToken();
 
             // Check if we have HTTP request context
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
@@ -84,7 +89,7 @@ public class NotificationServiceImpl implements NotificationService {
 
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("appType", appType);
-            requestBody.put("token", topic);
+            requestBody.put("token", token);
             requestBody.put("title", title);
             requestBody.put("body", body);
 
