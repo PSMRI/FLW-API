@@ -57,7 +57,7 @@ public class NotificationServiceImpl implements NotificationService {
             String authHeader = null;
             String jwtToken = null;
             Integer senderId = jwtUtil.extractUserId(jwtToken);
-            String token = userFcmTokenRepo.findByUserId(reciverID).getToken();
+            String token = userFcmTokenRepo.findByUserId(984).getToken();
 
             // Check if we have HTTP request context
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
