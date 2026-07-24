@@ -171,18 +171,32 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     /** Paged list of a user's notifications, newest first, with unread count attached. */
-    public NotificationListDTO getNotifications(Integer receiverUserId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate"));
+    public NotificationListDTO getNotifications(Integer receiverUserId) {
+
+        int page = 0;   // First page
+        int size = 20;  // Records per page
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdDate")
+        );
+
         Page<Notification> result =
-                notificationRepository.findByReceiverUserIdOrderByCreatedDateDesc(receiverUserId, pageable);
-        long unreadCount = notificationRepository.countByReceiverUserIdAndIsReadFalse(receiverUserId);
+                notificationRepository.findByReceiverUserIdOrderByCreatedDateDesc(
+                        receiverUserId,
+                        pageable
+                );
+
+        long unreadCount =
+                notificationRepository.countByReceiverUserIdAndIsReadFalse(receiverUserId);
 
         return new NotificationListDTO(
                 result.getContent(),
                 unreadCount,
                 result.getTotalElements(),
-                page,
-                size
+                result.getNumber(),
+                result.getSize()
         );
     }
 

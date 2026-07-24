@@ -3,6 +3,7 @@ package com.iemr.flw.controller;
 import com.iemr.flw.dto.iemr.NotificationListDTO;
 import com.iemr.flw.dto.iemr.SendNotificationRequestDTO;
 import com.iemr.flw.service.NotificationService;
+import com.iemr.flw.utils.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,21 +17,21 @@ import java.util.Map;
 public class NotificationController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Autowired
     private NotificationService notificationService;
 
     /** GET /notifications/{receiverUserId}?page=0&size=20 */
-    @GetMapping("/{receiverUserId}")
-    public Map<String, Object> listNotifications(
-            @PathVariable Integer receiverUserId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    @PostMapping("/list")
+    public Map<String, Object> listNotifications(@RequestHeader(value = "JwtToken") String token) {
         Map<String, Object> response = new HashMap<>();
         try {
+            Integer receiverUserId = jwtUtil.extractUserId(token);
             if (receiverUserId != null) {
                 NotificationListDTO notificationListDTO =
-                        notificationService.getNotifications(receiverUserId, page, size);
+                        notificationService.getNotifications(receiverUserId);
 
                 if (notificationListDTO != null) {
                     response.put("statusCode", 200);
@@ -56,6 +57,7 @@ public class NotificationController {
     public Map<String, Object> unreadCount(@PathVariable Integer receiverUserId) {
         Map<String, Object> response = new HashMap<>();
         try {
+
             if (receiverUserId != null) {
                 Long unreadCount = notificationService.getUnreadCount(receiverUserId);
 
