@@ -22,6 +22,8 @@ public class DiagnosticOrderRequestDto {
 
     private String orderEvent;
 
+    private String reasonForRefusal;
+
     @NotNull
     @Valid
     private PatientDto patient;
