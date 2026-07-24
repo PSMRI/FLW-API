@@ -56,8 +56,8 @@ public class NotificationServiceImpl implements NotificationService {
                                    String body, String redirect,
                                    String notificationType, Integer receiverId) {
 
-        logger.info("Initiating notification. appType={}, receiverId={}, type={}",
-                appType, receiverId, notificationType);
+        logger.info("Initiating notification. appType={}, receiverId={}, type={} , commonApiBaseUrl={}",
+                appType, receiverId, notificationType,commonApiBaseUrl);
 
         try {
             String authHeader = null;
