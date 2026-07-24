@@ -138,26 +138,51 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
             Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
             logger.info("Asha ID" + ashaIDs);
+            Integer stateId = userService.getUserDetail(supervisorUserID).getStateId();
 
-            List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
-            if (statusRows != null) {
-                for (Object[] sRow : statusRows) {
-                    long verified = ((Number) sRow[2]).longValue();
-                    long rejected = ((Number) sRow[3]).longValue();
-                    long pending = ((Number) sRow[4]).longValue();
+            if(stateId.equals(StateCode.AM.getStateCode())){
+                List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
+                if (statusRows != null) {
+                    for (Object[] sRow : statusRows) {
+                        long verified = ((Number) sRow[2]).longValue();
+                        long rejected = ((Number) sRow[3]).longValue();
+                        long pending = ((Number) sRow[4]).longValue();
 
-                    if (verified > 0) overallVerified += 1;
-                    if (rejected > 0) overallRejected += 1;
-                    if (pending > 0) overallPending += 1;
+                        if (verified > 0) overallVerified += 1;
+                        if (rejected > 0) overallRejected += 1;
+                        if (pending > 0) overallPending += 1;
+                    }
+                }
+                List<Object[]> unclaimedRows = dashboardRepo.getUnclaimedCountByAshaIds(ashaIDs, startDate, endDate);
+                if (unclaimedRows != null) {
+                    for (Object[] uRow : unclaimedRows) {
+                        long count = ((Number) uRow[1]).longValue();
+                        if (count > 0) overallUnclaimed += 1;
+                    }
+                }
+            }else  if(stateId.equals(StateCode.CG.getStateCode())){
+                List<Object[]> statusRows = dashboardRepo.getDefaultIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
+                if (statusRows != null) {
+                    for (Object[] sRow : statusRows) {
+                        long verified = ((Number) sRow[2]).longValue();
+                        long rejected = ((Number) sRow[3]).longValue();
+                        long pending = ((Number) sRow[4]).longValue();
+
+                        if (verified > 0) overallVerified += 1;
+                        if (rejected > 0) overallRejected += 1;
+                        if (pending > 0) overallPending += 1;
+                    }
+                }
+                List<Object[]> unclaimedRows = dashboardRepo.getUnclaimedCountByAshaIds(ashaIDs, startDate, endDate);
+                if (unclaimedRows != null) {
+                    for (Object[] uRow : unclaimedRows) {
+                        long count = ((Number) uRow[1]).longValue();
+                        if (count > 0) overallUnclaimed += 1;
+                    }
                 }
             }
-            List<Object[]> unclaimedRows = dashboardRepo.getUnclaimedCountByAshaIds(ashaIDs, startDate, endDate);
-            if (unclaimedRows != null) {
-                for (Object[] uRow : unclaimedRows) {
-                    long count = ((Number) uRow[1]).longValue();
-                    if (count > 0) overallUnclaimed += 1;
-                }
-            }
+
+
         } catch (Exception e) {
             logger.error("Error fetching incentive status: " + e.getMessage(), e);
         }

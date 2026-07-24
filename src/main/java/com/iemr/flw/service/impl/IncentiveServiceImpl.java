@@ -208,6 +208,16 @@ public class IncentiveServiceImpl implements IncentiveService {
             }
             if (stateCode.equals(StateCode.CG.getStateCode())) {
                 checkMonthlyAshaIncentiveForCg(request.getAshaId());
+                if(page==1){
+                    notificationService.sendNotification(
+                            "FLW",
+                            "user_" + request.getAshaId(),   // ya user ka topic
+                            "Hello ",
+                            "Test Notification",
+                            "","INCENTIVE_CLAIMED",request.getAshaId()
+                    );
+                }
+
 
             }
 
