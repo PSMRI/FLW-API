@@ -360,9 +360,16 @@ public class IncentiveServiceImpl implements IncentiveService {
                 : incentivesRepo.findValidActivityIds(activityIds, false);
 
         // Filter records based on valid activity IDs
-        records = records.stream()
-                .filter(r -> validActivityIds.contains(r.getActivityId()))
-                .collect(Collectors.toList());
+        if(isCG){
+            records = records.stream()
+                    .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
+                    .collect(Collectors.toList());
+        }else {
+            records = records.stream()
+                    .filter(r -> validActivityIds.contains(r.getActivityId()))
+                    .collect(Collectors.toList());
+        }
+
 
         Map<Long, List<IncentiveActivityRecord>> grouped =
                 records.stream().collect(Collectors.groupingBy(IncentiveActivityRecord::getActivityId));
