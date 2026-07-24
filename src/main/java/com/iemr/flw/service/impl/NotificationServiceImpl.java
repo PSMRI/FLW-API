@@ -49,7 +49,7 @@ public class NotificationServiceImpl implements NotificationService {
     private UserFcmTokenRepo userFcmTokenRepo;
 
 
-    private String NOTIFICATION_URL = "https://uatamrit.piramalswasthya.org/"+"firebaseNotification/sendNotification";
+    private String NOTIFICATION_URL = "https://uatamrit.piramalswasthya.org/common-api/"+"firebaseNotification/sendNotification";
 
     public String sendNotification(String appType, String topic, String title,
                                    String body, String redirect,
@@ -147,6 +147,7 @@ public class NotificationServiceImpl implements NotificationService {
             throw new RuntimeException("Failed to send notification.", ex);
         }
     }
+
 
         private void saveNotificationRecord(String appType, Integer senderUserId, Integer receiverUserId,
                                         String title, String body, String notificationType,
