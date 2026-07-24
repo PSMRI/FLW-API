@@ -49,7 +49,7 @@ public class NotificationServiceImpl implements NotificationService {
     private UserFcmTokenRepo userFcmTokenRepo;
 
 
-    private String NOTIFICATION_URL = commonApiBaseUrl+"firebaseNotification/sendNotification";
+    private String NOTIFICATION_URL = "https://uatamrit.piramalswasthya.org/"+"firebaseNotification/sendNotification";
 
     public String sendNotification(String appType, String topic, String title,
                                    String body, String redirect,
