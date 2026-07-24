@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/notifications")
+@RequestMapping("/notification")
 public class NotificationController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
