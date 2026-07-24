@@ -72,7 +72,7 @@ public class NotificationServiceImpl implements NotificationService {
 
             logger.debug("Sender Id: {}", senderId);
 
-            UserFcmTokenData tokenData = userFcmTokenRepo.findByUserId(984);
+            UserFcmTokenData tokenData = userFcmTokenRepo.findByUserId(4009);
 
             if (tokenData == null) {
                 logger.warn("FCM token not found for receiverId={}", receiverId);
