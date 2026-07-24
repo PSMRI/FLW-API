@@ -37,6 +37,7 @@ import java.util.Map;
 @Service
 public class NotificationServiceImpl implements NotificationService {
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+
     @Value("${common-api-base-url}")
     private String commonApiBaseUrl;
     @Autowired
@@ -49,7 +50,7 @@ public class NotificationServiceImpl implements NotificationService {
     private UserFcmTokenRepo userFcmTokenRepo;
 
 
-    private String NOTIFICATION_URL = "https://uatamrit.piramalswasthya.org/common-api/"+"firebaseNotification/sendNotification";
+    private String NOTIFICATION_URL = "firebaseNotification/sendNotification";
 
     public String sendNotification(String appType, String topic, String title,
                                    String body, String redirect,
@@ -72,7 +73,8 @@ public class NotificationServiceImpl implements NotificationService {
 
             logger.debug("Sender Id: {}", senderId);
 
-            UserFcmTokenData tokenData = userFcmTokenRepo.findByUserId(4009);
+
+            UserFcmTokenData tokenData = userFcmTokenRepo.findByUserId(receiverId);
 
             if (tokenData == null) {
                 logger.warn("FCM token not found for receiverId={}", receiverId);
@@ -98,7 +100,7 @@ public class NotificationServiceImpl implements NotificationService {
             Map<String, Object> dataMap = new HashMap<>();
             dataMap.put("notification_id", notificationType);
             dataMap.put("notification_type", notificationType);
-            dataMap.put("nav_id", "INCENTIVE_SCREEN");
+            dataMap.put("nav_id", redirect);
             dataMap.put("sender_user_id", senderId);
             dataMap.put("receiver_user_id", receiverId);
             dataMap.put("priority", "HIGH");
@@ -112,7 +114,7 @@ public class NotificationServiceImpl implements NotificationService {
             HttpEntity<Object> request = new HttpEntity<>(jsonRequest, headers);
 
             ResponseEntity<String> response = restTemplate.exchange(
-                    NOTIFICATION_URL,
+                    commonApiBaseUrl+NOTIFICATION_URL,
                     HttpMethod.POST,
                     request,
                     String.class);

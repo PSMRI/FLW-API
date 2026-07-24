@@ -36,6 +36,15 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			+ "AND asm.deleted = false", nativeQuery = true)
 	List<Object[]> getAshasWithFacilityInfo(@Param("supervisorUserID") Integer supervisorUserID);
 
+	@Query(value = """
+    SELECT asm.supervisorUserID
+    FROM asha_supervisor_mapping asm
+    WHERE asm.ashaUserID = :ashaUserID
+      AND asm.deleted = false
+    LIMIT 1
+    """, nativeQuery = true)
+	Integer getSupervisorUserIdByAshaId(@Param("ashaUserID") Integer ashaUserID);
+
 	// Unclaimed incentive count per ASHA
 	@Query(value = "SELECT iar.asha_id, "
 			+ "COUNT(*) AS unclaimedCount "

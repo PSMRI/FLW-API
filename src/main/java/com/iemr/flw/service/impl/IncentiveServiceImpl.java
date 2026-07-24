@@ -84,6 +84,9 @@ public class IncentiveServiceImpl implements IncentiveService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private SupervisorDashboardRepo dashboardRepo;
+
 
 
     // ================= MASTER SAVE =================
@@ -208,16 +211,6 @@ public class IncentiveServiceImpl implements IncentiveService {
             }
             if (stateCode.equals(StateCode.CG.getStateCode())) {
                 checkMonthlyAshaIncentiveForCg(request.getAshaId());
-                if(page==1){
-                    notificationService.sendNotification(
-                            "FLW",
-                            "user_" + request.getAshaId(),   // ya user ka topic
-                            "Hello ",
-                            "Test Notification",
-                            "","INCENTIVE_CLAIMED",request.getAshaId()
-                    );
-                }
-
 
             }
 
@@ -574,7 +567,6 @@ public class IncentiveServiceImpl implements IncentiveService {
     @Transactional
     public String updateClaimStatus(Integer ashaId, Integer month, Integer year, Boolean isClaimed, String token) {
         String title = null;
-        String body = null;
         try {
             LocalDate start = LocalDate.of(year, month, 1);
             LocalDate end = start.plusMonths(1);
@@ -598,18 +590,29 @@ public class IncentiveServiceImpl implements IncentiveService {
                 data.put("priority", "HIGH");
                 title = "Incentive Approved";
 
+
+
                 if (isClaimed) {
-                    body = "Your incentive claimed for " + Month.of(month).name() + " " + year;
+                 String body = "Your incentive Successfully claimed for month of" + Month.of(month).name() + " " + year;
+                    notificationService.sendNotification(
+                            "FLW","NA" ,
+                            title,
+                            body,
+                            "INCENTIVE_CLAIMED","INCENTIVE",ashaId
+                    );
+                }
+                if (isClaimed) {
+                  String  body = userService.getUserDetail(ashaId).getName()+" Successfully claimed Incentive for month of " + Month.of(month).name() + " " + year;
+                    notificationService.sendNotification(
+                            "FLW","NA" ,
+                            title,
+                            body,
+                            "INCENTIVE_CLAIMED","INCENTIVE",dashboardRepo.getSupervisorUserIdByAshaId(ashaId)
+                    );
                 }
 
 
-                notificationService.sendNotification(
-                        "FLW",
-                        "user_" + ashaId,   // ya user ka topic
-                        title,
-                        body,
-                        "","INCENTIVE_CLAIMED",ashaId
-                );
+
             }
 
             return updated > 0 ? "Success" : "No records";
