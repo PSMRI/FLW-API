@@ -13,6 +13,7 @@ public class DiagnosticOrderResultDto {
     private String providerStatus;
     private String resultSummary;
     private String errorMessage;
+    private String reasonForRefusal;
     private Boolean tbPresence;
     private Double tbConfidence;
     private Boolean drugResistancePresence;

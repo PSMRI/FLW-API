@@ -53,6 +53,9 @@ public class DiagnosticOrder {
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
+    @Column(name = "reason_for_refusal", columnDefinition = "TEXT")
+    private String reasonForRefusal;
+
     @Column(name = "push_response_json", columnDefinition = "LONGTEXT")
     private String pushResponseJson;
 

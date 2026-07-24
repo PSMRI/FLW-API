@@ -53,7 +53,7 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
     // is bucketed only by the retest, not both. o.benRegID already holds the beneficiaryId
     // (not a separate registration id), so it's matched against b.beneficiaryID, not b.beneficiaryRegID.
     @Query("SELECT o.benRegID FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
-            "AND o.testCompletedAt IS NULL " +
+            "AND o.testCompletedAt IS NULL AND o.status != 'REFUSED' " +
             "AND o.id = (SELECT MAX(o2.id) FROM DiagnosticOrder o2 " +
             "WHERE o2.benRegID = o.benRegID AND o2.orderType = :orderType AND o2.deleted = false) " +
             "AND o.benRegID IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
@@ -63,7 +63,7 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
             @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
 
     @Query("SELECT o.benRegID FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
-            "AND o.testCompletedAt IS NOT NULL AND o.status NOT IN ('COMPLETED', 'EXPIRED', 'FAILED') " +
+            "AND o.testCompletedAt IS NOT NULL AND o.status NOT IN ('COMPLETED', 'EXPIRED', 'FAILED', 'REFUSED') " +
             "AND o.id = (SELECT MAX(o2.id) FROM DiagnosticOrder o2 " +
             "WHERE o2.benRegID = o.benRegID AND o2.orderType = :orderType AND o2.deleted = false) " +
             "AND o.benRegID IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
@@ -103,22 +103,12 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
             @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
 
     @Query("SELECT o.benRegID FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
-            "AND o.status = 'EXPIRED' " +
+            "AND o.status = 'REFUSED' " +
             "AND o.id = (SELECT MAX(o2.id) FROM DiagnosticOrder o2 " +
             "WHERE o2.benRegID = o.benRegID AND o2.orderType = :orderType AND o2.deleted = false) " +
-            "AND o.benRegID IN (SELECT b.beneficiaryRegID FROM BenFlowStatus b WHERE b.deleted = false " +
+            "AND o.benRegID IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
             "AND (:villageId IS NULL OR b.villageID = :villageId) " +
             "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
-    List<Long> findBenRegIDsPollingTimedOut(@Param("orderType") String orderType,
-            @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
-
-    @Query("SELECT o.benRegID FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
-            "AND o.status = 'FAILED' " +
-            "AND o.id = (SELECT MAX(o2.id) FROM DiagnosticOrder o2 " +
-            "WHERE o2.benRegID = o.benRegID AND o2.orderType = :orderType AND o2.deleted = false) " +
-            "AND o.benRegID IN (SELECT b.beneficiaryRegID FROM BenFlowStatus b WHERE b.deleted = false " +
-            "AND (:villageId IS NULL OR b.villageID = :villageId) " +
-            "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
-    List<Long> findBenRegIDsFailed(@Param("orderType") String orderType,
+    List<Long> findBeneficiaryIdsRefused(@Param("orderType") String orderType,
             @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
 }
