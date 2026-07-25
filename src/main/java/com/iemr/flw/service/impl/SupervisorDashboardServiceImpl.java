@@ -475,19 +475,36 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                     if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
                         title = "Incentive Rejected";
-                        body = "Your incentive claim for " + Month.of(month).name() + " " + year + " has been rejected.";
+                        body = "Incentive claim for " + Month.of(month).name() + " " + year + " has been rejected.";
                         data.put("reason", reason == null ? "" : reason);
                         data.put("other_reason", otherReason == null ? "" : otherReason);
+
+                        notificationService.sendNotification(
+                                "FLW",
+                                "NA",   // ya user ka topic
+                                title,
+                                body+data,
+                                "INCENTIVE_REJECTED","INCENTIVE",ashaSupervisorUserId
+                        );
+                    }
+
+                    if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
+                        title = "Incentive Rejected";
+                        body = userService.getUserDetail(ashaSupervisorUserId).getName()+"is rejected your Incentive claim for " + Month.of(month).name() + " " + year;
+                        data.put("reason", reason == null ? "" : reason);
+                        data.put("other_reason", otherReason == null ? "" : otherReason);
+
+                        notificationService.sendNotification(
+                                "FLW",
+                                "NA",   // ya user ka topic
+                                title,
+                                body+data,
+                                "INCENTIVE_REJECTED","INCENTIVE",ashaId
+                        );
                     }
 
 
-                    notificationService.sendNotification(
-                            "FLW",
-                            "user_" + ashaId,   // ya user ka topic
-                            title,
-                            body+data,
-                            "","INCENTIVE_CLAIMED",ashaId
-                    );
+
                 }
                 return totalUpdated;
             }
@@ -514,17 +531,29 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 title = "Incentive Approved";
 
                 if (approvalStatus.equals(IncentiveApprovalStatus.VERIFIED.getCode())) {
-                    body = "Your incentive claim for " + Month.of(month).name() + " " + year + " has been approved.";
+                    body = "Incentive claim for " + Month.of(month).name() + " " + year + " has been approved.";
+                    notificationService.sendNotification(
+                            "FLW",
+                            "NA",   // ya user ka topic
+                            title,
+                            body,
+                            "INCENTIVE_CLAIMED","INCENTIVE",ashaSupervisorUserId
+                    );
+                }
+
+                if (approvalStatus.equals(IncentiveApprovalStatus.VERIFIED.getCode())) {
+                    body = userService.getUserDetail(ashaSupervisorUserId).getName()+"is approved Your incentive claim for " + Month.of(month).name() + " " + year + " has been approved.";
+                    notificationService.sendNotification(
+                            "FLW",
+                            "NA",   // ya user ka topic
+                            title,
+                            body,
+                            "INCENTIVE_CLAIMED","INCENTIVE",ashaId
+                    );
                 }
 
 
-                notificationService.sendNotification(
-                        "FLW",
-                        "user_" + ashaId,   // ya user ka topic
-                        title,
-                        body,
-                        "","INCENTIVE_CLAIMED",ashaId
-                );
+
             }
              return updatedCount;
         } catch (Exception e) {
