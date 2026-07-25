@@ -498,7 +498,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                 "FLW",
                                 "NA",   // ya user ka topic
                                 title,
-                                body+data,
+                                body,
                                 "INCENTIVE_REJECTED","INCENTIVE",ashaId
                         );
                     }
@@ -542,7 +542,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 }
 
                 if (approvalStatus.equals(IncentiveApprovalStatus.VERIFIED.getCode())) {
-                    body = userService.getUserDetail(ashaSupervisorUserId).getName()+"is approved Your incentive claim for " + Month.of(month).name() + " " + year + " has been approved.";
+                    body = userService.getUserDetail(ashaSupervisorUserId).getName()+"is approved Your incentive claim for " + Month.of(month).name() + " " + year;
                     notificationService.sendNotification(
                             "FLW",
                             "NA",   // ya user ka topic
