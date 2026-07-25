@@ -312,18 +312,26 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             List<IncentiveActivityRecord> incentiveActivityRecord = null;
              if(stateCode.equals(StateCode.AM.getStateCode())){
-                 incentiveActivityRecord=   incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate)
+                 List<IncentiveActivityRecord> dbRecords =
+                         incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate);
+                 incentiveActivityRecord=   dbRecords
                          .stream()
                          .filter(r -> approvalStatusID == 0 ||
                                  approvalStatusID.equals(r.getApprovalStatus()))
                          .collect(Collectors.toList());
              }else if(stateCode.equals(StateCode.CG.getStateCode())){
-                 incentiveActivityRecord=   incentiveRecordRepo.getDefalutRecordsByAsha(ashaId, startDate, endDate)
-                         .stream()
+                 List<IncentiveActivityRecord> dbRecords =
+                         incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate);
+
+                 incentiveActivityRecord = dbRecords.stream()
                          .filter(r -> approvalStatusID == 0 ||
                                  approvalStatusID.equals(r.getApprovalStatus()))
                          .collect(Collectors.toList());
+
+                 logger.info("CG - Records after approvalStatus filter: {}", incentiveActivityRecord.size());
+
              }
+            logger.info("Final incentiveActivityRecord count: {}", incentiveActivityRecord.size());
             List<Map<String, Object>> activityList = new ArrayList<>();
             for (IncentiveActivityRecord record : incentiveActivityRecord) {
                 Map<String, Object> activity = new HashMap<>();

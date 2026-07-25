@@ -37,6 +37,7 @@ public class AshaSupervisorIncentiveApproval {
             @RequestHeader(value = "JwtToken") String token) {
 
         try {
+            logger.info("getAshaListByFacility request{}",request.getFacilityId());
 
             if (token == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("UNAUTHORIZED");
@@ -71,6 +72,7 @@ public class AshaSupervisorIncentiveApproval {
     @PostMapping("/dashboard")
     public String getSupervisorDashboard(@RequestBody AshaByFacilityRequestDTO request,@RequestHeader(value = "JwtToken") String token ) {
         OutputResponse response = new OutputResponse();
+        logger.info("dashboard request{}",request.getFacilityId());
 
         try {
             if(token!=null){
