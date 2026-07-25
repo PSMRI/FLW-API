@@ -303,8 +303,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             Long totalAmount = null;
             if (userService.getUserDetail(ashaId) != null) {
                 Integer stateCode = userService.getUserDetail(ashaId).getStateId();
-                totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
-                        ashaId, startDate, endDate, approvalStatusID, stateCode);
+                if(stateCode.equals(StateCode.AM.getStateCode())){
+                    totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
+                            ashaId, startDate, endDate, approvalStatusID, stateCode);
+                }else if(stateCode.equals(StateCode.CG.getStateCode())){
+                    totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
+                            ashaId, startDate, endDate, approvalStatusID, stateCode);
+                }
+
 
             }
             Integer stateCode = userService.getUserDetail(ashaId).getStateId();
