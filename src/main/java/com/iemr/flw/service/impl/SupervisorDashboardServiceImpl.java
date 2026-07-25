@@ -341,14 +341,16 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 activity.put("approvalStatus", record.getApprovalStatus());
                 if(record.getVerifiedByUserId()!=null){
                     activity.put("verifiedByUserName", userService.getUserDetail(record.getVerifiedByUserId()).getName());
+                    activity.put("verifiedByUserId", record.getVerifiedByUserId());
+                    UserServiceRoleDTO roles = userService.getUserDetail(record.getVerifiedByUserId());
+                    activity.put("role", (roles != null ) ? roles.getRoleName() : null);
+
 
                 }
-                activity.put("verifiedByUserId", record.getVerifiedByUserId());
                 activity.put("isClaimed", record.getIsClaimed());
                 activity.put("claimedDate", record.getCalimedDate());
 
-                UserServiceRoleDTO roles = userService.getUserDetail(record.getVerifiedByUserId());
-                activity.put("role", (roles != null ) ? roles.getRoleName() : null);
+
 
                 activityList.add(activity);
             }
