@@ -325,7 +325,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                  incentiveActivityRecord = dbRecords.stream()
                          .filter(r -> approvalStatusID == 0 ||
-                                 approvalStatusID.equals(r.getApprovalStatus()))
+                                 approvalStatusID.equals(r.getApprovalStatus()) && r.getIsDefaultActivity())
                          .collect(Collectors.toList());
 
                  logger.info("CG - Records after approvalStatus filter: {}", incentiveActivityRecord.size());
