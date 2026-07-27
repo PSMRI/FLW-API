@@ -376,7 +376,12 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate);
 
                 }else  if(("ANM".equalsIgnoreCase(roleName)  || "CHO".equalsIgnoreCase(roleName) )){
+                    logger.info("ASHA_ID = {}", ashaId);
+                    logger.info("Role = {}", roleName);
+
                     countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
+
+                    logger.info("Count List = {}", countList);
 
                 }
 
@@ -384,6 +389,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
 
             }
+
             Long totalAmount = null;
             if (userService.getUserDetail(ashaId) != null) {
                 Integer stateCode = userService.getUserDetail(ashaId).getStateId();
