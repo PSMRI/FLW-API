@@ -590,120 +590,133 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             Integer ashaSupervisorUserId = jwtUtil.extractUserId(token);
             logger.info("Asha Supervisor User Id : {}", ashaSupervisorUserId);
-            String ashaSupervisorUsername = userService.getUserDetail(ashaSupervisorUserId).getUserName();
+            UserServiceRoleDTO ashaSupervisorDetails = userService.getUserDetail(ashaSupervisorUserId);
+
+            int updatedCount = 0;
 
             if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
-                int totalUpdated = 0;
-
-                totalUpdated += incentiveRecordRepo.updateApprovalStatusById(
+                updatedCount = incentiveRecordRepo.updateApprovalStatusById(
                         approvalStatus,
                         ashaSupervisorUserId,
-                        ashaSupervisorUsername,
+                        ashaSupervisorDetails.getUserName(),
                         reason,
                         approvalDate,
                         otherReason
                 );
-                if (totalUpdated > 0) {
+            } else {
 
-                    Map<String, String> data = new HashMap<>();
-                    data.put("notification_type", "INCENTIVE_APPROVAL");
-                    data.put("nav_id", "INCENTIVE_HISTORY");
-                    data.put("sender_user_id", String.valueOf(ashaSupervisorUserId));
-                    data.put("receiver_user_id", String.valueOf(ashaId));
-                    data.put("month", String.valueOf(month));
-                    data.put("year", String.valueOf(year));
-                    data.put("approval_status", String.valueOf(approvalStatus));
-                    data.put("priority", "HIGH");
+                if (ashaSupervisorDetails.getStateId().equals(StateCode.AM.getStateCode())) {
 
+                    updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
+                            ashaId, approvalStatus, startDate, endDate,
+                            approvalDate, ashaSupervisorUserId,
+                            ashaSupervisorDetails.getUserName());
 
+                } else {
 
-                    if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
-                        title = "Incentive Rejected";
-                        body = "Incentive claim for " + Month.of(month).name() + " " + year + " has been rejected.";
-                        data.put("reason", reason == null ? "" : reason);
-                        data.put("other_reason", otherReason == null ? "" : otherReason);
+                    if ("ASHA Supervisor".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())) {
 
-                        notificationService.sendNotification(
-                                "FLW",
-                                "NA",   // ya user ka topic
-                                title,
-                                body+data,
-                                "INCENTIVE_REJECTED","INCENTIVE",ashaSupervisorUserId
-                        );
+                        updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRangeForDefaultActivity(
+                                ashaId, approvalStatus, startDate, endDate,
+                                approvalDate, ashaSupervisorUserId,
+                                ashaSupervisorDetails.getUserName());
+
+                    } else {
+
+                        updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
+                                ashaId, approvalStatus, startDate, endDate,
+                                approvalDate, ashaSupervisorUserId,
+                                ashaSupervisorDetails.getUserName());
+
                     }
-
-                    if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
-                        title = "Incentive Rejected";
-                        body = userService.getUserDetail(ashaSupervisorUserId).getName()+"is rejected your Incentive claim for " + Month.of(month).name() + " " + year;
-                        data.put("reason", reason == null ? "" : reason);
-                        data.put("other_reason", otherReason == null ? "" : otherReason);
-
-                        notificationService.sendNotification(
-                                "FLW",
-                                "NA",   // ya user ka topic
-                                title,
-                                body,
-                                "INCENTIVE_REJECTED","INCENTIVE",ashaId
-                        );
-                    }
-
-
-
                 }
-                return totalUpdated;
             }
-            int updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
-                    ashaId,
-                    approvalStatus,
-                    startDate,
-                    endDate,
-                    approvalDate,
-                    ashaSupervisorUserId,
-                    ashaSupervisorUsername
-            );
+
             if (updatedCount > 0) {
-
-                Map<String, String> data = new HashMap<>();
-                data.put("notification_type", "INCENTIVE_APPROVAL");
-                data.put("nav_id", "INCENTIVE_HISTORY");
-                data.put("sender_user_id", String.valueOf(ashaSupervisorUserId));
-                data.put("receiver_user_id", String.valueOf(ashaId));
-                data.put("month", String.valueOf(month));
-                data.put("year", String.valueOf(year));
-                data.put("approval_status", String.valueOf(approvalStatus));
-                data.put("priority", "HIGH");
-                title = "Incentive Approved";
-
-                if (approvalStatus.equals(IncentiveApprovalStatus.VERIFIED.getCode())) {
-                    body = "Incentive claim for " + Month.of(month).name() + " " + year + " has been approved.";
-                    notificationService.sendNotification(
-                            "FLW",
-                            "NA",   // ya user ka topic
-                            title,
-                            body,
-                            "INCENTIVE_CLAIMED","INCENTIVE",ashaSupervisorUserId
-                    );
-                }
-
-                if (approvalStatus.equals(IncentiveApprovalStatus.VERIFIED.getCode())) {
-                    body = userService.getUserDetail(ashaSupervisorUserId).getName()+"is approved Your incentive claim for " + Month.of(month).name() + " " + year;
-                    notificationService.sendNotification(
-                            "FLW",
-                            "NA",   // ya user ka topic
-                            title,
-                            body,
-                            "INCENTIVE_CLAIMED","INCENTIVE",ashaId
-                    );
-                }
-
-
-
+                sendApprovalNotification(
+                        approvalStatus,
+                        ashaId,
+                        month,
+                        year,
+                        reason,
+                        otherReason,
+                        ashaSupervisorUserId,
+                        ashaSupervisorDetails
+                );
             }
-             return updatedCount;
+
+            return updatedCount;
+
         } catch (Exception e) {
             logger.error("Update claim :" + e.getMessage());
             e.printStackTrace();
             return 0;
+        }
+    }
+
+
+    private void sendApprovalNotification(
+            Integer approvalStatus,
+            Integer ashaId,
+            Integer month,
+            Integer year,
+            String reason,
+            String otherReason,
+            Integer supervisorId,
+            UserServiceRoleDTO supervisor) {
+
+        String title;
+        String body;
+
+        if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
+
+            title = "Incentive Rejected";
+
+            body = "Incentive claim for " + Month.of(month).name() + " " + year + " has been rejected.";
+
+            notificationService.sendNotification(
+                    "FLW", "NA",
+                    title,
+                    body,
+                    "INCENTIVE_REJECTED",
+                    "INCENTIVE",
+                    supervisorId);
+
+            body = supervisor.getName() + " has rejected your incentive claim for "
+                    + Month.of(month).name() + " " + year + "due to "+reason+" "+otherReason;
+
+            notificationService.sendNotification(
+                    "FLW", "NA",
+                    title,
+                    body,
+                    "INCENTIVE_REJECTED",
+                    "INCENTIVE",
+                    ashaId);
+
+        } else {
+
+            title = "Incentive Approved";
+
+            body = "Incentive claim for " + Month.of(month).name() + " " + year + " has been approved.";
+
+            notificationService.sendNotification(
+                    "FLW", "NA",
+                    title,
+                    body,
+                    "INCENTIVE_CLAIMED",
+                    "INCENTIVE",
+                    supervisorId);
+
+            body = supervisor.getName() + " has approved your incentive claim for "
+                    + Month.of(month).name() + " " + year;
+
+            notificationService.sendNotification(
+                    "FLW", "NA",
+                    title,
+                    body,
+                    "INCENTIVE_CLAIMED",
+                    "INCENTIVE",
+                    ashaId);
         }
     }
 
