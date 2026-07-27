@@ -448,10 +448,16 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                              .filter(r -> approvalStatusID == 0 ||
                                      approvalStatusID.equals(r.getApprovalStatus()) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
                              .collect(Collectors.toList());
-                 }else if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)){
+                 }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                      incentiveActivityRecord = dbRecords.stream()
                              .filter(r -> approvalStatusID == 0 ||
                                      approvalStatusID.equals(r.getApprovalStatus()) && isAfter24Hours(r.getCreatedDate()))
+                             .peek(r -> {
+                                 if (isAfter24Hours(r.getCreatedDate())
+                                         && r.getApprovalStatus().equals(102)) {
+                                     r.setApprovalStatus(104);
+                                 }
+                             })
                              .collect(Collectors.toList());
                  }
 
@@ -616,7 +622,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                             approvalDate, ashaSupervisorUserId,
                             ashaSupervisorDetails.getUserName());
 
-                } else {
+                } else if(ashaSupervisorDetails.getStateId().equals(StateCode.CG.getStateCode())){
 
                     if ("ASHA Supervisor".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())) {
 
