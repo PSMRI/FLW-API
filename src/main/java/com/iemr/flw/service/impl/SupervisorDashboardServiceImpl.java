@@ -78,7 +78,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         List<Object[]> ashaRows;
 
-        if ("ANM".equalsIgnoreCase(rollName)) {
+        if ("ANM".equalsIgnoreCase(rollName) || "CHO".equalsIgnoreCase(rollName)) {
 
             List<Integer> facilityIDs =
                     facilityLoginRepo.getUserFacilityIDs(supervisorUserID);
@@ -205,7 +205,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     }
                 }
             }else  if(stateId.equals(StateCode.CG.getStateCode())){
-                if(rollName.toLowerCase().equals("supervisor")){
+                if("ASHA Supervisor".equalsIgnoreCase(rollName)){
                     List<Object[]> statusRows = dashboardRepo.getDefaultIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
                     if (statusRows != null) {
                         for (Object[] sRow : statusRows) {
@@ -218,7 +218,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                             if (pending > 0) overallPending += 1;
                         }
                     }
-                }else if(rollName.equals("anm")){
+                }else if("ANM".equalsIgnoreCase(rollName)){
                     List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
                     if (statusRows != null) {
                         for (Object[] sRow : statusRows) {
@@ -309,23 +309,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         return result.toString();
     }
 
-    private JSONArray buildAshaList(List<Object[]> rows) {
-        JSONArray list = new JSONArray();
-        if (rows == null)
-            return list;
-        for (Object[] row : rows) {
-            JSONObject asha = new JSONObject();
-            asha.put("userId", row[0]);
-            asha.put("fullName", fullName(row[1], row[2]));
-            asha.put("employeeId", str(row[3]).isEmpty() ? JSONObject.NULL : str(row[3]));
-            asha.put("facilityId", row[4]);
-            asha.put("facilityName", str(row[5]));
-            asha.put("facilityType", str(row[6]));
-            asha.put("mobile", str(row[7]).isEmpty() ? JSONObject.NULL : str(row[7]));
-            list.put(asha);
-        }
-        return list;
-    }
+
 
     @Override
     public Map<String, Object> getAshasAtFacility(Integer supervisorId, Integer facilityId,
@@ -387,10 +371,10 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             List<Object[]> countList =null;
 
             if(supervisorstateCode.equals(StateCode.CG.getStateCode())){
-                if(roleName.toLowerCase().equals("asha supervisor") && today.getDayOfMonth() > 4){
+                if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                     countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate);
 
-                }else  if(roleName.toLowerCase().equals("anm") && today.getDayOfMonth() > 5){
+                }else  if(("ANM".equalsIgnoreCase(roleName)  || "CHO".equalsIgnoreCase(roleName) )){
                     countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
 
                 }
@@ -406,10 +390,10 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
                             ashaId, startDate, endDate, approvalStatusID, stateCode);
                 }else if(stateCode.equals(StateCode.CG.getStateCode())){
-                    if(roleName.toLowerCase().equals("asha supervisor") && today.getDayOfMonth() > 4){
+                    if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                         totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
                                 ashaId, startDate, endDate, approvalStatusID, stateCode);
-                    }else if(roleName.toLowerCase().equals("anm") && today.getDayOfMonth() > 5){
+                    }else if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName) ){
                         totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
                                 ashaId, startDate, endDate, approvalStatusID, stateCode);
                     }
@@ -433,12 +417,12 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
              }else if(stateCode.equals(StateCode.CG.getStateCode())){
                  List<IncentiveActivityRecord> dbRecords =
                          incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate);
-                 if(roleName.toLowerCase().equals("asha supervisor") && today.getDayOfMonth() > 4){
+                 if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                      incentiveActivityRecord = dbRecords.stream()
                              .filter(r -> approvalStatusID == 0 ||
                                      approvalStatusID.equals(r.getApprovalStatus()) && r.getIsDefaultActivity())
                              .collect(Collectors.toList());
-                 }else if(roleName.toLowerCase().equals("anm") && today.getDayOfMonth() > 5){
+                 }else if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)){
                      incentiveActivityRecord = dbRecords.stream()
                              .filter(r -> approvalStatusID == 0 ||
                                      approvalStatusID.equals(r.getApprovalStatus()))
