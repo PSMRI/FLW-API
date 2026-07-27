@@ -71,7 +71,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
     @Query("SELECT " +
             "SUM(CASE WHEN record.approvalStatus = 101 THEN 1 ELSE 0 END), " +
             "SUM(CASE WHEN record.approvalStatus = 102 THEN 1 ELSE 0 END), " +
-            "SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END) " +
+            "SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END), " +
             "SUM(CASE WHEN record.approvalStatus = 104 THEN 1 ELSE 0 END) " +
             "FROM IncentiveActivityRecord record " +
             "WHERE record.ashaId = :ashaId " +
@@ -87,7 +87,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
     @Query("SELECT " +
             "SUM(CASE WHEN record.approvalStatus = 101 THEN 1 ELSE 0 END), " +
             "SUM(CASE WHEN record.approvalStatus = 102 THEN 1 ELSE 0 END), " +
-            "SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END) " +
+            "SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END), " +
             "SUM(CASE WHEN record.approvalStatus = 104 THEN 1 ELSE 0 END) " +
             "FROM IncentiveActivityRecord record " +
             "WHERE record.ashaId = :ashaId " +
