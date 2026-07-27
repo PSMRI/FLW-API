@@ -19,32 +19,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
-package com.iemr.flw.dto.iemr;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.sql.Timestamp;
-import java.util.List;
+package com.iemr.flw.masterEnum;
 
 /**
- * Outbound representation of one section's response data.
+ * Exhaustive set of phases a form section can belong to.
+ * No other values may be stored in t_form_section.sectionPhase.
  *
  * @author Piramal Swasthya
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class SectionResponseDTO {
-
-    private Long sectionResponseId;
-    private Long sectionId;
-    private String sectionUuid;
-    private Boolean isEditable;
-    private String status;
-    private Timestamp savedAt;
-    private List<QuestionResponseDTO> answers;
+public enum SectionPhase {
+    /** Shown first, before PRE_SUBMIT sections. */
+    GENERAL_INFO,
+    /** Shown before the form's main submit. Saved via /submit. */
+    PRE_SUBMIT,
+    /** Shown after the main submit. Saved via /complete. */
+    POST_SUBMIT
 }
