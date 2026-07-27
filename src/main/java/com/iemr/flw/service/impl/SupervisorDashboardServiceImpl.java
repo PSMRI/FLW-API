@@ -104,11 +104,11 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         for (Object[] row : ashaRows) {
 
             logger.info(
-                    "Row Data -> row[0]={} ({}) | row[3]={} ({})",
+                    "Row Data -> row[0]={} ({}) | row[4]={} ({})",
                     row[0],
                     row[0] != null ? row[0].getClass().getName() : "null",
-                    row[3],
-                    row[3] != null ? row[3].getClass().getName() : "null"
+                    row[4],
+                    row[4] != null ? row[4].getClass().getName() : "null"
             );
 
             if (row[4] != null)
@@ -116,6 +116,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             if (row[0] != null)
                 ashaIDSet.add((Integer) row[0]);
+
         }
 
         List<Integer> facilityIDs = new ArrayList<>(facilityIDSet);
