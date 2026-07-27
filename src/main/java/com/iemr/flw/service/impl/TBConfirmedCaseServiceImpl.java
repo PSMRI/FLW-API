@@ -9,7 +9,7 @@ import com.iemr.flw.domain.iemr.BenVisitDetail;
 import com.iemr.flw.repo.iemr.DynamicFormRepo;
 import com.iemr.flw.repo.iemr.FormResponseRepo;
 import com.iemr.flw.repo.iemr.TBConfirmedTreatmentRepository;
-import com.iemr.flw.seeder.TbCounsellingV2FormSeeder;
+import com.iemr.flw.seeder.TbCounsellingFormSeeder;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.TBConfirmedCaseService;
 import com.iemr.flw.service.TBStopVisitService;
@@ -160,7 +160,7 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         List<Long> benIds = dtoList.stream().map(TBConfirmedCaseDTO::getBenId).collect(Collectors.toList());
         Set<Long> counselledBenIds = Collections.emptySet();
         if (!benIds.isEmpty()) {
-            Optional<DynamicForm> counsellingForm = dynamicFormRepo.findByFormUuid(TbCounsellingV2FormSeeder.FORM_UUID);
+            Optional<DynamicForm> counsellingForm = dynamicFormRepo.findByFormUuid(TbCounsellingFormSeeder.FORM_UUID);
             if (counsellingForm.isPresent()) {
                 counselledBenIds = new HashSet<>(formResponseRepo.findCounselledBenIds(benIds, counsellingForm.get().getFormId(), "COMPLETE"));
             }

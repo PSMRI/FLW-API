@@ -40,7 +40,7 @@ public class QuestionResponseDTO {
 
     private Long questionResponseId;
     private Long questionId;
-    /** Populated for RADIO, MCQ, and CHECKBOX answers. */
+    /** Populated for RADIO and MCQ answers. */
     private Long optionId;
     /** Populated for TEXT, DATE, AUTO_FILL answers. */
     private String answerText;

@@ -33,7 +33,6 @@ import java.util.List;
  * A single question's answer within a section answer request.
  * Exactly one of optionValue, optionValues, answerText, or answerDate should be set per question type:
  * RADIO      → optionValue (single string)
- * CHECKBOX   → optionValue (single string, e.g. "CHECKED")
  * MCQ        → optionValues (list of strings, one row saved per element)
  * TEXT/AUTO_FILL → answerText
  * DATE       → answerDate (ISO date string) or answerText

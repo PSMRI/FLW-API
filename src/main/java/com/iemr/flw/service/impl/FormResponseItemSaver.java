@@ -41,9 +41,7 @@ import com.iemr.flw.repo.iemr.QuestionOptionRepo;
 import com.iemr.flw.repo.iemr.QuestionResponseRepo;
 import com.iemr.flw.repo.iemr.SectionQuestionRepo;
 import com.iemr.flw.repo.iemr.SectionResponseRepo;
-import com.iemr.flw.masterEnum.FormResponseStatus;
 import com.iemr.flw.masterEnum.QuestionType;
-import com.iemr.flw.masterEnum.SectionPhase;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.exception.IEMRException;
@@ -75,6 +73,7 @@ import java.util.stream.Collectors;
 @Component
 public class FormResponseItemSaver {
 
+    private static final String STATUS_SUBMITTED = "SUBMITTED";
     private static final String SECTION_STATUS_DONE = "DONE";
     private static final String SECTION_STATUS_REFUSED = "REFUSED";
 
@@ -248,7 +247,7 @@ public class FormResponseItemSaver {
             }
             SectionResponse sectionResponse = sectionResponseOpt.get();
 
-            if (section.getSectionPhase() == SectionPhase.POST_SUBMIT) {
+            if ("POST_SUBMIT".equals(section.getSectionPhase())) {
                 formResponse.setLastFollowUpAt(sectionResponse.getSavedAt());
                 formResponseRepo.save(formResponse);
             }
@@ -266,7 +265,7 @@ public class FormResponseItemSaver {
                     parkingPlaceID);
 
             questionResponseRepo.saveAll(questionResponses);
-            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, section, questionResponses));
+            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, questionResponses));
         }
 
         return buildFormResponseDTO(formResponse, sectionDTOs);
@@ -331,7 +330,7 @@ public class FormResponseItemSaver {
 
             questionResponseRepo.deleteByQuestionIdAndSectionResponseId(questionId, sectionResponseId);
 
-            if (type == QuestionType.RADIO || type == QuestionType.CHECKBOX) {
+            if (type == QuestionType.RADIO) {
                 if (answer.getOptionValue() != null) {
                     QuestionOption opt = resolveOption(optionsByQuestion, questionId,
                             answer.getOptionValue(), answer.getQuestionUuid());
@@ -362,7 +361,7 @@ public class FormResponseItemSaver {
                     }
                 }
             } else {
-                // TEXT, DATE, AUTO_FILL, CHECKBOX — prefer answerText, then answerDate, then optionValue (legacy)
+                // TEXT, DATE, AUTO_FILL — prefer answerText, then answerDate, then optionValue (legacy)
                 String value = answer.getAnswerText() != null ? answer.getAnswerText()
                         : answer.getAnswerDate() != null ? answer.getAnswerDate()
                         : answer.getOptionValue();
@@ -410,8 +409,7 @@ public class FormResponseItemSaver {
                 .build();
     }
 
-    private SectionResponseDTO buildSectionResponseDTO(
-            SectionResponse sr, FormSection section, List<QuestionResponse> answers) {
+    private SectionResponseDTO buildSectionResponseDTO(SectionResponse sr, List<QuestionResponse> answers) {
         List<QuestionResponseDTO> answerDTOs = answers.stream()
                 .map(a -> QuestionResponseDTO.builder()
                         .questionResponseId(a.getQuestionResponseId())
@@ -423,8 +421,6 @@ public class FormResponseItemSaver {
         return SectionResponseDTO.builder()
                 .sectionResponseId(sr.getSectionResponseId())
                 .sectionId(sr.getSectionId())
-                .sectionUuid(section != null ? section.getSectionUuid() : null)
-                .isEditable(section != null ? section.getIsEditable() : null)
                 .status(sr.getStatus())
                 .savedAt(sr.getSavedAt())
                 .answers(answerDTOs)
