@@ -616,10 +616,10 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                     if ("ASHA Supervisor".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())) {
 
-                        updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRangeForDefaultActivity(
+                        updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
                                 ashaId, approvalStatus, startDate, endDate,
                                 approvalDate, ashaSupervisorUserId,
-                                ashaSupervisorDetails.getUserName(),true);
+                                ashaSupervisorDetails.getUserName());
 
                     } else {
 

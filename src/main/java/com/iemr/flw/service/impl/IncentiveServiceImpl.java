@@ -578,6 +578,7 @@ public class IncentiveServiceImpl implements IncentiveService {
             LocalDate start = LocalDate.of(year, month, 1);
             LocalDate end = start.plusMonths(1);
 
+
             int updated = recordRepo.updateClaimStatusByAshaAndDateRange(
                     ashaId,
                     isClaimed,
