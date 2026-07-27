@@ -387,7 +387,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             List<Object[]> countList =null;
 
             if(supervisorstateCode.equals(StateCode.CG.getStateCode())){
-                if(roleName.toLowerCase().equals("asha Supervisor") && today.getDayOfMonth() > 4){
+                if(roleName.toLowerCase().equals("asha supervisor") && today.getDayOfMonth() > 4){
                     countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate);
 
                 }else  if(roleName.toLowerCase().equals("anm") && today.getDayOfMonth() > 5){
@@ -406,7 +406,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
                             ashaId, startDate, endDate, approvalStatusID, stateCode);
                 }else if(stateCode.equals(StateCode.CG.getStateCode())){
-                    if(roleName.toLowerCase().equals("asha Supervisor") && today.getDayOfMonth() > 4){
+                    if(roleName.toLowerCase().equals("asha supervisor") && today.getDayOfMonth() > 4){
                         totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
                                 ashaId, startDate, endDate, approvalStatusID, stateCode);
                     }else if(roleName.toLowerCase().equals("anm") && today.getDayOfMonth() > 5){
