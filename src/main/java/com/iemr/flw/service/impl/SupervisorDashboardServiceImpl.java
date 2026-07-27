@@ -95,18 +95,34 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
 
         // Collect distinct facility IDs and ASHA IDs
+
+        logger.info("Processing {} ASHA records", ashaRows.size());
+
         Set<Integer> facilityIDSet = new HashSet<>();
         Set<Integer> ashaIDSet = new HashSet<>();
+
         for (Object[] row : ashaRows) {
+
+            logger.info(
+                    "Row Data -> row[0]={} ({}) | row[3]={} ({})",
+                    row[0],
+                    row[0] != null ? row[0].getClass().getName() : "null",
+                    row[3],
+                    row[3] != null ? row[3].getClass().getName() : "null"
+            );
+
             if (row[3] != null)
                 facilityIDSet.add((Integer) row[3]);
+
             if (row[0] != null)
                 ashaIDSet.add((Integer) row[0]);
         }
+
         List<Integer> facilityIDs = new ArrayList<>(facilityIDSet);
         List<Integer> ashaIDs = new ArrayList<>(ashaIDSet);
 
-
+        logger.info("Facility IDs: {}", facilityIDs);
+        logger.info("ASHA IDs: {}", ashaIDs);
         result.put("totalAshaCount", ashaIDs.size());
 
         // 3. Location from first facility
@@ -214,6 +230,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         } catch (Exception e) {
             logger.error("Error fetching incentive status: " + e.getMessage(), e);
+
         }
 
 
