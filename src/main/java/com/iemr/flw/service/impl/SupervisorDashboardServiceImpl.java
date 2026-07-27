@@ -111,8 +111,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     row[3] != null ? row[3].getClass().getName() : "null"
             );
 
-            if (row[3] != null)
-                facilityIDSet.add((Integer) row[3]);
+            if (row[4] != null)
+                facilityIDSet.add((Integer) row[4]);
 
             if (row[0] != null)
                 ashaIDSet.add((Integer) row[0]);
