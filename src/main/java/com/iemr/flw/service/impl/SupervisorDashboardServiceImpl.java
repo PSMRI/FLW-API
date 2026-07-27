@@ -4,12 +4,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
@@ -103,13 +98,15 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         for (Object[] row : ashaRows) {
 
-            logger.info(
-                    "Row Data -> row[0]={} ({}) | row[4]={} ({})",
-                    row[0],
-                    row[0] != null ? row[0].getClass().getName() : "null",
-                    row[4],
-                    row[4] != null ? row[4].getClass().getName() : "null"
-            );
+            logger.info("Complete Row: {}", Arrays.toString(row));
+
+            for (int i = 0; i < row.length; i++) {
+                logger.info("row[{}] = {} ({})",
+                        i,
+                        row[i],
+                        row[i] != null ? row[i].getClass().getName() : "null");
+            }
+
 
             if (row[4] != null)
                 facilityIDSet.add((Integer) row[4]);
@@ -294,6 +291,24 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         result.put("facilities", facilitiesArray);
         return result.toString();
+    }
+
+    private JSONArray buildAshaList(List<Object[]> rows) {
+        JSONArray list = new JSONArray();
+        if (rows == null)
+            return list;
+        for (Object[] row : rows) {
+            JSONObject asha = new JSONObject();
+            asha.put("userId", row[0]);
+            asha.put("fullName", fullName(row[1], row[2]));
+            asha.put("employeeId", str(row[3]).isEmpty() ? JSONObject.NULL : str(row[3]));
+            asha.put("facilityId", row[4]);
+            asha.put("facilityName", str(row[5]));
+            asha.put("facilityType", str(row[6]));
+            asha.put("mobile", str(row[7]).isEmpty() ? JSONObject.NULL : str(row[7]));
+            list.put(asha);
+        }
+        return list;
     }
 
     @Override
