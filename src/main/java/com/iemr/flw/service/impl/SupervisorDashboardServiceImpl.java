@@ -626,7 +626,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRangeForDefaultActivity(
                                 ashaId, approvalStatus, startDate, endDate,
                                 approvalDate, ashaSupervisorUserId,
-                                ashaSupervisorDetails.getUserName(),false);
+                                ashaSupervisorDetails.getUserName());
 
                     }
                 }
