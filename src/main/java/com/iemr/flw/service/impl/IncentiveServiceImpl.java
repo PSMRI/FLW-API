@@ -365,7 +365,7 @@ public class IncentiveServiceImpl implements IncentiveService {
         // Filter records based on valid activity IDs
         if(isCG){
             records = records.stream()
-                    .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
+                    .filter(r -> validActivityIds.contains(r.getActivityId()))
                     .collect(Collectors.toList());
         }else {
             records = records.stream()
