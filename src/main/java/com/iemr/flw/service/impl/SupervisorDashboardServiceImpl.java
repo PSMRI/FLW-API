@@ -340,6 +340,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         LocalDate currentMonthStartDate = LocalDate.of(year, month, 1);
         LocalDate currentMonthendLocalDate = currentMonthStartDate.plusMonths(1);
 
+        logger.info("Login user role:"+ roleName);
+
         boolean isCurrentMonth =
                 today.getYear() == year &&
                         today.getMonthValue() == month;
