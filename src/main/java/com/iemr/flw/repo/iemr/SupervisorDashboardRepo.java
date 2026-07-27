@@ -20,6 +20,12 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			+ "AND asm.deleted = false", nativeQuery = true)
 	List<Integer> getAshaIdsBySupervisor(@Param("supervisorUserID") Integer supervisorUserID);
 
+	@Query(value = "SELECT DISTINCT usrm.FacilityID "
+			+ "FROM m_UserServiceRoleMapping usrm "
+			+ "WHERE usrm.UserID = :userID AND usrm.Deleted = false "
+			+ "AND usrm.FacilityID IS NOT NULL", nativeQuery = true)
+	List<Integer> getUserFacilityIDs(@Param("userID") Integer userID);
+
 	// Get ASHAs with facility info for a supervisor
 	@Query(value = "SELECT DISTINCT asm.ashaUserID, u.FirstName, u.LastName, "
 			+ "f.FacilityID, f.FacilityName, "
@@ -35,6 +41,22 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			+ "WHERE asm.supervisorUserID = :supervisorUserID "
 			+ "AND asm.deleted = false", nativeQuery = true)
 	List<Object[]> getAshasWithFacilityInfo(@Param("supervisorUserID") Integer supervisorUserID);
+
+
+	@Query(value = "SELECT DISTINCT u.UserID, u.FirstName, u.LastName, "
+			+ "COALESCE(u.EmployeeID,'') AS employeeID, "
+			+ "f.FacilityID, f.FacilityName, "
+			+ "COALESCE(ft.FacilityTypeName,'') AS facilityTypeName, "
+			+ "COALESCE(u.ContactNo,'') AS mobile "
+			+ "FROM m_UserServiceRoleMapping usrm "
+			+ "JOIN m_User u ON u.UserID = usrm.UserID "
+			+ "JOIN m_Role r ON r.RoleID = usrm.RoleID "
+			+ "JOIN m_facility f ON f.FacilityID = usrm.FacilityID "
+			+ "LEFT JOIN m_facilitytype ft ON ft.FacilityTypeID = f.FacilityTypeID "
+			+ "WHERE usrm.FacilityID IN :facilityIDs "
+			+ "AND r.RoleName = 'ASHA' "
+			+ "AND usrm.Deleted = false AND u.Deleted = false AND f.Deleted = false", nativeQuery = true)
+	List<Object[]> getAshaListByFacilities(@Param("facilityIDs") List<Integer> facilityIDs);
 
 	@Query(value = """
     SELECT asm.supervisorUserID

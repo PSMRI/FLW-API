@@ -151,7 +151,7 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                             createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), institutionalDeliveryActivityAM);
                         }
 
-                        if (institutionalDeliveryActivityCH != null) {
+                        if (institutionalDeliveryActivityCH != null && placeOfDelivery.toLowerCase().equals("Government Hospital")) {
                             createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), institutionalDeliveryActivityCH);
                         }
                     }

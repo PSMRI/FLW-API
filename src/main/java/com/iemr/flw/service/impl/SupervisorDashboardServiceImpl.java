@@ -73,10 +73,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             result.put("supervisor", supervisor);
         }
 
+        List<Integer> facilityIDs = facilityLoginRepo.getUserFacilityIDs(supervisorUserID);
+        if (facilityIDs == null || facilityIDs.isEmpty())
+            return "Not found";
+
         // 2. Get all ASHAs with facility info
-        List<Object[]> ashaRows = dashboardRepo.getAshasWithFacilityInfo(supervisorUserID);
+        List<Object[]> ashaRows = dashboardRepo.getAshaListByFacilities(facilityIDs);
         if (ashaRows == null || ashaRows.isEmpty()) {
-            result.put("totalAshaCount", 0);
+            result.put("totalAshaCount", ashaRows.size());
             result.put("incentiveSummary", buildEmptyIncentiveSummary());
             result.put("facilities", new JSONArray());
             return result.toString();
@@ -91,7 +95,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             if (row[0] != null)
                 ashaIDSet.add((Integer) row[0]);
         }
-        List<Integer> facilityIDs = new ArrayList<>(facilityIDSet);
         List<Integer> ashaIDs = new ArrayList<>(ashaIDSet);
 
         result.put("totalAshaCount", ashaIDs.size());
@@ -161,18 +164,34 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     }
                 }
             }else  if(stateId.equals(StateCode.CG.getStateCode())){
-                List<Object[]> statusRows = dashboardRepo.getDefaultIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
-                if (statusRows != null) {
-                    for (Object[] sRow : statusRows) {
-                        long verified = ((Number) sRow[2]).longValue();
-                        long rejected = ((Number) sRow[3]).longValue();
-                        long pending = ((Number) sRow[4]).longValue();
+                if(userService.getUserDetail(supervisorUserID).getRoleName().toLowerCase().equals("supervisor")){
+                    List<Object[]> statusRows = dashboardRepo.getDefaultIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
+                    if (statusRows != null) {
+                        for (Object[] sRow : statusRows) {
+                            long verified = ((Number) sRow[2]).longValue();
+                            long rejected = ((Number) sRow[3]).longValue();
+                            long pending = ((Number) sRow[4]).longValue();
 
-                        if (verified > 0) overallVerified += 1;
-                        if (rejected > 0) overallRejected += 1;
-                        if (pending > 0) overallPending += 1;
+                            if (verified > 0) overallVerified += 1;
+                            if (rejected > 0) overallRejected += 1;
+                            if (pending > 0) overallPending += 1;
+                        }
+                    }
+                }else if(userService.getUserDetail(supervisorUserID).getRoleName().toLowerCase().equals("nurse")){
+                    List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
+                    if (statusRows != null) {
+                        for (Object[] sRow : statusRows) {
+                            long verified = ((Number) sRow[2]).longValue();
+                            long rejected = ((Number) sRow[3]).longValue();
+                            long pending = ((Number) sRow[4]).longValue();
+
+                            if (verified > 0) overallVerified += 1;
+                            if (rejected > 0) overallRejected += 1;
+                            if (pending > 0) overallPending += 1;
+                        }
                     }
                 }
+
                 List<Object[]> unclaimedRows = dashboardRepo.getUnclaimedCountByAshaIds(ashaIDs, startDate, endDate);
                 if (unclaimedRows != null) {
                     for (Object[] uRow : unclaimedRows) {
@@ -294,7 +313,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             List<Object[]> countList =null;
 
             if(supervisorstateCode.equals(StateCode.CG.getStateCode())){
-                 countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate);
+                if(userService.getUserDetail(supervisorId).getRoleName().toLowerCase().equals("supervisor")){
+                    countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate);
+
+                }else  if(userService.getUserDetail(supervisorId).getRoleName().toLowerCase().equals("nurse")){
+                    countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
+
+                }
 
             }else  if(supervisorstateCode.equals(StateCode.AM.getStateCode())){
                 countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
@@ -307,8 +332,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
                             ashaId, startDate, endDate, approvalStatusID, stateCode);
                 }else if(stateCode.equals(StateCode.CG.getStateCode())){
-                    totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
-                            ashaId, startDate, endDate, approvalStatusID, stateCode);
+                    if(userService.getUserDetail(supervisorId).getRoleName().toLowerCase().equals("supervisor")){
+                        totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
+                                ashaId, startDate, endDate, approvalStatusID, stateCode);
+                    }else if(userService.getUserDetail(supervisorId).getRoleName().toLowerCase().equals("nurse")){
+                        totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
+                                ashaId, startDate, endDate, approvalStatusID, stateCode);
+                    }
+
                 }
 
 
@@ -328,11 +359,18 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
              }else if(stateCode.equals(StateCode.CG.getStateCode())){
                  List<IncentiveActivityRecord> dbRecords =
                          incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate);
+                 if(userService.getUserDetail(supervisorId).getRoleName().toLowerCase().equals("supervisor")){
+                     incentiveActivityRecord = dbRecords.stream()
+                             .filter(r -> approvalStatusID == 0 ||
+                                     approvalStatusID.equals(r.getApprovalStatus()) && r.getIsDefaultActivity())
+                             .collect(Collectors.toList());
+                 }else if(userService.getUserDetail(supervisorId).getRoleName().toLowerCase().equals("nurse")){
+                     incentiveActivityRecord = dbRecords.stream()
+                             .filter(r -> approvalStatusID == 0 ||
+                                     approvalStatusID.equals(r.getApprovalStatus()))
+                             .collect(Collectors.toList());
+                 }
 
-                 incentiveActivityRecord = dbRecords.stream()
-                         .filter(r -> approvalStatusID == 0 ||
-                                 approvalStatusID.equals(r.getApprovalStatus()) && r.getIsDefaultActivity())
-                         .collect(Collectors.toList());
 
                  logger.info("CG - Records after approvalStatus filter: {}", incentiveActivityRecord.size());
 
