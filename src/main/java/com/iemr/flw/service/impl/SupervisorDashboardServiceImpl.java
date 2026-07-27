@@ -166,6 +166,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
             logger.info("Asha ID" + ashaIDs);
             Integer stateId = userService.getUserDetail(supervisorUserID).getStateId();
+            String rollName = userService.getUserDetail(supervisorUserID).getRoleName();
 
             if(stateId.equals(StateCode.AM.getStateCode())){
                 List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
@@ -188,7 +189,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     }
                 }
             }else  if(stateId.equals(StateCode.CG.getStateCode())){
-                if(userService.getUserDetail(supervisorUserID).getRoleName().toLowerCase().equals("supervisor")){
+                if(rollName.toLowerCase().equals("supervisor")){
                     List<Object[]> statusRows = dashboardRepo.getDefaultIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
                     if (statusRows != null) {
                         for (Object[] sRow : statusRows) {
@@ -201,7 +202,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                             if (pending > 0) overallPending += 1;
                         }
                     }
-                }else if(userService.getUserDetail(supervisorUserID).getRoleName().toLowerCase().equals("nurse")){
+                }else if(rollName.equals("anm")){
                     List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
                     if (statusRows != null) {
                         for (Object[] sRow : statusRows) {
