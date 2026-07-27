@@ -72,6 +72,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             "SUM(CASE WHEN record.approvalStatus = 101 THEN 1 ELSE 0 END), " +
             "SUM(CASE WHEN record.approvalStatus = 102 THEN 1 ELSE 0 END), " +
             "SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END) " +
+            "SUM(CASE WHEN record.approvalStatus = 104 THEN 1 ELSE 0 END) " +
             "FROM IncentiveActivityRecord record " +
             "WHERE record.ashaId = :ashaId " +
             "AND record.isClaimed = true " +
@@ -87,6 +88,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             "SUM(CASE WHEN record.approvalStatus = 101 THEN 1 ELSE 0 END), " +
             "SUM(CASE WHEN record.approvalStatus = 102 THEN 1 ELSE 0 END), " +
             "SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END) " +
+            "SUM(CASE WHEN record.approvalStatus = 104 THEN 1 ELSE 0 END) " +
             "FROM IncentiveActivityRecord record " +
             "WHERE record.ashaId = :ashaId " +
             "AND record.isClaimed = true " +
@@ -191,7 +193,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             + "iar.verifiedByUserName = :ashaSupervisorUserName "
             + "WHERE iar.ashaId = :ashaId "
             + "AND iar.isClaimed = true "
-            + "AND iar.isDefaultActivity = true "
+            + "AND iar.isDefaultActivity = isDefaultActivity "
             + "AND iar.createdDate >= :startDate "
             + "AND iar.createdDate < :endDate")
     int updateApprovalStatusByAshaAndDateRangeForDefaultActivity(
@@ -201,7 +203,9 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             @Param("endDate") Timestamp endDate,
             @Param("approvalDate") Timestamp approvalDate,
             @Param("ashaSupervisorUserId") Integer ashaSupervisorUserId,
-            @Param("ashaSupervisorUserName") String ashaSupervisorUserName);
+            @Param("ashaSupervisorUserName") String ashaSupervisorUserName,
+            @Param("isDefaultActivity") Boolean isDefaultActivity
+    );
 
 
     @Modifying

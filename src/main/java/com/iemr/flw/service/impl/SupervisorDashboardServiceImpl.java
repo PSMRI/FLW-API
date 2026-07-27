@@ -619,14 +619,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRangeForDefaultActivity(
                                 ashaId, approvalStatus, startDate, endDate,
                                 approvalDate, ashaSupervisorUserId,
-                                ashaSupervisorDetails.getUserName());
+                                ashaSupervisorDetails.getUserName(),true);
 
                     } else {
 
-                        updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
+                        updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRangeForDefaultActivity(
                                 ashaId, approvalStatus, startDate, endDate,
                                 approvalDate, ashaSupervisorUserId,
-                                ashaSupervisorDetails.getUserName());
+                                ashaSupervisorDetails.getUserName(),false);
 
                     }
                 }
