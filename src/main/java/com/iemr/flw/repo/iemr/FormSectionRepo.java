@@ -22,9 +22,13 @@
 package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.FormSection;
+import com.iemr.flw.masterEnum.SectionPhase;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -35,4 +39,11 @@ import java.util.List;
 public interface FormSectionRepo extends JpaRepository<FormSection, Long> {
 
     List<FormSection> findByFormVersion_VersionIdOrderByDisplayOrderAsc(Long versionId);
+
+    @Query("SELECT fs.formVersion.versionId, COUNT(fs) FROM FormSection fs " +
+           "WHERE fs.formVersion.versionId IN :versionIds " +
+           "AND fs.sectionPhase = :sectionPhase " +
+           "GROUP BY fs.formVersion.versionId")
+    List<Object[]> countByFormVersion_VersionIdInAndSectionPhase(@Param("versionIds") Collection<Long> versionIds,
+                                                                  @Param("sectionPhase") SectionPhase sectionPhase);
 }

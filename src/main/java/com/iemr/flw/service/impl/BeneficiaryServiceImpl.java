@@ -129,10 +129,15 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
         // Stop TB path: filter by providerServiceMapID + villageID
         if (request.getProviderServiceMapID() != null && request.getVillageID() != null) {
+            System.out.println("[TRACE][FLW-API] getBenData Stop TB path: providerServiceMapID=" + request.getProviderServiceMapID() + " villageID=" + request.getVillageID());
             List<BenFlowStatus> flows = benFlowStatusRepo.getRegistrarWorklist(
                     request.getProviderServiceMapID(), request.getVillageID());
+            System.out.println("[TRACE][FLW-API] getRegistrarWorklist returned flows count=" + (flows == null ? "null" : flows.size()));
 
-            if (flows == null || flows.isEmpty()) return null;
+            if (flows == null || flows.isEmpty()) {
+                System.out.println("[TRACE][FLW-API] getBenData returning null: no worklist flows for providerServiceMapID/villageID");
+                return null;
+            }
 
             List<RMNCHMBeneficiaryaddress> allAddresses = new ArrayList<>();
             for (BenFlowStatus flow : flows) {
@@ -145,13 +150,20 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                 RMNCHMBeneficiaryaddress address = beneficiaryRepo.getAddressById(mapping.getBenAddressId());
                 if (address != null) allAddresses.add(address);
             }
+            System.out.println("[TRACE][FLW-API] resolved allAddresses count=" + allAddresses.size() + " out of flows count=" + flows.size());
 
-            if (allAddresses.isEmpty()) return null;
+            if (allAddresses.isEmpty()) {
+                System.out.println("[TRACE][FLW-API] getBenData returning null: no addresses resolved from flows/mappings");
+                return null;
+            }
 
             int totalPage = (int) Math.ceil((double) allAddresses.size() / pageSize);
             int start = request.getPageNo() * pageSize;
             int end = Math.min(start + pageSize, allAddresses.size());
-            if (start >= allAddresses.size()) return null;
+            if (start >= allAddresses.size()) {
+                System.out.println("[TRACE][FLW-API] getBenData returning null: pageNo=" + request.getPageNo() + " start=" + start + " exceeds allAddresses size=" + allAddresses.size());
+                return null;
+            }
 
             return getMappingsForAddressIDs(allAddresses.subList(start, end), totalPage, authorisation);
         }
@@ -162,6 +174,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         }
 
         String userName = beneficiaryRepo.getUserName(request.getAshaId());
+        System.out.println("[TRACE][FLW-API] getBenData normal path: ashaId=" + request.getAshaId() + " resolved userName=" + userName);
 
         if (userName == null || userName.isEmpty()) {
             throw new Exception("Asha details not found, please contact administrator");
@@ -189,8 +202,10 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         } else {
             pageResult = beneficiaryRepo.getBenDataByUser(userName, pageRequest);
         }
+        System.out.println("[TRACE][FLW-API] getBenData normal path pageResult totalElements=" + pageResult.getTotalElements() + " hasContent=" + pageResult.hasContent());
 
         if (!pageResult.hasContent()) {
+            System.out.println("[TRACE][FLW-API] getBenData returning null: pageResult has no content for userName=" + userName);
             return null;
         }
 
@@ -279,6 +294,14 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             benDetailsRMNCH_OBJ.setMotherName(benDetailsOBJ.getMotherName());
                         if (benDetailsOBJ.getLiteracyStatus() != null)
                             benDetailsRMNCH_OBJ.setLiteracyStatus(benDetailsOBJ.getLiteracyStatus());
+
+                        // current-living-details for the Non-HH mobile flow
+                        if (benDetailsOBJ.getPlaceOfCurrentLiving() != null)
+                            benDetailsRMNCH_OBJ.setPlaceOfCurrentLiving(benDetailsOBJ.getPlaceOfCurrentLiving());
+                        if (benDetailsOBJ.getOtherPlaceOfCurrentLiving() != null)
+                            benDetailsRMNCH_OBJ.setOtherPlaceOfCurrentLiving(benDetailsOBJ.getOtherPlaceOfCurrentLiving());
+                        if (benDetailsOBJ.getInstitutionName() != null)
+                            benDetailsRMNCH_OBJ.setInstitutionName(benDetailsOBJ.getInstitutionName());
 
                         // bank
                         if (benAccountOBJ.getNameOfBank() != null)
@@ -478,9 +501,12 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             benDetailsRMNCH_OBJ.setAge_unit(ageUnit);
 
                         resultMap = new HashMap<>();
-                        if (benHouseHoldRMNCH_ROBJ != null)
+                        if (benHouseHoldRMNCH_ROBJ != null) {
+                            if (benHouseHoldRMNCH_ROBJ.getAddress() == null
+                                    && benAddressOBJ.getPermAddrLine1() != null)
+                                benHouseHoldRMNCH_ROBJ.setAddress(benAddressOBJ.getPermAddrLine1());
                             resultMap.put("householdDetails", benHouseHoldRMNCH_ROBJ);
-                        else
+                        } else
                             resultMap.put("householdDetails", new HashMap<String, Object>());
 
                         if (benBotnBirthRMNCH_ROBJ != null)

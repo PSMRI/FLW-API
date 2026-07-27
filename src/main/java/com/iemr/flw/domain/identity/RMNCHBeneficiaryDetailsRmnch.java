@@ -562,6 +562,13 @@ public class RMNCHBeneficiaryDetailsRmnch {
 	@Transient
 	private Integer residentialAreaId;
 
+	@Expose
+	private String placeOfCurrentLiving;
+	@Expose
+	private String otherPlaceOfCurrentLiving;
+	@Expose
+	private String institutionName;
+
 	public String getOccupation() { return occupation; }
 	public void setOccupation(String occupation) { this.occupation = occupation; }
 	public String getEconomicStatus() { return economicStatus; }

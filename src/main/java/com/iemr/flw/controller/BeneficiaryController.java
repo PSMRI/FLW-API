@@ -51,9 +51,15 @@ public class BeneficiaryController {
             if (requestDTO != null) {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
-                System.out.println("getBeneficiaryData request : " + requestDTO);
+                System.out.println("[TRACE][FLW-API] getBeneficiaryData request fields : villageID=" + requestDTO.getVillageID()
+                        + " fromDate=" + requestDTO.getFromDate() + " toDate=" + requestDTO.getToDate()
+                        + " pageNo=" + requestDTO.getPageNo() + " userId=" + requestDTO.getUserId()
+                        + " userName=" + requestDTO.getUserName() + " ashaId=" + requestDTO.getAshaId()
+                        + " providerServiceMapID=" + requestDTO.getProviderServiceMapID()
+                        + " activityId=" + requestDTO.getActivityId() + " month=" + requestDTO.getMonth()
+                        + " year=" + requestDTO.getYear());
                 String s = beneficiaryService.getBenData(requestDTO, authorization);
-                System.out.println("getBeneficiaryData response : " + s);
+                System.out.println("[TRACE][FLW-API] getBeneficiaryData response : " + s);
                 if (s != null)
                     response.setResponse(s);
                 else
