@@ -331,8 +331,8 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     // ================= GROUPED SUMMARY =================
     @Override
-    public String getAllIncentivesGroupedSummary(GetBenRequestHandler request) {
-
+    public String getAllIncentivesGroupedSummary(GetBenRequestHandler request,Integer userId) {
+       String roleName = userService.getUserDetail(userId).getRoleName();
         LocalDate start = LocalDate.of(request.getYear(), request.getMonth(), 1);
         LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
 
@@ -364,9 +364,16 @@ public class IncentiveServiceImpl implements IncentiveService {
 
         // Filter records based on valid activity IDs
         if(isCG){
-            records = records.stream()
-                    .filter(r -> validActivityIds.contains(r.getActivityId()))
-                    .collect(Collectors.toList());
+            if("ASHA Supervisor".equalsIgnoreCase(roleName)){
+                records = records.stream()
+                        .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
+                        .collect(Collectors.toList());
+            }else  if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName) ){
+                records = records.stream()
+                        .filter(r -> validActivityIds.contains(r.getActivityId()))
+                        .collect(Collectors.toList());
+            }
+
         }else {
             records = records.stream()
                     .filter(r -> validActivityIds.contains(r.getActivityId()))

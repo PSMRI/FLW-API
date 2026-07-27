@@ -446,12 +446,12 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                  if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                      incentiveActivityRecord = dbRecords.stream()
                              .filter(r -> approvalStatusID == 0 ||
-                                     approvalStatusID.equals(r.getApprovalStatus()) && r.getIsDefaultActivity())
+                                     approvalStatusID.equals(r.getApprovalStatus()) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
                              .collect(Collectors.toList());
                  }else if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)){
                      incentiveActivityRecord = dbRecords.stream()
                              .filter(r -> approvalStatusID == 0 ||
-                                     approvalStatusID.equals(r.getApprovalStatus()))
+                                     approvalStatusID.equals(r.getApprovalStatus()) && isAfter24Hours(r.getCreatedDate()))
                              .collect(Collectors.toList());
                  }
 
@@ -541,6 +541,22 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         return response;
     }
 
+    private boolean isAfter24Hours(Timestamp claimedDate) {
+        if (claimedDate == null) {
+            return false;
+        }
+
+        long diff = System.currentTimeMillis() - claimedDate.getTime();
+        return diff >= 24 * 60 * 60 * 1000L;
+    }
+    private boolean isWithin24Hours(Timestamp claimedDate) {
+        if (claimedDate == null) {
+            return false;
+        }
+
+        long diff = System.currentTimeMillis() - claimedDate.getTime();
+        return diff <= 24 * 60 * 60 * 1000L;
+    }
 
 
     private String getGroupNameByState(Integer stateCode) {
