@@ -27,19 +27,17 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 	List<Integer> getUserFacilityIDs(@Param("userID") Integer userID);
 
 	// Get ASHAs with facility info for a supervisor
-	@Query(value = "SELECT DISTINCT asm.ashaUserID, u.FirstName, u.LastName, "
+	@Query(value = "SELECT DISTINCT u.UserID, u.FirstName, u.LastName, "
+			+ "COALESCE(u.EmployeeID,'') AS employeeID, "
 			+ "f.FacilityID, f.FacilityName, "
 			+ "COALESCE(ft.FacilityTypeName,'') AS facilityTypeName, "
-			+ "COALESCE(u.AgentID,'') AS agentID, "
-			+ "COALESCE(u.EmergencyContactNo,'') AS mobile, "
-			+ "COALESCE(g.GenderName,'') AS gender "
+			+ "COALESCE(u.ContactNo,'') AS mobile "
 			+ "FROM asha_supervisor_mapping asm "
-			+ "JOIN m_User u ON u.UserID = asm.ashaUserID AND u.Deleted = false "
-			+ "JOIN m_facility f ON f.FacilityID = asm.facilityID AND f.Deleted = false "
+			+ "JOIN m_User u ON u.UserID = asm.ashaUserID "
+			+ "JOIN m_facility f ON f.FacilityID = asm.facilityID "
 			+ "LEFT JOIN m_facilitytype ft ON ft.FacilityTypeID = f.FacilityTypeID "
-			+ "LEFT JOIN m_gender g ON g.GenderID = u.GenderID "
 			+ "WHERE asm.supervisorUserID = :supervisorUserID "
-			+ "AND asm.deleted = false", nativeQuery = true)
+			+ "AND asm.deleted = false AND u.Deleted = false AND f.Deleted = false", nativeQuery = true)
 	List<Object[]> getAshasWithFacilityInfo(@Param("supervisorUserID") Integer supervisorUserID);
 
 
