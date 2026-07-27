@@ -370,7 +370,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         }
 
-        long overallVerified = 0, overallRejected = 0, overallPending = 0;
+        long overallVerified = 0, overallRejected = 0, overallPending = 0 ,overallApproved =0;
 
         String facilityName = "";
         String facilityType = "";
@@ -494,21 +494,24 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             asha.put("totalAmount", totalAmount);
             asha.put("activities", activityList);
 
-            long pending = 0, verified = 0, rejected = 0;
+            long pending = 0, verified = 0, rejected = 0 ,approved =0;
             if (countList != null && !countList.isEmpty()) {
                 Object[] counts = countList.get(0);
                 verified = counts[0] != null ? ((Number) counts[0]).longValue() : 0;
                 pending = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
                 rejected = counts[2] != null ? ((Number) counts[2]).longValue() : 0;
+                approved = counts[3] != null ? ((Number) counts[3]).longValue() : 0;
             }
 
             if (verified > 0) overallVerified += 1;
             if (rejected > 0) overallRejected += 1;
             if (pending > 0) overallPending += 1;
+            if (approved > 0) overallApproved += 1;
 
             asha.put("pending", pending);
             asha.put("verified", verified);
             asha.put("rejected", rejected);
+            asha.put("approved", approved);
 
             int approvalStatus = 0;
 
@@ -533,6 +536,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         approvalStatus.put("verified", overallVerified);
         approvalStatus.put("pending", overallPending);
         approvalStatus.put("rejected", overallRejected);
+        approvalStatus.put("approved", overallApproved);
 
         response.put("approvalStatus", approvalStatus);
         response.put("data", ashaList);
