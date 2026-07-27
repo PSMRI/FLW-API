@@ -343,12 +343,31 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
 
 
-        if (facilityId.equals(0)) {
-            rows = ashaSupervisorLoginRepo.getAshasAtFacility(
-                    supervisorId, approvalStatusID, startDate, endDate);
+
+        if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
+
+            if (facilityId.equals(0)) {
+
+                List<Integer> facilityIDs = facilityLoginRepo.getUserFacilityIDs(supervisorId);
+                rows = facilityLoginRepo.getAshaListByFacilities(facilityIDs);
+
+            } else {
+
+                rows = facilityLoginRepo.getAshaListByFacilities(
+                        Collections.singletonList(facilityId));
+
+            }
+
         } else {
-            rows = ashaSupervisorLoginRepo.getAshasAtFacility(
-                    supervisorId, facilityId, approvalStatusID, startDate, endDate);
+
+            if (facilityId.equals(0)) {
+                rows = ashaSupervisorLoginRepo.getAshasAtFacility(
+                        supervisorId, approvalStatusID, startDate, endDate);
+            } else {
+                rows = ashaSupervisorLoginRepo.getAshasAtFacility(
+                        supervisorId, facilityId, approvalStatusID, startDate, endDate);
+            }
+
         }
 
         long overallVerified = 0, overallRejected = 0, overallPending = 0;
