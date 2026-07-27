@@ -54,6 +54,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
     @Override
     public String getSupervisorDashboard(Integer supervisorUserID, Integer month, Integer year) {
         JSONObject result = new JSONObject();
+        Integer stateId = userService.getUserDetail(supervisorUserID).getStateId();
+        String rollName = userService.getUserDetail(supervisorUserID).getRoleName();
 
         // 1. Supervisor user details
         List<Object[]> supervisorRows = dashboardRepo.getSupervisorUserDetails(supervisorUserID);
@@ -72,9 +74,24 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         // 2. Get all ASHAs with facility info
         logger.info("Fetching ASHA details for supervisorUserID: {}", supervisorUserID);
 
-        List<Object[]> ashaRows = dashboardRepo.getAshasWithFacilityInfo(supervisorUserID);
 
-        logger.info("ASHA records fetched: {}", ashaRows != null ? ashaRows.size() : 0);
+
+        List<Object[]> ashaRows;
+
+        if ("ANM".equalsIgnoreCase(rollName)) {
+
+            List<Integer> facilityIDs =
+                    facilityLoginRepo.getUserFacilityIDs(supervisorUserID);
+
+            ashaRows =
+                    facilityLoginRepo.getAshaListByFacilities(facilityIDs);
+
+        } else {
+
+            ashaRows =
+                    dashboardRepo.getAshasWithFacilityInfo(supervisorUserID);
+
+        }
 
         if (ashaRows == null || ashaRows.isEmpty()) {
             logger.warn("No ASHA records found for supervisorUserID: {}", supervisorUserID);
@@ -87,6 +104,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             return result.toString();
         }
+
 
 
         // Collect distinct facility IDs and ASHA IDs
@@ -165,8 +183,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
             Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
             logger.info("Asha ID" + ashaIDs);
-            Integer stateId = userService.getUserDetail(supervisorUserID).getStateId();
-            String rollName = userService.getUserDetail(supervisorUserID).getRoleName();
 
             if(stateId.equals(StateCode.AM.getStateCode())){
                 List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
