@@ -368,6 +368,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             Map<String, Object> asha = new HashMap<>();
 
             Integer ashaId = ((Number) row[0]).intValue();
+            logger.info("ASHA_ID"+ashaId);
             List<Object[]> countList =null;
 
             if(supervisorstateCode.equals(StateCode.CG.getStateCode())){
