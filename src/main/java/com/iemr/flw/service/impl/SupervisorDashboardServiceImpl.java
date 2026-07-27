@@ -72,19 +72,27 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             supervisor.put("gender", str(sRow[5]).isEmpty() ? JSONObject.NULL : str(sRow[5]));
             result.put("supervisor", supervisor);
         }
-
-        List<Integer> facilityIDs = facilityLoginRepo.getUserFacilityIDs(supervisorUserID);
-        if (facilityIDs == null || facilityIDs.isEmpty())
-            return "Not found";
+        logger.info("Supervisor id"+supervisorUserID);
 
         // 2. Get all ASHAs with facility info
-        List<Object[]> ashaRows = dashboardRepo.getAshaListByFacilities(facilityIDs);
+        logger.info("Fetching ASHA details for supervisorUserID: {}", supervisorUserID);
+
+        List<Object[]> ashaRows = dashboardRepo.getAshasWithFacilityInfo(supervisorUserID);
+
+        logger.info("ASHA records fetched: {}", ashaRows != null ? ashaRows.size() : 0);
+
         if (ashaRows == null || ashaRows.isEmpty()) {
-            result.put("totalAshaCount", ashaRows.size());
+            logger.warn("No ASHA records found for supervisorUserID: {}", supervisorUserID);
+
+            result.put("totalAshaCount", 0);
             result.put("incentiveSummary", buildEmptyIncentiveSummary());
             result.put("facilities", new JSONArray());
+
+            logger.info("Returning empty dashboard response for supervisorUserID: {}", supervisorUserID);
+
             return result.toString();
         }
+
 
         // Collect distinct facility IDs and ASHA IDs
         Set<Integer> facilityIDSet = new HashSet<>();
@@ -95,7 +103,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             if (row[0] != null)
                 ashaIDSet.add((Integer) row[0]);
         }
+        List<Integer> facilityIDs = new ArrayList<>(facilityIDSet);
         List<Integer> ashaIDs = new ArrayList<>(ashaIDSet);
+
 
         result.put("totalAshaCount", ashaIDs.size());
 
