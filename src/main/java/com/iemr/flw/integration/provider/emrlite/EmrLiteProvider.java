@@ -265,7 +265,7 @@ public class EmrLiteProvider implements DiagnosticProvider {
                 order.getPatientFirstName(),
                 order.getPatientLastName(),
                 order.getPatientDateOfBirth(),
-                order.getPatientSex());
+                toProviderSex(order.getPatientSex()));
         String orderedAt = OffsetDateTime.now(ZoneId.of("Asia/Kolkata"))
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         return new EmrLiteOrderRequest(
@@ -275,5 +275,9 @@ public class EmrLiteProvider implements DiagnosticProvider {
                 order.getOrderType(),
                 orderedAt,
                 patient);
+    }
+
+    private String toProviderSex(String patientSex) {
+        return "Others".equalsIgnoreCase(patientSex) ? "Other" : patientSex;
     }
 }
