@@ -245,7 +245,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         // 7. Build facilities array with nested ASHAs
         Map<Integer, List<Object[]>> ashasByFacility = new HashMap<>();
         for (Object[] row : ashaRows) {
-            Integer facID = (Integer) row[3];
+            Integer facID = (Integer) row[4];
             ashasByFacility.computeIfAbsent(facID, k -> new ArrayList<>()).add(row);
         }
 
