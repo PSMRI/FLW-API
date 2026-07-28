@@ -122,7 +122,7 @@ public class TptFollowUpFormSeeder {
         registrationDate.setQuestionUuid("TFU_REGISTRATION_DATE");
         registrationDate.setQuestionText("Date of Registration");
         registrationDate.setQuestionTextHindi("पंजीकरण की तारीख");
-        registrationDate.setQuestionType(QuestionType.DATE);
+        registrationDate.setQuestionType(QuestionType.TEXT);
         registrationDate.setIsMandatory(true);
         registrationDate.setDisplayOrder(1);
         registrationDate.setVisibleByDefault(true);
