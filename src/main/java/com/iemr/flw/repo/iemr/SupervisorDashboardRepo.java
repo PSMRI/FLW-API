@@ -107,7 +107,7 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			+ "COUNT(*) AS totalRecords, "
 			+ "SUM(CASE WHEN iar.approval_status = 101 THEN 1 ELSE 0 END) AS verified, "
 			+ "SUM(CASE WHEN iar.approval_status = 103 THEN 1 ELSE 0 END) AS rejected, "
-			+ "SUM(CASE WHEN iar.approval_status = 102 THEN 1 ELSE 0 END) AS pending "
+			+ "SUM(CASE WHEN iar.approval_status = 102 THEN 1 ELSE 0 END) AS pending, "
 			+ "SUM(CASE WHEN iar.approval_status = 105 THEN 1 ELSE 0 END) AS approved "
 			+ "FROM incentive_activity_record iar "
 			+ "WHERE iar.asha_id IN (:ashaIds) "
