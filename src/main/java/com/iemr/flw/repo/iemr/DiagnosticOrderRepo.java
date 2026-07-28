@@ -53,7 +53,7 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
     // is bucketed only by the retest, not both. o.benRegID already holds the beneficiaryId
     // (not a separate registration id), so it's matched against b.beneficiaryID, not b.beneficiaryRegID.
     @Query("SELECT o.benRegID FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
-            "AND o.testCompletedAt IS NULL " +
+            "AND o.testCompletedAt IS NULL AND o.status != 'REFUSED' " +
             "AND o.id = (SELECT MAX(o2.id) FROM DiagnosticOrder o2 " +
             "WHERE o2.benRegID = o.benRegID AND o2.orderType = :orderType AND o2.deleted = false) " +
             "AND o.benRegID IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
