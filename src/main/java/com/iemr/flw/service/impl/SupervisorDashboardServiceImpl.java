@@ -318,13 +318,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         List<Object[]> rows;
         LocalDate today = LocalDate.now();
 
-        List<String> activityNames = Arrays.asList(
-                "MITANIN_REGISTER_5_INFO_FILL",
-                "MITANIN_REGISTER",
-                "VHSNC_MEETING",
-                "CLUSTER_MEETING"
-        );
-        List<String> groupNames = List.of("ACTIVITY");
 
         String roleName = userService.getUserDetail(supervisorId).getRoleName();
 
@@ -399,7 +392,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             if(supervisorstateCode.equals(StateCode.CG.getStateCode())){
                 if("ASHA Supervisor".equalsIgnoreCase(roleName)){
-                    countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate,groupNames,activityNames);
+                    countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate);
 
                 }else  if(("ANM".equalsIgnoreCase(roleName)  || "CHO".equalsIgnoreCase(roleName) )){
                     logger.info("ASHA_ID = {}", ashaId);
@@ -418,7 +411,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             Long totalAmount = null;
 
-
             if (userService.getUserDetail(ashaId) != null) {
                 Integer stateCode = userService.getUserDetail(ashaId).getStateId();
                 if(stateCode.equals(StateCode.AM.getStateCode())){
@@ -428,7 +420,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     if("ASHA Supervisor".equalsIgnoreCase(roleName)){
 
                         totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
-                                ashaId, startDate, endDate, approvalStatusID, stateCode,"ACTIVITY",activityNames);
+                                ashaId, startDate, endDate, approvalStatusID, stateCode);
                     }else if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName) ){
                         totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
                                 ashaId, startDate, endDate, approvalStatusID, stateCode);
@@ -452,7 +444,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          .collect(Collectors.toList());
              }else if(stateCode.equals(StateCode.CG.getStateCode())){
                  List<IncentiveActivityRecord> dbRecords =
-                         incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate,groupNames,activityNames);
+                         incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate);
                  if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                      incentiveActivityRecord = dbRecords.stream()
                              .filter(r -> approvalStatusID == 0 ||

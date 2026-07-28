@@ -342,46 +342,16 @@ public class IncentiveServiceImpl implements IncentiveService {
         Integer villageID = userRepo.getUserRole(request.getUserId()).get(0).getStateId();
         boolean isCG = villageID != null && villageID.intValue() == StateCode.CG.getStateCode();
 
-        List<String> activityNames = Arrays.asList(
-                "MITANIN_REGISTER_5_INFO_FILL",
-                "MITANIN_REGISTER",
-                "VHSNC_MEETING",
-                "CLUSTER_MEETING"
-        );
-        List<String> groupNames = List.of("ACTIVITY");
-        List<IncentiveActivityRecord> records = Collections.emptyList();
-        if (isCG) {
-            if(roleName.equalsIgnoreCase("ANM")){
-                records = recordRepo.findRecordsByAsha(request.getUserId())
+        List<IncentiveActivityRecord> records =
+                recordRepo.findRecordsByAsha(request.getUserId())
                         .stream()
                         .filter(r -> r.getCreatedDate() != null
                                 && r.getEndDate() != null
                                 && r.getEndDate().toLocalDateTime().getMonthValue() == request.getMonth()
                                 && r.getEndDate().toLocalDateTime().getYear() == request.getYear()
-                                && Boolean.TRUE.equals(r.getIsClaimed()))
+                                && r.getIsClaimed())
                         .toList();
-            }else if(roleName.equalsIgnoreCase("ASHA Supervisor")){
-                records = recordRepo.findRecordsByAsha(request.getUserId(),groupNames,activityNames)
-                        .stream()
-                        .filter(r -> r.getCreatedDate() != null
-                                && r.getEndDate() != null
-                                && r.getEndDate().toLocalDateTime().getMonthValue() == request.getMonth()
-                                && r.getEndDate().toLocalDateTime().getYear() == request.getYear()
-                                && Boolean.TRUE.equals(r.getIsClaimed()))
-                        .toList();
-            }
 
-        } else {
-
-            records = recordRepo.findRecordsByAsha(request.getUserId())
-                    .stream()
-                    .filter(r -> r.getCreatedDate() != null
-                            && r.getEndDate() != null
-                            && r.getEndDate().toLocalDateTime().getMonthValue() == request.getMonth()
-                            && r.getEndDate().toLocalDateTime().getYear() == request.getYear()
-                            && Boolean.TRUE.equals(r.getIsClaimed()))
-                    .toList();
-        }
 
         // Bulk fetch valid activity IDs — state wise
         List<Long> activityIds = records.stream()
@@ -396,7 +366,7 @@ public class IncentiveServiceImpl implements IncentiveService {
         if(isCG){
             if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                 records = records.stream()
-                        .filter(r -> validActivityIds.contains(r.getActivityId()))
+                        .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
                         .collect(Collectors.toList());
             }else  if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName) ){
                 records = records.stream()
