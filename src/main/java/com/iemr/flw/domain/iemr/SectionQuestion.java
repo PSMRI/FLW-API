@@ -47,7 +47,7 @@ import java.util.List;
 
 /**
  * A question within a form section.
- * questionType: RADIO | MCQ | CHECKBOX | TEXT | DATE | DISPLAY | AUTO_FILL
+ * questionType: RADIO | DROPDOWN | MCQ | CHECKBOX | TEXT | DATE | DISPLAY | AUTO_FILL | NUMBER_PICKER | CHECKBOX_MULTI
  */
 @Entity
 @Table(name = "t_section_question", schema = "db_iemr")

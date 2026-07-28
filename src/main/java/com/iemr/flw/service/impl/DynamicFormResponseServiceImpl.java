@@ -296,21 +296,25 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
     private Optional<SectionResponse> upsertSectionResponse(
             Long responseId, FormSection section, String actor, String status, Integer vanID, Integer parkingPlaceID) {
-        Optional<SectionResponse> existing =
-                sectionResponseRepo.findByResponseIdAndSectionId(responseId, section.getSectionId());
-        if (existing.isPresent()) {
-            if (Boolean.FALSE.equals(section.getIsEditable())) {
-                log.info("Section '{}' is not editable — skipping update for responseId={}",
-                        section.getSectionUuid(), responseId);
-                return Optional.empty();
+        if (section.getSectionPhase() != SectionPhase.POST_SUBMIT) {
+            Optional<SectionResponse> existing =
+                    sectionResponseRepo.findByResponseIdAndSectionId(responseId, section.getSectionId());
+            if (existing.isPresent()) {
+                if (Boolean.FALSE.equals(section.getIsEditable())) {
+                    log.info("Section '{}' is not editable — skipping update for responseId={}",
+                            section.getSectionUuid(), responseId);
+                    return Optional.empty();
+                }
+                SectionResponse sr = existing.get();
+                sr.setStatus(status);
+                sr.setSavedAt(new Timestamp(System.currentTimeMillis()));
+                sr.setUpdatedBy(actor);
+                if (sr.getVanID() == null) { sr.setVanID(vanID); sr.setParkingPlaceID(parkingPlaceID); }
+                return Optional.of(sectionResponseRepo.save(sr));
             }
-            SectionResponse sr = existing.get();
-            sr.setStatus(status);
-            sr.setSavedAt(new Timestamp(System.currentTimeMillis()));
-            sr.setUpdatedBy(actor);
-            if (sr.getVanID() == null) { sr.setVanID(vanID); sr.setParkingPlaceID(parkingPlaceID); }
-            return Optional.of(sectionResponseRepo.save(sr));
         }
+        // POST_SUBMIT sections always create a new instance — this is what makes repeatable
+        // follow-up visits possible; the read path already returns every row for a section.
         SectionResponse sr = SectionResponse.builder()
                 .responseId(responseId)
                 .sectionId(section.getSectionId())
@@ -356,7 +360,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             // Delete any existing answers for this question in this section (handles re-saves)
             questionResponseRepo.deleteByQuestionIdAndSectionResponseId(questionId, sectionResponseId);
 
-            if (type == QuestionType.RADIO || type == QuestionType.CHECKBOX) {
+            if (type == QuestionType.RADIO || type == QuestionType.CHECKBOX || type == QuestionType.DROPDOWN) {
                 if (answer.getOptionValue() != null) {
                     QuestionOption opt = resolveOption(
                             optionsByQuestion, questionId, answer.getOptionValue(), answer.getQuestionUuid());
@@ -370,7 +374,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                             .parkingPlaceID(parkingPlaceID)
                             .build());
                 }
-            } else if (type == QuestionType.MCQ) {
+            } else if (type == QuestionType.MCQ || type == QuestionType.CHECKBOX_MULTI) {
                 if (answer.getOptionValues() != null) {
                     for (String val : answer.getOptionValues()) {
                         QuestionOption opt = resolveOption(
@@ -387,7 +391,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                     }
                 }
             } else {
-                // TEXT, DATE, AUTO_FILL, CHECKBOX — prefer answerText, then answerDate, then optionValue (legacy)
+                // TEXT, DATE, AUTO_FILL, NUMBER_PICKER — prefer answerText, then answerDate, then optionValue (legacy)
                 String value = answer.getAnswerText() != null ? answer.getAnswerText()
                         : answer.getAnswerDate() != null ? answer.getAnswerDate()
                         : answer.getOptionValue();
