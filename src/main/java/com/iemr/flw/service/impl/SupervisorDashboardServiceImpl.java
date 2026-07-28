@@ -451,22 +451,37 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                      approvalStatusID.equals(r.getApprovalStatus()) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
                              .collect(Collectors.toList());
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
+                     if(approvalStatusID.equals(102)){
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(r -> r.getApprovalStatus().equals(105) && isAfter24Hours(r.getCreatedDate()))
+                                 .peek(r -> {
+                                     if(r.getApprovalStatus().equals(105)){
+                                         r.setApprovalStatus(102);
 
-                     incentiveActivityRecord = dbRecords.stream()
-                             .filter(r -> approvalStatusID == 0
-                                     || approvalStatusID.equals(r.getApprovalStatus())
-                                     || (approvalStatusID.equals(102) && r.getApprovalStatus().equals(105)) && isAfter24Hours(r.getCreatedDate()))
-                             .peek(r -> {
-                                 if(r.getApprovalStatus().equals(105)){
-                                     r.setApprovalStatus(102);
+                                     }
+                                     if (isAfter24Hours(r.getCreatedDate())
+                                             && r.getApprovalStatus().equals(105)) {
+                                         r.setApprovalStatus(102);
+                                     }
+                                 })
+                                 .collect(Collectors.toList());
+                     }else {
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(r -> approvalStatusID == 0
+                                         || approvalStatusID.equals(r.getApprovalStatus()) && isAfter24Hours(r.getCreatedDate()))
+                                 .peek(r -> {
+                                     if(r.getApprovalStatus().equals(105)){
+                                         r.setApprovalStatus(102);
 
-                                 }
-                                 if (isAfter24Hours(r.getCreatedDate())
-                                         && r.getApprovalStatus().equals(105)) {
-                                     r.setApprovalStatus(102);
-                                 }
-                             })
-                             .collect(Collectors.toList());
+                                     }
+                                     if (isAfter24Hours(r.getCreatedDate())
+                                             && r.getApprovalStatus().equals(105)) {
+                                         r.setApprovalStatus(102);
+                                     }
+                                 })
+                                 .collect(Collectors.toList());
+                     }
+
                  }
 
 
@@ -512,7 +527,15 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             if (countList != null && !countList.isEmpty()) {
                 Object[] counts = countList.get(0);
                 verified = counts[0] != null ? ((Number) counts[0]).longValue() : 0;
-                pending = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
+                if(stateCode.equals(StateCode.CG.getStateCode())){
+                    if(roleName.equalsIgnoreCase("ANM")){
+                        pending = counts[3] != null ? ((Number) counts[1]).longValue() : 0;
+
+                    }else {
+                        pending = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
+
+                    }
+                }
                 rejected = counts[2] != null ? ((Number) counts[2]).longValue() : 0;
                 approved = counts[3] != null ? ((Number) counts[3]).longValue() : 0;
             }
