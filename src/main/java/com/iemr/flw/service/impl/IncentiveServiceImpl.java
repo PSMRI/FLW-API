@@ -396,6 +396,12 @@ public class IncentiveServiceImpl implements IncentiveService {
             IncentiveActivity activity =
                     incentivesRepo.findById(activityId).orElse(null);
 
+            Integer approvalStatus = list.stream()
+                    .max(Comparator.comparing(IncentiveActivityRecord::getCreatedDate))
+                    .map(IncentiveActivityRecord::getApprovalStatus)
+                    .orElse(0);
+
+
             if (activity == null) continue;
 
             long total = list.stream()
@@ -408,11 +414,6 @@ public class IncentiveServiceImpl implements IncentiveService {
                 map.put("activityDec", activity.getDescription());
                 map.put("groupName", activity.getGroup());
                 map.put("isDefault", activity.getIsDefaultActivity());
-                Integer approvalStatus = list.stream()
-                        .max(Comparator.comparing(IncentiveActivityRecord::getCreatedDate))
-                        .map(IncentiveActivityRecord::getApprovalStatus)
-                        .orElse(null);
-
                 map.put("approvalStatus", approvalStatus);
                 map.put("claimCount", list.size());
                 map.put("totalAmount", total);
