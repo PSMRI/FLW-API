@@ -850,7 +850,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
                 if (ancFullActivityCH != null && ancVisit.getAncVisit() != null
                         && ancVisit.getAncVisit() == 4) {
-                    recordAncRelatedIncentive(ancFullActivityCH, ancVisit);
+                    recordFullAncIncentive(ancFullActivityCH, ancVisit);
                 }
 
 

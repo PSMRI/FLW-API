@@ -218,31 +218,11 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
 UPDATE IncentiveActivityRecord iar
 SET
     iar.approvalStatus = :approvalStatus,
-
-    iar.verifiedByUserId =
-        CASE
-            WHEN iar.isDefaultActivity = false
-            THEN :ashaSupervisorUserId
-            ELSE iar.verifiedByUserId
-        END,
-
-    iar.verifiedByUserName =
-        CASE
-            WHEN iar.isDefaultActivity = false
-            THEN :ashaSupervisorUserName
-            ELSE iar.verifiedByUserName
-        END,
-
-    iar.approvalDate =
-        CASE
-            WHEN iar.isDefaultActivity = false
-            THEN :approvalDate
-            ELSE iar.approvalDate
-        END,
-
+    iar.verifiedByUserId = :ashaSupervisorUserId,
+    iar.verifiedByUserName = :ashaSupervisorUserName,
+    iar.approvalDate = :approvalDate,
     iar.reason = NULL,
     iar.otherReason = NULL
-
 WHERE iar.ashaId = :ashaId
 AND iar.isClaimed = true
 AND iar.createdDate >= :startDate

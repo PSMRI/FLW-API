@@ -453,10 +453,18 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                  List<IncentiveActivityRecord> dbRecords =
                          incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate);
                  if("ASHA Supervisor".equalsIgnoreCase(roleName)){
-                     incentiveActivityRecord = dbRecords.stream()
-                             .filter(r ->( approvalStatusID == 0 ||
-                                     approvalStatusID.equals(r.getApprovalStatus())) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
-                             .collect(Collectors.toList());
+                     if(approvalStatusID.equals(105)){
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(r ->( r.getApprovalStatus().equals(101) ||
+                                         approvalStatusID.equals(r.getApprovalStatus())) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
+                                 .collect(Collectors.toList());
+                     }else {
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(r ->( approvalStatusID == 0 ||
+                                         approvalStatusID.equals(r.getApprovalStatus())) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
+                                 .collect(Collectors.toList());
+                     }
+
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                      if (approvalStatusID.equals(102)) {
 
@@ -473,35 +481,29 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  })
                                  .collect(Collectors.toList());
 
-                     } else if(approvalStatusID.equals(101)){
-                         incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r -> r.getApprovalStatus().equals(101) && !r.getIsDefaultActivity())
-                                 .collect(Collectors.toList());
-                     }else {
-                         incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r -> {
+                     } else incentiveActivityRecord = dbRecords.stream()
+                             .filter(r -> {
 
-                                     if (approvalStatusID != 0
-                                             && !approvalStatusID.equals(r.getApprovalStatus())) {
-                                         return false;
-                                     }
+                                 if (approvalStatusID != 0
+                                         && !approvalStatusID.equals(r.getApprovalStatus())) {
+                                     return false;
+                                 }
 
-                                     // 102 should be visible only after 24 hours
-                                     if (r.getApprovalStatus().equals(102)) {
-                                         return isAfter24Hours(r.getCalimedDate());
-                                     }
+                                 // 102 should be visible only after 24 hours
+                                 if (r.getApprovalStatus().equals(102)) {
+                                     return isAfter24Hours(r.getCalimedDate());
+                                 }
 
-                                     // 105 should always be visible
-                                     return true;
-                                 })
-                                 .peek(r -> {
-                                     if (r.getApprovalStatus().equals(102)
-                                             && isAfter24Hours(r.getCalimedDate())) {
-                                         r.setApprovalStatus(105);
-                                     }
-                                 })
-                                 .collect(Collectors.toList());
-                     }
+                                 // 105 should always be visible
+                                 return true;
+                             })
+                             .peek(r -> {
+                                 if (r.getApprovalStatus().equals(102)
+                                         && isAfter24Hours(r.getCalimedDate())) {
+                                     r.setApprovalStatus(105);
+                                 }
+                             })
+                             .collect(Collectors.toList());
 
                  }
 
