@@ -405,6 +405,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                 map.put("activityId", activityId);
                 map.put("activityDec", activity.getDescription());
                 map.put("groupName", activity.getGroup());
+                map.put("isDefault", activity.getIsDefaultActivity());
                 map.put("claimCount", list.size());
                 map.put("totalAmount", total);
                 map.put("amount", activity.getRate());
