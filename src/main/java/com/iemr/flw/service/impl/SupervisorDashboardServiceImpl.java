@@ -7,6 +7,7 @@ import java.time.Month;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.google.gson.Gson;
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
 import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
 import com.iemr.flw.masterEnum.IncentiveApprovalStatus;
@@ -457,32 +458,43 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                      approvalStatusID.equals(r.getApprovalStatus())) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
                              .collect(Collectors.toList());
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
-                     if(approvalStatusID.equals(102)){
-                         incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r -> (r.getApprovalStatus().equals(105)) && (isAfter24Hours(r.getCalimedDate()) || r.getApprovalStatus().equals(102)))
-                                 .peek(r -> {
-                                     if(r.getApprovalStatus().equals(105)){
-                                         r.setApprovalStatus(102);
+                     if (approvalStatusID.equals(102)) {
 
-                                     }
-                                     if (isAfter24Hours(r.getCalimedDate())
-                                             && r.getApprovalStatus().equals(105)) {
-                                         r.setApprovalStatus(102);
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(r ->
+                                         r.getApprovalStatus().equals(105)
+                                                 || (r.getApprovalStatus().equals(102)
+                                                 && isAfter24Hours(r.getCalimedDate())))
+                                 .peek(r -> {
+                                     if (r.getApprovalStatus().equals(102)
+                                             && isAfter24Hours(r.getCalimedDate())) {
+                                         r.setApprovalStatus(105);
                                      }
                                  })
                                  .collect(Collectors.toList());
-                     }else {
-                         incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r ->( approvalStatusID == 0
-                                         || approvalStatusID.equals(r.getApprovalStatus()))&& (isAfter24Hours(r.getCalimedDate()) || approvalStatusID.equals(102)))
-                                 .peek(r -> {
-                                     if(r.getApprovalStatus().equals(105)){
-                                         r.setApprovalStatus(102);
 
+                     } else {
+
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(r -> {
+
+                                     if (approvalStatusID != 0
+                                             && !approvalStatusID.equals(r.getApprovalStatus())) {
+                                         return false;
                                      }
-                                     if (isAfter24Hours(r.getCalimedDate())
-                                             && r.getApprovalStatus().equals(105)) {
-                                         r.setApprovalStatus(102);
+
+                                     // 102 should be visible only after 24 hours
+                                     if (r.getApprovalStatus().equals(102)) {
+                                         return isAfter24Hours(r.getCalimedDate());
+                                     }
+
+                                     // 105 should always be visible
+                                     return true;
+                                 })
+                                 .peek(r -> {
+                                     if (r.getApprovalStatus().equals(102)
+                                             && isAfter24Hours(r.getCalimedDate())) {
+                                         r.setApprovalStatus(105);
                                      }
                                  })
                                  .collect(Collectors.toList());
@@ -495,6 +507,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
              }
             logger.info("Final incentiveActivityRecord count: {}", incentiveActivityRecord.size());
+            logger.info("Final incentiveActivityRecord: {}",
+                    new Gson().toJson(incentiveActivityRecord));
+
             List<Map<String, Object>> activityList = new ArrayList<>();
             for (IncentiveActivityRecord record : incentiveActivityRecord) {
                 Map<String, Object> activity = new HashMap<>();
