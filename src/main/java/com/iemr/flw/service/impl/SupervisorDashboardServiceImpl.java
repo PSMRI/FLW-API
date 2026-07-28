@@ -457,7 +457,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                              .peek(r -> {
                                  if (isAfter24Hours(r.getCreatedDate())
                                          && r.getApprovalStatus().equals(102)) {
-                                     r.setApprovalStatus(104);
+                                     r.setApprovalStatus(105);
                                  }
                              })
                              .collect(Collectors.toList());
@@ -629,7 +629,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     if ("ASHA Supervisor".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())) {
 
                         updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
-                                ashaId, 104, startDate, endDate,
+                                ashaId, 105, startDate, endDate,
                                 approvalDate, ashaSupervisorUserId,
                                 ashaSupervisorDetails.getUserName());
 
