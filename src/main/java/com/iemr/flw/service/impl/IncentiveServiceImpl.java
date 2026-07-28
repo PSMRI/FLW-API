@@ -408,6 +408,12 @@ public class IncentiveServiceImpl implements IncentiveService {
                 map.put("activityDec", activity.getDescription());
                 map.put("groupName", activity.getGroup());
                 map.put("isDefault", activity.getIsDefaultActivity());
+                Integer approvalStatus = list.stream()
+                        .max(Comparator.comparing(IncentiveActivityRecord::getCreatedDate))
+                        .map(IncentiveActivityRecord::getApprovalStatus)
+                        .orElse(null);
+
+                map.put("approvalStatus", approvalStatus);
                 map.put("claimCount", list.size());
                 map.put("totalAmount", total);
                 map.put("amount", activity.getRate());
