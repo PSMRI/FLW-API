@@ -447,8 +447,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate);
                  if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                      incentiveActivityRecord = dbRecords.stream()
-                             .filter(r -> approvalStatusID == 0 ||
-                                     approvalStatusID.equals(r.getApprovalStatus()) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
+                             .filter(r ->( approvalStatusID == 0 ||
+                                     approvalStatusID.equals(r.getApprovalStatus())) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
                              .collect(Collectors.toList());
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                      if(approvalStatusID.equals(102)){
@@ -467,8 +467,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  .collect(Collectors.toList());
                      }else {
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r -> approvalStatusID == 0
-                                         || approvalStatusID.equals(r.getApprovalStatus()) && isAfter24Hours(r.getCreatedDate()))
+                                 .filter(r ->( approvalStatusID == 0
+                                         || approvalStatusID.equals(r.getApprovalStatus()))&& isAfter24Hours(r.getCreatedDate()))
                                  .peek(r -> {
                                      if(r.getApprovalStatus().equals(105)){
                                          r.setApprovalStatus(102);
