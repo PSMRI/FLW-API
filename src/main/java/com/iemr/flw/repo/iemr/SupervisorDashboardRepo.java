@@ -20,21 +20,50 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			+ "AND asm.deleted = false", nativeQuery = true)
 	List<Integer> getAshaIdsBySupervisor(@Param("supervisorUserID") Integer supervisorUserID);
 
+	@Query(value = "SELECT DISTINCT usrm.FacilityID "
+			+ "FROM m_UserServiceRoleMapping usrm "
+			+ "WHERE usrm.UserID = :userID AND usrm.Deleted = false "
+			+ "AND usrm.FacilityID IS NOT NULL", nativeQuery = true)
+	List<Integer> getUserFacilityIDs(@Param("userID") Integer userID);
+
 	// Get ASHAs with facility info for a supervisor
-	@Query(value = "SELECT DISTINCT asm.ashaUserID, u.FirstName, u.LastName, "
+	@Query(value = "SELECT DISTINCT u.UserID, u.FirstName, u.LastName, "
+			+ "COALESCE(u.EmployeeID,'') AS employeeID, "
 			+ "f.FacilityID, f.FacilityName, "
 			+ "COALESCE(ft.FacilityTypeName,'') AS facilityTypeName, "
-			+ "COALESCE(u.AgentID,'') AS agentID, "
-			+ "COALESCE(u.EmergencyContactNo,'') AS mobile, "
-			+ "COALESCE(g.GenderName,'') AS gender "
+			+ "COALESCE(u.ContactNo,'') AS mobile "
 			+ "FROM asha_supervisor_mapping asm "
-			+ "JOIN m_User u ON u.UserID = asm.ashaUserID AND u.Deleted = false "
-			+ "JOIN m_facility f ON f.FacilityID = asm.facilityID AND f.Deleted = false "
+			+ "JOIN m_User u ON u.UserID = asm.ashaUserID "
+			+ "JOIN m_facility f ON f.FacilityID = asm.facilityID "
 			+ "LEFT JOIN m_facilitytype ft ON ft.FacilityTypeID = f.FacilityTypeID "
-			+ "LEFT JOIN m_gender g ON g.GenderID = u.GenderID "
 			+ "WHERE asm.supervisorUserID = :supervisorUserID "
-			+ "AND asm.deleted = false", nativeQuery = true)
+			+ "AND asm.deleted = false AND u.Deleted = false AND f.Deleted = false", nativeQuery = true)
 	List<Object[]> getAshasWithFacilityInfo(@Param("supervisorUserID") Integer supervisorUserID);
+
+
+	@Query(value = "SELECT DISTINCT u.UserID, u.FirstName, u.LastName, "
+			+ "COALESCE(u.EmployeeID,'') AS employeeID, "
+			+ "f.FacilityID, f.FacilityName, "
+			+ "COALESCE(ft.FacilityTypeName,'') AS facilityTypeName, "
+			+ "COALESCE(u.ContactNo,'') AS mobile "
+			+ "FROM m_UserServiceRoleMapping usrm "
+			+ "JOIN m_User u ON u.UserID = usrm.UserID "
+			+ "JOIN m_Role r ON r.RoleID = usrm.RoleID "
+			+ "JOIN m_facility f ON f.FacilityID = usrm.FacilityID "
+			+ "LEFT JOIN m_facilitytype ft ON ft.FacilityTypeID = f.FacilityTypeID "
+			+ "WHERE usrm.FacilityID IN :facilityIDs "
+			+ "AND r.RoleName = 'ASHA' "
+			+ "AND usrm.Deleted = false AND u.Deleted = false AND f.Deleted = false", nativeQuery = true)
+	List<Object[]> getAshaListByFacilities(@Param("facilityIDs") List<Integer> facilityIDs);
+
+	@Query(value = """
+    SELECT asm.supervisorUserID
+    FROM asha_supervisor_mapping asm
+    WHERE asm.ashaUserID = :ashaUserID
+      AND asm.deleted = false
+    LIMIT 1
+    """, nativeQuery = true)
+	Integer getSupervisorUserIdByAshaId(@Param("ashaUserID") Integer ashaUserID);
 
 	// Unclaimed incentive count per ASHA
 	@Query(value = "SELECT iar.asha_id, "
@@ -87,6 +116,24 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			+ "GROUP BY iar.asha_id",
 			nativeQuery = true)
 	List<Object[]> getIncentiveStatusByAshaIds(
+			@Param("ashaIds") List<Integer> ashaIds,
+			@Param("startDate") Timestamp startDate,
+			@Param("endDate") Timestamp endDate);
+
+	@Query(value = "SELECT iar.asha_id, "
+			+ "COUNT(*) AS totalRecords, "
+			+ "SUM(CASE WHEN iar.approval_status = 101 THEN 1 ELSE 0 END) AS verified, "
+			+ "SUM(CASE WHEN iar.approval_status = 103 THEN 1 ELSE 0 END) AS rejected, "
+			+ "SUM(CASE WHEN iar.approval_status = 102 THEN 1 ELSE 0 END) AS pending "
+			+ "FROM incentive_activity_record iar "
+			+ "WHERE iar.asha_id IN (:ashaIds) "
+			+ "AND iar.created_date >= :startDate "
+			+ "AND iar.is_claimed = true "
+			+ "AND iar.is_default_activity = true "
+			+ "AND iar.created_date < :endDate "
+			+ "GROUP BY iar.asha_id",
+			nativeQuery = true)
+	List<Object[]> getDefaultIncentiveStatusByAshaIds(
 			@Param("ashaIds") List<Integer> ashaIds,
 			@Param("startDate") Timestamp startDate,
 			@Param("endDate") Timestamp endDate);

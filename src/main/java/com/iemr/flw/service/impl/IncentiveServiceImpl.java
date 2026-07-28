@@ -3,18 +3,17 @@ package com.iemr.flw.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.masterEnum.IncentiveApprovalStatus;
-import com.iemr.flw.masterEnum.IncentiveName;
 import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.IncentiveService;
 import com.iemr.flw.service.MaaMeetingService;
+import com.iemr.flw.service.NotificationService;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -30,11 +29,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.Month;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,6 +82,12 @@ public class IncentiveServiceImpl implements IncentiveService {
     private IFAFormSubmissionRepository ifaFormSubmissionRepository;
 
     private final ConcurrentHashMap<String, Object> lockMap = new ConcurrentHashMap<>();
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private SupervisorDashboardRepo dashboardRepo;
 
 
 
@@ -329,8 +333,8 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     // ================= GROUPED SUMMARY =================
     @Override
-    public String getAllIncentivesGroupedSummary(GetBenRequestHandler request) {
-
+    public String getAllIncentivesGroupedSummary(GetBenRequestHandler request,Integer userId) {
+       String roleName = userService.getUserDetail(userId).getRoleName();
         LocalDate start = LocalDate.of(request.getYear(), request.getMonth(), 1);
         LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
 
@@ -361,9 +365,23 @@ public class IncentiveServiceImpl implements IncentiveService {
                 : incentivesRepo.findValidActivityIds(activityIds, false);
 
         // Filter records based on valid activity IDs
-        records = records.stream()
-                .filter(r -> validActivityIds.contains(r.getActivityId()))
-                .collect(Collectors.toList());
+        if(isCG){
+            if("ASHA Supervisor".equalsIgnoreCase(roleName)){
+                records = records.stream()
+                        .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
+                        .collect(Collectors.toList());
+            }else  if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName) ){
+                records = records.stream()
+                        .filter(r -> validActivityIds.contains(r.getActivityId()))
+                        .collect(Collectors.toList());
+            }
+
+        }else {
+            records = records.stream()
+                    .filter(r -> validActivityIds.contains(r.getActivityId()))
+                    .collect(Collectors.toList());
+        }
+
 
         Map<Long, List<IncentiveActivityRecord>> grouped =
                 records.stream().collect(Collectors.groupingBy(IncentiveActivityRecord::getActivityId));
@@ -385,14 +403,29 @@ public class IncentiveServiceImpl implements IncentiveService {
                     .sum();
 
             Map<String, Object> map = new HashMap<>();
-            map.put("activityId", activityId);
-            map.put("activityDec", activity.getDescription());
-            map.put("groupName", activity.getGroup());
-            map.put("claimCount", list.size());
-            map.put("totalAmount", total);
-            map.put("amount", activity.getRate());
+            if(isCG){
+                map.put("activityId", activityId);
+                map.put("activityDec", activity.getDescription());
+                map.put("groupName", activity.getGroup());
+                map.put("isDefault", activity.getIsDefaultActivity());
+                map.put("claimCount", list.size());
+                map.put("totalAmount", total);
+                map.put("amount", activity.getRate());
+
+            }else {
+                map.put("activityId", activityId);
+                map.put("activityDec", activity.getDescription());
+                map.put("groupName", activity.getGroup());
+                map.put("claimCount", list.size());
+                map.put("totalAmount", total);
+                map.put("amount", activity.getRate());
+
+            }
 
             result.add(map);
+
+
+
         }
 
         return new Gson().toJson(result);
@@ -554,9 +587,11 @@ public class IncentiveServiceImpl implements IncentiveService {
     // ================= UPDATE CLAIM =================
     @Transactional
     public String updateClaimStatus(Integer ashaId, Integer month, Integer year, Boolean isClaimed, String token) {
+        String title = null;
         try {
             LocalDate start = LocalDate.of(year, month, 1);
             LocalDate end = start.plusMonths(1);
+
 
             int updated = recordRepo.updateClaimStatusByAshaAndDateRange(
                     ashaId,
@@ -565,6 +600,42 @@ public class IncentiveServiceImpl implements IncentiveService {
                     Timestamp.valueOf(start.atStartOfDay()),
                     Timestamp.valueOf(end.atStartOfDay())
             );
+            if(updated>0){
+                Map<String, String> data = new HashMap<>();
+                data.put("notification_type", "INCENTIVE_APPROVAL");
+                data.put("nav_id", "INCENTIVE_HISTORY");
+                data.put("sender_user_id", String.valueOf(ashaId));
+                data.put("receiver_user_id", String.valueOf(ashaId));
+                data.put("month", String.valueOf(month));
+                data.put("year", String.valueOf(year));
+                data.put("approval_status", String.valueOf(102));
+                data.put("priority", "HIGH");
+                title = "Incentive Approved";
+
+
+
+                if (isClaimed) {
+                 String body = "Your incentive Successfully claimed for month of" + Month.of(month).name() + " " + year;
+                    notificationService.sendNotification(
+                            "FLW","NA" ,
+                            title,
+                            body,
+                            "INCENTIVE_CLAIMED","INCENTIVE",ashaId
+                    );
+                }
+                if (isClaimed) {
+                  String  body = userService.getUserDetail(ashaId).getName()+" Successfully claimed Incentive for month of " + Month.of(month).name() + " " + year;
+                    notificationService.sendNotification(
+                            "FLW","NA" ,
+                            title,
+                            body,
+                            "INCENTIVE_CLAIMED","INCENTIVE",dashboardRepo.getSupervisorUserIdByAshaId(ashaId)
+                    );
+                }
+
+
+
+            }
 
             return updated > 0 ? "Success" : "No records";
 

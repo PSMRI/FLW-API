@@ -339,6 +339,7 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
                     record.setUpdatedBy(userRepo.getUserNamedByUserId(userId));
                     record.setAshaId(userId);
                     record.setBenId(0L);
+                    record.setIsDefaultActivity(true);
                     record.setAmount(Long.valueOf(activity.getRate()));
                     record.setIsEligible(true);
                     recordRepo.save(record);
@@ -375,6 +376,7 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
                     record.setUpdatedBy(userRepo.getUserNamedByUserId(userId));
                     record.setAshaId(userId);
                     record.setBenId(0L);
+                    record.setIsDefaultActivity(true);
                     record.setAmount(Long.valueOf(activity.getRate()));
                     record.setIsEligible(true);
                     recordRepo.save(record);
