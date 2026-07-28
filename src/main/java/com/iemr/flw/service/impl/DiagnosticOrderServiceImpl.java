@@ -84,6 +84,28 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         order.setPatientLastName(patientLastName);
         order.setPatientDateOfBirth(patientDateOfBirth);
         order.setPatientSex(patientSex);
+
+        String reasonForRefusal = request.getReasonForRefusal();
+        if (reasonForRefusal != null) {
+            order.setStatus(DiagnosticOrderStatus.REFUSED.name());
+            order.setReasonForRefusal(reasonForRefusal);
+            order.setErrorMessage(null);
+            try {
+                order = diagnosticOrderRepo.save(order);
+            } catch (DataIntegrityViolationException dive) {
+                Optional<DiagnosticOrder> winner = diagnosticOrderRepo
+                        .findByBenRegIDAndVisitCodeAndOrderType(benRegID, visitCode, orderType.name());
+                if (winner.isPresent()) {
+                    logger.warn("Lost create race for benRegID={}, visitCode={}, orderType={} — returning existing order id={}",
+                            benRegID, visitCode, orderType, winner.get().getId());
+                    return winner.get();
+                }
+                throw dive;
+            }
+            // Refused orders are saved as-is and never pushed to the vendor.
+            return order;
+        }
+
         try {
             order = diagnosticOrderRepo.save(order);
         } catch (DataIntegrityViolationException dive) {
@@ -162,6 +184,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         dto.setOrderType(order.getOrderType());
         dto.setStatus(order.getStatus());
         dto.setErrorMessage(order.getErrorMessage());
+        dto.setReasonForRefusal(order.getReasonForRefusal());
         dto.setProviderStatus(result.getProviderStatus());
         dto.setResultSummary(result.getResultSummary());
         dto.setTbPresence(result.getTbPresence());
@@ -243,7 +266,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
         if (DiagnosticOrderStatus.COMPLETED.name().equals(status)
                 || DiagnosticOrderStatus.FAILED.name().equals(status)
-                || DiagnosticOrderStatus.CANCELLED.name().equals(status)) {
+                || DiagnosticOrderStatus.CANCELLED.name().equals(status)
+                || DiagnosticOrderStatus.REFUSED.name().equals(status)) {
             throw new IllegalStateException("Cannot mark test completed for order in terminal status " + status);
         }
         order.setTestCompletedAt(new Timestamp(System.currentTimeMillis()));
@@ -278,6 +302,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         dto.setExternalOrderId(order.getExternalOrderId());
         dto.setStatus(order.getStatus());
         dto.setErrorMessage(order.getErrorMessage());
+        dto.setReasonForRefusal(order.getReasonForRefusal());
 
         diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId()).ifPresent(result -> {
             dto.setProviderStatus(result.getProviderStatus());
@@ -303,6 +328,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 .findBeneficiaryIdsPollingTimedOut(type.name(), villageId, providerServiceMapId);
         List<Long> failed = diagnosticOrderRepo
                 .findBeneficiaryIdsFailed(type.name(), villageId, providerServiceMapId);
-        return new DiagnosticOrderStatusSummaryDto(awaitingTestCompletion, awaitingProviderResult, completed, pollingTimedOut, failed);
+        List<Long> refused = diagnosticOrderRepo
+                .findBeneficiaryIdsRefused(type.name(), villageId, providerServiceMapId);
+        return new DiagnosticOrderStatusSummaryDto(awaitingTestCompletion, awaitingProviderResult, completed, pollingTimedOut, failed, refused);
     }
 }
