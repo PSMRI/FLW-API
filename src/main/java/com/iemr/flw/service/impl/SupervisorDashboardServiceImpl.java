@@ -459,7 +459,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                      if(approvalStatusID.equals(102)){
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r -> (r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(102)) && isAfter24Hours(r.getCalimedDate()))
+                                 .filter(r -> (r.getApprovalStatus().equals(105)) && (isAfter24Hours(r.getCalimedDate()) || r.getApprovalStatus().equals(102)))
                                  .peek(r -> {
                                      if(r.getApprovalStatus().equals(105)){
                                          r.setApprovalStatus(102);
@@ -474,7 +474,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                      }else {
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r ->( approvalStatusID == 0
-                                         || approvalStatusID.equals(r.getApprovalStatus()))&& isAfter24Hours(r.getCalimedDate()))
+                                         || approvalStatusID.equals(r.getApprovalStatus()))&& (isAfter24Hours(r.getCalimedDate()) || approvalStatusID.equals(102)))
                                  .peek(r -> {
                                      if(r.getApprovalStatus().equals(105)){
                                          r.setApprovalStatus(102);
@@ -601,8 +601,15 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             return false;
         }
 
-        long diff = System.currentTimeMillis() - claimedDate.getTime();
-        return diff >= 24 * 60 * 60 * 1000L;
+        long now = System.currentTimeMillis();
+        long diff = now - claimedDate.getTime();
+
+        logger.info("Now: {}", new Timestamp(now));
+        logger.info("ClaimedDate: {}", claimedDate);
+        logger.info("Diff(ms): {}", diff);
+        logger.info("Diff(hours): {}", diff / (1000 * 60 * 60.0));
+
+        return diff >= 24L * 60 * 60 * 1000;
     }
     private boolean isWithin24Hours(Timestamp claimedDate) {
         if (claimedDate == null) {
