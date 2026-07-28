@@ -698,7 +698,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                 approvalDate, ashaSupervisorUserId,
                                 ashaSupervisorDetails.getUserName());
 
-                    } else {
+                    } else if("ANM".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())){
 
                         updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRangeForDefaultActivity(
                                 ashaId, approvalStatus, startDate, endDate,
