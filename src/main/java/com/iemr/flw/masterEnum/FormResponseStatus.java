@@ -19,32 +19,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
-package com.iemr.flw.dto.iemr;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.sql.Timestamp;
-import java.util.List;
+package com.iemr.flw.masterEnum;
 
 /**
- * Outbound representation of one section's response data.
+ * Lifecycle status stored in FormResponse.status.
  *
  * @author Piramal Swasthya
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class SectionResponseDTO {
-
-    private Long sectionResponseId;
-    private Long sectionId;
-    private String sectionUuid;
-    private Boolean isEditable;
-    private String status;
-    private Timestamp savedAt;
-    private List<QuestionResponseDTO> answers;
+public enum FormResponseStatus {
+    /** Saved via /submit. */
+    SUBMITTED,
+    /** Saved via /complete, consent question answered YES (or not applicable). */
+    COMPLETE,
+    /** Saved via /complete, consent question TB2_GI_Q1 answered NO. */
+    REFUSED
 }

@@ -18,7 +18,22 @@ public class UserServiceImpl implements UserService {
     public UserServiceRoleDTO getUserDetail(Integer userId) {
         logger.info("calling getUserRole for userId: " + userId);
         UserServiceRoleDTO userRole = userServiceRoleRepo.getUserRole(userId).get(0);
-        if (userRole.getWorkingDistrictId() == null && userRole.getBlockId() != null) {
+
+        // Stop TB / Nikshay — additive only. This naturally returns nothing for
+        // any user whose rows don't have NikshayTUID set, i.e. every non-Stop-TB
+        // user. Fetched first so the district-by-block patch below can tell
+        // Stop TB users apart and skip them.
+        java.util.List<Object[]> nikshayResults = userServiceRoleRepo.getNikshayLocationScope(userId, userRole.getProviderServiceMapId());
+        boolean isStopTBUser = nikshayResults != null && !nikshayResults.isEmpty()
+                && nikshayResults.get(0) != null && nikshayResults.get(0).length == 6
+                && nikshayResults.get(0)[0] != null;
+
+        // Stop TB's BlockId holds a Nikshay TU ID, not an AMRIT BlockID -
+        // joining it against m_districtblock/m_district (what
+        // getDistrictByBlockId does) would resolve to whatever AMRIT
+        // district happens to share that same numeric ID by coincidence,
+        // not real data. Skip this patch for Stop TB users.
+        if (!isStopTBUser && userRole.getWorkingDistrictId() == null && userRole.getBlockId() != null) {
             java.util.List<Object[]> districtResults = userServiceRoleRepo.getDistrictByBlockId(userRole.getBlockId());
             if (districtResults != null && !districtResults.isEmpty()) {
                 Object[] district = districtResults.get(0);
@@ -28,6 +43,26 @@ public class UserServiceImpl implements UserService {
                 }
             }
         }
+
+        if (isStopTBUser) {
+            Object[] nikshay = nikshayResults.get(0);
+            userRole.setTuId((String) nikshay[0]);
+            userRole.setTuName((String) nikshay[1]);
+            userRole.setHealthFacilityId((String) nikshay[2]);
+            userRole.setHealthFacilityName((String) nikshay[3]);
+            // Stop TB never sets WorkingLocationID, so workingDistrictId/Name
+            // (derived from it) are always null. DistrictID sits directly on
+            // the mapping row instead - Stop TB has no "work location"
+            // indirection layer the way other servicelines do, so read it
+            // straight from there rather than trying to derive it.
+            if (nikshay[4] != null) {
+                userRole.setWorkingDistrictId(((Number) nikshay[4]).intValue());
+            }
+            if (nikshay[5] != null) {
+                userRole.setWorkingDistrictName((String) nikshay[5]);
+            }
+        }
+
         return userRole;
     }
 }
