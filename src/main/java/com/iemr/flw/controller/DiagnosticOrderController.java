@@ -46,11 +46,13 @@ public class DiagnosticOrderController {
     }
 
     @PostMapping("/order/get")
-    @Operation(summary = "Get the diagnostic order for a beneficiary+orderType (latest, if more than one exists)")
-    public String getOrder(@RequestParam Long benRegID, @RequestParam String orderType) {
+    @Operation(summary = "Get the diagnostic order for a beneficiary+orderType (latest, if more than one exists; "
+            + "pass visitCode to target a specific order/retest)")
+    public String getOrder(@RequestParam Long benRegID, @RequestParam String orderType,
+            @RequestParam(required = false) Long visitCode) {
         OutputResponse response = new OutputResponse();
         try {
-            DiagnosticOrder order = diagnosticOrderService.getOrder(benRegID, orderType);
+            DiagnosticOrder order = diagnosticOrderService.getOrder(benRegID, orderType, visitCode);
             response.setResponse(new Gson().toJson(order));
         } catch (Exception e) {
             logger.error("Error in getOrder: {}", e.getMessage());
@@ -74,11 +76,13 @@ public class DiagnosticOrderController {
     }
 
     @PostMapping("/order/testCompleted")
-    @Operation(summary = "Mark that the physical test has completed for this beneficiary+orderType, starting the poll cadence")
-    public String markTestCompleted(@RequestParam Long benRegID, @RequestParam String orderType) {
+    @Operation(summary = "Mark that the physical test has completed for this beneficiary+orderType, starting the poll cadence "
+            + "(targets the latest order unless visitCode is given)")
+    public String markTestCompleted(@RequestParam Long benRegID, @RequestParam String orderType,
+            @RequestParam(required = false) Long visitCode) {
         OutputResponse response = new OutputResponse();
         try {
-            DiagnosticOrder order = diagnosticOrderService.markTestCompleted(benRegID, orderType);
+            DiagnosticOrder order = diagnosticOrderService.markTestCompleted(benRegID, orderType, visitCode);
             response.setResponse(new Gson().toJson(order));
         } catch (Exception e) {
             logger.error("Error in markTestCompleted: {}", e.getMessage());
@@ -88,11 +92,13 @@ public class DiagnosticOrderController {
     }
 
     @PostMapping("/order/result")
-    @Operation(summary = "Get the diagnostic result for benId+orderType, at whatever stage it's currently in")
-    public String getOrderResult(@RequestParam Long benId, @RequestParam String orderType) {
+    @Operation(summary = "Get the diagnostic result for benId+orderType, at whatever stage it's currently in "
+            + "(targets the latest order unless visitCode is given)")
+    public String getOrderResult(@RequestParam Long benId, @RequestParam String orderType,
+            @RequestParam(required = false) Long visitCode) {
         OutputResponse response = new OutputResponse();
         try {
-            DiagnosticOrderResultDto result = diagnosticOrderService.getOrderResult(benId, orderType);
+            DiagnosticOrderResultDto result = diagnosticOrderService.getOrderResult(benId, orderType, visitCode);
             response.setResponse(new GsonBuilder().serializeNulls().create().toJson(result));
         } catch (Exception e) {
             logger.error("Error in getOrderResult: {}", e.getMessage());
@@ -102,11 +108,13 @@ public class DiagnosticOrderController {
     }
 
     @PostMapping("/order/poll")
-    @Operation(summary = "Trigger an immediate poll for one beneficiary+orderType's diagnostic order and return the result (ops use)")
-    public String pollOrder(@RequestParam Long benRegID, @RequestParam String orderType) {
+    @Operation(summary = "Trigger an immediate poll for one beneficiary+orderType's diagnostic order and return the result (ops use). "
+            + "Targets the latest order unless visitCode is given")
+    public String pollOrder(@RequestParam Long benRegID, @RequestParam String orderType,
+            @RequestParam(required = false) Long visitCode) {
         OutputResponse response = new OutputResponse();
         try {
-            DiagnosticOrderResultDto result = diagnosticOrderService.triggerManualPoll(benRegID, orderType);
+            DiagnosticOrderResultDto result = diagnosticOrderService.triggerManualPoll(benRegID, orderType, visitCode);
             response.setResponse(new GsonBuilder().serializeNulls().create().toJson(result));
         } catch (Exception e) {
             logger.error("Error in pollOrder: {}", e.getMessage());

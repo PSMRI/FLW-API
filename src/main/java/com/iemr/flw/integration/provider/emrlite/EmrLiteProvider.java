@@ -39,7 +39,9 @@ public class EmrLiteProvider implements DiagnosticProvider {
     private static final String TUBERCULOSIS_FINDING_NAME = "Tuberculosis";
 
     private static final String SUMMARY_TB_POSITIVE = "TB Positive";
+    private static final String SUMMARY_TB_NEGATIVE = "TB Negative";
     private static final String SUMMARY_DR_TB = "DR TB";
+    private static final String SUMMARY_NON_DR_TB = "Non DR TB";
 
     @Value("${diagnostic.emrlite.order-url}")
     private String orderUrl;
@@ -139,18 +141,30 @@ public class EmrLiteProvider implements DiagnosticProvider {
 
     private Boolean classifyTbPresenceFromSummary(String orderType, String summary) {
         if (!DiagnosticOrderType.MTB.name().equals(orderType) && !DiagnosticOrderType.MTB_PLUS.name().equals(orderType)) {
+            return null; // TB presence isn't tested for this orderType — not applicable, not a confirmed negative
+        }
+        if (SUMMARY_TB_POSITIVE.equalsIgnoreCase(summary)) {
+            return true;
+        }
+        if (SUMMARY_TB_NEGATIVE.equalsIgnoreCase(summary)) {
             return false;
         }
-        return SUMMARY_TB_POSITIVE.equalsIgnoreCase(summary);
+        return null; // Error/Indeterminate/anything else — genuinely unknown, not a confirmed negative
     }
 
     // MDR_RIF's summary reports rifampicin drug-resistance, not raw TB presence — kept as its own
     // field rather than folded into tbPresence.
     private Boolean classifyDrugResistanceFromSummary(String orderType, String summary) {
         if (!DiagnosticOrderType.MDR_RIF.name().equals(orderType)) {
+            return null; // Drug resistance isn't tested for this orderType — not applicable, not a confirmed negative
+        }
+        if (SUMMARY_DR_TB.equalsIgnoreCase(summary)) {
+            return true;
+        }
+        if (SUMMARY_NON_DR_TB.equalsIgnoreCase(summary)) {
             return false;
         }
-        return SUMMARY_DR_TB.equalsIgnoreCase(summary);
+        return null; // Error/Indeterminate/anything else — genuinely unknown, not a confirmed negative
     }
 
     private EmrLiteCadRawJson.FindingDto extractTuberculosisFinding(EmrLiteResultResponse result) {
