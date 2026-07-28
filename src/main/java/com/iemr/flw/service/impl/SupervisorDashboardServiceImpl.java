@@ -459,13 +459,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                      if(approvalStatusID.equals(102)){
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r -> (r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(102)) && isAfter24Hours(r.getCreatedDate()))
+                                 .filter(r -> (r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(102)) && isAfter24Hours(r.getCalimedDate()))
                                  .peek(r -> {
                                      if(r.getApprovalStatus().equals(105)){
                                          r.setApprovalStatus(102);
 
                                      }
-                                     if (isAfter24Hours(r.getCreatedDate())
+                                     if (isAfter24Hours(r.getCalimedDate())
                                              && r.getApprovalStatus().equals(105)) {
                                          r.setApprovalStatus(102);
                                      }
@@ -474,13 +474,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                      }else {
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r ->( approvalStatusID == 0
-                                         || approvalStatusID.equals(r.getApprovalStatus()))&& isAfter24Hours(r.getCreatedDate()))
+                                         || approvalStatusID.equals(r.getApprovalStatus()))&& isAfter24Hours(r.getCalimedDate()))
                                  .peek(r -> {
                                      if(r.getApprovalStatus().equals(105)){
                                          r.setApprovalStatus(102);
 
                                      }
-                                     if (isAfter24Hours(r.getCreatedDate())
+                                     if (isAfter24Hours(r.getCalimedDate())
                                              && r.getApprovalStatus().equals(105)) {
                                          r.setApprovalStatus(102);
                                      }
