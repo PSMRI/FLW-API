@@ -410,7 +410,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             }
 
             Long totalAmount = null;
-
             if (userService.getUserDetail(ashaId) != null) {
                 Integer stateCode = userService.getUserDetail(ashaId).getStateId();
                 if(stateCode.equals(StateCode.AM.getStateCode())){
@@ -448,7 +447,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                  if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                      incentiveActivityRecord = dbRecords.stream()
                              .filter(r -> approvalStatusID == 0 ||
-                                     approvalStatusID.equals(r.getApprovalStatus()) && isWithin24Hours(r.getCalimedDate()))
+                                     approvalStatusID.equals(r.getApprovalStatus()) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
                              .collect(Collectors.toList());
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                      incentiveActivityRecord = dbRecords.stream()
