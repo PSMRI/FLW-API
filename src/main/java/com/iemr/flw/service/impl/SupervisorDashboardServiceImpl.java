@@ -422,8 +422,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
                                 ashaId, startDate, endDate, approvalStatusID, stateCode);
                     }else if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName) ){
-                        totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
-                                ashaId, startDate, endDate, approvalStatusID, stateCode);
+                        if(approvalStatusID.equals(102)){
+                            totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
+                                    ashaId, startDate, endDate, 105, stateCode);
+                        }else {
+                            totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
+                                    ashaId, startDate, endDate, approvalStatusID, stateCode);
+                        }
+
                     }
 
                 }
