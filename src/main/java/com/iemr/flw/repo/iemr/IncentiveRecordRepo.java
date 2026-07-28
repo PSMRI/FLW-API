@@ -217,12 +217,7 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
     @Query("""
 UPDATE IncentiveActivityRecord iar
 SET
-    iar.approvalStatus =
-        CASE
-            WHEN iar.isDefaultActivity = false
-            THEN :approvalStatus
-            ELSE iar.approvalStatus
-        END,
+    iar.approvalStatus = :approvalStatus,
 
     iar.verifiedByUserId =
         CASE

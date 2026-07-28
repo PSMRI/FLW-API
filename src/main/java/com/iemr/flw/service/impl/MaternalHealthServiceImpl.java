@@ -872,12 +872,12 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         if (record == null) {
             record = new IncentiveActivityRecord();
             record.setActivityId(incentiveActivity.getId());
-            record.setCreatedDate(ancVisit.getCreatedDate());
+            record.setCreatedDate(ancVisit.getAncDate());
             record.setCreatedBy(ancVisit.getCreatedBy());
-            record.setUpdatedDate(ancVisit.getCreatedDate());
+            record.setUpdatedDate(ancVisit.getAncDate());
             record.setUpdatedBy(ancVisit.getCreatedBy());
-            record.setStartDate(ancVisit.getCreatedDate());
-            record.setEndDate(ancVisit.getCreatedDate());
+            record.setStartDate(ancVisit.getAncDate());
+            record.setEndDate(ancVisit.getAncDate());
             record.setBenId(ancVisit.getBenId());
             record.setAshaId(userId);
             record.setAmount(Long.valueOf(incentiveActivity.getRate()));

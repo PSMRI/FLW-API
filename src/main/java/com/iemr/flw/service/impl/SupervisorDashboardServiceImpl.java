@@ -473,8 +473,11 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  })
                                  .collect(Collectors.toList());
 
-                     } else {
-
+                     } else if(approvalStatusID.equals(101)){
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(r -> r.getApprovalStatus().equals(101) && !r.getIsDefaultActivity())
+                                 .collect(Collectors.toList());
+                     }else {
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r -> {
 
