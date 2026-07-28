@@ -66,4 +66,8 @@ public class IncentiveActivity {
 
 
 
+    @Column(name = "state_activity_code")
+    private Integer stateActivityCode;
+
+
 }
