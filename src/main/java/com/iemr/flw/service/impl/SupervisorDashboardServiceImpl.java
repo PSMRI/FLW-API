@@ -451,13 +451,19 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                      approvalStatusID.equals(r.getApprovalStatus()) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
                              .collect(Collectors.toList());
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
+
                      incentiveActivityRecord = dbRecords.stream()
-                             .filter(r -> approvalStatusID == 0 ||
-                                     approvalStatusID.equals(r.getApprovalStatus()) && isAfter24Hours(r.getCreatedDate()))
+                             .filter(r -> approvalStatusID == 0
+                                     || approvalStatusID.equals(r.getApprovalStatus())
+                                     || (approvalStatusID.equals(102) && r.getApprovalStatus().equals(105)) && isAfter24Hours(r.getCreatedDate()))
                              .peek(r -> {
+                                 if(r.getApprovalStatus().equals(105)){
+                                     r.setApprovalStatus(102);
+
+                                 }
                                  if (isAfter24Hours(r.getCreatedDate())
-                                         && r.getApprovalStatus().equals(102)) {
-                                     r.setApprovalStatus(105);
+                                         && r.getApprovalStatus().equals(105)) {
+                                     r.setApprovalStatus(102);
                                  }
                              })
                              .collect(Collectors.toList());
