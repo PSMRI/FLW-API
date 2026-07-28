@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A selectable option for a RADIO or MCQ question.
+ * A selectable option for a RADIO, DROPDOWN, or MCQ question.
  */
 @Entity
 @Table(name = "t_question_option", schema = "db_iemr")

@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Transfer object for a selectable option on a RADIO or MCQ question.
+ * Transfer object for a selectable option on a RADIO, DROPDOWN, or MCQ question.
  */
 @Data
 @NoArgsConstructor

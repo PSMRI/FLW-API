@@ -30,6 +30,9 @@ package com.iemr.flw.masterEnum;
 public enum QuestionType {
     /** Single-select from a predefined list of options. */
     RADIO,
+    /** Single-select from a predefined list of options, presented as a dropdown. Resolved
+     *  like RADIO: submit optionValue to select it. */
+    DROPDOWN,
     /** Multi-select from a predefined list of options. */
     MCQ,
     /** Single boolean checkbox — checked or unchecked. Resolved like RADIO: submit
@@ -42,5 +45,10 @@ public enum QuestionType {
     /** Read-only display text — carries no answer data. */
     DISPLAY,
     /** Value auto-filled from context (e.g. ASHA worker ID). */
-    AUTO_FILL
+    AUTO_FILL,
+    /** Numeric input via a picker widget. Resolved like TEXT: submit answerText. */
+    NUMBER_PICKER,
+    /** Multi-select checkbox list from a predefined list of options. Resolved like MCQ:
+     *  submit optionValues, one QuestionResponse row stored per selected option. */
+    CHECKBOX_MULTI
 }
