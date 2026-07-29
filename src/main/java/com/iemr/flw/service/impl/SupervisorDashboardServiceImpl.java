@@ -499,8 +499,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r ->
                                          r.getApprovalStatus().equals(105)
-                                                 || (r.getApprovalStatus().equals(102)
-                                                 && isAfter24Hours(r.getCalimedDate())))
+                                                 || (r.getApprovalStatus().equals(102)))
                                  .peek(r -> {
                                      if (r.getApprovalStatus().equals(102)
                                              && isAfter24Hours(r.getCalimedDate())) {
