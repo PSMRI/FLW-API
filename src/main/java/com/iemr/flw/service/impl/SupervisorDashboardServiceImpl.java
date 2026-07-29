@@ -58,6 +58,10 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         Integer stateId = userService.getUserDetail(supervisorUserID).getStateId();
         String rollName = userService.getUserDetail(supervisorUserID).getRoleName();
 
+        LocalDate today = LocalDate.now();
+
+        boolean isOverDue = today.isAfter(LocalDate.of(year, month, 5));
+
         // 1. Supervisor user details
         List<Object[]> supervisorRows = dashboardRepo.getSupervisorUserDetails(supervisorUserID);
         if (supervisorRows != null && !supervisorRows.isEmpty()) {
@@ -168,7 +172,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         }
 
         // 5. Get incentive status per ASHA (verified, rejected, pending, totalAmount)
-        long overallVerified = 0, overallRejected = 0, overallPending = 0;
+        long overallVerified = 0, overallRejected = 0, overallPending = 0, overallOverDue =0;
         long overallUnclaimed = 0;
 
         try {
@@ -230,7 +234,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                             if (verified > 0) overallVerified += 1;
                             if (rejected > 0) overallRejected += 1;
-                            if (pending > 0) overallPending += 1;
+                            if (pending > 0) {
+                                if (isOverDue) {
+                                    overallOverDue++;
+                                } else {
+                                    overallPending++;
+                                }
+                            }
                         }
                     }
                 }
@@ -257,7 +267,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         overallSummary.put("verified", overallVerified);
         overallSummary.put("rejected", overallRejected);
         overallSummary.put("pending", overallPending);
-        overallSummary.put("overDue", 0);
+        overallSummary.put("overDue", overallOverDue);
         overallSummary.put("unclaimed", overallUnclaimed);
         result.put("incentiveSummary", overallSummary);
 
@@ -326,6 +336,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         LocalDate currentMonthStartDate = LocalDate.of(year, month, 1);
         LocalDate currentMonthendLocalDate = currentMonthStartDate.plusMonths(1);
 
+
+
+        boolean isOverDue =
+                roleName.equalsIgnoreCase("ANM")
+                        && today.getYear() == year
+                        && today.getMonthValue() == month
+                        && today.getDayOfMonth() > 5;
+
         logger.info("Login user role:"+ roleName);
 
         boolean isCurrentMonth =
@@ -391,7 +409,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         }
         logger.info("Other:" + rows);
 
-        long overallVerified = 0, overallRejected = 0, overallPending = 0 , overallUnclaimed=0;
+        long overallVerified = 0, overallRejected = 0, overallPending = 0 , overallUnclaimed=0 ,overallOverDue =0;
 
         String facilityName = "";
         String facilityType = "";
@@ -523,6 +541,20 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  })
                                  .collect(Collectors.toList());
 
+                     }else if (approvalStatusID.equals(104)) {
+                         if(isOverDue){
+                             incentiveActivityRecord = dbRecords.stream()
+                                     .filter(r ->
+                                             r.getApprovalStatus().equals(105)
+                                                     || (r.getApprovalStatus().equals(104)))
+                                     .peek(r -> {
+                                         if (r.getApprovalStatus().equals(102)) {
+                                             r.setApprovalStatus(104);
+                                         }
+                                     })
+                                     .collect(Collectors.toList());
+                         }
+
                      }else if(approvalStatusID.equals(106)){
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r->!r.getIsClaimed() && r.getApprovalStatus().equals(102)).collect(Collectors.toList());
@@ -614,7 +646,12 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         if(approvalStatusID.equals(106)){
                             unclaimedCount = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
 
-                        }else {
+                        }else if(approvalStatusID.equals(0)){
+                            unclaimedCount = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
+                            pending = counts[3] != null ? ((Number) counts[3]).longValue() : 0;
+
+                        }else{
+
                             pending = counts[3] != null ? ((Number) counts[3]).longValue() : 0;
 
                         }
@@ -631,7 +668,11 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         if(approvalStatusID.equals(106)){
                             unclaimedCount = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
 
-                        }else {
+                        }else if(approvalStatusID.equals(0)){
+                            unclaimedCount = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
+                            pending = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
+
+                        }else{
                             pending = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
 
                         }
@@ -651,7 +692,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             if (verified > 0) overallVerified += 1;
             if (rejected > 0) overallRejected += 1;
-            if (pending > 0) overallPending += 1;
+            if (pending > 0) {
+                if (isOverDue) {
+                    overallOverDue++;
+                } else {
+                    overallPending++;
+                }
+            }
+
             if (unclaimedCount > 0) overallUnclaimed += 1;
 
             asha.put("pending", pending);
