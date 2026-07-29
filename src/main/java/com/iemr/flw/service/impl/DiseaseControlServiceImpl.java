@@ -1250,7 +1250,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         }
 
         if (diseaseScreening.getCaseStatus().equals("Suspected")) {
-            if (!diseaseScreening.getMalariaTestType().isEmpty()) {
+            if (!diseaseScreening.getMalariaSlideTestType().isEmpty()) {
                 if (stateId.equals(StateCode.AM.getStateCode())) {
                     if (incentiveActivityForCollectSlideAM != null) {
                         addIncentive(incentiveActivityForCollectSlideAM, diseaseScreening);
@@ -1258,14 +1258,17 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     }
                 }
 
-                if (stateId.equals(StateCode.CG.getStateCode())) {
-                    if (incentiveActivityForCollectSlideCG != null) {
-                        addIncentive(incentiveActivityForCollectSlideCG, diseaseScreening);
 
-                    }
+
+            }
+
+        }
+        if (diseaseScreening.getMalariaSlideTestType()!=null || !diseaseScreening.getMalariaSlideTestType().isEmpty()){
+            if (stateId.equals(StateCode.CG.getStateCode())) {
+                if (incentiveActivityForCollectSlideCG != null) {
+                    addIncentive(incentiveActivityForCollectSlideCG, diseaseScreening);
+
                 }
-
-
             }
 
         }

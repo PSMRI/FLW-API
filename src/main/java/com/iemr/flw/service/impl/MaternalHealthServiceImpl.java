@@ -854,7 +854,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
                 if (ancFullActivityCH != null && ancVisit.getAncVisit() != null
                         && ancVisit.getAncVisit() == 4) {
-                    recordAncRelatedIncentive(ancFullActivityCH, ancVisit);
+                    recordFullAncIncentive(ancFullActivityCH, ancVisit);
                 }
 
 
@@ -876,12 +876,12 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         if (record == null) {
             record = new IncentiveActivityRecord();
             record.setActivityId(incentiveActivity.getId());
-            record.setCreatedDate(ancVisit.getCreatedDate());
+            record.setCreatedDate(ancVisit.getVisitDate());
             record.setCreatedBy(ancVisit.getCreatedBy());
-            record.setUpdatedDate(ancVisit.getCreatedDate());
+            record.setUpdatedDate(ancVisit.getVisitDate());
             record.setUpdatedBy(ancVisit.getCreatedBy());
-            record.setStartDate(ancVisit.getCreatedDate());
-            record.setEndDate(ancVisit.getCreatedDate());
+            record.setStartDate(ancVisit.getVisitDate());
+            record.setEndDate(ancVisit.getVisitDate());
             record.setBenId(ancVisit.getBenId());
             record.setAshaId(userId);
             record.setAmount(Long.valueOf(incentiveActivity.getRate()));
