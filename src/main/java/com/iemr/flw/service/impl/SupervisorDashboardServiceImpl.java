@@ -317,7 +317,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
     public Map<String, Object> getAshasAtFacility(Integer supervisorId, Integer facilityId,
                                                   Integer month, Integer year, Integer approvalStatusID) {
         Integer supervisorstateCode = userService.getUserDetail(supervisorId).getStateId();
-        List<Object[]> rows;
+        List<Object[]> rows = null;
         LocalDate today = LocalDate.now();
 
 
@@ -363,11 +363,27 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         } else {
 
             if (facilityId.equals(0)) {
-                rows = ashaSupervisorLoginRepo.getAshasAtFacility(
-                        supervisorId, approvalStatusID, startDate, endDate);
+                if(supervisorstateCode.equals(StateCode.CG.getStateCode())){
+                    if("ASHA Supervisor".equalsIgnoreCase(roleName)){
+                        rows = ashaSupervisorLoginRepo.getAshasAtFacilityCg(
+                                supervisorId, facilityId, approvalStatusID, startDate, endDate);
+                    }
+                }else if(supervisorstateCode.equals(StateCode.AM.getStateCode())){
+                    rows = ashaSupervisorLoginRepo.getAshasAtFacility(
+                            supervisorId, facilityId, approvalStatusID, startDate, endDate);
+                }
             } else {
-                rows = ashaSupervisorLoginRepo.getAshasAtFacility(
-                        supervisorId, facilityId, approvalStatusID, startDate, endDate);
+                if(supervisorstateCode.equals(StateCode.CG.getStateCode())){
+                    if("ASHA Supervisor".equalsIgnoreCase(roleName)){
+                        rows = ashaSupervisorLoginRepo.getAshasAtFacilityCg(
+                                supervisorId, facilityId, approvalStatusID, startDate, endDate);
+                    }
+                }else if(supervisorstateCode.equals(StateCode.AM.getStateCode())){
+                    rows = ashaSupervisorLoginRepo.getAshasAtFacility(
+                            supervisorId, facilityId, approvalStatusID, startDate, endDate);
+                }
+
+
             }
 
         }
