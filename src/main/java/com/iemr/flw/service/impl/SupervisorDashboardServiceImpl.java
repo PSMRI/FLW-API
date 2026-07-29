@@ -396,6 +396,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                     countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate);
 
+                    logger.info("countList = {}", Arrays.deepToString(countList.toArray()));
+
                 }else  if(("ANM".equalsIgnoreCase(roleName)  || "CHO".equalsIgnoreCase(roleName) )){
                     logger.info("ASHA_ID = {}", ashaId);
                     logger.info("Role = {}", roleName);
