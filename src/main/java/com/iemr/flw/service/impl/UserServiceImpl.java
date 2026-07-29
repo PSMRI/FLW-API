@@ -8,6 +8,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -23,10 +30,8 @@ public class UserServiceImpl implements UserService {
         // any user whose rows don't have NikshayTUID set, i.e. every non-Stop-TB
         // user. Fetched first so the district-by-block patch below can tell
         // Stop TB users apart and skip them.
-        java.util.List<Object[]> nikshayResults = userServiceRoleRepo.getNikshayLocationScope(userId, userRole.getProviderServiceMapId());
-        boolean isStopTBUser = nikshayResults != null && !nikshayResults.isEmpty()
-                && nikshayResults.get(0) != null && nikshayResults.get(0).length == 6
-                && nikshayResults.get(0)[0] != null;
+        List<Object[]> nikshayRows = userServiceRoleRepo.getNikshayMappingRows(userId, userRole.getProviderServiceMapId());
+        boolean isStopTBUser = nikshayRows != null && !nikshayRows.isEmpty();
 
         // Stop TB's BlockId holds a Nikshay TU ID, not an AMRIT BlockID -
         // joining it against m_districtblock/m_district (what
@@ -34,7 +39,7 @@ public class UserServiceImpl implements UserService {
         // district happens to share that same numeric ID by coincidence,
         // not real data. Skip this patch for Stop TB users.
         if (!isStopTBUser && userRole.getWorkingDistrictId() == null && userRole.getBlockId() != null) {
-            java.util.List<Object[]> districtResults = userServiceRoleRepo.getDistrictByBlockId(userRole.getBlockId());
+            List<Object[]> districtResults = userServiceRoleRepo.getDistrictByBlockId(userRole.getBlockId());
             if (districtResults != null && !districtResults.isEmpty()) {
                 Object[] district = districtResults.get(0);
                 if (district != null && district.length == 2) {
@@ -45,24 +50,67 @@ public class UserServiceImpl implements UserService {
         }
 
         if (isStopTBUser) {
-            Object[] nikshay = nikshayResults.get(0);
-            userRole.setTuId((String) nikshay[0]);
-            userRole.setTuName((String) nikshay[1]);
-            userRole.setHealthFacilityId((String) nikshay[2]);
-            userRole.setHealthFacilityName((String) nikshay[3]);
+            TreeSet<Integer> tuIds = new TreeSet<>();
+            TreeSet<Integer> facilityIds = new TreeSet<>();
+            Integer districtId = null;
+            for (Object[] row : nikshayRows) {
+                addCsvIds((String) row[0], tuIds);
+                addCsvIds((String) row[1], facilityIds);
+                if (districtId == null && row[2] != null) {
+                    districtId = ((Number) row[2]).intValue();
+                }
+            }
+
+            Map<Integer, String> tuNames = tuIds.isEmpty() ? Map.of()
+                    : toIdNameMap(userServiceRoleRepo.findNikshayTuNames(tuIds));
+            Map<Integer, String> facilityNames = facilityIds.isEmpty() ? Map.of()
+                    : toIdNameMap(userServiceRoleRepo.findNikshayFacilityNames(facilityIds));
+
+            userRole.setTuId(joinIds(tuIds));
+            userRole.setTuName(joinNames(tuIds, tuNames));
+            userRole.setHealthFacilityId(joinIds(facilityIds));
+            userRole.setHealthFacilityName(joinNames(facilityIds, facilityNames));
+
             // Stop TB never sets WorkingLocationID, so workingDistrictId/Name
             // (derived from it) are always null. DistrictID sits directly on
             // the mapping row instead - Stop TB has no "work location"
             // indirection layer the way other servicelines do, so read it
             // straight from there rather than trying to derive it.
-            if (nikshay[4] != null) {
-                userRole.setWorkingDistrictId(((Number) nikshay[4]).intValue());
-            }
-            if (nikshay[5] != null) {
-                userRole.setWorkingDistrictName((String) nikshay[5]);
+            if (districtId != null) {
+                userRole.setWorkingDistrictId(districtId);
+                userRole.setWorkingDistrictName(userServiceRoleRepo.findNikshayDistrictName(districtId));
             }
         }
 
         return userRole;
+    }
+
+    private void addCsvIds(String csv, Collection<Integer> target) {
+        if (csv == null || csv.isBlank()) {
+            return;
+        }
+        for (String id : csv.split(",")) {
+            try {
+                target.add(Integer.valueOf(id.trim()));
+            } catch (NumberFormatException ignored) {
+                // skip malformed entries rather than fail the whole login
+            }
+        }
+    }
+
+    private Map<Integer, String> toIdNameMap(List<Object[]> rows) {
+        Map<Integer, String> map = new HashMap<>();
+        for (Object[] row : rows) {
+            map.put(((Number) row[0]).intValue(), (String) row[1]);
+        }
+        return map;
+    }
+
+    private String joinIds(Collection<Integer> ids) {
+        return ids.stream().map(String::valueOf).collect(Collectors.joining(","));
+    }
+
+    private String joinNames(Collection<Integer> ids, Map<Integer, String> names) {
+        return ids.stream().map(id -> names.getOrDefault(id, "")).collect(Collectors.joining(","));
     }
 }
