@@ -429,7 +429,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     logger.info("ASHA_ID = {}", ashaId);
                     logger.info("Role = {}", roleName);
 
-                    countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
+                    if(approvalStatusID.equals(106)){
+                        countList = incentiveRecordRepo.getStatusUnclaimedCountByAshaId(ashaId, startDate, endDate);
+
+                    }else {
+                        countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
+
+                    }
+
 
                     logger.info("Count List = {}", countList);
 

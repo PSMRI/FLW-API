@@ -112,7 +112,6 @@ SELECT
 FROM IncentiveActivityRecord record
 WHERE record.ashaId = :ashaId
 AND record.isClaimed = false
-AND record.isDefaultActivity = true
 AND record.createdDate >= :startDate
 AND record.createdDate < :endDate
 """)
