@@ -460,7 +460,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                  if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                      if(approvalStatusID.equals(105)){
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r -> r.getApprovalStatus().equals(101) && r.getIsDefaultActivity())
+                                 .filter(r -> (r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(105)) && r.getIsDefaultActivity())
                                  .collect(Collectors.toList());
                      }else if(approvalStatusID.equals(106)){
                          incentiveActivityRecord = dbRecords.stream()
