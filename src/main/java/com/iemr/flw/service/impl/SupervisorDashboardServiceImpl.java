@@ -564,6 +564,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             long pending = 0, verified = 0, rejected = 0 ;
             if (countList != null && !countList.isEmpty()) {
                 Object[] counts = countList.get(0);
+                logger.info("Count List = {}", Arrays.deepToString(countList.toArray()));
+                logger.info("101={}, 102={}, 103={}, 101+105={}",
+                        counts[0], counts[1], counts[2], counts[3]);
 
                 if(stateCode.equals(StateCode.CG.getStateCode())){
                     if(roleName.equalsIgnoreCase("ANM")){
