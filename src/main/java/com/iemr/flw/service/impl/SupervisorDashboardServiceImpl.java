@@ -221,7 +221,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         }
                     }
                 }else if("ANM".equalsIgnoreCase(rollName)){
-                    List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
+                    List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIdsForAnm(ashaIDs, startDate, endDate);
                     if (statusRows != null) {
                         for (Object[] sRow : statusRows) {
                             long verified = ((Number) sRow[2]).longValue();
