@@ -347,6 +347,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
 
         if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
+            logger.info("ANM:" + roleName);
 
             if (facilityId.equals(0)) {
 
@@ -361,6 +362,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             }
 
         } else {
+            logger.info("Other:" + roleName);
 
             if (facilityId.equals(0)) {
                 if(supervisorstateCode.equals(StateCode.CG.getStateCode())){
@@ -387,6 +389,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             }
 
         }
+        logger.info("Other:" + rows);
 
         long overallVerified = 0, overallRejected = 0, overallPending = 0 ;
 
