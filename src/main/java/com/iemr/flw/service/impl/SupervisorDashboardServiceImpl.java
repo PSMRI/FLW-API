@@ -391,7 +391,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         }
         logger.info("Other:" + rows);
 
-        long overallVerified = 0, overallRejected = 0, overallPending = 0 ;
+        long overallVerified = 0, overallRejected = 0, overallPending = 0 , overallUnclaimed=0;
 
         String facilityName = "";
         String facilityType = "";
@@ -416,6 +416,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate);
 
                     logger.info("countList = {}", Arrays.deepToString(countList.toArray()));
+
+
 
                 }else  if(("ANM".equalsIgnoreCase(roleName)  || "CHO".equalsIgnoreCase(roleName) )){
                     logger.info("ASHA_ID = {}", ashaId);
@@ -581,7 +583,12 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             asha.put("totalAmount", totalAmount);
             asha.put("activities", activityList);
 
-            long pending = 0, verified = 0, rejected = 0 ;
+
+
+            long pending = 0, verified = 0, rejected = 0 , unclaimedCount = 0 ;
+
+             unclaimedCount = dashboardRepo.getUnclaimedCountByAshaId(
+                    ashaId, startDate, endDate);
             if (countList != null && !countList.isEmpty()) {
                 Object[] counts = countList.get(0);
                 logger.info("Count List = {}", Arrays.deepToString(countList.toArray()));
@@ -616,13 +623,17 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             }
 
+
+
             if (verified > 0) overallVerified += 1;
             if (rejected > 0) overallRejected += 1;
             if (pending > 0) overallPending += 1;
+            if (unclaimedCount > 0) overallUnclaimed += 1;
 
             asha.put("pending", pending);
             asha.put("verified", verified);
             asha.put("rejected", rejected);
+            asha.put("unClaimed", unclaimedCount);
 
             int approvalStatus = 0;
 
@@ -631,7 +642,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             }
             if (totalAmount == null || totalAmount <= 0) continue;
 
-            if (pending == 0 && verified == 0 && rejected == 0) continue;
+            if (pending == 0 && verified == 0 && rejected == 0 && unclaimedCount == 0) continue;
             if (approvalStatusID.equals(0)) {
                 asha.put("approvalStatus", approvalStatus);
 
@@ -649,6 +660,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         approvalStatus.put("verified", overallVerified);
         approvalStatus.put("pending", overallPending);
         approvalStatus.put("rejected", overallRejected);
+        approvalStatus.put("unClaimed", overallUnclaimed);
 
         response.put("approvalStatus", approvalStatus);
         response.put("data", ashaList);

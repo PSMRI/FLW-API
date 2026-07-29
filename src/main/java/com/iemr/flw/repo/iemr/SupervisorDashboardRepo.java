@@ -80,6 +80,19 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			@Param("startDate") Timestamp startDate,
 			@Param("endDate") Timestamp endDate);
 
+
+	@Query(value = "SELECT COUNT(*) " +
+			"FROM incentive_activity_record iar " +
+			"WHERE iar.asha_id = :ashaId " +
+			"AND iar.created_date >= :startDate " +
+			"AND iar.created_date < :endDate " +
+			"AND (iar.is_claimed = false OR iar.is_claimed IS NULL)",
+			nativeQuery = true)
+	Long getUnclaimedCountByAshaId(
+			@Param("ashaId") Integer ashaId,
+			@Param("startDate") Timestamp startDate,
+			@Param("endDate") Timestamp endDate);
+
 	// Get facility details with geo names
 	@Query(value = "SELECT DISTINCT f.FacilityID, f.FacilityName, "
 			+ "COALESCE(s.StateName,'') AS stateName, "
