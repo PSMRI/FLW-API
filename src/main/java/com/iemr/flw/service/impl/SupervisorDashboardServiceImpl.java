@@ -368,17 +368,17 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 if(supervisorstateCode.equals(StateCode.CG.getStateCode())){
                     if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                         rows = ashaSupervisorLoginRepo.getAshasAtFacilityCg(
-                                supervisorId, facilityId, 101, startDate, endDate);
+                                supervisorId, approvalStatusID, startDate, endDate);
                     }
                 }else if(supervisorstateCode.equals(StateCode.AM.getStateCode())){
                     rows = ashaSupervisorLoginRepo.getAshasAtFacility(
-                            supervisorId, facilityId, approvalStatusID, startDate, endDate);
+                            supervisorId, approvalStatusID, startDate, endDate);
                 }
             } else {
                 if(supervisorstateCode.equals(StateCode.CG.getStateCode())){
                     if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                         rows = ashaSupervisorLoginRepo.getAshasAtFacilityCg(
-                                supervisorId, facilityId, 101, startDate, endDate);
+                                supervisorId, facilityId, approvalStatusID, startDate, endDate);
                     }
                 }else if(supervisorstateCode.equals(StateCode.AM.getStateCode())){
                     rows = ashaSupervisorLoginRepo.getAshasAtFacility(
