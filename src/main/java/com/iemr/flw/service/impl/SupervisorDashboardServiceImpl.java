@@ -419,9 +419,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                             ashaId, startDate, endDate, approvalStatusID, stateCode);
                 }else if(stateCode.equals(StateCode.CG.getStateCode())){
                     if("ASHA Supervisor".equalsIgnoreCase(roleName)){
+                       if(approvalStatusID.equals(105)){
+                           totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
+                                   ashaId, startDate, endDate, 101, stateCode);
+                       }else {
+                           totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
+                                   ashaId, startDate, endDate, approvalStatusID, stateCode);
+                       }
 
-                        totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
-                                ashaId, startDate, endDate, approvalStatusID, stateCode);
                     }else if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName) ){
                         if(approvalStatusID.equals(102)){
                             totalAmount = incentiveRecordRepo.getTotalAmountByAshaANM(
@@ -455,8 +460,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                  if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                      if(approvalStatusID.equals(105)){
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r ->( r.getApprovalStatus().equals(101) ||
-                                         approvalStatusID.equals(r.getApprovalStatus())) && r.getIsDefaultActivity())
+                                 .filter(r -> r.getApprovalStatus().equals(101) && r.getIsDefaultActivity())
                                  .collect(Collectors.toList());
                      }else if(approvalStatusID.equals(106)){
                          incentiveActivityRecord = dbRecords.stream()
@@ -471,7 +475,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                      if (approvalStatusID.equals(102)) {
-
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r ->
                                          r.getApprovalStatus().equals(105)
