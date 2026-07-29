@@ -658,7 +658,10 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             if (!activityList.isEmpty()) {
                 approvalStatus = (int) activityList.get(0).get("approvalStatus");
             }
-            if (totalAmount == null || totalAmount <= 0) continue;
+            if(!approvalStatusID.equals(106)){
+                if (totalAmount == null || totalAmount <= 0) continue;
+
+            }
 
             if (pending == 0 && verified == 0 && rejected == 0 && unclaimedCount == 0) continue;
             if (approvalStatusID.equals(0)) {
