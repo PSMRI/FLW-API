@@ -456,9 +456,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                      if(approvalStatusID.equals(105)){
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r ->( r.getApprovalStatus().equals(101) ||
-                                         approvalStatusID.equals(r.getApprovalStatus())) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
+                                         approvalStatusID.equals(r.getApprovalStatus())) && r.getIsDefaultActivity())
                                  .collect(Collectors.toList());
-                     }else {
+                     }else if(approvalStatusID.equals(106)){
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(r ->r.getApprovalStatus().equals(102) && r.getIsDefaultActivity() && !r.getIsClaimed())
+                                 .collect(Collectors.toList());
+                     } else {
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r ->( approvalStatusID == 0 ||
                                          approvalStatusID.equals(r.getApprovalStatus())) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
@@ -481,7 +485,11 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  })
                                  .collect(Collectors.toList());
 
-                     } else incentiveActivityRecord = dbRecords.stream()
+                     }else if(approvalStatusID.equals(106)){
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(r->!r.getIsClaimed() && r.getApprovalStatus().equals(102)).collect(Collectors.toList());
+                     } else{
+                         incentiveActivityRecord = dbRecords.stream()
                              .filter(r -> {
 
                                  if (approvalStatusID != 0
@@ -504,6 +512,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  }
                              })
                              .collect(Collectors.toList());
+                     }
 
                  }
 
