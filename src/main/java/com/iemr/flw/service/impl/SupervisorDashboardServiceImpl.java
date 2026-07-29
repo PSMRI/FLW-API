@@ -413,7 +413,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             if(supervisorstateCode.equals(StateCode.CG.getStateCode())){
                 if("ASHA Supervisor".equalsIgnoreCase(roleName)){
-                    countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate);
+                    if(approvalStatusID.equals(106)){
+                        countList = incentiveRecordRepo.getStatusUnclaimedCountByAshaId(ashaId, startDate, endDate);
+
+                    }else {
+                        countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate);
+
+                    }
 
                     logger.info("countList = {}", Arrays.deepToString(countList.toArray()));
 
@@ -587,8 +593,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             long pending = 0, verified = 0, rejected = 0 , unclaimedCount = 0 ;
 
-             unclaimedCount = dashboardRepo.getUnclaimedCountByAshaId(
-                    ashaId, startDate, endDate);
+
             if (countList != null && !countList.isEmpty()) {
                 Object[] counts = countList.get(0);
                 logger.info("Count List = {}", Arrays.deepToString(countList.toArray()));
@@ -610,7 +615,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                             // only 101
                             verified = counts[0] != null ? ((Number) counts[0]).longValue() : 0;
                         }
-                        pending = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
+                        if(approvalStatusID.equals(106)){
+                            unclaimedCount = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
+
+                        }else {
+                            pending = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
+
+                        }
                         rejected = counts[2] != null ? ((Number) counts[2]).longValue() : 0;
 
 

@@ -103,6 +103,25 @@ AND record.createdDate < :endDate
             @Param("endDate") Timestamp endDate);
 
 
+    @Query("""
+SELECT
+    SUM(CASE WHEN record.approvalStatus = 101 THEN 1 ELSE 0 END),
+    SUM(CASE WHEN record.approvalStatus = 102 THEN 1 ELSE 0 END),
+    SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END),
+    SUM(CASE WHEN record.approvalStatus IN (101,105) THEN 1 ELSE 0 END)
+FROM IncentiveActivityRecord record
+WHERE record.ashaId = :ashaId
+AND record.isClaimed = false
+AND record.isDefaultActivity = true
+AND record.createdDate >= :startDate
+AND record.createdDate < :endDate
+""")
+    List<Object[]> getStatusUnclaimedCountByAshaId(
+            @Param("ashaId") Integer ashaId,
+            @Param("startDate") Timestamp startDate,
+            @Param("endDate") Timestamp endDate);
+
+
 
     @Query("SELECT COALESCE(SUM(record.amount), 0) " +
             "FROM IncentiveActivityRecord record " +
