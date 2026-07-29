@@ -157,7 +157,11 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             "AND record.isDefaultActivity = true " +
             "AND record.startDate >= :fromDate " +
             "AND record.endDate <= :toDate " +
-            "AND (:approvalStatus = 0 OR record.approvalStatus = :approvalStatus)")
+            "AND (" +
+            "     :approvalStatus = 0 " +
+            "     OR (:approvalStatus = 101 AND record.approvalStatus IN (101,105)) " +
+            "     OR (:approvalStatus <> 101 AND record.approvalStatus = :approvalStatus)" +
+            ")")
     Long getDefaultActivityTotalAmountByAsha(
             @Param("ashaId") Integer ashaId,
             @Param("fromDate") Timestamp fromDate,
