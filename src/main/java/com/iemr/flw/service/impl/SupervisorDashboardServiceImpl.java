@@ -543,6 +543,12 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                      }
 
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
+                     dbRecords.forEach(r -> logger.info(
+                             "activityId={}, status={}, isDefaultActivity={}",
+                             r.getActivityId(),
+                             r.getApprovalStatus(),
+                             r.getIsDefaultActivity()
+                     ));
                      if (approvalStatusID.equals(102)) {
                          incentiveActivityRecord = dbRecords.stream()
                                  .peek(r -> {
