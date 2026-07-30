@@ -370,9 +370,15 @@ public class IncentiveServiceImpl implements IncentiveService {
                 records = records.stream()
                         .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
                         .collect(Collectors.toList());
-            }else  if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName) ){
+            }else  if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                 records = records.stream()
-                        .filter(r -> validActivityIds.contains(r.getActivityId()) || ((isAfter24Hours(r.getCalimedDate()) && !r.getIsDefaultActivity())))
+                        .filter(r ->
+                                validActivityIds.contains(r.getActivityId()) &&
+                                        (
+                                                isAfter24Hours(r.getCalimedDate())
+                                                        || Boolean.FALSE.equals(r.getIsDefaultActivity())
+                                        )
+                        )
                         .collect(Collectors.toList());
             }
 
