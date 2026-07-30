@@ -550,7 +550,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  .peek(r -> {
                                      if (r.getApprovalStatus().equals(102)
                                              && Boolean.FALSE.equals(r.getIsDefaultActivity())
+                                             && r.getCalimedDate() != null
                                              && isAfter24Hours(r.getCalimedDate())) {
+
                                          r.setApprovalStatus(105);
                                      }
                                  })
@@ -560,7 +562,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                                  && Boolean.FALSE.equals(r.getIsDefaultActivity())))
                                  .collect(Collectors.toList());
 
-                         dbRecords.forEach(r -> logger.info(
+                         incentiveActivityRecord.forEach(r -> logger.info(
                                  "activityId={}, status={}, isDefaultActivity={}",
                                  r.getActivityId(),
                                  r.getApprovalStatus(),
