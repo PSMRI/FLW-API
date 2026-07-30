@@ -317,9 +317,11 @@ AND iar.createdDate < :endDate
             + "iar.otherReason = :otherReason, "
             + "iar.approvalDate = :approvalDate, "
             + "iar.verifiedByUserName = :ashaSupervisorUserName "
-            + "WHERE iar.isClaimed = true")
+            + "WHERE iar.isClaimed = true "
+            + "AND iar.ashaId = :ashaId")
     int updateApprovalStatusById(
             @Param("status") Integer status,
+            @Param("ashaId") Integer ashaId,
             @Param("ashaSupervisorUserId") Integer ashaSupervisorUserId,
             @Param("ashaSupervisorUserName") String ashaSupervisorUserName,
             @Param("reason") String reason,

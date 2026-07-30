@@ -843,6 +843,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
                 updatedCount = incentiveRecordRepo.updateApprovalStatusById(
                         approvalStatus,
+                        ashaId,
                         ashaSupervisorUserId,
                         ashaSupervisorDetails.getUserName(),
                         reason,
