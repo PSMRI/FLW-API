@@ -525,7 +525,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  .collect(Collectors.toList());
                      }else if(approvalStatusID.equals(0)){
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r ->(r.getApprovalStatus().equals(102) || r.getApprovalStatus().equals(103) || r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(104)) && r.getIsDefaultActivity() && !r.getIsClaimed())
+                                 .filter(r ->(r.getApprovalStatus().equals(102) || r.getApprovalStatus().equals(103) || r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(104)) && r.getIsDefaultActivity())
                                  .collect(Collectors.toList());
                      }else{
                          incentiveActivityRecord = dbRecords.stream()
