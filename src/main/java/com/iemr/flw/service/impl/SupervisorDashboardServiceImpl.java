@@ -86,6 +86,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         boolean isOverDue =
                 rollName.equalsIgnoreCase("ANM")
                         && today.isAfter(dueDate);
+
+
         List<Object[]> ashaRows;
 
         if ("ANM".equalsIgnoreCase(rollName) || "CHO".equalsIgnoreCase(rollName)) {
@@ -457,7 +459,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         countList = incentiveRecordRepo.getStatusUnclaimedCountByAshaId(ashaId, startDate, endDate);
 
                     }else {
-                        countList = incentiveRecordRepo.getStatusCountByAshaId(ashaId, startDate, endDate);
+                        countList = incentiveRecordRepo.getStatusCountByAshaIdANM(ashaId, startDate, endDate);
 
                     }
 
@@ -585,7 +587,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                                  // 102 should be visible only after 24 hours
                                  if (r.getApprovalStatus().equals(102)) {
-                                     return isAfter24Hours(r.getCalimedDate());
+                                     return true;
                                  }
 
                                  // 105 should always be visible
