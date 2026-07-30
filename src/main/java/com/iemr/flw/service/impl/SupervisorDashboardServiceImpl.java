@@ -1,5 +1,6 @@
 package com.iemr.flw.service.impl;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -561,7 +562,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                                  || (r.getApprovalStatus().equals(102)
                                                  && Boolean.FALSE.equals(r.getIsDefaultActivity())))
                                  .collect(Collectors.toList());
-
+                          totalAmount = incentiveActivityRecord.stream()
+                                 .mapToLong(r -> r.getAmount())
+                                 .sum();
                          incentiveActivityRecord.forEach(r -> logger.info(
                                  "activityId={}, status={}, isDefaultActivity={}",
                                  r.getActivityId(),
