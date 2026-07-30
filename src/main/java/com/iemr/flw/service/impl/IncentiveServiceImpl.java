@@ -372,7 +372,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                         .collect(Collectors.toList());
             }else  if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName) ){
                 records = records.stream()
-                        .filter(r -> validActivityIds.contains(r.getActivityId()))
+                        .filter(r -> validActivityIds.contains(r.getActivityId()) || ((isAfter24Hours(r.getCalimedDate()) && !r.getIsDefaultActivity())))
                         .collect(Collectors.toList());
             }
 
@@ -438,6 +438,21 @@ public class IncentiveServiceImpl implements IncentiveService {
         return new Gson().toJson(result);
     }
 
+    private boolean isAfter24Hours(Timestamp claimedDate) {
+        if (claimedDate == null) {
+            return false;
+        }
+
+        long now = System.currentTimeMillis();
+        long diff = now - claimedDate.getTime();
+
+        logger.info("Now: {}", new Timestamp(now));
+        logger.info("ClaimedDate: {}", claimedDate);
+        logger.info("Diff(ms): {}", diff);
+        logger.info("Diff(hours): {}", diff / (1000 * 60 * 60.0));
+
+        return diff >= 24L * 60 * 60 * 1000;
+    }
     @Override
     public String getAllIncentivesGroupedActivity(GetBenRequestHandler request) {
         try {
