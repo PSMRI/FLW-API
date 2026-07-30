@@ -545,11 +545,16 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                      if (approvalStatusID.equals(102)) {
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r -> (r.getApprovalStatus().equals(102) && !r.getIsDefaultActivity())
-                                         || r.getApprovalStatus().equals(105))
+                                 .filter(r ->
+                                         r.getApprovalStatus().equals(105)
+                                                 || (r.getApprovalStatus().equals(102)
+                                                 && !Boolean.TRUE.equals(r.getIsDefaultActivity()))
+                                 )
                                  .peek(r -> {
                                      if (r.getApprovalStatus().equals(102)
+                                             && !Boolean.TRUE.equals(r.getIsDefaultActivity())
                                              && isAfter24Hours(r.getCalimedDate())) {
+
                                          r.setApprovalStatus(105);
                                      }
                                  })
