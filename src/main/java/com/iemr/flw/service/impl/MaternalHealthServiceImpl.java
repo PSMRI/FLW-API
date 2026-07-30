@@ -439,7 +439,8 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             logger.info("PNC visit details saved");
             return "no of pnc details saved: " + pncList.size();
         } catch (Exception e) {
-            logger.info("Saving PNC visit details failed with error : " + e.getMessage());
+            logger.error("Saving PNC visit details failed", e);
+
         }
         return null;
     }

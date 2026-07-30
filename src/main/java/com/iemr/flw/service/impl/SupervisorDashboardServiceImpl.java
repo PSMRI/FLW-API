@@ -579,7 +579,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                              r.getApprovalStatus().equals(105)
                                                      || (r.getApprovalStatus().equals(104)))
                                      .peek(r -> {
-                                         if (r.getApprovalStatus().equals(102)) {
+                                         if (r.getApprovalStatus().equals(102) || r.getApprovalStatus().equals(105)) {
                                              r.setApprovalStatus(104);
                                          }
                                      })
