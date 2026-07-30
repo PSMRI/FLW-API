@@ -523,6 +523,10 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r ->r.getApprovalStatus().equals(102) && r.getIsDefaultActivity() && !r.getIsClaimed())
                                  .collect(Collectors.toList());
+                     }else if(approvalStatusID.equals(0)){
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(r ->(r.getApprovalStatus().equals(102) || r.getApprovalStatus().equals(103) || r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(104)) && r.getIsDefaultActivity() && !r.getIsClaimed())
+                                 .collect(Collectors.toList());
                      }else{
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r ->( approvalStatusID == 0 ||
@@ -561,6 +565,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                      }else if(approvalStatusID.equals(106)){
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r->!r.getIsClaimed() && r.getApprovalStatus().equals(102)).collect(Collectors.toList());
+                     }else if(approvalStatusID.equals(0)){
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(r->(r.getApprovalStatus().equals(102) || r.getApprovalStatus().equals(103) || r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(104))).collect(Collectors.toList());
                      } else{
                          incentiveActivityRecord = dbRecords.stream()
                              .filter(r -> {
@@ -719,6 +726,11 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 if (totalAmount == null || totalAmount <= 0) continue;
 
             }
+            if(!approvalStatusID.equals(0)){
+                if (totalAmount == null || totalAmount <= 0) continue;
+
+            }
+
             if (pending == 0 && verified == 0 && rejected == 0 && unclaimedCount == 0) continue;
 
             if (approvalStatusID.equals(0)) {
