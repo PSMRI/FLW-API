@@ -376,7 +376,10 @@ public class IncentiveServiceImpl implements IncentiveService {
                             .filter(r ->
                                     validActivityIds.contains(r.getActivityId()) &&
                                             (
-                                                    r.getApprovalStatus() == 105
+                                                    r.getApprovalStatus() == 101
+                                                            || r.getApprovalStatus() == 103
+                                                            || r.getApprovalStatus() == 105
+                                                            || r.getApprovalStatus() == 104
                                                             || (
                                                             r.getApprovalStatus() == 102
                                                                     && (
