@@ -60,7 +60,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         LocalDate today = LocalDate.now();
 
-        boolean isOverDue = today.isAfter(LocalDate.of(year, month, 5));
 
         // 1. Supervisor user details
         List<Object[]> supervisorRows = dashboardRepo.getSupervisorUserDetails(supervisorUserID);
@@ -80,7 +79,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         logger.info("Fetching ASHA details for supervisorUserID: {}", supervisorUserID);
 
 
+        LocalDate dueDate = LocalDate.of(year, month, 1)
+                .plusMonths(1)
+                .withDayOfMonth(5);
 
+        boolean isOverDue =
+                rollName.equalsIgnoreCase("ANM")
+                        && today.isAfter(dueDate);
         List<Object[]> ashaRows;
 
         if ("ANM".equalsIgnoreCase(rollName) || "CHO".equalsIgnoreCase(rollName)) {
@@ -336,13 +341,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         LocalDate currentMonthStartDate = LocalDate.of(year, month, 1);
         LocalDate currentMonthendLocalDate = currentMonthStartDate.plusMonths(1);
 
-
+        LocalDate dueDate = LocalDate.of(year, month, 1)
+                .plusMonths(1)
+                .withDayOfMonth(5);
 
         boolean isOverDue =
                 roleName.equalsIgnoreCase("ANM")
-                        && today.getYear() == year
-                        && today.getMonthValue() == month
-                        && today.getDayOfMonth() > 5;
+                        && today.isAfter(dueDate);
+
 
         logger.info("Login user role:"+ roleName);
 
