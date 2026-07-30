@@ -656,7 +656,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             asha.put("facilityType", facilityType);
             asha.put("userId", row[0]);
             asha.put("fullName", fullName(row[1], row[2]));
-            asha.put("employeeId", str(row[3]).isEmpty() ? null : str(row[3]));
+            asha.put("employeeId", row[0]);
             asha.put("mobile", str(row[4]).isEmpty() ? null : str(row[4]));
             asha.put("gender", str(row[5]).isEmpty() ? null : str(row[5]));
             asha.put("totalAmount", totalAmount);
