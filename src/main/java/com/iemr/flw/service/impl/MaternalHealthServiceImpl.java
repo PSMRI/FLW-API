@@ -592,7 +592,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     private void checkAndAddAntaraIncentive(PNCVisit ect) {
         Integer userId = userRepo.getUserIdByName(ect.getCreatedBy());
         Integer stateId = userRepo.getUserRole(userId).get(0).getStateId();
-        logger.info("ContraceptionMethod:" + ect.getContraceptionMethod());
 
         // logic for assam
         if (stateId.equals(StateCode.AM.getStateCode())) {
