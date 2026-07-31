@@ -439,7 +439,8 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             logger.info("PNC visit details saved");
             return "no of pnc details saved: " + pncList.size();
         } catch (Exception e) {
-            logger.info("Saving PNC visit details failed with error : " + e.getMessage());
+            logger.error("Saving PNC visit details failed", e);
+
         }
         return null;
     }
@@ -591,7 +592,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
     private void checkAndAddAntaraIncentive(PNCVisit ect) {
         Integer userId = userRepo.getUserIdByName(ect.getCreatedBy());
         Integer stateId = userRepo.getUserRole(userId).get(0).getStateId();
-        logger.info("ContraceptionMethod:" + ect.getContraceptionMethod());
 
         // logic for assam
         if (stateId.equals(StateCode.AM.getStateCode())) {
@@ -708,18 +708,20 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
             }
             if (ect.getPncPeriod() == 1 || ect.getPncPeriod() == 3 || ect.getPncPeriod() == 7) {
+                  if(ect.getContraceptionMethod()!=null){
+                      if ((ect.getContraceptionMethod().equals("POST PARTUM STERILIZATION (PPS)")
+                              || ect.getContraceptionMethod().equals("MiniLap"))
+                              && ect.getSterilisationDate() != null) {
+                          IncentiveActivity ppsActivityCH =
+                                  incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPS", GroupName.ACTIVITY.getDisplayName());
+                          if (ppsActivityCH != null) {
 
-                if ((ect.getContraceptionMethod().equals("POST PARTUM STERILIZATION (PPS)")
-                        || ect.getContraceptionMethod().equals("MiniLap"))
-                        && ect.getSterilisationDate() != null) {
-                    IncentiveActivity ppsActivityCH =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPS", GroupName.ACTIVITY.getDisplayName());
-                    if (ppsActivityCH != null) {
+                              addIncenticeRecord(ect, userId, ppsActivityCH);
 
-                        addIncenticeRecord(ect, userId, ppsActivityCH);
+                          }
+                      }
+                  }
 
-                    }
-                }
             }
 
         }
@@ -850,7 +852,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
                 if (ancFullActivityCH != null && ancVisit.getAncVisit() != null
                         && ancVisit.getAncVisit() == 4) {
-                    recordAncRelatedIncentive(ancFullActivityCH, ancVisit);
+                    recordFullAncIncentive(ancFullActivityCH, ancVisit);
                 }
 
 
@@ -872,12 +874,12 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         if (record == null) {
             record = new IncentiveActivityRecord();
             record.setActivityId(incentiveActivity.getId());
-            record.setCreatedDate(ancVisit.getCreatedDate());
+            record.setCreatedDate(ancVisit.getAncDate());
             record.setCreatedBy(ancVisit.getCreatedBy());
-            record.setUpdatedDate(ancVisit.getCreatedDate());
+            record.setUpdatedDate(ancVisit.getAncDate());
             record.setUpdatedBy(ancVisit.getCreatedBy());
-            record.setStartDate(ancVisit.getCreatedDate());
-            record.setEndDate(ancVisit.getCreatedDate());
+            record.setStartDate(ancVisit.getAncDate());
+            record.setEndDate(ancVisit.getAncDate());
             record.setBenId(ancVisit.getBenId());
             record.setAshaId(userId);
             record.setAmount(Long.valueOf(incentiveActivity.getRate()));

@@ -709,7 +709,8 @@ public class ChildCareServiceImpl implements ChildCareService {
         savedList.forEach(data -> {
             Timestamp visitTimestamp =
                     Timestamp.valueOf(data.getIfaProvisionDate().atStartOfDay());
-            if(data.getIfaBottleCount().equals("10.0")){
+
+            if(data!=null){
                 incentiveLogicService.incentiveForGiveingIFA(
                         data.getBeneficiaryId(),
                         visitTimestamp,
@@ -774,8 +775,10 @@ public class ChildCareServiceImpl implements ChildCareService {
             fields.setIfa_provision_date(entity.getIfaProvisionDate().format(FORMATTER));
         }
         fields.setMcp_card_upload(entity.getMcpCardUpload());
-        fields.setIfa_bottle_count(Double.valueOf(entity.getIfaBottleCount()));
+        if(entity.getIfaBottleCount()!=null){
+            fields.setIfa_bottle_count(Double.valueOf(entity.getIfaBottleCount()));
 
+        }
         dto.setFields(fields);
         return dto;
     }
@@ -803,7 +806,10 @@ public class ChildCareServiceImpl implements ChildCareService {
                     entity.setIfaProvisionDate(null);
                 }
             }
-            entity.setIfaBottleCount(dto.getFields().getIfa_bottle_count().toString());
+            if(dto.getFields().getIfa_bottle_count()!=null){
+                entity.setIfaBottleCount(dto.getFields().getIfa_bottle_count().toString());
+
+            }
             entity.setMcpCardUpload(dto.getFields().getMcp_card_upload());
         }
 

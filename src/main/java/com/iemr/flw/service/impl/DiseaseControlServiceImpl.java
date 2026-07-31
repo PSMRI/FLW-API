@@ -1269,6 +1269,26 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             }
 
         }
+        if (diseaseScreening.getCaseStatus().equals("Suspected")) {
+            if (!diseaseScreening.getMalariaTestType().isEmpty()) {
+                if (stateId.equals(StateCode.AM.getStateCode())) {
+                    if (incentiveActivityForCollectSlideAM != null) {
+                        addIncentive(incentiveActivityForCollectSlideAM, diseaseScreening);
+
+                    }
+                }
+
+                if (stateId.equals(StateCode.CG.getStateCode())) {
+                    if (incentiveActivityForCollectSlideCG != null) {
+                        addIncentive(incentiveActivityForCollectSlideCG, diseaseScreening);
+
+                    }
+                }
+
+
+            }
+
+        }
     }
     private void addIncentive(IncentiveActivity diseaseScreeningActivity, MosquitoNetEntity diseaseScreening) {
 

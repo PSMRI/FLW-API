@@ -370,10 +370,27 @@ public class IncentiveServiceImpl implements IncentiveService {
                 records = records.stream()
                         .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
                         .collect(Collectors.toList());
-            }else  if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName) ){
-                records = records.stream()
-                        .filter(r -> validActivityIds.contains(r.getActivityId()))
-                        .collect(Collectors.toList());
+            }else  if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
+                if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
+                    records = records.stream()
+                            .filter(r ->
+                                    validActivityIds.contains(r.getActivityId()) &&
+                                            (
+                                                    r.getApprovalStatus() == 101
+                                                            || r.getApprovalStatus() == 103
+                                                            || r.getApprovalStatus() == 105
+                                                            || r.getApprovalStatus() == 104
+                                                            || (
+                                                            r.getApprovalStatus() == 102
+                                                                    && (
+                                                                    isAfter24Hours(r.getCalimedDate())
+                                                                            || Boolean.FALSE.equals(r.getIsDefaultActivity())
+                                                            )
+                                                    )
+                                            )
+                            )
+                            .collect(Collectors.toList());
+                }
             }
 
         }else {
@@ -396,6 +413,12 @@ public class IncentiveServiceImpl implements IncentiveService {
             IncentiveActivity activity =
                     incentivesRepo.findById(activityId).orElse(null);
 
+            Integer approvalStatus = list.stream()
+                    .max(Comparator.comparing(IncentiveActivityRecord::getCreatedDate))
+                    .map(IncentiveActivityRecord::getApprovalStatus)
+                    .orElse(0);
+
+
             if (activity == null) continue;
 
             long total = list.stream()
@@ -408,6 +431,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                 map.put("activityDec", activity.getDescription());
                 map.put("groupName", activity.getGroup());
                 map.put("isDefault", activity.getIsDefaultActivity());
+                map.put("approvalStatus", approvalStatus);
                 map.put("claimCount", list.size());
                 map.put("totalAmount", total);
                 map.put("amount", activity.getRate());
@@ -431,6 +455,21 @@ public class IncentiveServiceImpl implements IncentiveService {
         return new Gson().toJson(result);
     }
 
+    private boolean isAfter24Hours(Timestamp claimedDate) {
+        if (claimedDate == null) {
+            return false;
+        }
+
+        long now = System.currentTimeMillis();
+        long diff = now - claimedDate.getTime();
+
+        logger.info("Now: {}", new Timestamp(now));
+        logger.info("ClaimedDate: {}", claimedDate);
+        logger.info("Diff(ms): {}", diff);
+        logger.info("Diff(hours): {}", diff / (1000 * 60 * 60.0));
+
+        return diff >= 24L * 60 * 60 * 1000;
+    }
     @Override
     public String getAllIncentivesGroupedActivity(GetBenRequestHandler request) {
         try {

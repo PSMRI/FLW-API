@@ -80,6 +80,19 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			@Param("startDate") Timestamp startDate,
 			@Param("endDate") Timestamp endDate);
 
+
+	@Query(value = "SELECT COUNT(*) " +
+			"FROM incentive_activity_record iar " +
+			"WHERE iar.asha_id = :ashaId " +
+			"AND iar.created_date >= :startDate " +
+			"AND iar.created_date < :endDate " +
+			"AND (iar.is_claimed = false OR iar.is_claimed IS NULL)",
+			nativeQuery = true)
+	Long getUnclaimedCountByAshaId(
+			@Param("ashaId") Integer ashaId,
+			@Param("startDate") Timestamp startDate,
+			@Param("endDate") Timestamp endDate);
+
 	// Get facility details with geo names
 	@Query(value = "SELECT DISTINCT f.FacilityID, f.FacilityName, "
 			+ "COALESCE(s.StateName,'') AS stateName, "
@@ -107,7 +120,8 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			+ "COUNT(*) AS totalRecords, "
 			+ "SUM(CASE WHEN iar.approval_status = 101 THEN 1 ELSE 0 END) AS verified, "
 			+ "SUM(CASE WHEN iar.approval_status = 103 THEN 1 ELSE 0 END) AS rejected, "
-			+ "SUM(CASE WHEN iar.approval_status = 102 THEN 1 ELSE 0 END) AS pending "
+			+ "SUM(CASE WHEN iar.approval_status = 102 THEN 1 ELSE 0 END) AS pending, "
+			+ "SUM(CASE WHEN iar.approval_status IN (101, 105) THEN 1 ELSE 0 END) AS approved "
 			+ "FROM incentive_activity_record iar "
 			+ "WHERE iar.asha_id IN (:ashaIds) "
 			+ "AND iar.created_date >= :startDate "
@@ -120,11 +134,32 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			@Param("startDate") Timestamp startDate,
 			@Param("endDate") Timestamp endDate);
 
+
+
 	@Query(value = "SELECT iar.asha_id, "
 			+ "COUNT(*) AS totalRecords, "
 			+ "SUM(CASE WHEN iar.approval_status = 101 THEN 1 ELSE 0 END) AS verified, "
 			+ "SUM(CASE WHEN iar.approval_status = 103 THEN 1 ELSE 0 END) AS rejected, "
-			+ "SUM(CASE WHEN iar.approval_status = 102 THEN 1 ELSE 0 END) AS pending "
+			+ "SUM(CASE WHEN iar.approval_status = 102 THEN 1 ELSE 0 END) AS pending, "
+			+ "SUM(CASE WHEN iar.approval_status IN (102,105) THEN 1 ELSE 0 END) AS approved "
+			+ "FROM incentive_activity_record iar "
+			+ "WHERE iar.asha_id IN (:ashaIds) "
+			+ "AND iar.created_date >= :startDate "
+			+ "AND iar.is_claimed = true "
+			+ "AND iar.created_date < :endDate "
+			+ "GROUP BY iar.asha_id",
+			nativeQuery = true)
+	List<Object[]> getIncentiveStatusByAshaIdsForAnm(
+			@Param("ashaIds") List<Integer> ashaIds,
+			@Param("startDate") Timestamp startDate,
+			@Param("endDate") Timestamp endDate);
+
+	@Query(value = "SELECT iar.asha_id, "
+			+ "COUNT(*) AS totalRecords, "
+			+ "SUM(CASE WHEN iar.approval_status = 101 THEN 1 ELSE 0 END) AS verified, "
+			+ "SUM(CASE WHEN iar.approval_status = 103 THEN 1 ELSE 0 END) AS rejected, "
+			+ "SUM(CASE WHEN iar.approval_status = 102 THEN 1 ELSE 0 END) AS pending, "
+			+ "SUM(CASE WHEN iar.approval_status IN (101, 105) THEN 1 ELSE 0 END) AS approved "
 			+ "FROM incentive_activity_record iar "
 			+ "WHERE iar.asha_id IN (:ashaIds) "
 			+ "AND iar.created_date >= :startDate "

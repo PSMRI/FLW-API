@@ -55,6 +55,70 @@ public interface AshaSupervisorLoginRepo extends CrudRepository<AshaSupervisorMa
 			@Param("endDate") Timestamp endDate);
 
 
+	@Query(value = "SELECT DISTINCT asm.ashaUserID, u.FirstName, u.LastName, "
+			+ "COALESCE(u.AgentID,'') AS agentID, "
+			+ "COALESCE(u.EmergencyContactNo,'') AS mobile, "
+			+ "COALESCE(g.GenderName,'') AS gender "
+			+ "FROM asha_supervisor_mapping asm "
+			+ "JOIN m_User u ON u.UserID = asm.ashaUserID "
+			+ "AND u.Deleted = false "
+			+ "LEFT JOIN m_gender g ON g.GenderID = u.GenderID "
+			+ "JOIN incentive_activity_record iar "
+			+ "ON iar.asha_id = asm.ashaUserID "
+			+ "WHERE asm.supervisorUserID = :supervisorUserID "
+			+ "AND asm.facilityID = :facilityID "
+			+ "AND asm.deleted = false "
+			+ "AND iar.is_claimed = true "
+			+ "AND iar.start_date >= :startDate "
+			+ "AND iar.end_date < :endDate "
+			+ "AND ("
+			+ "    :approvalStatus = 0 "
+			+ " OR (:approvalStatus = 105 AND iar.approval_status IN (101,105)) "
+			+ " OR (:approvalStatus = 106 AND iar.approval_status = 102) "
+			+ " OR (:approvalStatus NOT IN (105,106) AND iar.approval_status = :approvalStatus)"
+			+ ")",
+			nativeQuery = true)
+	List<Object[]> getAshasAtFacilityCg(
+			@Param("supervisorUserID") Integer supervisorUserID,
+			@Param("facilityID") Integer facilityID,
+			@Param("approvalStatus") Integer approvalStatus,
+			@Param("startDate") Timestamp startDate,
+			@Param("endDate") Timestamp endDate);
+
+
+	@Query(value = "SELECT DISTINCT asm.ashaUserID, u.FirstName, u.LastName, "
+			+ "COALESCE(u.AgentID,'') AS agentID, "
+			+ "COALESCE(u.EmergencyContactNo,'') AS mobile, "
+			+ "COALESCE(g.GenderName,'') AS gender "
+			+ "FROM asha_supervisor_mapping asm "
+			+ "JOIN m_User u ON u.UserID = asm.ashaUserID "
+			+ "AND u.Deleted = false "
+			+ "LEFT JOIN m_gender g ON g.GenderID = u.GenderID "
+			+ "JOIN incentive_activity_record iar "
+			+ "ON iar.asha_id = asm.ashaUserID "
+			+ "WHERE asm.supervisorUserID = :supervisorUserID "
+			+ "AND asm.deleted = false "
+			+ "AND ("
+			+ "     (:approvalStatus = 106 AND (iar.is_claimed = false OR iar.is_claimed IS NULL)) "
+			+ "  OR (:approvalStatus <> 106 AND iar.is_claimed = true)"
+			+ ") "
+			+ "AND iar.start_date >= :startDate "
+			+ "AND iar.end_date < :endDate "
+			+ "AND ("
+			+ "    :approvalStatus = 0 "
+			+ " OR (:approvalStatus = 105 AND iar.approval_status IN (101,105)) "
+			+ " OR (:approvalStatus = 106 AND iar.approval_status = 102) "
+			+ " OR (:approvalStatus NOT IN (105,106) AND iar.approval_status = :approvalStatus)"
+			+ ")",
+			nativeQuery = true)
+	List<Object[]> getAshasAtFacilityCg(
+			@Param("supervisorUserID") Integer supervisorUserID,
+			@Param("approvalStatus") Integer approvalStatus,
+			@Param("startDate") Timestamp startDate,
+			@Param("endDate") Timestamp endDate);
+
+
+
 	@Query(value = "SELECT DISTINCT asm.ashaUserID, "
 			+ "u.FirstName, "
 			+ "u.LastName, "
