@@ -649,7 +649,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                 data.put("year", String.valueOf(year));
                 data.put("approval_status", String.valueOf(102));
                 data.put("priority", "HIGH");
-                title = "Incentive Approved";
+                title = "Incentive Claimed";
 
 
 
