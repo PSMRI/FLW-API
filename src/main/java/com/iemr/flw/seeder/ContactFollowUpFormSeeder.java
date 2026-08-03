@@ -42,7 +42,8 @@ import java.util.List;
 
 /**
  * Seeds the Contact Follow Up form definition on application startup if it does not already
- * exist. Idempotent: skips creation if the form UUID is already present in the database.
+ * exist. Idempotent: skips creation if the form UUID is already present and active. If present
+ * but inactive, the stale row is deleted and reseeded from scratch.
  *
  * One-time form (no repeatable follow-up section, unlike {@link TptFollowUpFormSeeder}). Its
  * "Status of Clinical Screening" question's outcomes ("Full Treatment" / "TPT Eligible" /
@@ -66,8 +67,14 @@ public class ContactFollowUpFormSeeder {
 
     @PostConstruct
     public void seed() {
+        formRepo.findByFormUuid(FORM_UUID).ifPresent(existing -> {
+            if (Boolean.FALSE.equals(existing.getIsActive())) {
+                log.info("ContactFollowUpFormSeeder: form '{}' exists but is inactive — deleting and reseeding.", FORM_UUID);
+                formRepo.delete(existing);
+            }
+        });
         if (formRepo.findByFormUuid(FORM_UUID).isPresent()) {
-            log.info("ContactFollowUpFormSeeder: form '{}' already exists — skipping seed.", FORM_UUID);
+            log.info("ContactFollowUpFormSeeder: form '{}' already exists and is active — skipping seed.", FORM_UUID);
             return;
         }
         log.info("ContactFollowUpFormSeeder: seeding Contact Follow Up form...");

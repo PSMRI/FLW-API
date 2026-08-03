@@ -44,7 +44,8 @@ import java.util.List;
 
 /**
  * Seeds the Occupational Contact Tracing form definition on application startup if it does not
- * already exist. Idempotent: skips creation if the form UUID is already present in the database.
+ * already exist. Idempotent: skips creation if the form UUID is already present and active. If
+ * present but inactive, the stale row is deleted and reseeded from scratch.
  *
  * One response per beneficiary, same as TB Counselling — the "Type of Contact tracing initiated"
  * (Community / Occupational) choice is a client-side picker deciding whether this form or
@@ -65,8 +66,14 @@ public class OccupationalContactTracingFormSeeder {
 
     @PostConstruct
     public void seed() {
+        formRepo.findByFormUuid(FORM_UUID).ifPresent(existing -> {
+            if (Boolean.FALSE.equals(existing.getIsActive())) {
+                log.info("OccupationalContactTracingFormSeeder: form '{}' exists but is inactive — deleting and reseeding.", FORM_UUID);
+                formRepo.delete(existing);
+            }
+        });
         if (formRepo.findByFormUuid(FORM_UUID).isPresent()) {
-            log.info("OccupationalContactTracingFormSeeder: form '{}' already exists — skipping seed.", FORM_UUID);
+            log.info("OccupationalContactTracingFormSeeder: form '{}' already exists and is active — skipping seed.", FORM_UUID);
             return;
         }
         log.info("OccupationalContactTracingFormSeeder: seeding Occupational Contact Tracing form...");

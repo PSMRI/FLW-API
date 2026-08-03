@@ -45,7 +45,7 @@ import java.util.List;
 /**
  * Seeds the TPT (Tuberculosis Preventive Treatment) Follow Up form definition on application
  * startup if it does not already exist. Idempotent: skips creation if the form UUID is already
- * present in the database.
+ * present and active. If present but inactive, the stale row is deleted and reseeded from scratch.
  *
  * Two sections:
  * - "Registration &amp; Regimen Details" (PRE_SUBMIT) — captured once, on the first visit only.
@@ -86,8 +86,14 @@ public class TptFollowUpFormSeeder {
 
     @PostConstruct
     public void seed() {
+        formRepo.findByFormUuid(FORM_UUID).ifPresent(existing -> {
+            if (Boolean.FALSE.equals(existing.getIsActive())) {
+                log.info("TptFollowUpFormSeeder: form '{}' exists but is inactive — deleting and reseeding.", FORM_UUID);
+                formRepo.delete(existing);
+            }
+        });
         if (formRepo.findByFormUuid(FORM_UUID).isPresent()) {
-            log.info("TptFollowUpFormSeeder: form '{}' already exists — skipping seed.", FORM_UUID);
+            log.info("TptFollowUpFormSeeder: form '{}' already exists and is active — skipping seed.", FORM_UUID);
             return;
         }
         log.info("TptFollowUpFormSeeder: seeding TPT Follow Up form...");
