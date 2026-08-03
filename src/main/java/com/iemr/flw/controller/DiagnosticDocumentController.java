@@ -35,10 +35,10 @@ public class DiagnosticDocumentController {
     @Operation(summary = "Fetch the stored document for a beneficiary + document type "
             + "(XRAY_CHEST, XRAY_CHEST_ANNOTATED, CAD, MTB_REPORT, MTB_PLUS_REPORT, or MDR_RIF_REPORT). "
             + "Defaults to the most recent order's document; pass visitCode to target a specific order/retest.")
-    public ResponseEntity<byte[]> getDocument(@RequestParam Long benId, @RequestParam DiagnosticDocumentType documentType,
+    public ResponseEntity<byte[]> getDocument(@RequestParam Long beneficiaryId, @RequestParam DiagnosticDocumentType documentType,
             @RequestParam(required = false) Long visitCode) {
         try {
-            DiagnosticDocumentContent content = diagnosticDocumentService.fetch(benId, documentType, visitCode);
+            DiagnosticDocumentContent content = diagnosticDocumentService.fetch(beneficiaryId, documentType, visitCode);
             MediaType mediaType;
             try {
                 mediaType = MediaType.parseMediaType(content.getContentType());
@@ -47,7 +47,7 @@ public class DiagnosticDocumentController {
             }
             return ResponseEntity.ok().contentType(mediaType).body(content.getContent());
         } catch (Exception e) {
-            logger.error("Error fetching document: benId={}, documentType={}: {}", benId, documentType, e.getMessage());
+            logger.error("Error fetching document: beneficiaryId={}, documentType={}: {}", beneficiaryId, documentType, e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }

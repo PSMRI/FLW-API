@@ -35,23 +35,38 @@ public class EmrLiteProvider implements DiagnosticProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(EmrLiteProvider.class);
     private static final String PROVIDER_CODE = DiagnosticProviderCode.EMRLITE.name();
-    private static final String CAD_COMPONENT_KEY = "cad";
-    private static final String TUBERCULOSIS_FINDING_NAME = "Tuberculosis";
 
     private static final String SUMMARY_TB_POSITIVE = "TB Positive";
     private static final String SUMMARY_TB_NEGATIVE = "TB Negative";
     private static final String SUMMARY_DR_TB = "DR TB";
     private static final String SUMMARY_NON_DR_TB = "Non DR TB";
+    private static final String SUMMARY_TB_PRESUMPTIVE = "TB Presumptive";
 
-    @Value("${diagnostic.emrlite.order-url}")
-    private String orderUrl;
+    @Value("${diagnostic.emrlite.xray.order-url}")
+    private String xrayOrderUrl;
 
-    @Value("${diagnostic.emrlite.result-url}")
-    private String resultUrl;
+    @Value("${diagnostic.emrlite.xray.result-url}")
+    private String xrayResultUrl;
+
+    @Value("${diagnostic.emrlite.truenat.order-url}")
+    private String truenatOrderUrl;
+
+    @Value("${diagnostic.emrlite.truenat.result-url}")
+    private String truenatResultUrl;
+
+    @Value("${diagnostic.emrlite.xray.ping-url}")
+    private String xrayPingUrl;
+
+    @Value("${diagnostic.emrlite.truenat.ping-url}")
+    private String truenatPingUrl;
 
     @Autowired
     @Qualifier("emrLiteRestTemplate")
     private RestTemplate restTemplate;
+
+    @Autowired
+    @Qualifier("emrLitePingRestTemplate")
+    private RestTemplate pingRestTemplate;
 
     private final Gson gson = new Gson();
 
@@ -63,6 +78,8 @@ public class EmrLiteProvider implements DiagnosticProvider {
     @Override
     public DiagnosticPushResult pushOrder(DiagnosticOrder order) throws Exception {
         EmrLiteOrderRequest request = buildOrderRequest(order);
+        String orderUrl = DiagnosticOrderType.XRAY_CHEST.name().equals(order.getOrderType())
+                ? xrayOrderUrl : truenatOrderUrl;
         String responseBody;
         try {
             responseBody = doPost(orderUrl, gson.toJson(request));
@@ -104,6 +121,8 @@ public class EmrLiteProvider implements DiagnosticProvider {
     @Override
     public DiagnosticPollResult pollResult(DiagnosticOrder order, boolean includeAssets) throws Exception {
         EmrLiteResultRequest request = new EmrLiteResultRequest(order.getExternalOrderId(), includeAssets);
+        String resultUrl = DiagnosticOrderType.XRAY_CHEST.name().equals(order.getOrderType())
+                ? xrayResultUrl : truenatResultUrl;
         String responseBody;
         try {
             responseBody = doPost(resultUrl, gson.toJson(request));
@@ -127,10 +146,12 @@ public class EmrLiteProvider implements DiagnosticProvider {
 
         String summary = result.getResult() != null ? result.getResult().getSummary() : null;
         List<DiagnosticDocumentAsset> assets = mapAssets(result);
-        EmrLiteCadRawJson.FindingDto tbFinding = extractTuberculosisFinding(result);
-        Boolean tbPresence = tbFinding != null ? tbFinding.isPresence() : null;
-        Double tbConfidence = tbFinding != null ? tbFinding.getConfidence() : null;
-        if (tbPresence == null) {
+
+        Boolean tbPresence;
+        Double tbConfidence = null; // dropped for X-ray; MTB/MTB_PLUS/MDR_RIF never populated this either
+        if (DiagnosticOrderType.XRAY_CHEST.name().equals(order.getOrderType())) {
+            tbPresence = classifyXrayTbPresenceFromSummary(status, summary);
+        } else {
             tbPresence = classifyTbPresenceFromSummary(order.getOrderType(), summary);
         }
         Boolean drugResistancePresence = classifyDrugResistanceFromSummary(order.getOrderType(), summary);
@@ -139,7 +160,27 @@ public class EmrLiteProvider implements DiagnosticProvider {
                 tbPresence, tbConfidence, drugResistancePresence);
     }
 
-    private Boolean classifyTbPresenceFromSummary(String orderType, String summary) {
+    @Override
+    public boolean checkHealth(DiagnosticOrderType orderType) {
+        String pingUrl = DiagnosticOrderType.XRAY_CHEST.equals(orderType) ? xrayPingUrl : truenatPingUrl;
+        if (pingUrl == null || pingUrl.isBlank()) {
+            logger.warn("EMR Lite ping URL not configured for orderType={}", orderType);
+            return false;
+        }
+        try {
+            ResponseEntity<String> response = pingRestTemplate.getForEntity(pingUrl, String.class);
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                return false;
+            }
+            EmrLiteProviderResponse envelope = gson.fromJson(response.getBody(), EmrLiteProviderResponse.class);
+            return envelope != null && envelope.isSuccess();
+        } catch (Exception e) {
+            logger.warn("EMR Lite ping failed: url={}, error={}", pingUrl, e.getMessage());
+            return false;
+        }
+    }
+
+    Boolean classifyTbPresenceFromSummary(String orderType, String summary) {
         if (!DiagnosticOrderType.MTB.name().equals(orderType) && !DiagnosticOrderType.MTB_PLUS.name().equals(orderType)) {
             return null; // TB presence isn't tested for this orderType — not applicable, not a confirmed negative
         }
@@ -154,7 +195,7 @@ public class EmrLiteProvider implements DiagnosticProvider {
 
     // MDR_RIF's summary reports rifampicin drug-resistance, not raw TB presence — kept as its own
     // field rather than folded into tbPresence.
-    private Boolean classifyDrugResistanceFromSummary(String orderType, String summary) {
+    Boolean classifyDrugResistanceFromSummary(String orderType, String summary) {
         if (!DiagnosticOrderType.MDR_RIF.name().equals(orderType)) {
             return null; // Drug resistance isn't tested for this orderType — not applicable, not a confirmed negative
         }
@@ -167,28 +208,14 @@ public class EmrLiteProvider implements DiagnosticProvider {
         return null; // Error/Indeterminate/anything else — genuinely unknown, not a confirmed negative
     }
 
-    private EmrLiteCadRawJson.FindingDto extractTuberculosisFinding(EmrLiteResultResponse result) {
-        if (result.getComponents() == null || !result.getComponents().containsKey(CAD_COMPONENT_KEY)) {
+    // X-ray summary carries no numeric score (tbConfidence is always null for this order type —
+    // see pollResult). Only "TB Presumptive" is positive; every other non-null summary is negative.
+    // A null summary (order not yet completed) stays null/unknown rather than a confirmed negative.
+    Boolean classifyXrayTbPresenceFromSummary(DiagnosticOrderStatus status, String summary) {
+        if (status != DiagnosticOrderStatus.COMPLETED || summary == null) {
             return null;
         }
-        if (result.getResult() == null || result.getResult().getRawJson() == null) {
-            return null;
-        }
-        try {
-            EmrLiteCadRawJson cadRawJson =
-                    gson.fromJson(gson.toJson(result.getResult().getRawJson()), EmrLiteCadRawJson.class);
-            if (cadRawJson.getResults() == null || cadRawJson.getResults().getFindings() == null) {
-                return null;
-            }
-            return cadRawJson.getResults().getFindings().stream()
-                    .filter(f -> TUBERCULOSIS_FINDING_NAME.equalsIgnoreCase(f.getName()))
-                    .findFirst()
-                    .orElse(null);
-        } catch (Exception e) {
-            logger.warn("Failed to parse CAD rawJson findings for externalOrderId={}: {}",
-                    result.getExternalOrderId(), e.getMessage());
-            return null;
-        }
+        return SUMMARY_TB_PRESUMPTIVE.equalsIgnoreCase(summary);
     }
 
     // Provider's top-level "status" is unreliable on its own (can report COMPLETED while a
@@ -269,7 +296,7 @@ public class EmrLiteProvider implements DiagnosticProvider {
         String orderedAt = OffsetDateTime.now(ZoneId.of("Asia/Kolkata"))
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         return new EmrLiteOrderRequest(
-                String.valueOf(order.getBenRegID()),
+                String.valueOf(order.getBeneficiaryId()),
                 String.valueOf(order.getVisitCode()),
                 order.getExternalOrderId(),
                 order.getOrderType(),
@@ -278,6 +305,6 @@ public class EmrLiteProvider implements DiagnosticProvider {
     }
 
     private String toProviderSex(String patientSex) {
-        return "Others".equalsIgnoreCase(patientSex) ? "Other" : patientSex;
+        return "Others".equalsIgnoreCase(patientSex) ? "Others" : patientSex;
     }
 }

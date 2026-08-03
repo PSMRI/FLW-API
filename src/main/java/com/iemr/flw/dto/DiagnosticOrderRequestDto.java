@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class DiagnosticOrderRequestDto {
 
     @NotNull
-    private Long benRegID;
+    private Long beneficiaryId;
 
     @NotNull
     private Long visitCode;
@@ -37,7 +37,7 @@ public class DiagnosticOrderRequestDto {
         @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "dateOfBirth must be in yyyy-MM-dd format")
         private String dateOfBirth;
         @NotBlank
-        @Pattern(regexp = "Male|Female|Others", message = "sex must be exactly one of Male, Female, Others")
+        @Pattern(regexp = "Male|Female|Other", message = "sex must be exactly one of Male, Female, Others")
         private String sex;
     }
 }
