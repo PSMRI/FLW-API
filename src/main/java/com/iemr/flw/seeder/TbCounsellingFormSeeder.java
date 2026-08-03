@@ -44,7 +44,8 @@ import java.util.List;
 
 /**
  * Seeds the TB Counselling form definition on application startup if it does not already exist.
- * Idempotent: skips creation if the form UUID is already present in the database.
+ * Idempotent: skips creation if the form UUID is already present and active. If present but
+ * inactive, the stale row is deleted and reseeded from scratch.
  *
  * @author Piramal Swasthya
  */
@@ -61,8 +62,14 @@ public class TbCounsellingFormSeeder {
 
     @PostConstruct
     public void seed() {
+        formRepo.findByFormUuid(FORM_UUID).ifPresent(existing -> {
+            if (Boolean.FALSE.equals(existing.getIsActive())) {
+                log.info("TbCounsellingFormSeeder: form '{}' exists but is inactive — deleting and reseeding.", FORM_UUID);
+                formRepo.delete(existing);
+            }
+        });
         if (formRepo.findByFormUuid(FORM_UUID).isPresent()) {
-            log.info("TbCounsellingFormSeeder: form '{}' already exists — skipping seed.", FORM_UUID);
+            log.info("TbCounsellingFormSeeder: form '{}' already exists and is active — skipping seed.", FORM_UUID);
             return;
         }
         log.info("TbCounsellingFormSeeder: seeding TB Counselling form...");

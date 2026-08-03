@@ -44,7 +44,8 @@ import java.util.List;
 
 /**
  * Seeds the TB Counselling (v2) form definition on application startup if it does not already exist.
- * Idempotent: skips creation if the form UUID is already present in the database.
+ * Idempotent: skips creation if the form UUID is already present and active. If present but
+ * inactive, the stale row is deleted and reseeded from scratch.
  *
  * Adds an initial GENERAL_INFO consent gate ("Has the beneficiary agreed for counselling?") ahead
  * of the PRE_SUBMIT sections, and uses CHECKBOX questions in place of Yes/No RADIO questions.
@@ -64,8 +65,14 @@ public class TbCounsellingV2FormSeeder {
 
     @PostConstruct
     public void seed() {
+        formRepo.findByFormUuid(FORM_UUID).ifPresent(existing -> {
+            if (Boolean.FALSE.equals(existing.getIsActive())) {
+                log.info("TbCounsellingV2FormSeeder: form '{}' exists but is inactive — deleting and reseeding.", FORM_UUID);
+                formRepo.delete(existing);
+            }
+        });
         if (formRepo.findByFormUuid(FORM_UUID).isPresent()) {
-            log.info("TbCounsellingV2FormSeeder: form '{}' already exists — skipping seed.", FORM_UUID);
+            log.info("TbCounsellingV2FormSeeder: form '{}' already exists and is active — skipping seed.", FORM_UUID);
             return;
         }
         log.info("TbCounsellingV2FormSeeder: seeding TB Counselling (v2) form...");
