@@ -10,7 +10,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DiagnosticOrderStatusSummaryDto {
-    private List<Long> awaitingTestCompletion;
     private List<Long> awaitingProviderResult;
     private List<Long> completed;
     private List<Long> pollingTimedOut;
