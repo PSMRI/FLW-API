@@ -17,9 +17,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-// Two independent schedulers, one per order family: XRAY_CHEST polls immediately on its own
-// cadence, while TrueNat waits truenatInitialDelayMinutes after test completion before polling
-// on its own (slower) cadence.
+// Every order gets a primary poll window anchored on createdDate (XRAY_CHEST: xrayInitialDelayMinutes
+// after creation; TrueNat: truenatInitialDelayMinutes after creation), running for giveUpMinutes before
+// giving up (EXPIRED). Once an order has been retried via DiagnosticOrderService.retryPoll, retriedAt
+// overrides that anchor: the order gets a fresh retryWindowMinutes window starting from retriedAt instead.
 @Service
 public class DiagnosticPollSchedulerService {
 
@@ -28,8 +29,14 @@ public class DiagnosticPollSchedulerService {
     @Value("${diagnostic.poll.give-up-minutes}")
     private int giveUpMinutes;
 
+    @Value("${diagnostic.poll.xray.initial-delay-minutes}")
+    private int xrayInitialDelayMinutes;
+
     @Value("${diagnostic.poll.truenat.initial-delay-minutes}")
     private int truenatInitialDelayMinutes;
+
+    @Value("${diagnostic.poll.retry.window-minutes}")
+    private int retryWindowMinutes;
 
     @Autowired
     private DiagnosticOrderRepo diagnosticOrderRepo;
@@ -46,8 +53,11 @@ public class DiagnosticPollSchedulerService {
         Instant now = Instant.now();
         int polled = 0;
         for (DiagnosticOrder order : candidates) {
-            Instant testCompletedAt = order.getTestCompletedAt().toInstant();
-            if (isExpired(testCompletedAt, now)) {
+            PollWindow window = resolveWindow(order, xrayInitialDelayMinutes);
+            if (window.start().isAfter(now)) {
+                continue;
+            }
+            if (isExpired(window, now)) {
                 giveUp(order);
             } else {
                 pollSingle(order);
@@ -68,12 +78,11 @@ public class DiagnosticPollSchedulerService {
         Instant now = Instant.now();
         int polled = 0;
         for (DiagnosticOrder order : candidates) {
-            Instant pollingStartedAt = order.getTestCompletedAt().toInstant()
-                    .plus(truenatInitialDelayMinutes, ChronoUnit.MINUTES);
-            if (pollingStartedAt.isAfter(now)) {
+            PollWindow window = resolveWindow(order, truenatInitialDelayMinutes);
+            if (window.start().isAfter(now)) {
                 continue;
             }
-            if (isExpired(pollingStartedAt, now)) {
+            if (isExpired(window, now)) {
                 giveUp(order);
             } else {
                 pollSingle(order);
@@ -85,10 +94,19 @@ public class DiagnosticPollSchedulerService {
         }
     }
 
-    // Measured from when polling actually starts for this order (immediately for X-ray, after the
-    // initial delay for TrueNat), so one give-up-minutes value works for both families.
-    private boolean isExpired(Instant pollingStartedAt, Instant now) {
-        Instant deadline = pollingStartedAt.plus(giveUpMinutes, ChronoUnit.MINUTES);
+    private record PollWindow(Instant start, int durationMinutes) {}
+
+    // retriedAt (set by the /order/retry endpoint) takes over as the window anchor once present,
+    // overriding the original createdDate-anchored window regardless of whether that one already expired.
+    private PollWindow resolveWindow(DiagnosticOrder order, int initialDelayMinutes) {
+        if (order.getRetriedAt() != null) {
+            return new PollWindow(order.getRetriedAt().toInstant(), retryWindowMinutes);
+        }
+        return new PollWindow(order.getCreatedDate().toInstant().plus(initialDelayMinutes, ChronoUnit.MINUTES), giveUpMinutes);
+    }
+
+    private boolean isExpired(PollWindow window, Instant now) {
+        Instant deadline = window.start().plus(window.durationMinutes(), ChronoUnit.MINUTES);
         return !deadline.isAfter(now);
     }
 

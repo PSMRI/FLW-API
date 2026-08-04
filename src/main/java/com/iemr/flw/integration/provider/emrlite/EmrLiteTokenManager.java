@@ -7,6 +7,7 @@ import com.iemr.flw.integration.provider.emrlite.dto.EmrLiteLoginResponse;
 import com.iemr.flw.integration.provider.emrlite.dto.EmrLiteProviderResponse;
 import com.iemr.flw.integration.provider.emrlite.dto.EmrLiteRefreshRequest;
 import com.iemr.flw.integration.provider.emrlite.dto.EmrLiteRefreshResponse;
+import com.iemr.flw.masterEnum.DiagnosticOrderType;
 import com.iemr.flw.masterEnum.DiagnosticProviderCode;
 import com.iemr.flw.repo.iemr.DiagnosticProviderTokenRepo;
 import com.iemr.flw.utils.CryptoUtil;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
@@ -34,18 +36,31 @@ public class EmrLiteTokenManager {
     private static final String PROVIDER_CODE = DiagnosticProviderCode.EMRLITE.name();
     private static final String TYPE_ACCESS = "ACCESS";
     private static final String TYPE_REFRESH = "REFRESH";
+    private static final int VENDOR_CALL_TIMEOUT_MS = 20000;
 
-    @Value("${diagnostic.emrlite.login-url}")
-    private String loginUrl;
+    @Value("${diagnostic.emrlite.xray.login-url}")
+    private String xrayLoginUrl;
 
-    @Value("${diagnostic.emrlite.refresh-url}")
-    private String refreshUrl;
+    @Value("${diagnostic.emrlite.xray.refresh-url}")
+    private String xrayRefreshUrl;
 
-    @Value("${diagnostic.emrlite.username}")
-    private String username;
+    @Value("${diagnostic.emrlite.xray.username}")
+    private String xrayUsername;
 
-    @Value("${diagnostic.emrlite.password}")
-    private String encodedPassword;
+    @Value("${diagnostic.emrlite.xray.password}")
+    private String xrayEncodedPassword;
+
+    @Value("${diagnostic.emrlite.truenat.login-url}")
+    private String truenatLoginUrl;
+
+    @Value("${diagnostic.emrlite.truenat.refresh-url}")
+    private String truenatRefreshUrl;
+
+    @Value("${diagnostic.emrlite.truenat.username}")
+    private String truenatUsername;
+
+    @Value("${diagnostic.emrlite.truenat.password}")
+    private String truenatEncodedPassword;
 
     @Value("${diagnostic.emrlite.token-ttl-seconds:3600}")
     private long tokenTtlSeconds;
@@ -53,7 +68,8 @@ public class EmrLiteTokenManager {
     @Value("${diagnostic.emrlite.refresh-ttl-seconds:82800}")
     private long refreshTtlSeconds;
 
-    private String password;
+    private String xrayPassword;
+    private String truenatPassword;
 
     @Autowired
     private DiagnosticProviderTokenRepo tokenRepo;
@@ -61,17 +77,36 @@ public class EmrLiteTokenManager {
     @Autowired
     private CryptoUtil cryptoUtil;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = buildRestTemplateWithTimeout();
     private final Gson gson = new Gson();
+
+    private static RestTemplate buildRestTemplateWithTimeout() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(VENDOR_CALL_TIMEOUT_MS);
+        factory.setReadTimeout(VENDOR_CALL_TIMEOUT_MS);
+        return new RestTemplate(factory);
+    }
 
     @PostConstruct
     private void init() {
-        this.password = encodedPassword != null && encodedPassword.startsWith("0X10:")
+        this.xrayPassword = decodePassword(xrayEncodedPassword);
+        this.truenatPassword = decodePassword(truenatEncodedPassword);
+    }
+
+    private static String decodePassword(String encodedPassword) {
+        return encodedPassword != null && encodedPassword.startsWith("0X10:")
                 ? new String(Base64.getDecoder().decode(encodedPassword.substring(5)))
                 : encodedPassword;
     }
 
+    // The auth interceptor attaches a bearer token to every EMR Lite call with no per-request
+    // orderType context available, so the automatic refresh path has no group to pick from.
+    // Defaults to the xray group; harmless while both groups share identical vendor config.
     public String getValidToken() throws Exception {
+        return getValidToken(DiagnosticOrderType.XRAY_CHEST);
+    }
+
+    public String getValidToken(DiagnosticOrderType orderType) throws Exception {
         Optional<DiagnosticProviderToken> record =
                 tokenRepo.findByProviderCodeAndTokenType(PROVIDER_CODE, TYPE_ACCESS);
         if (record.isPresent()) {
@@ -93,24 +128,29 @@ public class EmrLiteTokenManager {
                     return cryptoUtil.decrypt(t.getTokenValue());
                 }
             }
-            return refreshOrLogin();
+            return refreshOrLogin(orderType);
         }
     }
 
     public synchronized String forceRefresh() throws Exception {
-        return refreshOrLogin();
+        return forceRefresh(DiagnosticOrderType.XRAY_CHEST);
     }
 
-    private String refreshOrLogin() throws Exception {
+    public synchronized String forceRefresh(DiagnosticOrderType orderType) throws Exception {
+        return refreshOrLogin(orderType);
+    }
+
+    private String refreshOrLogin(DiagnosticOrderType orderType) throws Exception {
         try {
-            return refreshAccessToken();
+            return refreshAccessToken(orderType);
         } catch (Exception e) {
             logger.warn("Token refresh failed ({}), falling back to full login", e.getMessage());
-            return login();
+            return login(orderType);
         }
     }
 
-    private String refreshAccessToken() throws Exception {
+    private String refreshAccessToken(DiagnosticOrderType orderType) throws Exception {
+        String refreshUrl = DiagnosticOrderType.XRAY_CHEST.equals(orderType) ? xrayRefreshUrl : truenatRefreshUrl;
         Optional<DiagnosticProviderToken> refreshRecord =
                 tokenRepo.findByProviderCodeAndTokenType(PROVIDER_CODE, TYPE_REFRESH);
         if (refreshRecord.isEmpty()) {
@@ -170,7 +210,12 @@ public class EmrLiteTokenManager {
         return refreshResponse.getAccess();
     }
 
-    private String login() throws Exception {
+    private String login(DiagnosticOrderType orderType) throws Exception {
+        boolean xray = DiagnosticOrderType.XRAY_CHEST.equals(orderType);
+        String loginUrl = xray ? xrayLoginUrl : truenatLoginUrl;
+        String username = xray ? xrayUsername : truenatUsername;
+        String password = xray ? xrayPassword : truenatPassword;
+
         logger.info("Attempting EMR Lite login: url={}, username={}", loginUrl, username);
 
         HttpHeaders headers = new HttpHeaders();
