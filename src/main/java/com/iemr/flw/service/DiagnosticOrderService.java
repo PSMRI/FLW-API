@@ -4,6 +4,7 @@ import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.dto.DiagnosticOrderRequestDto;
 import com.iemr.flw.dto.DiagnosticOrderResultDto;
 import com.iemr.flw.dto.DiagnosticOrderStatusSummaryDto;
+import com.iemr.flw.dto.ManualDiagnosticResultRequestDto;
 import com.iemr.flw.dto.VendorHealthDto;
 import com.iemr.flw.integration.provider.DiagnosticPollResult;
 
@@ -30,4 +31,6 @@ public interface DiagnosticOrderService {
     DiagnosticOrderStatusSummaryDto getOrderStatusSummary(String orderType, Integer villageId, Integer providerServiceMapId);
 
     VendorHealthDto checkVendorHealth(String orderType) throws Exception;
+
+    DiagnosticOrderResultDto submitManualResult(ManualDiagnosticResultRequestDto request) throws Exception;
 }

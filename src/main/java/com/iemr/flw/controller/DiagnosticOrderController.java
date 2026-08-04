@@ -6,6 +6,7 @@ import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.dto.DiagnosticOrderRequestDto;
 import com.iemr.flw.dto.DiagnosticOrderResultDto;
 import com.iemr.flw.dto.DiagnosticOrderStatusSummaryDto;
+import com.iemr.flw.dto.ManualDiagnosticResultRequestDto;
 import com.iemr.flw.dto.VendorHealthDto;
 import com.iemr.flw.masterEnum.DiagnosticOrderType;
 import com.iemr.flw.service.DiagnosticOrderService;
@@ -122,6 +123,23 @@ public class DiagnosticOrderController {
         } catch (Exception e) {
             logger.error("Error in pollOrder: {}", e.getMessage());
             response.setError(5000, "Error triggering poll: " + e.getMessage());
+        }
+        return response.toString();
+    }
+
+    @PostMapping("/order/manualResult")
+    @Operation(summary = "Manually submit a diagnostic result for a beneficiary's latest order of the given "
+            + "type, for use when no vendor device is integrated. Stored as-is; tbPresence, tbConfidence, and "
+            + "drugResistancePresence are left null since nothing derives them. Rejected if that order is "
+            + "already COMPLETED.")
+    public String submitManualResult(@RequestBody @Valid ManualDiagnosticResultRequestDto request) {
+        OutputResponse response = new OutputResponse();
+        try {
+            DiagnosticOrderResultDto result = diagnosticOrderService.submitManualResult(request);
+            response.setResponse(new GsonBuilder().serializeNulls().create().toJson(result));
+        } catch (Exception e) {
+            logger.error("Error in submitManualResult: {}", e.getMessage());
+            response.setError(5000, "Error submitting manual diagnostic result: " + e.getMessage());
         }
         return response.toString();
     }
