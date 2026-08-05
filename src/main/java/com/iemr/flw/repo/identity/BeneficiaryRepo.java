@@ -123,4 +123,33 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
         "FROM RMNCHBeneficiaryDetailsRmnch b " +
         "WHERE b.BenRegId IN :regIds AND b.benficieryid IS NOT NULL")
 List<Object[]> getBenIdsFromRegIDs(@Param("regIds") List<Long> regIds);
+
+    // Village worklist (Stop TB path) — paginated at the DB level via LIMIT/OFFSET,
+    // replacing the old approach of loading every flow row for the whole village into
+    // memory and slicing it in Java. Cost is now O(pageSize) instead of O(village size)
+    // on every page request, including page 0. See BeneficiaryServiceImpl.getBenData().
+    @Query(value = """
+        SELECT bm.BenAddressId
+        FROM db_iemr.i_ben_flow_outreach bfs
+        JOIN db_identity.i_beneficiarymapping bm ON bm.BenRegId = bfs.beneficiary_reg_id
+        WHERE bfs.providerServiceMapID = :psmId AND bfs.villageID = :villageId AND bfs.deleted = 0
+        ORDER BY bfs.registrationDate DESC
+        LIMIT :pageSize OFFSET :offset
+        """, nativeQuery = true)
+    List<BigInteger> getVillageWorklistAddressIds(
+            @Param("psmId") Integer psmId,
+            @Param("villageId") Integer villageId,
+            @Param("pageSize") int pageSize,
+            @Param("offset") int offset);
+
+    @Query(value = """
+        SELECT COUNT(*)
+        FROM db_iemr.i_ben_flow_outreach bfs
+        JOIN db_identity.i_beneficiarymapping bm ON bm.BenRegId = bfs.beneficiary_reg_id
+        WHERE bfs.providerServiceMapID = :psmId AND bfs.villageID = :villageId AND bfs.deleted = 0
+        """, nativeQuery = true)
+    long countVillageWorklist(@Param("psmId") Integer psmId, @Param("villageId") Integer villageId);
+
+    @Query("SELECT t FROM RMNCHMBeneficiaryaddress t WHERE t.benAddressID IN :ids")
+    List<RMNCHMBeneficiaryaddress> findAddressesByIds(@Param("ids") List<BigInteger> ids);
 }
