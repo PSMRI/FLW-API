@@ -102,6 +102,15 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     entity.setPlaceOfDeath(dto.getPlaceOfDeath());
                     entity.setReasonForDeath(dto.getReasonForDeath());
                     entity.setReasonForNotCompleting(dto.getReasonForNotCompleting());
+                    // Stop TB / Nikshay reporting — same gap as tb_suspected: benRegID is computed
+                    // above for the visit lookup but was never persisted onto the entity.
+                    entity.setBenRegID(beneficiaryRegID);
+                    // created_by — gated on isNew so a later follow-up save doesn't overwrite who
+                    // originally created the record; createdAt already self-populates via the
+                    // entity's `= LocalDate.now()` field default on `new TBConfirmedCase()`.
+                    if (isNew) {
+                        entity.setCreatedBy(modifiedBy);
+                    }
                     if (entity.getVanID() == null && vanID != null) { entity.setVanID(vanID); entity.setParkingPlaceID(parkingPlaceID); }
                     entity.setProcessed("N");
                     if(entity!=null){

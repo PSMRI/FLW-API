@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +57,8 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
             TBSuspected tbSuspected =
                     tbSuspectedRepo.getByUserIdAndBenIdAndVisitCode(tbSuspectedDTO.getBenId(), requestDTO.getUserId(), visit.getVisitCode());
 
-            if (tbSuspected == null) {
+            boolean isNew = tbSuspected == null;
+            if (isNew) {
                 tbSuspected = new TBSuspected();
                 modelMapper.map(tbSuspectedDTO, tbSuspected);
                 tbSuspected.setId(null);
@@ -68,6 +70,21 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
 
             tbSuspected.setUserId(requestDTO.getUserId());
             tbSuspected.setVisitCode(visit.getVisitCode());
+            // Stop TB / Nikshay reporting — mirrors what StopTBServiceImpl.saveNurseTBScreening()
+            // already does for tb_screening. Without this, tb_suspected.benRegID stays null and
+            // reports can't join it directly against i_beneficiarymapping.BenRegId like tb_screening
+            // does; they have to bridge through m_beneficiaryregidmapping.beneficiaryid instead.
+            tbSuspected.setBenRegID(beneficiaryRegID);
+            // created_date/created_by — mobile currently sends no separate "created" timestamp
+            // (confirmed against STOP-TB-App's TBSuspectedDTO wire format), so visitDate is the
+            // closest real proxy we have for local capture time; server time is the last-resort
+            // fallback. Gated on isNew so a later re-save (e.g. sputum result added afterward)
+            // never overwrites the true creation time.
+            if (isNew) {
+                tbSuspected.setCreatedDate(tbSuspected.getVisitDate() != null
+                        ? tbSuspected.getVisitDate() : new Timestamp(System.currentTimeMillis()));
+                tbSuspected.setCreatedBy(requestDTO.getUserId() != null ? requestDTO.getUserId().toString() : null);
+            }
             if (tbSuspected.getVanID() == null && vanID != null) { tbSuspected.setVanID(vanID); tbSuspected.setParkingPlaceID(parkingPlaceID); }
             tbSuspected.setProcessed("N");
             tbSuspectedRepo.save(tbSuspected);

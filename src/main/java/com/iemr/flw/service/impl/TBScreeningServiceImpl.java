@@ -6,6 +6,7 @@ import com.iemr.flw.domain.iemr.TBScreening;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.TBScreeningDTO;
 import com.iemr.flw.dto.iemr.TBScreeningRequestDTO;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.TBScreeningRepo;
 import com.iemr.flw.service.TBScreeningService;
 import org.modelmapper.ModelMapper;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +25,8 @@ public class TBScreeningServiceImpl implements TBScreeningService {
     private final Logger logger = LoggerFactory.getLogger(TBScreeningServiceImpl.class);
     @Autowired
     private TBScreeningRepo tbScreeningRepo;
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
     private final ModelMapper modelMapper = new ModelMapper();
 
     @Override
@@ -37,7 +41,8 @@ public class TBScreeningServiceImpl implements TBScreeningService {
             TBScreening tbScreening =
                     tbScreeningRepo.getByUserIdAndBenId(tbScreeningDTO.getBenId(), requestDTO.getUserId());
 
-            if (tbScreening == null) {
+            boolean isNew = tbScreening == null;
+            if (isNew) {
                 tbScreening = new TBScreening();
                 modelMapper.map(tbScreeningDTO, tbScreening);
                 tbScreening.setId(null);
@@ -48,6 +53,17 @@ public class TBScreeningServiceImpl implements TBScreeningService {
             }
 
             tbScreening.setUserId(requestDTO.getUserId());
+            // Stop TB / Nikshay reporting — same gap this ASHA-flow save path had as the nurse
+            // flow's saveNurseTBScreening(): benRegID was never persisted here at all.
+            tbScreening.setBenRegID(beneficiaryRepo.getRegIDFromBenId(tbScreeningDTO.getBenId()));
+            // created_date/created_by — gated on isNew so a later re-save doesn't overwrite the
+            // true creation time/author. No device-supplied created timestamp on this DTO, so
+            // visitDate (closest real proxy) is preferred, server time as last-resort fallback.
+            if (isNew) {
+                tbScreening.setCreatedDate(tbScreening.getVisitDate() != null
+                        ? tbScreening.getVisitDate() : new Timestamp(System.currentTimeMillis()));
+                tbScreening.setCreatedBy(requestDTO.getUserId() != null ? requestDTO.getUserId().toString() : null);
+            }
             tbScreeningRepo.save(tbScreening);
         });
         return "no of tb screening items saved: " + requestDTO.getTbScreeningList().size();
