@@ -271,12 +271,18 @@ public class StopTBServiceImpl implements StopTBService {
             screening.setRecommendedForTruenat(getBool(data, "recommendedForTruenat"));
             screening.setRecommendedForLiquidCulture(getBool(data, "recommendedForLiquidCulture"));
             screening.setTestDenialReasons(getString(data, "testDenialReasons"));
-            screening.setCreatedBy(getString(data, "createdBy"));
             screening.setModifiedBy(getString(data, "createdBy"));
             // PRD: date is user-provided, mandatory, not editable once submitted
             if (screening.getVisitDate() == null) {
                 Timestamp provided = getTimestamp(data, "visitDate");
                 screening.setVisitDate(provided != null ? provided : new Timestamp(System.currentTimeMillis()));
+            }
+            // created_date/created_by — gated on isNew so a later re-save doesn't overwrite the
+            // true creation time/author (previously createdBy was set unconditionally on every
+            // save, and createdDate was never set at all).
+            if (isNew) {
+                screening.setCreatedBy(getString(data, "createdBy"));
+                screening.setCreatedDate(screening.getVisitDate());
             }
             if (screening.getVanID() == null && vanID != null) { screening.setVanID(vanID); screening.setParkingPlaceID(parkingPlaceID); }
             screening.setProcessed("N");
