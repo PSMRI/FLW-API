@@ -1,7 +1,6 @@
 package com.iemr.flw.service.impl;
 
 import com.iemr.flw.domain.iemr.DiagnosticOrder;
-import com.iemr.flw.integration.provider.DiagnosticPollResult;
 import com.iemr.flw.integration.provider.DiagnosticProviderFactory;
 import com.iemr.flw.masterEnum.DiagnosticOrderStatus;
 import com.iemr.flw.masterEnum.DiagnosticOrderType;
@@ -98,8 +97,9 @@ public class DiagnosticPollSchedulerService {
 
     private void pollSingle(DiagnosticOrder order) {
         try {
-            DiagnosticPollResult result = diagnosticOrderService.pollOnce(order);
-            diagnosticOrderService.processResult(order, result);
+            // pollOnce now saves the result/order fields and ingests any documents itself —
+            // nothing left to do here on success.
+            diagnosticOrderService.pollOnce(order);
         } catch (Exception e) {
             logger.error("Poll failed for orderId={}: {}", order.getId(), e.getMessage());
             order.setRetryCount(order.getRetryCount() + 1);

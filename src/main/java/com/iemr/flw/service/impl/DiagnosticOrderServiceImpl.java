@@ -181,7 +181,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         result.setBeneficiaryId(order.getBeneficiaryId());
         result.setProviderStatus(pollResult.getStatus().name());
         result.setResultSummary(pollResult.getResultSummary());
-        result.setRawResponseJson(pollResult.getRawResponseJson());
+        // The vendor embeds each asset's base64 file content directly inline in its response body
+        // when assets are requested — never persist that raw JSON verbatim (it's unencrypted, unlike
+        // the same content on local disk). Only store rawResponseJson from the asset-free call.
+        if (pollResult.getAssets() == null || pollResult.getAssets().isEmpty()) {
+            result.setRawResponseJson(pollResult.getRawResponseJson());
+        }
         result.setTbPresence(pollResult.getTbPresence());
         result.setTbConfidence(pollResult.getTbConfidence());
         result.setDrugResistancePresence(pollResult.getDrugResistancePresence());
@@ -193,17 +198,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             result = diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId()).orElse(result);
         }
 
-        if (pollResult.getAssets() != null) {
-            for (DiagnosticDocumentAsset asset : pollResult.getAssets()) {
-                try {
-                    diagnosticDocumentService.ingestAsset(order.getId(), order.getBeneficiaryId(), order.getOrderType(),
-                            order.getExternalOrderId(), asset);
-                } catch (Exception e) {
-                    logger.error("Failed to ingest document asset for orderId={}, assetType={}, fileName={}: {}",
-                            order.getId(), asset.getType(), asset.getFileName(), e.getMessage());
-                }
-            }
-        }
+        ingestAssets(order, pollResult);
 
         order.setStatus(pollResult.getStatus().name());
         order.setErrorMessage(pollResult.getErrorMessage());
@@ -227,6 +222,23 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         return dto;
     }
 
+    // Shared by processResult (single combined save+ingest call, e.g. triggerManualPoll) and pollOnce's
+    // second, asset-only call (which must NOT re-save the already-saved result/order fields a second time).
+    private void ingestAssets(DiagnosticOrder order, DiagnosticPollResult pollResult) {
+        if (pollResult.getAssets() == null) {
+            return;
+        }
+        for (DiagnosticDocumentAsset asset : pollResult.getAssets()) {
+            try {
+                diagnosticDocumentService.ingestAsset(order.getId(), order.getBeneficiaryId(), order.getOrderType(),
+                        order.getExternalOrderId(), asset);
+            } catch (Exception e) {
+                logger.error("Failed to ingest document asset for orderId={}, assetType={}, fileName={}: {}",
+                        order.getId(), asset.getType(), asset.getFileName(), e.getMessage());
+            }
+        }
+    }
+
     @Override
     public DiagnosticPollResult pollOnce(DiagnosticOrder order) throws Exception {
         DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
@@ -236,6 +248,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             // doesn't also lose the already-confirmed completed status (see pollSingle's catch).
             processResult(order, result);
             result = provider.pollResult(order, true);
+            // Only ingest the documents this time — the result/order fields were already saved above
+            // and this second, asset-bearing response carries the same status/summary, so re-saving
+            // them again would just be a redundant duplicate write.
+            ingestAssets(order, result);
+        } else {
+            processResult(order, result);
         }
         return result;
     }
