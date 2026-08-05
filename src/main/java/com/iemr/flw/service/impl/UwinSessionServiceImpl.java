@@ -107,6 +107,7 @@ public class UwinSessionServiceImpl implements UwinSessionService {
         dto.setParticipants(session.getParticipants());
         dto.setAttachments(Collections.singletonList(session.getAttachmentsJson()));
 
+
         return dto;
     }
     @Override
@@ -137,8 +138,6 @@ public class UwinSessionServiceImpl implements UwinSessionService {
                 String imagesJson = objectMapper.writeValueAsString(base64Images);
                 session.setAttachmentsJson(imagesJson);
 
-                // Trigger incentive update if attachments exist
-                updateIncentivePendindDocService.updateIncentive(activityId);
             }
 
             repo.save(session); // ✅ Save updated session
@@ -190,18 +189,22 @@ public class UwinSessionServiceImpl implements UwinSessionService {
                  record.setBenId(0L);
                  record.setAshaId(session.getAshaId());
                  record.setAmount(Long.valueOf(incentiveActivityAM.getRate()));
-                 if(session.getAttachmentsJson()!=null){
-                     record.setIsEligible(true);
-                     recordRepo.save(record);
+                 record.setIsEligible(true);
+                 recordRepo.save(record);
 
-                 }else {
-                     record.setIsEligible(false);
-                   IncentiveActivityRecord incentiveActivityRecord =   recordRepo.save(record);
-                     if(incentiveActivityRecord!=null){
-                         updateIncentivePendindDocService.updatePendingActivity(session.getAshaId(),session.getId(),incentiveActivityRecord.getId(),incentiveActivityAM.getId());
 
-                     }
-                 }
+//                 if(session.getAttachmentsJson()!=null){
+//                     record.setIsEligible(true);
+//                     recordRepo.save(record);
+//
+//                 }else {
+//                     record.setIsEligible(false);
+//                   IncentiveActivityRecord incentiveActivityRecord =   recordRepo.save(record);
+//                     if(incentiveActivityRecord!=null){
+//                         updateIncentivePendindDocService.updatePendingActivity(session.getAshaId(),session.getId(),incentiveActivityRecord.getId(),incentiveActivityAM.getId());
+//
+//                     }
+//                 }
 
              }
          }
@@ -221,12 +224,14 @@ public class UwinSessionServiceImpl implements UwinSessionService {
                 record.setBenId(0L);
                 record.setAshaId(session.getAshaId());
                 record.setAmount(Long.valueOf(incentiveActivityCH.getRate()));
-                if(session.getAttachmentsJson()!=null){
-                    record.setIsEligible(true);
-                }else {
-                    record.setIsEligible(false);
-                    updateIncentivePendindDocService.updatePendingActivity(session.getAshaId(),session.getId(),record.getId(),incentiveActivityCH.getId());
-                }
+                record.setIsEligible(true);
+
+//                if(session.getAttachmentsJson()!=null){
+//                    record.setIsEligible(true);
+//                }else {
+//                    record.setIsEligible(false);
+//                    updateIncentivePendindDocService.updatePendingActivity(session.getAshaId(),session.getId(),record.getId(),incentiveActivityCH.getId());
+//                }
                 recordRepo.save(record);
             }
         }

@@ -31,14 +31,14 @@ public class UwinSessionController {
      @Autowired
      private JwtUtil jwtUtil;
 
-    @RequestMapping(value = "saveAll", method = RequestMethod.POST, headers = "Authorization", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequestMapping(value = "saveAll", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> saveSession(
             @RequestPart("meetingDate") String meetingDate,
             @RequestPart("place") String place,
             @RequestPart("participants") String participants,
             @RequestPart("ashaId") String ashaId,
             @RequestPart("createdBy") String createdBy,
-            @RequestPart(value = "meetingImages", required = false) List<MultipartFile> images) throws Exception {
+            @RequestPart(value = "meetingImages", required = false) List<MultipartFile> images,@RequestHeader(value = "jwtToken") String jwtToken) throws Exception {
         Map<String, Object> response = new LinkedHashMap<>();
 
         UwinSessionRequestDTO dto = new UwinSessionRequestDTO();

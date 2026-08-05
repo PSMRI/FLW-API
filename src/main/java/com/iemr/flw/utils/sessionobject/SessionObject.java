@@ -81,7 +81,6 @@ public class SessionObject {
 			JsonElement jsnElmnt = jsnParser.parse(value);
 			jsnOBJ = jsnElmnt.getAsJsonObject();
 			if (jsnOBJ.has("userName") && jsnOBJ.get("userName") != null) {
-				jwtUtil.setUserNameFromStorage(jsnOBJ.get("userName").getAsString());
 				objectStore.updateObject(jsnOBJ.get("userName").getAsString().trim().toLowerCase(), key,
 						extendExpirationTime, sessionExpiryTime);
 			}

@@ -7,7 +7,9 @@ import com.iemr.flw.domain.iemr.TBSuspected;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.TBSuspectedDTO;
 import com.iemr.flw.dto.iemr.TBSuspectedRequestDTO;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.TBSuspectedRepo;
+import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.TBStopVisitService;
 import com.iemr.flw.service.TBSuspectedService;
@@ -31,6 +33,11 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
     private CampConfigService campConfigService;
     @Autowired
     private TBStopVisitService tbStopVisitService;
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
 
     @Override
     public String getByBenId(Long benId, String authorisation) throws Exception {
@@ -42,7 +49,8 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
         Integer vanID = campConfigService.getVanID();
         Integer parkingPlaceID = campConfigService.getParkingPlaceID();
         for (TBSuspectedDTO tbSuspectedDTO : requestDTO.getTbSuspectedList()) {
-            BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(tbSuspectedDTO.getBenId(), null,
+            Long beneficiaryRegID = beneficiaryRepo.getRegIDFromBenId(tbSuspectedDTO.getBenId());
+            BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, null,
                     requestDTO.getUserId() != null ? requestDTO.getUserId().toString() : null, vanID, parkingPlaceID);
 
             TBSuspected tbSuspected =
@@ -62,9 +70,15 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
             tbSuspected.setVisitCode(visit.getVisitCode());
             if (tbSuspected.getVanID() == null && vanID != null) { tbSuspected.setVanID(vanID); tbSuspected.setParkingPlaceID(parkingPlaceID); }
             tbSuspected.setProcessed("N");
-
             tbSuspectedRepo.save(tbSuspected);
             tbSuspectedRepo.updateVanSerialNo(tbSuspected.getId());
+            if(tbSuspected!=null){
+                if(tbSuspected.getIsConfirmed()){
+                    incentiveLogicService.incentiveForTbSuspected(tbSuspected.getBenId(),tbSuspected.getVisitDate(),tbSuspected.getVisitDate(),tbSuspected.getUserId());
+
+                }
+
+            }
         }
         return "no of tb suspected items saved:" + requestDTO.getTbSuspectedList().size();
     }
@@ -80,6 +94,15 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
             dto.setUpdateDate(tbSuspected.getLastModDate());
             dto.setUpdatedBy(tbSuspected.getModifiedBy());
             dtos.add(dto);
+
+            if (tbSuspected != null && Boolean.TRUE.equals(tbSuspected.getIsConfirmed())) {
+                incentiveLogicService.incentiveForTbSuspected(
+                        tbSuspected.getBenId(),
+                        tbSuspected.getVisitDate(),
+                        tbSuspected.getVisitDate(),
+                        tbSuspected.getUserId()
+                );
+            }
         }
         TBSuspectedRequestDTO tbSuspectedRequestDTO = new TBSuspectedRequestDTO();
         tbSuspectedRequestDTO.setTbSuspectedList(dtos);
