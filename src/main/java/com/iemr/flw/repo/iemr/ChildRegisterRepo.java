@@ -18,4 +18,8 @@ public interface ChildRegisterRepo extends JpaRepository<ChildRegister, Long> {
 
 //    @Query(value = "Select * from db_identity.i_cbacdetails where beneficiaryRegId = :benRegId and createdDate = :createdDate limit 1", nativeQuery = true)
     ChildRegister findChildRegisterByBenIdAndCreatedDate(Long benRegId, Timestamp createdDate);
+
+    Long countByBenId(Long benId);
+
+    List<ChildRegister> findByBenId(Long benId);
 }

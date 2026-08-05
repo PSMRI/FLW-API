@@ -16,4 +16,6 @@ public interface DiseaseLeprosyRepository extends JpaRepository<ScreeningLeprosy
     // Custom queries can be added here if needed
     @Query("SELECT s FROM ScreeningLeprosy s WHERE s.createdBy = :createdBy")
     List<ScreeningLeprosy> getByCreatedBy(@Param("createdBy") String createdBy);
+
+
 }

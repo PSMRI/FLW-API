@@ -67,7 +67,7 @@ public class IncentiveController {
             // add logic for different state or district
             if (incentiveRequestDTO != null) {
                 String s = incentiveService.getIncentiveMaster(incentiveRequestDTO);
-                logger.info("All incentives" + s);
+              //  logger.info("All incentives" + s);
 
                 if (s != null)
                     response.setResponse(s);
@@ -94,7 +94,7 @@ public class IncentiveController {
                 logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
                         + requestDTO);
                 String s = incentiveService.getAllIncentivesByUserId(requestDTO);
-                logger.info("User Incentive:" + s);
+                //logger.info("User Incentive:" + s);
                 if (s != null)
                     response.setResponse(s);
                 else

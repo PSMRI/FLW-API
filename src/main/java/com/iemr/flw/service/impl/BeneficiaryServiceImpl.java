@@ -3,6 +3,7 @@ package com.iemr.flw.service.impl;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
@@ -23,6 +24,8 @@ import com.iemr.flw.dto.iemr.EyeCheckupRequestDTO;
 import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.domain.iemr.BenFlowStatus;
 import com.iemr.flw.repo.iemr.*;
+import com.iemr.flw.service.IncentiveLogicService;
+import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,6 +102,12 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     private JwtUtil jwtUtil;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
+    private IncentiveLogicService incentiveLogicService;
+
+    @Autowired
     private BenFlowStatusRepo benFlowStatusRepo;
 
     @Autowired
@@ -111,7 +120,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     private BenPhysicalVitalRepo benPhysicalVitalRepo;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-
 
 
     @Override
@@ -129,15 +137,10 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
         // Stop TB path: filter by providerServiceMapID + villageID
         if (request.getProviderServiceMapID() != null && request.getVillageID() != null) {
-            System.out.println("[TRACE][FLW-API] getBenData Stop TB path: providerServiceMapID=" + request.getProviderServiceMapID() + " villageID=" + request.getVillageID());
             List<BenFlowStatus> flows = benFlowStatusRepo.getRegistrarWorklist(
                     request.getProviderServiceMapID(), request.getVillageID());
-            System.out.println("[TRACE][FLW-API] getRegistrarWorklist returned flows count=" + (flows == null ? "null" : flows.size()));
 
-            if (flows == null || flows.isEmpty()) {
-                System.out.println("[TRACE][FLW-API] getBenData returning null: no worklist flows for providerServiceMapID/villageID");
-                return null;
-            }
+            if (flows == null || flows.isEmpty()) return null;
 
             List<RMNCHMBeneficiaryaddress> allAddresses = new ArrayList<>();
             for (BenFlowStatus flow : flows) {
@@ -150,20 +153,13 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                 RMNCHMBeneficiaryaddress address = beneficiaryRepo.getAddressById(mapping.getBenAddressId());
                 if (address != null) allAddresses.add(address);
             }
-            System.out.println("[TRACE][FLW-API] resolved allAddresses count=" + allAddresses.size() + " out of flows count=" + flows.size());
 
-            if (allAddresses.isEmpty()) {
-                System.out.println("[TRACE][FLW-API] getBenData returning null: no addresses resolved from flows/mappings");
-                return null;
-            }
+            if (allAddresses.isEmpty()) return null;
 
             int totalPage = (int) Math.ceil((double) allAddresses.size() / pageSize);
             int start = request.getPageNo() * pageSize;
             int end = Math.min(start + pageSize, allAddresses.size());
-            if (start >= allAddresses.size()) {
-                System.out.println("[TRACE][FLW-API] getBenData returning null: pageNo=" + request.getPageNo() + " start=" + start + " exceeds allAddresses size=" + allAddresses.size());
-                return null;
-            }
+            if (start >= allAddresses.size()) return null;
 
             return getMappingsForAddressIDs(allAddresses.subList(start, end), totalPage, authorisation);
         }
@@ -174,7 +170,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         }
 
         String userName = beneficiaryRepo.getUserName(request.getAshaId());
-        System.out.println("[TRACE][FLW-API] getBenData normal path: ashaId=" + request.getAshaId() + " resolved userName=" + userName);
 
         if (userName == null || userName.isEmpty()) {
             throw new Exception("Asha details not found, please contact administrator");
@@ -202,10 +197,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         } else {
             pageResult = beneficiaryRepo.getBenDataByUser(userName, pageRequest);
         }
-        System.out.println("[TRACE][FLW-API] getBenData normal path pageResult totalElements=" + pageResult.getTotalElements() + " hasContent=" + pageResult.hasContent());
 
         if (!pageResult.hasContent()) {
-            System.out.println("[TRACE][FLW-API] getBenData returning null: pageResult has no content for userName=" + userName);
             return null;
         }
 
@@ -274,7 +267,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                                 benDetailsRMNCH_OBJ = beneficiaryRepo
                                         .getDetailsByRegID((m.getBenRegId()).longValue()).get(0);
                             }
-
                             benBotnBirthRMNCH_ROBJ = beneficiaryRepo.getBornBirthByRegID((m.getBenRegId()).longValue());
 
                             if (benDetailsRMNCH_OBJ != null && benDetailsRMNCH_OBJ.getHouseoldId() != null)
@@ -532,7 +524,10 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         resultMap.put("isMarried", benDetailsRMNCH_OBJ.getIsMarried());
                         resultMap.put("doYouHavechildren", benDetailsRMNCH_OBJ.getDoYouHavechildren());
                         resultMap.put("noofAlivechildren",benDetailsRMNCH_OBJ.getNoofAlivechildren());
-                        resultMap.put("isDeactivate",benDetailsRMNCH_OBJ.getIsDeactivate());
+                        resultMap.put("isDeactivate", benDetailsRMNCH_OBJ.getIsDeactivate() != null
+                                ? benDetailsRMNCH_OBJ.getIsDeactivate()
+                                : false
+                        );
                         resultMap.put("economicStatus",benDetailsOBJ.getEconomicStatus());
                         resultMap.put("economicStatusId",benDetailsOBJ.getEconomicStatusId());
                         resultMap.put("residentialAreaId",benDetailsOBJ.getResidentialAreaId());
@@ -628,7 +623,9 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                 }
 
             } catch (Exception e) {
-                logger.error("error for addressID :"+e.getMessage() + a.getId() + " and vanID : " + a.getVanID());
+                logger.info("Error for ben :"+e.getMessage());
+                logger.info("Error for ben :"+e);
+                logger.error("error for addressID :" + e.getMessage() + a.getId() + " and vanID : " + a.getVanID());
             }
         }
 
@@ -754,6 +751,22 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                 visit.setFollowUpStatus(f.getFollow_up_status());
 
                 eyeCheckUpVisitRepo.save(visit);
+                if (visit.getReferredTo() != null) {
+                    if (visit.getReferredTo().equals("Govt Public Facility")) {
+                        LocalDate localDate = visit.getVisitDate();
+
+                        Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
+                        incentiveLogicService.incentiveForEyeSurgeyReferGovtHospital(visit.getBeneficiaryId(), visitDate, visitDate, visit.getUserId());
+                    }
+
+                    if (visit.getReferredTo().equals("Private Facility")) {
+                        LocalDate localDate = visit.getVisitDate();
+
+                        Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
+                        incentiveLogicService.incentiveForEyeSurgeyReferPrivateHospital(visit.getBeneficiaryId(), visitDate, visitDate, visit.getUserId());
+                    }
+                }
+
             }
 
             return "Eye checkup data saved successfully.";
@@ -770,8 +783,13 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     @Override
     public List<EyeCheckupRequestDTO> getEyeCheckUpVisit(GetBenRequestHandler request,String token) {
-
-        List<EyeCheckupVisit> visits = eyeCheckUpVisitRepo.findByCreatedBy(jwtUtil.extractUsername(token));
+        String createdBy = null;
+        try {
+            createdBy = userService.getUserDetail(jwtUtil.extractUserId(token)).getUserName();
+        } catch (Exception e) {
+            logger.error("Error extracting userId from token: " + e.getMessage());
+        }
+        List<EyeCheckupVisit> visits = eyeCheckUpVisitRepo.findByCreatedBy(createdBy);
 
         return visits.stream().map(v -> {
             EyeCheckupRequestDTO dto = new EyeCheckupRequestDTO();
@@ -793,6 +811,22 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
 
             dto.setFields(fields);
+            if (v.getReferredTo() != null) {
+                if (v.getReferredTo().equals("Govt Public Facility")) {
+                    LocalDate localDate = v.getVisitDate();
+
+                    Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
+                    incentiveLogicService.incentiveForEyeSurgeyReferGovtHospital(v.getBeneficiaryId(), visitDate, visitDate, v.getUserId());
+                }
+
+                if (v.getReferredTo().equals("Private Facility")) {
+                    LocalDate localDate = v.getVisitDate();
+
+                    Timestamp visitDate = Timestamp.valueOf(localDate.atStartOfDay());
+                    incentiveLogicService.incentiveForEyeSurgeyReferPrivateHospital(v.getBeneficiaryId(), visitDate, visitDate, v.getUserId());
+                }
+            }
+
             return dto;
         }).collect(Collectors.toList());
     }

@@ -63,7 +63,7 @@ public class CampaignServiceImpl implements CampaignService {
 
         List<CampaignOrs> campaignOrsRequest = new ArrayList<>();
         Integer userId = jwtUtil.extractUserId(token);
-        String userName = jwtUtil.extractUsername(token);
+        String userName = userServiceRoleRepo.getUserNamedByUserId(userId);
 
         for (OrsCampaignDTO campaignDTO : orsCampaignDTO) {
             if (campaignDTO.getFields() == null) {
@@ -141,7 +141,7 @@ public class CampaignServiceImpl implements CampaignService {
 
         List<PulsePolioCampaign> campaignPolioRequest = new ArrayList<>();
         Integer userId = jwtUtil.extractUserId(token);
-        String userName = jwtUtil.extractUsername(token);
+        String userName = userServiceRoleRepo.getUserNamedByUserId(userId);
 
         for (PolioCampaignDTO campaignDTO : polioCampaignDTOs) {
             if (campaignDTO.getFields() == null) {
@@ -190,18 +190,18 @@ public class CampaignServiceImpl implements CampaignService {
 
         if (!campaignPolioRequest.isEmpty()) {
             List<PulsePolioCampaign> savedCampaigns = pulsePolioCampaignRepo.saveAll(campaignPolioRequest);
-            savedCampaigns.forEach(pulsePolioCampaign -> {
-                checkMonthlyPulsePolioIncentive(pulsePolioCampaign.getUserId(),pulsePolioCampaign.getStartDate(),pulsePolioCampaign.getEndDate());
+            savedCampaigns.forEach(this::checkIncentiveForPulsePolio);
 
-            });{
-
-            }
             return savedCampaigns;
         }
 
         throw new IEMRException("No valid campaign data to save");
     }
 
+    private void  checkIncentiveForPulsePolio(PulsePolioCampaign pulsePolioCampaign){
+        checkMonthlyPulsePolioIncentive(pulsePolioCampaign.getUserId(),pulsePolioCampaign.getStartDate(),pulsePolioCampaign.getEndDate());
+
+    }
 
     @Override
     @Transactional
@@ -213,7 +213,7 @@ public class CampaignServiceImpl implements CampaignService {
 
         List<FilariasisCampaign> campaignPolioRequest = new ArrayList<>();
         Integer userId = jwtUtil.extractUserId(token);
-        String userName = jwtUtil.extractUsername(token);
+        String userName = userServiceRoleRepo.getUserNamedByUserId(userId);
 
         for (FilariasisCampaignDTO campaignDTO : filariasisCampaignDTOS) {
             if (campaignDTO.getFields() == null) {
@@ -307,6 +307,7 @@ public class CampaignServiceImpl implements CampaignService {
             for (PulsePolioCampaign campaignOrs : campaignPolioPage.getContent()) {
                 PolioCampaignResponseDTO dto = convertPolioToDTO(campaignOrs);
                 polioCampaignDTOSResponse.add(dto);
+
             }
             page++;
         } while (campaignPolioPage.hasNext());
@@ -448,7 +449,7 @@ public class CampaignServiceImpl implements CampaignService {
 
     private void checkMonthlyPulsePolioIncentive(Integer ashaId,LocalDate startDate,LocalDate endDate) {
 
-        IncentiveActivity CHILD_MOBILIZATION_SESSIONS = incentivesRepo.findIncentiveMasterByNameAndGroup("CHILD_MOBILIZATION_SESSIONS", GroupName.ACTIVITY.getDisplayName());
+        IncentiveActivity CHILD_MOBILIZATION_SESSIONS = incentivesRepo.findIncentiveMasterByNameAndGroup("PULSE_POLIO_SUPPORT", GroupName.ACTIVITY.getDisplayName());
         if (CHILD_MOBILIZATION_SESSIONS != null) {
             addAshaIncentiveRecord(CHILD_MOBILIZATION_SESSIONS, ashaId,startDate,endDate);
         }
@@ -479,10 +480,10 @@ public class CampaignServiceImpl implements CampaignService {
 
         IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
                 incentiveActivity.getId(),
-                startOfMonth,
-                endOfMonth,
                 0L,
-                ashaId
+                ashaId,
+                startOfMonth,
+                endOfMonth
         );
 
 

@@ -2,7 +2,6 @@ package com.iemr.flw.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.iemr.flw.dto.iemr.StopTBRegistrationDto;
 import com.iemr.flw.service.StopTBService;
 import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,54 +26,6 @@ public class StopTBController {
     @Autowired
     private StopTBService stopTBService;
 
-    // ── Registration ──────────────────────────────────────────────────────────
-
-    @PostMapping("/registration/save")
-    @Operation(summary = "Save Stop TB beneficiary registration")
-    public String saveRegistration(
-            @RequestBody String requestBody,
-            @RequestHeader("Authorization") String authorization) {
-        OutputResponse response = new OutputResponse();
-        try {
-            Map<String, Object> data = stopTBService.saveRegistration(requestBody, authorization);
-            response.setResponse(gson.toJson(data));
-        } catch (Exception e) {
-            logger.error("Error in saveRegistration: " + e);
-            response.setError(5000, "Error in registration: " + e.getMessage());
-        }
-        return response.toString();
-    }
-
-    // ── Worklists ─────────────────────────────────────────────────────────────
-
-    @PostMapping("/registrar/worklist")
-    @Operation(summary = "Get registrar worklist — full beneficiary details for Stop TB")
-    public String getRegistrarWorklist(@RequestBody StopTBRegistrationDto dto) {
-        OutputResponse response = new OutputResponse();
-        try {
-            Map<String, Object> data = stopTBService.getRegistrarWorklist(dto);
-            response.setResponse(gson.toJson(data.get("data")));
-        } catch (Exception e) {
-            logger.error("Error in getRegistrarWorklist: " + e);
-            response.setError(5000, "Error fetching worklist: " + e.getMessage());
-        }
-        return response.toString();
-    }
-
-    @PostMapping("/nurse/worklist")
-    @Operation(summary = "Get nurse worklist — full beneficiary details + nurse module data")
-    public String getNurseWorklist(@RequestBody StopTBRegistrationDto dto) {
-        OutputResponse response = new OutputResponse();
-        try {
-            Map<String, Object> data = stopTBService.getNurseWorklist(dto);
-            response.setResponse(gson.toJson(data.get("data")));
-        } catch (Exception e) {
-            logger.error("Error in getNurseWorklist: " + e);
-            response.setError(5000, "Error fetching nurse worklist: " + e.getMessage());
-        }
-        return response.toString();
-    }
-
     // ── Nurse: General Examination ────────────────────────────────────────────
 
     @PostMapping("/nurse/generalExamination/save")
@@ -87,22 +38,6 @@ public class StopTBController {
         } catch (Exception e) {
             logger.error("Error in saveGeneralExamination: " + e);
             response.setError(5000, "Error saving general examination: " + e.getMessage());
-        }
-        return response.toString();
-    }
-
-    @PostMapping("/nurse/generalExamination/get")
-    @Operation(summary = "Get general examination for a Stop TB beneficiary")
-    public String getGeneralExamination(@RequestBody Map<String, Object> body) {
-        OutputResponse response = new OutputResponse();
-        try {
-            Object raw = body.get("benRegID");
-            if (raw == null) throw new Exception("benRegID is required");
-            Map<String, Object> data = stopTBService.getGeneralExamination(Long.parseLong(raw.toString()));
-            response.setResponse(gson.toJson(data));
-        } catch (Exception e) {
-            logger.error("Error in getGeneralExamination: " + e);
-            response.setError(5000, "Error fetching general examination: " + e.getMessage());
         }
         return response.toString();
     }
@@ -140,22 +75,6 @@ public class StopTBController {
         return response.toString();
     }
 
-    @PostMapping("/nurse/tbScreening/get")
-    @Operation(summary = "Get TB screening for a Stop TB beneficiary")
-    public String getNurseTBScreening(@RequestBody Map<String, Object> body) {
-        OutputResponse response = new OutputResponse();
-        try {
-            Object raw = body.get("benRegID");
-            if (raw == null) throw new Exception("benRegID is required");
-            Map<String, Object> data = stopTBService.getNurseTBScreening(Long.parseLong(raw.toString()));
-            response.setResponse(gson.toJson(data));
-        } catch (Exception e) {
-            logger.error("Error in getNurseTBScreening: " + e);
-            response.setError(5000, "Error fetching TB screening: " + e.getMessage());
-        }
-        return response.toString();
-    }
-
     @PostMapping("/nurse/tbScreening/getAll")
     @Operation(summary = "Get all TB screenings for a camp")
     public String getAllNurseTBScreenings(@RequestBody Map<String, Object> body) {
@@ -185,22 +104,6 @@ public class StopTBController {
         } catch (Exception e) {
             logger.error("Error in saveGeneralOpd: " + e);
             response.setError(5000, "Error saving general OPD: " + e.getMessage());
-        }
-        return response.toString();
-    }
-
-    @PostMapping("/nurse/generalOpd/get")
-    @Operation(summary = "Get general OPD record for a Stop TB beneficiary")
-    public String getGeneralOpd(@RequestBody Map<String, Object> body) {
-        OutputResponse response = new OutputResponse();
-        try {
-            Object raw = body.get("benRegID");
-            if (raw == null) throw new Exception("benRegID is required");
-            Map<String, Object> data = stopTBService.getGeneralOpd(Long.parseLong(raw.toString()));
-            response.setResponse(gson.toJson(data));
-        } catch (Exception e) {
-            logger.error("Error in getGeneralOpd: " + e);
-            response.setError(5000, "Error fetching general OPD: " + e.getMessage());
         }
         return response.toString();
     }
@@ -238,22 +141,6 @@ public class StopTBController {
         return response.toString();
     }
 
-    @PostMapping("/nurse/diagnostics/get")
-    @Operation(summary = "Get diagnostics for a Stop TB beneficiary")
-    public String getDiagnostics(@RequestBody Map<String, Object> body) {
-        OutputResponse response = new OutputResponse();
-        try {
-            Object raw = body.get("benRegID");
-            if (raw == null) throw new Exception("benRegID is required");
-            Map<String, Object> data = stopTBService.getDiagnostics(Long.parseLong(raw.toString()));
-            response.setResponse(gson.toJson(data));
-        } catch (Exception e) {
-            logger.error("Error in getDiagnostics: " + e);
-            response.setError(5000, "Error fetching diagnostics: " + e.getMessage());
-        }
-        return response.toString();
-    }
-
     @PostMapping("/nurse/diagnostics/getAll")
     @Operation(summary = "Get all diagnostics records for a camp")
     public String getAllDiagnostics(@RequestBody Map<String, Object> body) {
@@ -271,19 +158,4 @@ public class StopTBController {
         return response.toString();
     }
 
-    // ── Nurse: Submit ─────────────────────────────────────────────────────────
-
-    @PostMapping("/nurse/submit")
-    @Operation(summary = "Submit nurse data — mark nurse done for a Stop TB beneficiary")
-    public String submitNurseData(@RequestBody Map<String, Object> data) {
-        OutputResponse response = new OutputResponse();
-        try {
-            Map<String, Object> result = stopTBService.submitNurseData(data);
-            response.setResponse(gson.toJson(result));
-        } catch (Exception e) {
-            logger.error("Error in submitNurseData: " + e);
-            response.setError(5000, "Error submitting nurse data: " + e.getMessage());
-        }
-        return response.toString();
-    }
 }

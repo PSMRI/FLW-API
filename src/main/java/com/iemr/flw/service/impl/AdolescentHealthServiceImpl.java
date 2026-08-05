@@ -126,7 +126,7 @@ public class AdolescentHealthServiceImpl implements AdolescentHealthService {
 
         if (sellingSanitaryActivity != null) {
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(sellingSanitaryActivity.getId(), adolescentHealth.getCreatedDate(), adolescentHealth.getBenId().longValue());
+                    .findRecordByActivityIdCreatedDateBenId(sellingSanitaryActivity.getId(), adolescentHealth.getCreatedDate(), adolescentHealth.getBenId().longValue(),adolescentHealth.getUserId());
             if (record == null) {
                 record = new IncentiveActivityRecord();
                 record.setActivityId(sellingSanitaryActivity.getId());
@@ -151,7 +151,7 @@ public class AdolescentHealthServiceImpl implements AdolescentHealthService {
 
         if (mobilizingADHActivity != null) {
             IncentiveActivityRecord record = recordRepo
-                    .findRecordByActivityIdCreatedDateBenId(mobilizingADHActivity.getId(), adolescentHealth.getCreatedDate(), adolescentHealth.getBenId().longValue());
+                    .findRecordByActivityIdCreatedDateBenId(mobilizingADHActivity.getId(), adolescentHealth.getCreatedDate(), adolescentHealth.getBenId().longValue(),adolescentHealth.getUserId());
             if (record == null) {
                 record = new IncentiveActivityRecord();
                 record.setActivityId(mobilizingADHActivity.getId());

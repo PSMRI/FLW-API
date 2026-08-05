@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Map;
+
 @Data
 @Getter
 @Setter
@@ -23,6 +25,7 @@ public class UserServiceRoleDTO {
     private String blockName;
     private String villageId;
     private String villageName;
+    private Map<String, Object> facilityData;
 
     // Stop TB / Nikshay location scope — populated only when serviceName = "Stop TB".
     // Set via setters after construction (additive, not part of the base constructor

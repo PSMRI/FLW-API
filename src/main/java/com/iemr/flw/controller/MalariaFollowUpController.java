@@ -29,6 +29,8 @@ import com.iemr.flw.dto.iemr.MalariaFollowListUpDTO;
 import com.iemr.flw.dto.iemr.MalariaFollowUpDTO;
 import com.iemr.flw.service.MalariaFollowUpService;
 import com.iemr.flw.utils.JwtUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +42,7 @@ import java.util.Map;
 @RestController
 @RequestMapping(value = "/follow-up", headers = "Authorization")
 public class MalariaFollowUpController {
+    private final Logger logger = LoggerFactory.getLogger(MalariaFollowUpController.class);
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -88,6 +91,8 @@ public class MalariaFollowUpController {
             }
 
         } catch (Exception e) {
+            logger.info("Fail Malaria followUp: "+e.getMessage());
+            logger.info("Fail Malaria  full error: "+e);
             response.put("status", "Error: " + e.getMessage());
             response.put("statusCode", 5000);
         }
