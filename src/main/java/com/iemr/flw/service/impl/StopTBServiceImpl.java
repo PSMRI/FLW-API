@@ -153,6 +153,7 @@ public class StopTBServiceImpl implements StopTBService {
 
             Map<String, Object> result = new HashMap<>();
             result.put("beneficiaryRegID", beneficiaryRegID);
+            result.put("visitCode", visit.getVisitCode());
             result.put("referralToHWCNeeded", exam.getReferralToHWCNeeded());
             results.add(result);
         }
@@ -184,6 +185,7 @@ public class StopTBServiceImpl implements StopTBService {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", e.getId());
         m.put("beneficiaryRegID", e.getBeneficiaryRegID());
+        m.put("visitCode", e.getVisitCode());
         m.put("providerServiceMapID", e.getProviderServiceMapID());
         m.put("pulseRate", e.getPulseRate());
         m.put("systolicBP", e.getSystolicBP());
@@ -284,6 +286,7 @@ public class StopTBServiceImpl implements StopTBService {
 
             Map<String, Object> result = new HashMap<>();
             result.put("beneficiaryRegID", beneficiaryRegID);
+            result.put("visitCode", visit.getVisitCode());
             results.add(result);
         }
         return results;
@@ -306,6 +309,7 @@ public class StopTBServiceImpl implements StopTBService {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", s.getId());
         m.put("beneficiaryRegID", s.getBenRegID());
+        m.put("visitCode", s.getVisitCode());
         m.put("providerServiceMapID", s.getProviderServiceMapID());
         m.put("coughMoreThan2Weeks", s.getCoughMoreThan2Weeks());
         m.put("bloodInSputum", s.getBloodInSputum());
@@ -387,6 +391,7 @@ public class StopTBServiceImpl implements StopTBService {
 
             Map<String, Object> result = new HashMap<>();
             result.put("beneficiaryRegID", beneficiaryRegID);
+            result.put("visitCode", visit.getVisitCode());
             results.add(result);
         }
         return results;
@@ -409,6 +414,7 @@ public class StopTBServiceImpl implements StopTBService {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", o.getId());
         m.put("beneficiaryRegID", o.getBenRegID());
+        m.put("visitCode", o.getVisitCode());
         m.put("providerServiceMapID", o.getProviderServiceMapID());
         m.put("chiefComplaint", o.getChiefComplaint());
         m.put("medication", o.getMedication());

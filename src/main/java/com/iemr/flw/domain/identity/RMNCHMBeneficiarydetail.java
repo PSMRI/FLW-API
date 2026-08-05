@@ -213,4 +213,13 @@ public class RMNCHMBeneficiarydetail {
 	@Column(name = "address")
 	private String address;
 
+	@Expose
+	private String placeOfCurrentLiving;
+
+	@Expose
+	private String otherPlaceOfCurrentLiving;
+
+	@Expose
+	private String institutionName;
+
 }

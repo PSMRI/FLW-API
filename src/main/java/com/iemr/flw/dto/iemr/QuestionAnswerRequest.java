@@ -32,9 +32,10 @@ import java.util.List;
 /**
  * A single question's answer within a section answer request.
  * Exactly one of optionValue, optionValues, answerText, or answerDate should be set per question type:
- * RADIO      → optionValue (single string)
- * MCQ        → optionValues (list of strings, one row saved per element)
- * TEXT/AUTO_FILL → answerText
+ * RADIO/DROPDOWN → optionValue (single string)
+ * CHECKBOX   → optionValue (single string, e.g. "CHECKED")
+ * MCQ/CHECKBOX_MULTI → optionValues (list of strings, one row saved per element)
+ * TEXT/AUTO_FILL/NUMBER_PICKER → answerText
  * DATE       → answerDate (ISO date string) or answerText
  * DISPLAY    → omit entirely (ignored by service)
  *
@@ -49,13 +50,13 @@ public class QuestionAnswerRequest {
     @NotBlank(message = "questionUuid is required")
     private String questionUuid;
 
-    /** RADIO — single selected option value. */
+    /** RADIO / DROPDOWN — single selected option value. */
     private String optionValue;
 
-    /** MCQ — list of selected option values. */
+    /** MCQ / CHECKBOX_MULTI — list of selected option values. */
     private List<String> optionValues;
 
-    /** TEXT / AUTO_FILL — free-text answer. */
+    /** TEXT / AUTO_FILL / NUMBER_PICKER — free-text answer. */
     private String answerText;
 
     /** DATE — ISO date string answer. */

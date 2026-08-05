@@ -6,12 +6,11 @@ import com.iemr.flw.domain.iemr.DynamicForm;
 import com.iemr.flw.domain.iemr.TBConfirmedCaseDTO;
 import com.iemr.flw.domain.iemr.TBConfirmedCase;
 import com.iemr.flw.domain.iemr.BenVisitDetail;
-import com.iemr.flw.dto.iemr.TBConfirmedCasesResponseDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.DynamicFormRepo;
 import com.iemr.flw.repo.iemr.FormResponseRepo;
 import com.iemr.flw.repo.iemr.TBConfirmedTreatmentRepository;
-import com.iemr.flw.seeder.TbCounsellingFormSeeder;
+import com.iemr.flw.seeder.TbCounsellingV2FormSeeder;
 import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.TBConfirmedCaseService;
@@ -45,7 +44,6 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
     @Autowired
     private IncentiveLogicService incentiveLogicService;
-
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -203,7 +201,7 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         List<Long> benIds = dtoList.stream().map(TBConfirmedCaseDTO::getBenId).collect(Collectors.toList());
         Set<Long> counselledBenIds = Collections.emptySet();
         if (!benIds.isEmpty()) {
-            Optional<DynamicForm> counsellingForm = dynamicFormRepo.findByFormUuid(TbCounsellingFormSeeder.FORM_UUID);
+            Optional<DynamicForm> counsellingForm = dynamicFormRepo.findByFormUuid(TbCounsellingV2FormSeeder.FORM_UUID);
             if (counsellingForm.isPresent()) {
                 counselledBenIds = new HashSet<>(formResponseRepo.findCounselledBenIds(benIds, counsellingForm.get().getFormId(), "COMPLETE"));
             }

@@ -21,6 +21,7 @@
  */
 package com.iemr.flw.seeder;
 
+import com.iemr.flw.domain.iemr.DynamicForm;
 import com.iemr.flw.dto.iemr.DynamicFormDTO;
 import com.iemr.flw.dto.iemr.FormSectionDTO;
 import com.iemr.flw.dto.iemr.OptionConditionDTO;
@@ -29,6 +30,7 @@ import com.iemr.flw.dto.iemr.QuestionValidationDTO;
 import com.iemr.flw.dto.iemr.SectionQuestionDTO;
 import com.iemr.flw.masterEnum.FormType;
 import com.iemr.flw.masterEnum.QuestionType;
+import com.iemr.flw.masterEnum.SectionPhase;
 import com.iemr.flw.masterEnum.ValidationType;
 import com.iemr.flw.repo.iemr.DynamicFormRepo;
 import com.iemr.flw.service.DynamicFormDefinitionService;
@@ -40,10 +42,13 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Seeds the TB Counselling form definition on application startup if it does not already exist.
- * Idempotent: skips creation if the form UUID is already present in the database.
+ * Idempotent: skips creation if the form UUID is already present. If present but inactive, it is
+ * reactivated instead (never deleted — a form can have real historical responses referencing its
+ * options via a DB-level FK outside JPA's cascade, so deleting it can fail app startup).
  *
  * @author Piramal Swasthya
  */
@@ -60,8 +65,16 @@ public class TbCounsellingFormSeeder {
 
     @PostConstruct
     public void seed() {
-        if (formRepo.findByFormUuid(FORM_UUID).isPresent()) {
-            log.info("TbCounsellingFormSeeder: form '{}' already exists — skipping seed.", FORM_UUID);
+        Optional<DynamicForm> existing = formRepo.findByFormUuid(FORM_UUID);
+        if (existing.isPresent()) {
+            DynamicForm form = existing.get();
+            if (Boolean.FALSE.equals(form.getIsActive())) {
+                form.setIsActive(true);
+                formRepo.save(form);
+                log.info("TbCounsellingFormSeeder: form '{}' was inactive — reactivated.", FORM_UUID);
+            } else {
+                log.info("TbCounsellingFormSeeder: form '{}' already exists and is active — skipping seed.", FORM_UUID);
+            }
             return;
         }
         log.info("TbCounsellingFormSeeder: seeding TB Counselling form...");
@@ -93,7 +106,7 @@ public class TbCounsellingFormSeeder {
     // ── Section A: Disease Awareness ─────────────────────────────────────────────
 
     private FormSectionDTO buildSectionA() {
-        FormSectionDTO s = section("TB_SEC_A", "Disease Awareness", "बीमारी के बारे में जागरूकता", "PRE_SUBMIT", 1, true, false);
+        FormSectionDTO s = section("TB_SEC_A", "Disease Awareness", "बीमारी के बारे में जागरूकता", SectionPhase.PRE_SUBMIT, 1, true, false);
         List<SectionQuestionDTO> qs = new ArrayList<>();
         qs.add(yesNoRadio("TB_A_Q1", "TB disease explained to patient", "मरीज़ को टीबी बीमारी के बारे में समझाया गया।", 1, true));
         qs.add(yesNoRadio("TB_A_Q2", "Transmission route explained", "ट्रांसमिशन के तरीके के बारे में जानकारी", 2, true));
@@ -107,7 +120,7 @@ public class TbCounsellingFormSeeder {
     // ── Section B: Do's and Don'ts ───────────────────────────────────────────────
 
     private FormSectionDTO buildSectionB() {
-        FormSectionDTO s = section("TB_SEC_B", "Do's and Don'ts", "करो और ना करो", "PRE_SUBMIT", 2, true, false);
+        FormSectionDTO s = section("TB_SEC_B", "Do's and Don'ts", "करो और ना करो", SectionPhase.PRE_SUBMIT, 2, true, false);
         List<SectionQuestionDTO> qs = new ArrayList<>();
         qs.add(yesNoRadio("TB_B_Q1", "Cover mouth while coughing — advised", "खांसते समय मुंह ढकने की सलाह दी जाती है।", 1, true));
         qs.add(yesNoRadio("TB_B_Q2", "Complete full treatment course — advised", "इलाज का पूरा कोर्स पूरा करने की सलाह दी जाती है।", 2, true));
@@ -123,7 +136,7 @@ public class TbCounsellingFormSeeder {
     // ── Section C: Government Schemes ────────────────────────────────────────────
 
     private FormSectionDTO buildSectionC() {
-        FormSectionDTO s = section("TB_SEC_C", "Government Schemes", "सरकारी योजनाएं", "PRE_SUBMIT", 3, false, false);
+        FormSectionDTO s = section("TB_SEC_C", "Government Schemes", "सरकारी योजनाएं", SectionPhase.PRE_SUBMIT, 3, false, false);
         List<SectionQuestionDTO> qs = new ArrayList<>();
         qs.add(yesNoRadio("TB_C_Q1", "Nikshay Poshan Yojana (NPY) eligibility explained", "निक्षय पोषण योजना (एनपीवाई) पात्रता के बारे में बताया गया", 1, true));
         qs.add(yesNoRadio("TB_C_Q2", "DOTS free treatment explained", "DOTS मुफ़्त इलाज के बारे में जानकारी", 2, true));
@@ -135,7 +148,7 @@ public class TbCounsellingFormSeeder {
     // ── Section D: Treatment Regimen ─────────────────────────────────────────────
 
     private FormSectionDTO buildSectionD() {
-        FormSectionDTO s = section("TB_SEC_D", "Treatment Regimen", "इलाज का तरीका", "PRE_SUBMIT", 4, true, false);
+        FormSectionDTO s = section("TB_SEC_D", "Treatment Regimen", "इलाज का तरीका", SectionPhase.PRE_SUBMIT, 4, true, false);
         List<SectionQuestionDTO> qs = new ArrayList<>();
         qs.add(yesNoRadio("TB_D_Q1", "Regimen explained to patient", "मरीज़ को इलाज का तरीका समझाया गया।", 1, true));
         qs.add(yesNoRadio("TB_D_Q2", "Medication names explained", "दवाओं के नामों की जानकारी", 2, true));
@@ -149,7 +162,7 @@ public class TbCounsellingFormSeeder {
     // ── Section E: Counselling Completion ────────────────────────────────────────
 
     private FormSectionDTO buildSectionE() {
-        FormSectionDTO s = section("TB_SEC_E", "Counselling Completion", "काउंसलिंग पूरी होना", "PRE_SUBMIT", 5, true, true);
+        FormSectionDTO s = section("TB_SEC_E", "Counselling Completion", "काउंसलिंग पूरी होना", SectionPhase.PRE_SUBMIT, 5, true, true);
         List<SectionQuestionDTO> qs = new ArrayList<>();
 
         // Counselling completion status — RADIO: Complete | Refused
@@ -194,7 +207,7 @@ public class TbCounsellingFormSeeder {
     // ── Section F: Follow Up to TU ───────────────────────────────────────────────
 
     private FormSectionDTO buildSectionF() {
-        FormSectionDTO s = section("TB_SEC_F", "Follow Up to TU", "TU के बाद की कार्रवाई", "POST_SUBMIT", 6, true, true);
+        FormSectionDTO s = section("TB_SEC_F", "Follow Up to TU", "TU के बाद की कार्रवाई", SectionPhase.POST_SUBMIT, 6, true, true);
         List<SectionQuestionDTO> qs = new ArrayList<>();
 
         // "Has the patient started TB treatment?" — RADIO: Yes | No
@@ -244,7 +257,7 @@ public class TbCounsellingFormSeeder {
 
     // ── Builder Helpers ───────────────────────────────────────────────────────────
 
-    private FormSectionDTO section(String uuid, String name, String nameHindi, String phase,
+    private FormSectionDTO section(String uuid, String name, String nameHindi, SectionPhase phase,
                                    int order, boolean required, boolean hasSubmitButton) {
         FormSectionDTO s = new FormSectionDTO();
         s.setSectionUuid(uuid);

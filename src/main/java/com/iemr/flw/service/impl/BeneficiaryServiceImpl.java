@@ -274,8 +274,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                                         .getByHouseHoldID(benDetailsRMNCH_OBJ.getHouseoldId()).isEmpty()){
                                     benHouseHoldRMNCH_ROBJ = houseHoldRepo
                                             .getByHouseHoldID(benDetailsRMNCH_OBJ.getHouseoldId()).get(0);
-                                }
 
+                                }
 
                         }
                         if (benDetailsRMNCH_OBJ == null)
@@ -286,6 +286,14 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             benDetailsRMNCH_OBJ.setMotherName(benDetailsOBJ.getMotherName());
                         if (benDetailsOBJ.getLiteracyStatus() != null)
                             benDetailsRMNCH_OBJ.setLiteracyStatus(benDetailsOBJ.getLiteracyStatus());
+
+                        // current-living-details for the Non-HH mobile flow
+                        if (benDetailsOBJ.getPlaceOfCurrentLiving() != null)
+                            benDetailsRMNCH_OBJ.setPlaceOfCurrentLiving(benDetailsOBJ.getPlaceOfCurrentLiving());
+                        if (benDetailsOBJ.getOtherPlaceOfCurrentLiving() != null)
+                            benDetailsRMNCH_OBJ.setOtherPlaceOfCurrentLiving(benDetailsOBJ.getOtherPlaceOfCurrentLiving());
+                        if (benDetailsOBJ.getInstitutionName() != null)
+                            benDetailsRMNCH_OBJ.setInstitutionName(benDetailsOBJ.getInstitutionName());
 
                         // bank
                         if (benAccountOBJ.getNameOfBank() != null)
@@ -485,9 +493,12 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             benDetailsRMNCH_OBJ.setAge_unit(ageUnit);
 
                         resultMap = new HashMap<>();
-                        if (benHouseHoldRMNCH_ROBJ != null)
+                        if (benHouseHoldRMNCH_ROBJ != null) {
+                            if (benHouseHoldRMNCH_ROBJ.getAddress() == null
+                                    && benAddressOBJ.getPermAddrLine1() != null)
+                                benHouseHoldRMNCH_ROBJ.setAddress(benAddressOBJ.getPermAddrLine1());
                             resultMap.put("householdDetails", benHouseHoldRMNCH_ROBJ);
-                        else
+                        } else
                             resultMap.put("householdDetails", new HashMap<String, Object>());
 
                         if (benBotnBirthRMNCH_ROBJ != null)
