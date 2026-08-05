@@ -28,9 +28,6 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     List<RMNCHBeneficiaryDetailsRmnch> findByHouseoldId(Long houseHoldId);
     List<RMNCHBeneficiaryDetailsRmnch> findByBenficieryid(Long benID);
 
-    List<RMNCHBeneficiaryDetailsRmnch> findByHouseoldId(Long houseHoldId);
-    List<RMNCHBeneficiaryDetailsRmnch> findByBenficieryid(Long benID);
-
     @Query(value = "SELECT beneficiaryRegID FROM db_identity.i_beneficiarydetails_rmnch WHERE BeneficiaryId = :benId", nativeQuery = true)
     Long getBenRegIdFromBenId(@Param("benId") Long benId);
 
@@ -126,7 +123,4 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
         "FROM RMNCHBeneficiaryDetailsRmnch b " +
         "WHERE b.BenRegId IN :regIds AND b.benficieryid IS NOT NULL")
 List<Object[]> getBenIdsFromRegIDs(@Param("regIds") List<Long> regIds);
-
-    @Query(nativeQuery = true, value = " SELECT HealthIdNumber,HealthID  FROM db_iemr.m_benhealthidmapping WHERE HealthIdNumber = :HealthIdNumber ")
-    Object[] getHealthIdNumber(@Param("HealthIdNumber") String  HealthIdNumber);
 }
