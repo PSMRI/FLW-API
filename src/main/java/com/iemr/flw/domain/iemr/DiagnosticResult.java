@@ -57,4 +57,16 @@ public class DiagnosticResult {
 
     @Column(name = "deleted")
     private Boolean deleted = false;
+
+    // Van sync columns — present in the DB table but were never mapped here, so
+    // VanID/VanSerialNo could never be populated for this entity regardless of
+    // what the service layer did.
+    @Column(name = "vanID")
+    private Integer vanID;
+
+    @Column(name = "parkingPlaceID")
+    private Integer parkingPlaceID;
+
+    @Column(name = "vanSerialNo")
+    private Long vanSerialNo;
 }

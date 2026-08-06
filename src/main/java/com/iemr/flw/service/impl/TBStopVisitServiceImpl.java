@@ -50,7 +50,9 @@ public class TBStopVisitServiceImpl implements TBStopVisitService {
         visit.setVisitCode(visitCode);
         // saveAndFlush ensures the VisitCode UPDATE reaches DB before child tables (e.g. t_benchiefcomplaint)
         // insert with FK on VisitCode — same transaction, lazy flush otherwise causes FK violation
-        return benVisitDetailsRepo.saveAndFlush(visit);
+        visit = benVisitDetailsRepo.saveAndFlush(visit);
+        benVisitDetailsRepo.updateVanSerialNo(visit.getBenVisitId());
+        return visit;
     }
 
     private long generateVisitCode(long visitId, int vanID) {
