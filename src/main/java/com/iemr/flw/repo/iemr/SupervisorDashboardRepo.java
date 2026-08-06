@@ -36,6 +36,21 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			+ "AND asm.deleted = false", nativeQuery = true)
 	List<Object[]> getAshasWithFacilityInfo(@Param("supervisorUserID") Integer supervisorUserID);
 
+	// Unclaimed incentive count per ASHA
+	@Query(value = "SELECT iar.asha_id, "
+			+ "COUNT(*) AS unclaimedCount "
+			+ "FROM incentive_activity_record iar "
+			+ "WHERE iar.asha_id IN (:ashaIds) "
+			+ "AND iar.created_date >= :startDate "
+			+ "AND iar.created_date < :endDate "
+			+ "AND (iar.is_claimed = false OR iar.is_claimed IS NULL) "
+			+ "GROUP BY iar.asha_id",
+			nativeQuery = true)
+	List<Object[]> getUnclaimedCountByAshaIds(
+			@Param("ashaIds") List<Integer> ashaIds,
+			@Param("startDate") Timestamp startDate,
+			@Param("endDate") Timestamp endDate);
+
 	// Get facility details with geo names
 	@Query(value = "SELECT DISTINCT f.FacilityID, f.FacilityName, "
 			+ "COALESCE(s.StateName,'') AS stateName, "

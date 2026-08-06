@@ -6,6 +6,8 @@ import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.dto.DiagnosticOrderRequestDto;
 import com.iemr.flw.dto.DiagnosticOrderResultDto;
 import com.iemr.flw.dto.DiagnosticOrderStatusSummaryDto;
+import com.iemr.flw.dto.ManualDiagnosticResultRequestDto;
+import com.iemr.flw.dto.VendorHealthDto;
 import com.iemr.flw.masterEnum.DiagnosticOrderType;
 import com.iemr.flw.service.DiagnosticOrderService;
 import com.iemr.flw.utils.ApiResponse;
@@ -17,7 +19,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/diagnostic")
@@ -48,11 +52,11 @@ public class DiagnosticOrderController {
     @PostMapping("/order/get")
     @Operation(summary = "Get the diagnostic order for a beneficiary+orderType (latest, if more than one exists; "
             + "pass visitCode to target a specific order/retest)")
-    public String getOrder(@RequestParam Long benRegID, @RequestParam String orderType,
+    public String getOrder(@RequestParam Long beneficiaryId, @RequestParam String orderType,
             @RequestParam(required = false) Long visitCode) {
         OutputResponse response = new OutputResponse();
         try {
-            DiagnosticOrder order = diagnosticOrderService.getOrder(benRegID, orderType, visitCode);
+            DiagnosticOrder order = diagnosticOrderService.getOrder(beneficiaryId, orderType, visitCode);
             response.setResponse(new Gson().toJson(order));
         } catch (Exception e) {
             logger.error("Error in getOrder: {}", e.getMessage());
@@ -61,12 +65,12 @@ public class DiagnosticOrderController {
         return response.toString();
     }
 
-    @PostMapping("/order/getByBen/{benRegID}")
+    @PostMapping("/order/getByBen/{beneficiaryId}")
     @Operation(summary = "Get all diagnostic orders for a beneficiary")
-    public String getOrdersByBen(@PathVariable Long benRegID) {
+    public String getOrdersByBen(@PathVariable Long beneficiaryId) {
         OutputResponse response = new OutputResponse();
         try {
-            List<DiagnosticOrder> orders = diagnosticOrderService.getOrdersByBenRegId(benRegID);
+            List<DiagnosticOrder> orders = diagnosticOrderService.getOrdersByBeneficiaryId(beneficiaryId);
             response.setResponse(new Gson().toJson(orders));
         } catch (Exception e) {
             logger.error("Error in getOrdersByBen: {}", e.getMessage());
@@ -75,30 +79,30 @@ public class DiagnosticOrderController {
         return response.toString();
     }
 
-    @PostMapping("/order/testCompleted")
-    @Operation(summary = "Mark that the physical test has completed for this beneficiary+orderType, starting the poll cadence "
-            + "(targets the latest order unless visitCode is given)")
-    public String markTestCompleted(@RequestParam Long benRegID, @RequestParam String orderType,
+    @PostMapping("/order/retry")
+    @Operation(summary = "Restart polling for this beneficiary+orderType's diagnostic order for another "
+            + "retry window (targets the latest order unless visitCode is given)")
+    public String retryOrder(@RequestParam Long beneficiaryId, @RequestParam String orderType,
             @RequestParam(required = false) Long visitCode) {
         OutputResponse response = new OutputResponse();
         try {
-            DiagnosticOrder order = diagnosticOrderService.markTestCompleted(benRegID, orderType, visitCode);
+            DiagnosticOrder order = diagnosticOrderService.retryPoll(beneficiaryId, orderType, visitCode);
             response.setResponse(new Gson().toJson(order));
         } catch (Exception e) {
-            logger.error("Error in markTestCompleted: {}", e.getMessage());
-            response.setError(5000, "Error marking test completed: " + e.getMessage());
+            logger.error("Error in retryOrder: {}", e.getMessage());
+            response.setError(5000, "Error retrying diagnostic order poll: " + e.getMessage());
         }
         return response.toString();
     }
 
     @PostMapping("/order/result")
-    @Operation(summary = "Get the diagnostic result for benId+orderType, at whatever stage it's currently in "
+    @Operation(summary = "Get the diagnostic result for beneficiaryId+orderType, at whatever stage it's currently in "
             + "(targets the latest order unless visitCode is given)")
-    public String getOrderResult(@RequestParam Long benId, @RequestParam String orderType,
+    public String getOrderResult(@RequestParam Long beneficiaryId, @RequestParam String orderType,
             @RequestParam(required = false) Long visitCode) {
         OutputResponse response = new OutputResponse();
         try {
-            DiagnosticOrderResultDto result = diagnosticOrderService.getOrderResult(benId, orderType, visitCode);
+            DiagnosticOrderResultDto result = diagnosticOrderService.getOrderResult(beneficiaryId, orderType, visitCode);
             response.setResponse(new GsonBuilder().serializeNulls().create().toJson(result));
         } catch (Exception e) {
             logger.error("Error in getOrderResult: {}", e.getMessage());
@@ -110,15 +114,32 @@ public class DiagnosticOrderController {
     @PostMapping("/order/poll")
     @Operation(summary = "Trigger an immediate poll for one beneficiary+orderType's diagnostic order and return the result (ops use). "
             + "Targets the latest order unless visitCode is given")
-    public String pollOrder(@RequestParam Long benRegID, @RequestParam String orderType,
+    public String pollOrder(@RequestParam Long beneficiaryId, @RequestParam String orderType,
             @RequestParam(required = false) Long visitCode) {
         OutputResponse response = new OutputResponse();
         try {
-            DiagnosticOrderResultDto result = diagnosticOrderService.triggerManualPoll(benRegID, orderType, visitCode);
+            DiagnosticOrderResultDto result = diagnosticOrderService.triggerManualPoll(beneficiaryId, orderType, visitCode);
             response.setResponse(new GsonBuilder().serializeNulls().create().toJson(result));
         } catch (Exception e) {
             logger.error("Error in pollOrder: {}", e.getMessage());
             response.setError(5000, "Error triggering poll: " + e.getMessage());
+        }
+        return response.toString();
+    }
+
+    @PostMapping("/order/manualResult")
+    @Operation(summary = "Manually submit a diagnostic result for a beneficiary's latest order of the given "
+            + "type, for use when no vendor device is integrated. Stored as-is; tbPresence, tbConfidence, and "
+            + "drugResistancePresence are left null since nothing derives them. Rejected if that order is "
+            + "already COMPLETED.")
+    public String submitManualResult(@RequestBody @Valid ManualDiagnosticResultRequestDto request) {
+        OutputResponse response = new OutputResponse();
+        try {
+            DiagnosticOrderResultDto result = diagnosticOrderService.submitManualResult(request);
+            response.setResponse(new GsonBuilder().serializeNulls().create().toJson(result));
+        } catch (Exception e) {
+            logger.error("Error in submitManualResult: {}", e.getMessage());
+            response.setError(5000, "Error submitting manual diagnostic result: " + e.getMessage());
         }
         return response.toString();
     }
@@ -133,5 +154,24 @@ public class DiagnosticOrderController {
         DiagnosticOrderStatusSummaryDto result =
                 diagnosticOrderService.getOrderStatusSummary(orderType.name(), villageId, providerServiceMapId);
         return ResponseEntity.ok(new ApiResponse(true, "Diagnostic order status summary fetched successfully", result));
+    }
+
+    @GetMapping("/vendor/health")
+    @Operation(summary = "Check whether the diagnostic vendor responsible for the given orderType is running, "
+            + "by hitting its unauthenticated ping endpoint.")
+    public ResponseEntity<ApiResponse> vendorHealth(@RequestParam String orderType) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        try {
+            VendorHealthDto health = diagnosticOrderService.checkVendorHealth(orderType);
+            data.put("isConnected", health.isConnected());
+            data.put("isDeviceIntegrated", health.isDeviceIntegrated());
+            return ResponseEntity.ok(new ApiResponse(true, "Vendor health check for orderType " + orderType + " completed", data));
+        } catch (Exception e) {
+            logger.error("Vendor health check failed for orderType {}: {}", orderType, e.getMessage());
+            data.put("isConnected", false);
+            data.put("isDeviceIntegrated", false);
+            return ResponseEntity.ok(new ApiResponse(true,
+                    "Vendor health check failed for orderType " + orderType + ": " + e.getMessage(), data));
+        }
     }
 }

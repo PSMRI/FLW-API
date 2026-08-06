@@ -19,12 +19,17 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+
     @Autowired
     private UserServiceRoleRepo userServiceRoleRepo;
+
+    @Autowired
+    private FacilityDataService facilityDataService;
 
     public UserServiceRoleDTO getUserDetail(Integer userId) {
         logger.info("calling getUserRole for userId: " + userId);
         UserServiceRoleDTO userRole = userServiceRoleRepo.getUserRole(userId).get(0);
+        userRole.setFacilityData(facilityDataService.buildFacilityData(userId, userRole.getRoleName()));
 
         // Stop TB / Nikshay — additive only. This naturally returns nothing for
         // any user whose rows don't have NikshayTUID set, i.e. every non-Stop-TB

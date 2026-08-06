@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "tb_diagnostic_order", schema = "db_iemr",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"ben_reg_id", "visitCode", "order_type"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"beneficiary_id", "visitCode", "order_type"}))
 @Data
 public class DiagnosticOrder {
 
@@ -20,8 +20,8 @@ public class DiagnosticOrder {
     @Column(name = "order_event", length = 100)
     private String orderEvent;
 
-    @Column(name = "ben_reg_id")
-    private Long benRegID;
+    @Column(name = "beneficiary_id")
+    private Long beneficiaryId;
 
     @Column(name = "provider_service_name", length = 50)
     private String providerServiceName;
@@ -47,8 +47,8 @@ public class DiagnosticOrder {
     @Column(name = "last_polled_at")
     private Timestamp lastPolledAt;
 
-    @Column(name = "test_completed_at")
-    private Timestamp testCompletedAt;
+    @Column(name = "retried_at")
+    private Timestamp retriedAt;
 
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;

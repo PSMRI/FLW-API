@@ -20,8 +20,8 @@ public class DiagnosticResult {
     @Column(name = "diagnostic_order_id")
     private Long diagnosticOrderId;
 
-    @Column(name = "ben_reg_id")
-    private Long benRegID;
+    @Column(name = "beneficiary_id")
+    private Long beneficiaryId;
 
     @Column(name = "provider_status", length = 20)
     private String providerStatus;

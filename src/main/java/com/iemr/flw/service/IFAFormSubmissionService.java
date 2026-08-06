@@ -9,6 +9,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 @Service
 public interface IFAFormSubmissionService {
-    String saveFormData(List<IFAFormSubmissionRequest> requests);
+    String saveFormData(List<IFAFormSubmissionRequest> requests,Integer userId);
     List<IFAFormSubmissionResponse> getFormData(GetBenRequestHandler getBenRequestHandler);
 }

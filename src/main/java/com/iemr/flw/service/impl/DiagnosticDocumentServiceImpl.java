@@ -45,11 +45,11 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
     private CryptoUtil cryptoUtil;
 
     @Override
-    public void ingestAsset(Long diagnosticOrderId, Long benRegID, String orderType, String externalOrderId,
+    public void ingestAsset(Long diagnosticOrderId, Long beneficiaryId, String orderType, String externalOrderId,
             DiagnosticDocumentAsset asset) throws Exception {
         if (asset == null || asset.getBase64Content() == null) {
-            logger.warn("Skipping document ingest for benRegID={}, orderType={}: empty asset content",
-                    benRegID, orderType);
+            logger.warn("Skipping document ingest for beneficiaryId={}, orderType={}: empty asset content",
+                    beneficiaryId, orderType);
             return;
         }
 
@@ -67,7 +67,7 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
 
         long epochTime = Instant.now().toEpochMilli();
         String storedFileName = documentType.name() + ".enc";
-        String relativeDir = benRegID + "/" + diagnosticOrderId;
+        String relativeDir = beneficiaryId + "/" + diagnosticOrderId;
 
         // Documents must never touch disk unencrypted: encrypt in memory first, write only ciphertext.
         String base64Original = Base64.getEncoder().encodeToString(originalBytes);
@@ -89,7 +89,7 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
             });
         }
         document.setDiagnosticOrderId(diagnosticOrderId);
-        document.setBenRegID(benRegID);
+        document.setBeneficiaryId(beneficiaryId);
         document.setOrderType(orderType);
         document.setAssetType(asset.getType());
         document.setDocumentType(documentType.name());
@@ -108,23 +108,23 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
             return;
         }
 
-        logger.info("Diagnostic document ingested: benRegID={}, orderType={}, epochTime={}",
-                benRegID, orderType, epochTime);
+        logger.info("Diagnostic document ingested: beneficiaryId={}, orderType={}, epochTime={}",
+                beneficiaryId, orderType, epochTime);
     }
 
     @Override
-    public DiagnosticDocumentContent fetch(Long benRegID, DiagnosticDocumentType documentType, Long visitCode) throws Exception {
+    public DiagnosticDocumentContent fetch(Long beneficiaryId, DiagnosticDocumentType documentType, Long visitCode) throws Exception {
         String orderType = documentType.impliedOrderType().name();
         DiagnosticOrder order;
         if (visitCode != null) {
-            order = diagnosticOrderRepo.findByBenRegIDAndVisitCodeAndOrderType(benRegID, visitCode, orderType)
-                    .orElseThrow(() -> new Exception("No diagnostic order found for benRegID=" + benRegID
+            order = diagnosticOrderRepo.findByBeneficiaryIdAndVisitCodeAndOrderType(beneficiaryId, visitCode, orderType)
+                    .orElseThrow(() -> new Exception("No diagnostic order found for beneficiaryId=" + beneficiaryId
                             + ", visitCode=" + visitCode + ", orderType=" + orderType));
         } else {
             order = diagnosticOrderRepo
-                    .findFirstByBenRegIDAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(benRegID, orderType)
+                    .findFirstByBeneficiaryIdAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, orderType)
                     .orElseThrow(() -> new Exception(
-                            "No diagnostic order found for benRegID=" + benRegID + ", orderType=" + orderType));
+                            "No diagnostic order found for beneficiaryId=" + beneficiaryId + ", orderType=" + orderType));
         }
 
         DiagnosticDocument document = diagnosticDocumentRepo
@@ -137,18 +137,18 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
 
         String base64Original = cryptoUtil.decrypt(encryptedPayload);
         if (base64Original == null) {
-            throw new Exception("Failed to decrypt document for benRegID=" + benRegID + ", documentType=" + documentType);
+            throw new Exception("Failed to decrypt document for beneficiaryId=" + beneficiaryId + ", documentType=" + documentType);
         }
         byte[] originalBytes = Base64.getDecoder().decode(base64Original);
 
         String recomputedHash = sha256Hex(originalBytes);
         if (!recomputedHash.equals(document.getSha256Hash())) {
             throw new Exception(
-                    "Document integrity check failed for benRegID=" + benRegID + ", documentType=" + documentType);
+                    "Document integrity check failed for beneficiaryId=" + beneficiaryId + ", documentType=" + documentType);
         }
 
-        logger.info("Diagnostic document fetched: benRegID={}, documentType={}, epochTime={}",
-                benRegID, documentType, document.getEpochTime());
+        logger.info("Diagnostic document fetched: beneficiaryId={}, documentType={}, epochTime={}",
+                beneficiaryId, documentType, document.getEpochTime());
 
         return new DiagnosticDocumentContent(originalBytes, document.getContentType());
     }

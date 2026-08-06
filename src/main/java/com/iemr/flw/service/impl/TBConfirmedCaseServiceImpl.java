@@ -6,10 +6,12 @@ import com.iemr.flw.domain.iemr.DynamicForm;
 import com.iemr.flw.domain.iemr.TBConfirmedCaseDTO;
 import com.iemr.flw.domain.iemr.TBConfirmedCase;
 import com.iemr.flw.domain.iemr.BenVisitDetail;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.DynamicFormRepo;
 import com.iemr.flw.repo.iemr.FormResponseRepo;
 import com.iemr.flw.repo.iemr.TBConfirmedTreatmentRepository;
 import com.iemr.flw.seeder.TbCounsellingV2FormSeeder;
+import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.TBConfirmedCaseService;
 import com.iemr.flw.service.TBStopVisitService;
@@ -21,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,6 +43,9 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
     private final DynamicFormRepo dynamicFormRepo;
 
     @Autowired
+    private IncentiveLogicService incentiveLogicService;
+
+    @Autowired
     private JwtUtil jwtUtil;
 
     @Autowired
@@ -47,6 +53,9 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
     @Autowired
     private TBStopVisitService tbStopVisitService;
+
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
 
     public TBConfirmedCaseServiceImpl(TBConfirmedTreatmentRepository repository,
                                       FormResponseRepo formResponseRepo,
@@ -68,7 +77,8 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
                 for(TBConfirmedCaseDTO dto:request){
                     String modifiedBy = jwtUtil.extractUsername(authorisation);
-                    BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(dto.getBenId(), null,
+                    Long beneficiaryRegID = beneficiaryRepo.getRegIDFromBenId(dto.getBenId());
+                    BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, null,
                             modifiedBy, vanID, parkingPlaceID);
 
                     List<TBConfirmedCase> existing = repository.findByBenIdAndVisitCode(dto.getBenId(), visit.getVisitCode());
@@ -92,16 +102,23 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     entity.setPlaceOfDeath(dto.getPlaceOfDeath());
                     entity.setReasonForDeath(dto.getReasonForDeath());
                     entity.setReasonForNotCompleting(dto.getReasonForNotCompleting());
+                    // Stop TB / Nikshay reporting — same gap as tb_suspected: benRegID is computed
+                    // above for the visit lookup but was never persisted onto the entity.
+                    entity.setBenRegID(beneficiaryRegID);
+                    // created_by — gated on isNew so a later follow-up save doesn't overwrite who
+                    // originally created the record; createdAt already self-populates via the
+                    // entity's `= LocalDate.now()` field default on `new TBConfirmedCase()`.
+                    if (isNew) {
+                        entity.setCreatedBy(modifiedBy);
+                    }
                     if (entity.getVanID() == null && vanID != null) { entity.setVanID(vanID); entity.setParkingPlaceID(parkingPlaceID); }
                     entity.setProcessed("N");
                     if(entity!=null){
                         TBConfirmedCase saved = repository.save(entity);
                         if (isNew) repository.updateVanSerialNo(saved.getId());
+                        checkIncentive(entity);
                     }
                 }
-
-
-
 
                 response.setResponse("TB Confirmed case saved successfully");
 
@@ -114,6 +131,37 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         }
 
         return response.toString();
+    }
+
+    private void  checkIncentive(TBConfirmedCase entity){
+        String regimen = entity.getRegimenType();
+
+        boolean isDrTb =
+                "Shorter Regimen (9–12 Months)".equalsIgnoreCase(regimen)
+                        || "Longer Regimen (18–24 Months)".equalsIgnoreCase(regimen);
+
+        if (Boolean.TRUE.equals(entity.getTreatmentCompleted())
+                && entity.getExpectedTreatmentCompletionDate() != null) {
+
+
+            if (isDrTb) {
+                incentiveLogicService.incentiveForTbFollowUpIsDrTb(
+                        entity.getBenId(),
+                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                        entity.getUserId()
+                );
+            } else {
+                incentiveLogicService.incentiveForTbFollowUp(
+                        entity.getBenId(),
+                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                        entity.getUserId()
+                );
+
+            }
+
+        }
     }
 
     @Override
@@ -129,6 +177,8 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                         .collect(Collectors.toList());
 
                 response.setResponse(dtoList.toString());
+                list.forEach(this::checkIncentive);
+
             } else {
                 response.setError(404, "No record found for benId: " + benId);
             }

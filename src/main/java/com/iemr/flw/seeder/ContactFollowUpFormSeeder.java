@@ -21,6 +21,7 @@
  */
 package com.iemr.flw.seeder;
 
+import com.iemr.flw.domain.iemr.DynamicForm;
 import com.iemr.flw.dto.iemr.DynamicFormDTO;
 import com.iemr.flw.dto.iemr.FormSectionDTO;
 import com.iemr.flw.dto.iemr.OptionConditionDTO;
@@ -39,10 +40,14 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Seeds the Contact Follow Up form definition on application startup if it does not already
- * exist. Idempotent: skips creation if the form UUID is already present in the database.
+ * exist. Idempotent: skips creation if the form UUID is already present. If present but inactive,
+ * it is reactivated instead (never deleted — a form can have real historical responses
+ * referencing its options via a DB-level FK outside JPA's cascade, so deleting it can fail app
+ * startup).
  *
  * One-time form (no repeatable follow-up section, unlike {@link TptFollowUpFormSeeder}). Its
  * "Status of Clinical Screening" question's outcomes ("Full Treatment" / "TPT Eligible" /
@@ -66,8 +71,16 @@ public class ContactFollowUpFormSeeder {
 
     @PostConstruct
     public void seed() {
-        if (formRepo.findByFormUuid(FORM_UUID).isPresent()) {
-            log.info("ContactFollowUpFormSeeder: form '{}' already exists — skipping seed.", FORM_UUID);
+        Optional<DynamicForm> existing = formRepo.findByFormUuid(FORM_UUID);
+        if (existing.isPresent()) {
+            DynamicForm form = existing.get();
+            if (Boolean.FALSE.equals(form.getIsActive())) {
+                form.setIsActive(true);
+                formRepo.save(form);
+                log.info("ContactFollowUpFormSeeder: form '{}' was inactive — reactivated.", FORM_UUID);
+            } else {
+                log.info("ContactFollowUpFormSeeder: form '{}' already exists and is active — skipping seed.", FORM_UUID);
+            }
             return;
         }
         log.info("ContactFollowUpFormSeeder: seeding Contact Follow Up form...");
