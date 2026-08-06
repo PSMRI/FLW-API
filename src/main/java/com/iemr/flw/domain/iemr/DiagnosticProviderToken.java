@@ -37,4 +37,15 @@ public class DiagnosticProviderToken {
     @UpdateTimestamp
     @Column(name = "last_mod_date")
     private Timestamp lastModDate;
+
+    // Van sync columns — present in the DB table but were never mapped here, same gap
+    // found on DiagnosticResult/DiagnosticDocument.
+    @Column(name = "vanID")
+    private Integer vanID;
+
+    @Column(name = "parkingPlaceID")
+    private Integer parkingPlaceID;
+
+    @Column(name = "vanSerialNo")
+    private Long vanSerialNo;
 }

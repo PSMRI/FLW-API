@@ -2,7 +2,11 @@ package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.DiagnosticResult;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -10,4 +14,9 @@ import java.util.Optional;
 public interface DiagnosticResultRepo extends JpaRepository<DiagnosticResult, Long> {
 
     Optional<DiagnosticResult> findByDiagnosticOrderIdAndDeletedFalse(Long diagnosticOrderId);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE DiagnosticResult r SET r.vanSerialNo = r.id WHERE r.id = :id")
+    void updateVanSerialNo(@Param("id") Long id);
 }

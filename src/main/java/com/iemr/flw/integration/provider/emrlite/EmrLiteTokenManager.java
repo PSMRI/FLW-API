@@ -77,6 +77,9 @@ public class EmrLiteTokenManager {
     @Autowired
     private CryptoUtil cryptoUtil;
 
+    @Autowired
+    private com.iemr.flw.service.CampConfigService campConfigService;
+
     private final RestTemplate restTemplate = buildRestTemplateWithTimeout();
     private final Gson gson = new Gson();
 
@@ -276,11 +279,17 @@ public class EmrLiteTokenManager {
         String encrypted = cryptoUtil.encrypt(rawValue);
         Optional<DiagnosticProviderToken> existing =
                 tokenRepo.findByProviderCodeAndTokenType(PROVIDER_CODE, tokenType);
+        boolean isNew = existing.isEmpty();
         DiagnosticProviderToken record = existing.orElseGet(DiagnosticProviderToken::new);
+        if (record.getVanID() == null) {
+            record.setVanID(campConfigService.getVanID());
+            record.setParkingPlaceID(campConfigService.getParkingPlaceID());
+        }
         record.setProviderCode(PROVIDER_CODE);
         record.setTokenType(tokenType);
         record.setTokenValue(encrypted);
         record.setExpiresAt(expiresAt);
-        tokenRepo.save(record);
+        record = tokenRepo.save(record);
+        if (isNew) tokenRepo.updateVanSerialNo(record.getId());
     }
 }

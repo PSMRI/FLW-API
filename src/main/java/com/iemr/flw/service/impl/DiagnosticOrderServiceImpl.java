@@ -16,6 +16,7 @@ import com.iemr.flw.masterEnum.DiagnosticOrderStatus;
 import com.iemr.flw.masterEnum.DiagnosticOrderType;
 import com.iemr.flw.repo.iemr.DiagnosticOrderRepo;
 import com.iemr.flw.repo.iemr.DiagnosticResultRepo;
+import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.DiagnosticDocumentService;
 import com.iemr.flw.service.DiagnosticOrderService;
 import org.slf4j.Logger;
@@ -45,6 +46,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     @Autowired
     private DiagnosticDocumentService diagnosticDocumentService;
 
+    @Autowired
+    private CampConfigService campConfigService;
+
     @Override
     public DiagnosticOrder createAndPushOrder(DiagnosticOrderRequestDto request) throws Exception {
         Long beneficiaryId            = request.getBeneficiaryId();
@@ -72,7 +76,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             return existing.get();
         }
 
+        boolean isNew = existing.isEmpty();
         DiagnosticOrder order = existing.orElseGet(DiagnosticOrder::new);
+        if (order.getVanID() == null) {
+            order.setVanID(campConfigService.getVanID());
+            order.setParkingPlaceID(campConfigService.getParkingPlaceID());
+        }
         order.setOrderEvent(orderEvent);
         order.setBeneficiaryId(beneficiaryId);
         order.setVisitCode(visitCode);
@@ -124,6 +133,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             order.setErrorMessage(e.getMessage());
         }
         order = diagnosticOrderRepo.save(order);
+        if (isNew) diagnosticOrderRepo.updateVanSerialNo(order.getId());
 
         return order;
     }
@@ -141,7 +151,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             latest = Optional.empty();
         }
 
+        boolean isNew = latest.isEmpty();
         DiagnosticOrder order = latest.orElseGet(DiagnosticOrder::new);
+        if (order.getVanID() == null) {
+            order.setVanID(campConfigService.getVanID());
+            order.setParkingPlaceID(campConfigService.getParkingPlaceID());
+        }
         if (latest.isEmpty()) {
             order.setOrderEvent(orderEvent);
             order.setBeneficiaryId(beneficiaryId);
@@ -160,7 +175,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         order.setErrorMessage(null);
 
         try {
-            return diagnosticOrderRepo.save(order);
+            order = diagnosticOrderRepo.save(order);
+            if (isNew) diagnosticOrderRepo.updateVanSerialNo(order.getId());
+            return order;
         } catch (DataIntegrityViolationException dive) {
             Optional<DiagnosticOrder> winner = diagnosticOrderRepo
                     .findByBeneficiaryIdAndVisitCodeAndOrderType(beneficiaryId, visitCode, orderType.name());
@@ -176,6 +193,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     @Override
     public DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult pollResult) throws Exception {
         Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId());
+        boolean isNewResult = existingResult.isEmpty();
         DiagnosticResult result = existingResult.orElseGet(DiagnosticResult::new);
         result.setDiagnosticOrderId(order.getId());
         result.setBeneficiaryId(order.getBeneficiaryId());
@@ -191,8 +209,15 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         result.setTbConfidence(pollResult.getTbConfidence());
         result.setDrugResistancePresence(pollResult.getDrugResistancePresence());
         result.setCreatedBy("SYSTEM");
+        if (result.getVanID() == null) {
+            // Inherit from the parent order rather than re-reading Redis — the result belongs
+            // to whichever van originated the order, not whichever van happens to be polling now.
+            result.setVanID(order.getVanID());
+            result.setParkingPlaceID(order.getParkingPlaceID());
+        }
         try {
             diagnosticResultRepo.save(result);
+            if (isNewResult) diagnosticResultRepo.updateVanSerialNo(result.getId());
         } catch (DataIntegrityViolationException dive) {
             logger.warn("Lost result upsert race for diagnosticOrderId={}", order.getId());
             result = diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId()).orElse(result);
