@@ -18,8 +18,10 @@ public class CampConfigService {
     @Autowired
     private LettuceConnectionFactory connectionFactory;
 
-    // When true, saves fail loudly if camp is not configured instead of silently storing vanID=NULL
-    @Value("${stoptb.enforce.vanid:false}")
+    // When true, saves fail loudly if camp is not configured instead of silently storing vanID=NULL.
+    // No inline default — every properties file must set this explicitly, so a forgotten
+    // config fails loudly at startup instead of running fail-open.
+    @Value("${stoptb.enforce.vanid}")
     private boolean enforceVanID;
 
     public Integer getVanID() {

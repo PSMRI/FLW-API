@@ -16,6 +16,7 @@ import com.iemr.flw.masterEnum.DiagnosticOrderStatus;
 import com.iemr.flw.masterEnum.DiagnosticOrderType;
 import com.iemr.flw.repo.iemr.DiagnosticOrderRepo;
 import com.iemr.flw.repo.iemr.DiagnosticResultRepo;
+import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.DiagnosticDocumentService;
 import com.iemr.flw.service.DiagnosticOrderService;
 import org.slf4j.Logger;
@@ -45,6 +46,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     @Autowired
     private DiagnosticDocumentService diagnosticDocumentService;
 
+    @Autowired
+    private CampConfigService campConfigService;
+
     @Override
     public DiagnosticOrder createAndPushOrder(DiagnosticOrderRequestDto request) throws Exception {
         Long beneficiaryId            = request.getBeneficiaryId();
@@ -72,7 +76,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             return existing.get();
         }
 
+        boolean isNew = existing.isEmpty();
         DiagnosticOrder order = existing.orElseGet(DiagnosticOrder::new);
+        if (order.getVanID() == null) {
+            order.setVanID(campConfigService.getVanID());
+            order.setParkingPlaceID(campConfigService.getParkingPlaceID());
+        }
         order.setOrderEvent(orderEvent);
         order.setBeneficiaryId(beneficiaryId);
         order.setVisitCode(visitCode);
@@ -124,6 +133,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             order.setErrorMessage(e.getMessage());
         }
         order = diagnosticOrderRepo.save(order);
+        if (isNew) diagnosticOrderRepo.updateVanSerialNo(order.getId());
 
         return order;
     }
@@ -141,7 +151,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             latest = Optional.empty();
         }
 
+        boolean isNew = latest.isEmpty();
         DiagnosticOrder order = latest.orElseGet(DiagnosticOrder::new);
+        if (order.getVanID() == null) {
+            order.setVanID(campConfigService.getVanID());
+            order.setParkingPlaceID(campConfigService.getParkingPlaceID());
+        }
         if (latest.isEmpty()) {
             order.setOrderEvent(orderEvent);
             order.setBeneficiaryId(beneficiaryId);
@@ -160,7 +175,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         order.setErrorMessage(null);
 
         try {
-            return diagnosticOrderRepo.save(order);
+            order = diagnosticOrderRepo.save(order);
+            if (isNew) diagnosticOrderRepo.updateVanSerialNo(order.getId());
+            return order;
         } catch (DataIntegrityViolationException dive) {
             Optional<DiagnosticOrder> winner = diagnosticOrderRepo
                     .findByBeneficiaryIdAndVisitCodeAndOrderType(beneficiaryId, visitCode, orderType.name());
@@ -176,34 +193,37 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     @Override
     public DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult pollResult) throws Exception {
         Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId());
+        boolean isNewResult = existingResult.isEmpty();
         DiagnosticResult result = existingResult.orElseGet(DiagnosticResult::new);
         result.setDiagnosticOrderId(order.getId());
         result.setBeneficiaryId(order.getBeneficiaryId());
         result.setProviderStatus(pollResult.getStatus().name());
         result.setResultSummary(pollResult.getResultSummary());
-        result.setRawResponseJson(pollResult.getRawResponseJson());
+        // The vendor embeds each asset's base64 file content directly inline in its response body
+        // when assets are requested — never persist that raw JSON verbatim (it's unencrypted, unlike
+        // the same content on local disk). Only store rawResponseJson from the asset-free call.
+        if (pollResult.getAssets() == null || pollResult.getAssets().isEmpty()) {
+            result.setRawResponseJson(pollResult.getRawResponseJson());
+        }
         result.setTbPresence(pollResult.getTbPresence());
         result.setTbConfidence(pollResult.getTbConfidence());
         result.setDrugResistancePresence(pollResult.getDrugResistancePresence());
         result.setCreatedBy("SYSTEM");
+        if (result.getVanID() == null) {
+            // Inherit from the parent order rather than re-reading Redis — the result belongs
+            // to whichever van originated the order, not whichever van happens to be polling now.
+            result.setVanID(order.getVanID());
+            result.setParkingPlaceID(order.getParkingPlaceID());
+        }
         try {
             diagnosticResultRepo.save(result);
+            if (isNewResult) diagnosticResultRepo.updateVanSerialNo(result.getId());
         } catch (DataIntegrityViolationException dive) {
             logger.warn("Lost result upsert race for diagnosticOrderId={}", order.getId());
             result = diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId()).orElse(result);
         }
 
-        if (pollResult.getAssets() != null) {
-            for (DiagnosticDocumentAsset asset : pollResult.getAssets()) {
-                try {
-                    diagnosticDocumentService.ingestAsset(order.getId(), order.getBeneficiaryId(), order.getOrderType(),
-                            order.getExternalOrderId(), asset);
-                } catch (Exception e) {
-                    logger.error("Failed to ingest document asset for orderId={}, assetType={}, fileName={}: {}",
-                            order.getId(), asset.getType(), asset.getFileName(), e.getMessage());
-                }
-            }
-        }
+        ingestAssets(order, pollResult);
 
         order.setStatus(pollResult.getStatus().name());
         order.setErrorMessage(pollResult.getErrorMessage());
@@ -227,6 +247,23 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         return dto;
     }
 
+    // Shared by processResult (single combined save+ingest call, e.g. triggerManualPoll) and pollOnce's
+    // second, asset-only call (which must NOT re-save the already-saved result/order fields a second time).
+    private void ingestAssets(DiagnosticOrder order, DiagnosticPollResult pollResult) {
+        if (pollResult.getAssets() == null) {
+            return;
+        }
+        for (DiagnosticDocumentAsset asset : pollResult.getAssets()) {
+            try {
+                diagnosticDocumentService.ingestAsset(order.getId(), order.getBeneficiaryId(), order.getOrderType(),
+                        order.getExternalOrderId(), asset);
+            } catch (Exception e) {
+                logger.error("Failed to ingest document asset for orderId={}, assetType={}, fileName={}: {}",
+                        order.getId(), asset.getType(), asset.getFileName(), e.getMessage());
+            }
+        }
+    }
+
     @Override
     public DiagnosticPollResult pollOnce(DiagnosticOrder order) throws Exception {
         DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
@@ -236,6 +273,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             // doesn't also lose the already-confirmed completed status (see pollSingle's catch).
             processResult(order, result);
             result = provider.pollResult(order, true);
+            // Only ingest the documents this time — the result/order fields were already saved above
+            // and this second, asset-bearing response carries the same status/summary, so re-saving
+            // them again would just be a redundant duplicate write.
+            ingestAssets(order, result);
+        } else {
+            processResult(order, result);
         }
         return result;
     }
