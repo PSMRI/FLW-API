@@ -141,33 +141,44 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         // O(village size), on every page including page 0. See BeneficiaryRepo for the
         // underlying query.
         if (request.getProviderServiceMapID() != null && request.getVillageID() != null) {
+            System.out.println("[TRACE] step0: psmId=" + request.getProviderServiceMapID() + ", villageId=" + request.getVillageID() + ", pageNo=" + request.getPageNo());
+
             long totalCount = beneficiaryRepo.countVillageWorklist(
                     request.getProviderServiceMapID(), request.getVillageID());
+            System.out.println("[TRACE] step1 countVillageWorklist OK: totalCount=" + totalCount);
 
             if (totalCount == 0) return null;
 
             int totalPage = (int) Math.ceil((double) totalCount / pageSize);
             int offset = request.getPageNo() * pageSize;
+            System.out.println("[TRACE] step2: pageSize=" + pageSize + ", offset=" + offset + ", totalPage=" + totalPage);
             if (offset >= totalCount) return null;
 
             List<BigInteger> addressIds = beneficiaryRepo.getVillageWorklistAddressIds(
                     request.getProviderServiceMapID(), request.getVillageID(), pageSize, offset);
+            System.out.println("[TRACE] step3 getVillageWorklistAddressIds OK: addressIds.size()=" + addressIds.size() + ", ids=" + addressIds);
 
             if (addressIds.isEmpty()) return null;
 
-            // findAddressesByIds doesn't preserve IN-list order, so re-assemble in the
-            // order the paginated query returned (already sorted by registrationDate DESC).
-            Map<BigInteger, RMNCHMBeneficiaryaddress> byId = beneficiaryRepo.findAddressesByIds(addressIds)
-                    .stream()
-                    .collect(Collectors.toMap(RMNCHMBeneficiaryaddress::getBenAddressID, a -> a, (x, y) -> x));
+            // Was findAddressesByIds() - a single "IN :ids" JPQL query. Hit a reproducible
+            // Hibernate 6.4.1 bug there: "Binding is multi-valued; illegal call to
+            // #getBindValue" even with a well-formed, non-empty id list (confirmed live
+            // against 192.168.45.40 - the 10 rows returned have no NULLs/type issues, so
+            // this isn't a data problem). Looping getAddressById() per id sidesteps
+            // Hibernate's collection-parameter binding entirely - only ever pageSize (10)
+            // calls per page, same order-preservation as before.
             List<RMNCHMBeneficiaryaddress> pageAddresses = addressIds.stream()
-                    .map(byId::get)
+                    .map(beneficiaryRepo::getAddressById)
                     .filter(java.util.Objects::nonNull)
                     .collect(Collectors.toList());
+            System.out.println("[TRACE] step4-5 pageAddresses assembled via per-id lookup: size=" + pageAddresses.size());
 
             if (pageAddresses.isEmpty()) return null;
 
-            return getMappingsForAddressIDs(pageAddresses, totalPage, authorisation);
+            System.out.println("[TRACE] step6 calling getMappingsForAddressIDs...");
+            String result = getMappingsForAddressIDs(pageAddresses, totalPage, authorisation);
+            System.out.println("[TRACE] step7 getMappingsForAddressIDs OK");
+            return result;
         }
 
         // Normal FLW/ASHA path
