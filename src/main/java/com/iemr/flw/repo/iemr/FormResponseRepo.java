@@ -22,6 +22,7 @@
 package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.FormResponse;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -69,4 +70,10 @@ public interface FormResponseRepo extends JpaRepository<FormResponse, Long> {
             @Param("formIds") List<Long> formIds,
             @Param("windowStart") Timestamp windowStart,
             @Param("windowEnd") Timestamp windowEnd);
+
+    // See SectionResponseRepo.updateVanSerialNo for why this is a targeted UPDATE, not a
+    // second full-entity save.
+    @Modifying
+    @Query("UPDATE FormResponse f SET f.vanSerialNo = :vanSerialNo WHERE f.responseId = :id")
+    void updateVanSerialNo(@Param("id") Long id, @Param("vanSerialNo") Long vanSerialNo);
 }

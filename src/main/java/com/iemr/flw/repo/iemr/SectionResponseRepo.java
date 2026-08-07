@@ -24,6 +24,7 @@ package com.iemr.flw.repo.iemr;
 import com.iemr.flw.domain.iemr.SectionResponse;
 import com.iemr.flw.masterEnum.SectionPhase;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -54,4 +55,13 @@ public interface SectionResponseRepo extends JpaRepository<SectionResponse, Long
            "AND sr.responseId IN :responseIds GROUP BY sr.responseId")
     List<Object[]> countByResponseIdInAndSectionPhase(@Param("responseIds") Collection<Long> responseIds,
                                                        @Param("sectionPhase") SectionPhase sectionPhase);
+
+    // vanSerialNo is never set at creation time (no van-context available yet on a plain
+    // .save()) - called right after save() once the auto-generated sectionResponseId is
+    // known, matching the "VanSerialNo == own PK" convention used across this codebase.
+    // A targeted UPDATE, not a second full-entity save - see BeneficiaryServiceImpl/
+    // CommonBenStatusFlowServiceImpl for why a full re-save is the wrong fix here.
+    @Modifying
+    @Query("UPDATE SectionResponse s SET s.vanSerialNo = :vanSerialNo WHERE s.sectionResponseId = :id")
+    void updateVanSerialNo(@Param("id") Long id, @Param("vanSerialNo") Long vanSerialNo);
 }
