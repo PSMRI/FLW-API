@@ -23,6 +23,9 @@ package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.QuestionResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -43,4 +46,10 @@ public interface QuestionResponseRepo extends JpaRepository<QuestionResponse, Lo
     void deleteByQuestionIdAndSectionResponseId(Long questionId, Long sectionResponseId);
 
     void deleteBySectionResponseIdIn(Collection<Long> sectionResponseIds);
+
+    // See SectionResponseRepo.updateVanSerialNo for why this is a targeted UPDATE, not a
+    // second full-entity save.
+    @Modifying
+    @Query("UPDATE QuestionResponse q SET q.vanSerialNo = :vanSerialNo WHERE q.questionResponseId = :id")
+    void updateVanSerialNo(@Param("id") Long id, @Param("vanSerialNo") Long vanSerialNo);
 }

@@ -202,7 +202,9 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 .vanID(vanID)
                 .parkingPlaceID(parkingPlaceID)
                 .build();
-        return formResponseRepo.save(formResponse);
+        formResponse = formResponseRepo.save(formResponse);
+        formResponseRepo.updateVanSerialNo(formResponse.getResponseId(), formResponse.getResponseId());
+        return formResponse;
     }
 
     /**
@@ -286,7 +288,10 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                     vanID,
                     parkingPlaceID);
 
-            questionResponseRepo.saveAll(questionResponses);
+            questionResponses = questionResponseRepo.saveAll(questionResponses);
+            for (QuestionResponse qr : questionResponses) {
+                questionResponseRepo.updateVanSerialNo(qr.getQuestionResponseId(), qr.getQuestionResponseId());
+            }
 
             sectionDTOs.add(buildSectionResponseDTO(sectionResponse, section, questionResponses));
         }
@@ -310,7 +315,9 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 sr.setSavedAt(new Timestamp(System.currentTimeMillis()));
                 sr.setUpdatedBy(actor);
                 if (sr.getVanID() == null) { sr.setVanID(vanID); sr.setParkingPlaceID(parkingPlaceID); }
-                return Optional.of(sectionResponseRepo.save(sr));
+                SectionResponse updated = sectionResponseRepo.save(sr);
+                sectionResponseRepo.updateVanSerialNo(updated.getSectionResponseId(), updated.getSectionResponseId());
+                return Optional.of(updated);
             }
         }
         // POST_SUBMIT sections always create a new instance — this is what makes repeatable
@@ -325,7 +332,9 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 .vanID(vanID)
                 .parkingPlaceID(parkingPlaceID)
                 .build();
-        return Optional.of(sectionResponseRepo.save(sr));
+        sr = sectionResponseRepo.save(sr);
+        sectionResponseRepo.updateVanSerialNo(sr.getSectionResponseId(), sr.getSectionResponseId());
+        return Optional.of(sr);
     }
 
     private List<QuestionResponse> processAnswers(
