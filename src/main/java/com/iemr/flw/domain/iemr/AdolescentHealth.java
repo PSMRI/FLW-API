@@ -41,6 +41,9 @@ public class AdolescentHealth {
     @Column(name = "sanitary_napkin_distributed")
     private Boolean sanitaryNapkinDistributed;
 
+    @Column(name = "is_sanitary_napkin_used")
+    private Boolean isSanitaryNapkinUsed;
+
     @Column(name = "no_of_packets_distributed")
     private Integer noOfPacketsDistributed;
 
