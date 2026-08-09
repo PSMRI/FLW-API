@@ -76,7 +76,6 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             return existing.get();
         }
 
-        boolean isNew = existing.isEmpty();
         DiagnosticOrder order = existing.orElseGet(DiagnosticOrder::new);
         if (order.getVanID() == null) {
             order.setVanID(campConfigService.getVanID());
@@ -133,7 +132,11 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             order.setErrorMessage(e.getMessage());
         }
         order = diagnosticOrderRepo.save(order);
-        if (isNew) diagnosticOrderRepo.updateVanSerialNo(order.getId());
+        // Check the field itself, not a point-in-time "isNew" flag — a flag computed before save()
+        // goes stale forever once the row exists (e.g. this row was the "winner" of a lost create
+        // race below, or a prior attempt crashed between save() and this line). Re-checking the
+        // real value self-heals any row still stuck at NULL, on whichever call next touches it.
+        if (order.getVanSerialNo() == null) diagnosticOrderRepo.updateVanSerialNo(order.getId());
 
         return order;
     }
@@ -151,7 +154,6 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             latest = Optional.empty();
         }
 
-        boolean isNew = latest.isEmpty();
         DiagnosticOrder order = latest.orElseGet(DiagnosticOrder::new);
         if (order.getVanID() == null) {
             order.setVanID(campConfigService.getVanID());
@@ -176,7 +178,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
         try {
             order = diagnosticOrderRepo.save(order);
-            if (isNew) diagnosticOrderRepo.updateVanSerialNo(order.getId());
+            if (order.getVanSerialNo() == null) diagnosticOrderRepo.updateVanSerialNo(order.getId());
             return order;
         } catch (DataIntegrityViolationException dive) {
             Optional<DiagnosticOrder> winner = diagnosticOrderRepo
@@ -193,7 +195,6 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     @Override
     public DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult pollResult) throws Exception {
         Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId());
-        boolean isNewResult = existingResult.isEmpty();
         DiagnosticResult result = existingResult.orElseGet(DiagnosticResult::new);
         result.setDiagnosticOrderId(order.getId());
         result.setBeneficiaryId(order.getBeneficiaryId());
@@ -217,7 +218,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         }
         try {
             diagnosticResultRepo.save(result);
-            if (isNewResult) diagnosticResultRepo.updateVanSerialNo(result.getId());
+            if (result.getVanSerialNo() == null) diagnosticResultRepo.updateVanSerialNo(result.getId());
         } catch (DataIntegrityViolationException dive) {
             logger.warn("Lost result upsert race for diagnosticOrderId={}", order.getId());
             result = diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId()).orElse(result);
