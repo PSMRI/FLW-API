@@ -78,7 +78,6 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         Path filePath = dir.resolve(storedFileName);
         Files.write(filePath, encryptedPayload.getBytes(StandardCharsets.UTF_8));
 
-        boolean isNewDocument = existing.isEmpty();
         DiagnosticDocument document = existing.orElseGet(DiagnosticDocument::new);
         if (document.getVanID() == null) {
             // Inherit from the parent order rather than re-reading Redis — the document belongs
@@ -102,7 +101,7 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         document.setCreatedBy("SYSTEM");
         try {
             diagnosticDocumentRepo.save(document);
-            if (isNewDocument) diagnosticDocumentRepo.updateVanSerialNo(document.getId());
+            if (document.getVanSerialNo() == null) diagnosticDocumentRepo.updateVanSerialNo(document.getId());
         } catch (DataIntegrityViolationException dive) {
             logger.warn("Lost document upsert race for diagnosticOrderId={}, documentType={}", diagnosticOrderId, documentType);
             return;
