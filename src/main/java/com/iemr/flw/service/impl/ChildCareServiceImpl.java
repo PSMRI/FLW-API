@@ -278,6 +278,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                     addIfValid(fields, "jaundice", convert(visit.getJaundice()));
                     addIfValid(fields, "umbilical_stump", visit.getUmbilical_stump());
                     addIfValid(fields, "discharged_from_sncu", convert(visit.getDischarged_from_sncu()));
+                    addIfValid(fields, "is_admitted_in_sncu", convert(visit.getIs_admitted_in_sncu()));
                     addIfValid(fields, "discharge_summary_upload", visit.getDischarge_summary_upload());
 
                     // Add more fields as required
