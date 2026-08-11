@@ -67,9 +67,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
         String providerCode = providerFactory.getProviderCodeForOrderType(orderType);
         String externalOrderId = String.format("%d-%d-%s", beneficiaryId, visitCode, orderType.name());
-
-        markTbSuspectedReferred(beneficiaryId);
-
+        
         String reasonForRefusal = request.getReasonForRefusal();
         if (reasonForRefusal != null) {
             return saveRefusedOrder(beneficiaryId, visitCode, orderType, orderEvent, providerCode, externalOrderId,
@@ -270,14 +268,6 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             logger.warn("No tb_suspected row for beneficiaryId={} — skipping write-back", beneficiaryId);
         }
         return tbSuspected;
-    }
-
-    private void markTbSuspectedReferred(Long beneficiaryId) {
-        TBSuspected tbSuspected = findTbSuspected(beneficiaryId);
-        if (tbSuspected == null || Boolean.TRUE.equals(tbSuspected.getReferred())) return;
-        tbSuspected.setReferred(true);
-        tbSuspected.setProcessed("N");
-        tbSuspectedRepo.save(tbSuspected);
     }
 
     private void recordTbSuspectedResult(DiagnosticOrder order, DiagnosticResult result) {
