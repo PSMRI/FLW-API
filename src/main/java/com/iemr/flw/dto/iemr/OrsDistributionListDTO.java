@@ -15,5 +15,10 @@ public class OrsDistributionListDTO {
     @SerializedName("num_ors_packets")
     private Double num_ors_packets;
 
+    @SerializedName("is_rehydration_solution_provided")
+    private Boolean is_rehydration_solution_provided;
+
+
+
 
 }

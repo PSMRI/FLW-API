@@ -32,6 +32,9 @@ public class OrsDistribution {
     @Column(name = "num_ors_packets")
     private String numOrsPackets;
 
+    @Column(name = "is_rehydration_solution_provided")
+    private Boolean isRehydrationSolutionProvided;
+
 
     @Column(name = "created_at", updatable = false, insertable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private java.sql.Timestamp createdAt;
