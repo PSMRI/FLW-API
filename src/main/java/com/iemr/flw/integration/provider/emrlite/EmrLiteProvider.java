@@ -127,13 +127,11 @@ public class EmrLiteProvider implements DiagnosticProvider {
         try {
             responseBody = doPost(resultUrl, gson.toJson(request));
         } catch (HttpClientErrorException.NotFound e) {
-            // Permanent per the API contract — return FAILED instead of throwing, so the scheduler
-            // stops instead of retrying on the transient back-off schedule.
+            // Treated as transient (order not yet registered on the provider, or a momentary
+            // blip) rather than permanent — throw so the order's status is left untouched and
+            // the scheduler retries on the next tick instead of marking it FAILED.
             logger.warn("Provider returned 404 Not Found for externalOrderId={}", order.getExternalOrderId());
-            return new DiagnosticPollResult(DiagnosticOrderStatus.FAILED, null, null,
-                    e.getResponseBodyAsString(), null,
-                    "Order not found on provider (404): externalOrderId=" + order.getExternalOrderId(),
-                    false, null, false);
+            throw new Exception("Order not found on provider (404): externalOrderId=" + order.getExternalOrderId(), e);
         }
 
         EmrLiteProviderResponse envelope = gson.fromJson(responseBody, EmrLiteProviderResponse.class);

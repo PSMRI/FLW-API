@@ -148,12 +148,12 @@ public class OccupationalContactTracingFormSeeder {
         qs.add(occupation);
 
         // Other occupation — hidden by default, mandatory only when "Other occupation" is selected
-        qs.add(mandatoryIfQuestion("OCT_OCCUPATION_OTHER", "Other occupation", "अन्य व्यवसाय", 2, 500,
+        qs.add(mandatoryIfQuestion("OCT_OCCUPATION_OTHER", "Other occupation", "अन्य व्यवसाय", 2, 500, true,
                 List.of("OCT_OCCUPATION=OTHER_OCCUPATION")));
 
         // Name and Address of Employment — mandatory when occupation is any of the 5 employment types
         SectionQuestionDTO employmentAddress = mandatoryIfQuestion("OCT_EMPLOYMENT_ADDRESS", "Name and Address of Employment",
-                "रोजगार का नाम और पता", 3, 500,
+                "रोजगार का नाम और पता", 3, 500, true,
                 List.of("OCT_OCCUPATION=LABORER_DAILY_WAGE",
                         "OCT_OCCUPATION=SELF_EMPLOYED_BUSINESS",
                         "OCT_OCCUPATION=GOVERNMENT_EMPLOYEE",
@@ -164,7 +164,7 @@ public class OccupationalContactTracingFormSeeder {
 
         // Name and Address of Institution — mandatory only when occupation = Student
         qs.add(mandatoryIfQuestion("OCT_INSTITUTION_ADDRESS", "Name and Address of Institution",
-                "संस्थान का नाम और पता", 4, 500,
+                "संस्थान का नाम और पता", 4, 500, true,
                 List.of("OCT_OCCUPATION=STUDENT")));
 
         qs.add(textQuestionRegex("OCT_NO_OF_CONTACTS", "No. of contacts", "संपर्कों की संख्या", 5, true,
@@ -191,7 +191,7 @@ public class OccupationalContactTracingFormSeeder {
                 "^([0-9]|1[0-9]|2[0-4])$", "Enter whole hours between 0 and 24", true));
 
         qs.add(textQuestionMaxLength("OCT_REMARKS", "Any other Significant Information/Notes/Remarks",
-                "कोई अन्य महत्वपूर्ण जानकारी/टिप्पणी", 8, false, 3000, true));
+                "कोई अन्य महत्वपूर्ण जानकारी/टिप्पणी", 8, false, 500, true));
 
         s.setQuestions(qs);
         return s;
@@ -278,13 +278,13 @@ public class OccupationalContactTracingFormSeeder {
     /** Hidden-by-default free-text question that becomes mandatory when ANY of {@code mandatoryIfParams}
      *  ("QUESTION_UUID=OPTION_VALUE" per entry) is satisfied. Always carries a MAX_LENGTH validation too. */
     private SectionQuestionDTO mandatoryIfQuestion(String uuid, String text, String textHindi, int order,
-                                                    int maxLength, List<String> mandatoryIfParams) {
+                                                    int maxLength, boolean isMandatory,List<String> mandatoryIfParams) {
         SectionQuestionDTO q = new SectionQuestionDTO();
         q.setQuestionUuid(uuid);
         q.setQuestionText(text);
         q.setQuestionTextHindi(textHindi);
         q.setQuestionType(QuestionType.TEXT);
-        q.setIsMandatory(false);
+        q.setIsMandatory(isMandatory);
         q.setDisplayOrder(order);
         q.setMaxLength(maxLength);
         q.setVisibleByDefault(false);

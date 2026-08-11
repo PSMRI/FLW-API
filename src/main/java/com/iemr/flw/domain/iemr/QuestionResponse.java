@@ -37,9 +37,9 @@ import java.sql.Timestamp;
 
 /**
  * Stores one answer to a single question within a section response.
- * MCQ/CHECKBOX_MULTI questions produce multiple rows (one per selected option) — no unique constraint on (sectionResponseId, questionId).
+ * MCQ/CHECKBOX_MULTI/DROPDOWN_MULTI questions produce multiple rows (one per selected option) — no unique constraint on (sectionResponseId, questionId).
  * RADIO/DROPDOWN: optionId set, answerText null.
- * MCQ/CHECKBOX_MULTI: optionId set per selection, answerText null.
+ * MCQ/CHECKBOX_MULTI/DROPDOWN_MULTI: optionId set per selection, answerText null.
  * TEXT/DATE/AUTO_FILL/NUMBER_PICKER: answerText set, optionId null.
  * DISPLAY: no row stored (read-only question type).
  *
@@ -64,7 +64,7 @@ public class QuestionResponse {
     @Column(name = "questionId", nullable = false)
     private Long questionId;
 
-    /** Set for RADIO/DROPDOWN (one row) and MCQ (one row per selected option). */
+    /** Set for RADIO/DROPDOWN (one row) and MCQ/CHECKBOX_MULTI/DROPDOWN_MULTI (one row per selected option). */
     @Column(name = "optionId")
     private Long optionId;
 

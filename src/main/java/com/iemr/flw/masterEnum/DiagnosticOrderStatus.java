@@ -7,7 +7,8 @@ public enum DiagnosticOrderStatus {
     FAILED,
     CANCELLED,
     EXPIRED,
-    REFUSED;
+    REFUSED,
+    MANUAL_ENTRY;
 
     public static DiagnosticOrderStatus fromString(String value) {
         if (value == null) return PENDING;
