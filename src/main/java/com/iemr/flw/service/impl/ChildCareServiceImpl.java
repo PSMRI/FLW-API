@@ -672,6 +672,12 @@ public class ChildCareServiceImpl implements ChildCareService {
                 orsDistributionResponseListDTO.setNum_under5_children(orsDistribution.getChildCount().toString());
 
             }
+
+            if (orsDistribution.getIsRehydrationSolutionProvided() != null) {
+                orsDistributionResponseListDTO.setIs_rehydration_solution_provided(orsDistribution.getIsRehydrationSolutionProvided());
+
+            }
+
             orsDistributionResponseDTO.setFields(orsDistributionResponseListDTO);
             orsDistributionResponseDTO.setVisitDate(parseDate(orsDistribution.getVisitDate().toString()).toString());
             orsDistributionResponseDTOSList.add(orsDistributionResponseDTO);

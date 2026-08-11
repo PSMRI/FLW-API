@@ -14,4 +14,7 @@ public class OrsDistributionResponseListDTO {
     @JsonProperty("num_ors_packets")
     private String num_ors_packets;
 
+    @SerializedName("is_rehydration_solution_provided")
+    private Boolean is_rehydration_solution_provided;
+
 }
