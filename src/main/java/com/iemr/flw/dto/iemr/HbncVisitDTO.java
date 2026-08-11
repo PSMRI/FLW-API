@@ -47,6 +47,9 @@ import java.util.List;
   @SerializedName("discharged_from_sncu")
   private String discharged_from_sncu;
 
+  @SerializedName("is_admited_in_sncu")
+  private String is_admitted_in_sncu;
+
   @SerializedName("activity")
   private String activity;
 

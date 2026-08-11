@@ -89,6 +89,9 @@ public class HbncVisit {
     @Column(name = "umbilical_stump_condition")
     private String umbilical_stump;
 
+    @Column(name = "is_admitted_in_sncu")
+    private Boolean is_admitted_in_sncu;
+
     @Column(name = "baby_discharged_from_sncu")
     private Boolean discharged_from_sncu;
 
