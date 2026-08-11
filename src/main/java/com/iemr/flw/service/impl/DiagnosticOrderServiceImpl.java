@@ -2,6 +2,7 @@ package com.iemr.flw.service.impl;
 
 import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.domain.iemr.DiagnosticResult;
+import com.iemr.flw.domain.iemr.TBSuspected;
 import com.iemr.flw.dto.DiagnosticOrderRequestDto;
 import com.iemr.flw.dto.DiagnosticOrderResultDto;
 import com.iemr.flw.dto.DiagnosticOrderStatusSummaryDto;
@@ -16,6 +17,7 @@ import com.iemr.flw.masterEnum.DiagnosticOrderStatus;
 import com.iemr.flw.masterEnum.DiagnosticOrderType;
 import com.iemr.flw.repo.iemr.DiagnosticOrderRepo;
 import com.iemr.flw.repo.iemr.DiagnosticResultRepo;
+import com.iemr.flw.repo.iemr.TBSuspectedRepo;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.DiagnosticDocumentService;
 import com.iemr.flw.service.DiagnosticOrderService;
@@ -41,6 +43,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     private DiagnosticResultRepo diagnosticResultRepo;
 
     @Autowired
+    private TBSuspectedRepo tbSuspectedRepo;
+
+    @Autowired
     private DiagnosticProviderFactory providerFactory;
 
     @Autowired
@@ -62,6 +67,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
         String providerCode = providerFactory.getProviderCodeForOrderType(orderType);
         String externalOrderId = String.format("%d-%d-%s", beneficiaryId, visitCode, orderType.name());
+
+        markTbSuspectedReferred(beneficiaryId);
 
         String reasonForRefusal = request.getReasonForRefusal();
         if (reasonForRefusal != null) {
@@ -113,6 +120,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         if (providerCode == null || providerCode.isBlank()) {
             logger.info("No active vendor configured for orderType={}, beneficiaryId={} — order saved for manual entry",
                     orderType, beneficiaryId);
+            order.setStatus(DiagnosticOrderStatus.MANUAL_ENTRY.name());
+            order = diagnosticOrderRepo.save(order);
             return order;
         }
 
@@ -234,6 +243,10 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
         diagnosticOrderRepo.save(order);
 
+        if (DiagnosticOrderStatus.COMPLETED.name().equals(order.getStatus())) {
+            recordTbSuspectedResult(order, result);
+        }
+
         DiagnosticOrderResultDto dto = new DiagnosticOrderResultDto();
         dto.setExternalOrderId(order.getExternalOrderId());
         dto.setOrderType(order.getOrderType());
@@ -246,6 +259,41 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         dto.setTbConfidence(result.getTbConfidence());
         dto.setDrugResistancePresence(result.getDrugResistancePresence());
         return dto;
+    }
+
+    // Best-effort link from a diagnostic order back to the tb_suspected referral that presumably
+    // prompted it. Not every diagnostic order originates from a TB referral, so a miss here is
+    // expected and must never fail/block the push or result flow — just log and move on.
+    private TBSuspected findTbSuspected(Long beneficiaryId) {
+        TBSuspected tbSuspected = tbSuspectedRepo.findFirstByBenIdOrderByCreatedDateDesc(beneficiaryId);
+        if (tbSuspected == null) {
+            logger.warn("No tb_suspected row for beneficiaryId={} — skipping write-back", beneficiaryId);
+        }
+        return tbSuspected;
+    }
+
+    private void markTbSuspectedReferred(Long beneficiaryId) {
+        TBSuspected tbSuspected = findTbSuspected(beneficiaryId);
+        if (tbSuspected == null || Boolean.TRUE.equals(tbSuspected.getReferred())) return;
+        tbSuspected.setReferred(true);
+        tbSuspected.setProcessed("N");
+        tbSuspectedRepo.save(tbSuspected);
+    }
+
+    private void recordTbSuspectedResult(DiagnosticOrder order, DiagnosticResult result) {
+        TBSuspected tbSuspected = findTbSuspected(order.getBeneficiaryId());
+        if (tbSuspected == null) return;
+        DiagnosticOrderType type = DiagnosticOrderType.fromCode(order.getOrderType());
+        if (type == DiagnosticOrderType.XRAY_CHEST) {
+            tbSuspected.setIsChestXRayDone(true);
+            tbSuspected.setChestXRayResult(result.getResultSummary());
+        } else {
+            tbSuspected.setIsSputumCollected(true);
+            tbSuspected.setSputumSubmittedAt(new Timestamp(System.currentTimeMillis()).toString());
+            tbSuspected.setSputumTestResult(result.getResultSummary());
+        }
+        tbSuspected.setProcessed("N");
+        tbSuspectedRepo.save(tbSuspected);
     }
 
     // Shared by processResult (single combined save+ingest call, e.g. triggerManualPoll) and pollOnce's
@@ -319,7 +367,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
         if (DiagnosticOrderStatus.COMPLETED.name().equals(status)
                 || DiagnosticOrderStatus.CANCELLED.name().equals(status)
-                || DiagnosticOrderStatus.REFUSED.name().equals(status)) {
+                || DiagnosticOrderStatus.REFUSED.name().equals(status)
+                || DiagnosticOrderStatus.MANUAL_ENTRY.name().equals(status)) {
             throw new IllegalStateException("Cannot retry polling for order in terminal status " + status);
         }
 
@@ -385,7 +434,10 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 .findBeneficiaryIdsFailed(type.name(), villageId, providerServiceMapId);
         List<Long> refused = diagnosticOrderRepo
                 .findBeneficiaryIdsRefused(type.name(), villageId, providerServiceMapId);
-        return new DiagnosticOrderStatusSummaryDto(awaitingProviderResult, completed, pollingTimedOut, failed, refused);
+        List<Long> awaitingManualEntry = diagnosticOrderRepo
+                .findBeneficiaryIdsAwaitingManualEntry(type.name(), villageId, providerServiceMapId);
+        return new DiagnosticOrderStatusSummaryDto(awaitingProviderResult, completed, pollingTimedOut, failed, refused,
+                awaitingManualEntry);
     }
 
     @Override

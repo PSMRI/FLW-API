@@ -145,7 +145,7 @@ public class CommunityContactTracingFormSeeder {
         qs.add(relationship);
 
         // Other (relationship) — hidden by default, mandatory only when "Other" is selected above
-        qs.add(mandatoryIfQuestion("CCT_RELATIONSHIP_OTHER", "Other", "अन्य", 3, 100,
+        qs.add(mandatoryIfQuestion("CCT_RELATIONSHIP_OTHER", "Other", "अन्य", 3, 100, true,
                 List.of("CCT_RELATIONSHIP=OTHER")));
 
         // Per-relationship contact counts — each hidden by default, shown/mandatory only when its
@@ -198,7 +198,7 @@ public class CommunityContactTracingFormSeeder {
         qs.add(exposureSetting);
 
         // Other Place — hidden by default, mandatory + max 100 chars only when "Other Place" is selected
-        qs.add(mandatoryIfQuestion("CCT_EXPOSURE_SETTING_OTHER", "Other Place", "अन्य स्थान", 12, 100,
+        qs.add(mandatoryIfQuestion("CCT_EXPOSURE_SETTING_OTHER", "Other Place", "अन्य स्थान", 12, 100, true,
                 List.of("CCT_EXPOSURE_SETTING=OTHER_PLACE")));
 
         SectionQuestionDTO typeOfSpace = new SectionQuestionDTO();
@@ -222,7 +222,7 @@ public class CommunityContactTracingFormSeeder {
                 "^([0-9]|1[0-9]|2[0-4])$", "Enter whole hours between 0 and 24", true));
 
         qs.add(textQuestionMaxLength("CCT_REMARKS", "Any other Significant Information/Notes/Remarks",
-                "कोई अन्य महत्वपूर्ण जानकारी/टिप्पणी", 15, false, 3000, true));
+                "कोई अन्य महत्वपूर्ण जानकारी/टिप्पणी", 15, false, 500, true));
 
         s.setQuestions(qs);
         return s;
@@ -309,13 +309,13 @@ public class CommunityContactTracingFormSeeder {
     /** Hidden-by-default free-text question that becomes mandatory when ANY of {@code mandatoryIfParams}
      *  ("QUESTION_UUID=OPTION_VALUE" per entry) is satisfied. Always carries a MAX_LENGTH validation too. */
     private SectionQuestionDTO mandatoryIfQuestion(String uuid, String text, String textHindi, int order,
-                                                    int maxLength, List<String> mandatoryIfParams) {
+                                                    int maxLength, boolean isMandatory, List<String> mandatoryIfParams) {
         SectionQuestionDTO q = new SectionQuestionDTO();
         q.setQuestionUuid(uuid);
         q.setQuestionText(text);
         q.setQuestionTextHindi(textHindi);
         q.setQuestionType(QuestionType.TEXT);
-        q.setIsMandatory(false);
+        q.setIsMandatory(isMandatory);
         q.setDisplayOrder(order);
         q.setMaxLength(maxLength);
         q.setVisibleByDefault(false);

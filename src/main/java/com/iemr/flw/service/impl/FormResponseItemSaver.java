@@ -358,7 +358,8 @@ public class FormResponseItemSaver {
                             .parkingPlaceID(parkingPlaceID)
                             .build());
                 }
-            } else if (type == QuestionType.MCQ || type == QuestionType.CHECKBOX_MULTI) {
+            } else if (type == QuestionType.MCQ || type == QuestionType.CHECKBOX_MULTI
+                    || type == QuestionType.DROPDOWN_MULTI) {
                 if (answer.getOptionValues() != null) {
                     for (String val : answer.getOptionValues()) {
                         QuestionOption opt = resolveOption(optionsByQuestion, questionId, val,

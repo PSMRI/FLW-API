@@ -50,5 +50,8 @@ public enum QuestionType {
     NUMBER_PICKER,
     /** Multi-select checkbox list from a predefined list of options. Resolved like MCQ:
      *  submit optionValues, one QuestionResponse row stored per selected option. */
-    CHECKBOX_MULTI
+    CHECKBOX_MULTI,
+    /** Multi-select from a predefined list of options, presented as a dropdown. Resolved
+     *  like CHECKBOX_MULTI: submit optionValues, one QuestionResponse row stored per selected option. */
+    DROPDOWN_MULTI
 }

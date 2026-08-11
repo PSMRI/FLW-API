@@ -255,7 +255,7 @@ public class TptFollowUpFormSeeder {
         discomfort.setDisplayOrder(8);
         discomfort.setVisibleByDefault(true);
         discomfort.setOptions(List.of(
-                option("Yes", "हाँ", "YES", "हाँ", 1, List.of()),
+                option("Yes", "हाँ", "YES", "हाँ", 1, List.of(showQuestion("TFU_ADR"))),
                 option("No", "नहीं", "NO", "नहीं", 2, List.of())));
         discomfort.setValidations(List.of());
         qs.add(discomfort);
@@ -265,37 +265,38 @@ public class TptFollowUpFormSeeder {
         adr.setQuestionUuid("TFU_ADR");
         adr.setQuestionText("Adverse Drug Reactions");
         adr.setQuestionTextHindi("प्रतिकूल दवा प्रतिक्रियाएं");
-        adr.setQuestionType(QuestionType.DROPDOWN);
-        adr.setIsMandatory(false);
+        adr.setQuestionType(QuestionType.DROPDOWN_MULTI);
+        adr.setIsMandatory(true);
         adr.setDisplayOrder(9);
-        adr.setVisibleByDefault(true);
-        adr.setDefaultValue("NONE_REPORTED");
+        adr.setVisibleByDefault(false);
+        adr.setDefaultValue("UNKNOWN");
         adr.setOptions(List.of(
-                option("Nausea", "", "NAUSEA", "", 1, List.of()),
-                option("Vomiting", "", "VOMITING", "", 2, List.of()),
-                option("Abdominal Pain", "", "ABDOMINAL_PAIN", "", 3, List.of()),
+                option("Unknown", "", "UNKNOWN", "", 1, List.of()),
+                option("Nausea", "", "NAUSEA", "", 2, List.of()),
+                option("Vomiting", "", "VOMITING", "", 3, List.of()),
+                option("Abdominal Pain", "", "ABDOMINAL_PAIN", "", 4, List.of()),
                 option("Flue like syndrome- Chills, Dry cough, Shortness of breath, loss of appetite, body ache and malaise, dizziness, headache",
-                        "", "FLU_LIKE_SYNDROME_WITH_DIZZINESS_HEADACHE", "", 4, List.of()),
-                option("Yellowish discoloration of skin and eyes", "", "YELLOWISH_DISCOLORATION_SKIN_EYES", "", 5, List.of()),
-                option("Discoloration of body fluids", "", "DISCOLORATION_BODY_FLUIDS", "", 6, List.of()),
-                option("Dark colour Urine", "", "DARK_COLOUR_URINE", "", 7, List.of()),
-                option("Pale stool", "", "PALE_STOOL", "", 8, List.of()),
-                option("Skin Rash", "", "SKIN_RASH", "", 9, List.of()),
-                option("Itching", "", "ITCHING", "", 10, List.of()),
-                option("Tingling/burning/numbness in hands and feet", "", "TINGLING_BURNING_NUMBNESS_HANDS_FEET", "", 11, List.of()),
+                        "", "FLU_LIKE_SYNDROME_WITH_DIZZINESS_HEADACHE", "", 5, List.of()),
+                option("Yellowish discoloration of skin and eyes", "", "YELLOWISH_DISCOLORATION_SKIN_EYES", "", 6, List.of()),
+                option("Discoloration of body fluids", "", "DISCOLORATION_BODY_FLUIDS", "", 7, List.of()),
+                option("Dark colour Urine", "", "DARK_COLOUR_URINE", "", 8, List.of()),
+                option("Pale stool", "", "PALE_STOOL", "", 9, List.of()),
+                option("Skin Rash", "", "SKIN_RASH", "", 10, List.of()),
+                option("Itching", "", "ITCHING", "", 11, List.of()),
+                option("Tingling/burning/numbness in hands and feet", "", "TINGLING_BURNING_NUMBNESS_HANDS_FEET", "", 12, List.of()),
                 option("Flue like syndrome- Chills, Dry cough, Shortness of breath, loss of appetite, body ache and malaise",
-                        "", "FLU_LIKE_SYNDROME", "", 12, List.of()),
-                option("Sleepiness, lethargy", "", "SLEEPINESS_LETHARGY", "", 13, List.of()),
-                option("Persistent episodes of unformed watery stools", "", "PERSISTENT_UNFORMED_WATERY_STOOLS", "", 14, List.of()),
-                option("Mental changes and signs of bleeding", "", "MENTAL_CHANGES_SIGNS_BLEEDING", "", 15, List.of()),
-                option("Convulsions", "", "CONVULSIONS", "", 16, List.of()),
-                option("Anaemia", "", "ANAEMIA", "", 17, List.of()),
-                option("Arthralgia", "", "ARTHRALGIA", "", 18, List.of()),
-                option("Decreased appetite", "", "DECREASED_APPETITE", "", 19, List.of()),
-                option("Hypotension / Syncope", "", "HYPOTENSION_SYNCOPE", "", 20, List.of()),
-                option("Conjuctivities", "", "CONJUCTIVITIES", "", 21, List.of()),
-                option("Shock", "", "SHOCK", "", 22, List.of()),
-                option("None Reported", "", "NONE_REPORTED", "", 23, List.of())));
+                        "", "FLU_LIKE_SYNDROME", "", 13, List.of()),
+                option("Sleepiness, lethargy", "", "SLEEPINESS_LETHARGY", "", 14, List.of()),
+                option("Persistent episodes of unformed watery stools", "", "PERSISTENT_UNFORMED_WATERY_STOOLS", "", 15, List.of()),
+                option("Mental changes and signs of bleeding", "", "MENTAL_CHANGES_SIGNS_BLEEDING", "", 16, List.of()),
+                option("Convulsions", "", "CONVULSIONS", "", 17, List.of()),
+                option("Anaemia", "", "ANAEMIA", "", 18, List.of()),
+                option("Arthralgia", "", "ARTHRALGIA", "", 19, List.of()),
+                option("Decreased appetite", "", "DECREASED_APPETITE", "", 20, List.of()),
+                option("Hypotension / Syncope", "", "HYPOTENSION_SYNCOPE", "", 21, List.of()),
+                option("Conjuctivities", "", "CONJUCTIVITIES", "", 22, List.of()),
+                option("Shock", "", "SHOCK", "", 23, List.of()),
+                option("None Reported", "", "NONE_REPORTED", "", 24, List.of())));
         adr.setValidations(List.of());
         qs.add(adr);
 
@@ -404,7 +405,7 @@ public class TptFollowUpFormSeeder {
         q.setQuestionText(text);
         q.setQuestionTextHindi(textHindi);
         q.setQuestionType(QuestionType.DATE);
-        q.setIsMandatory(false);
+        q.setIsMandatory(true);
         q.setDisplayOrder(order);
         q.setVisibleByDefault(false);
         q.setOptions(List.of());
