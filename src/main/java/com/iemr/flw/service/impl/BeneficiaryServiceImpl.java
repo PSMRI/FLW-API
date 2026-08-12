@@ -356,10 +356,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
                         // GPS fallback: if not in RMNCH details (syncdatatoamrti not yet called),
                         // pull from i_beneficiaryaddress (saved during TM-API registration)
-                        if (benDetailsRMNCH_OBJ.getGpsLatitude() == null && benAddressOBJ.getGpsLatitude() != null)
-                            benDetailsRMNCH_OBJ.setGpsLatitude(benAddressOBJ.getGpsLatitude());
-                        if (benDetailsRMNCH_OBJ.getGpsLongitude() == null && benAddressOBJ.getGpsLongitude() != null)
-                            benDetailsRMNCH_OBJ.setGpsLongitude(benAddressOBJ.getGpsLongitude());
                         if (benDetailsRMNCH_OBJ.getDigipin() == null && benAddressOBJ.getDigipin() != null)
                             benDetailsRMNCH_OBJ.setDigipin(benAddressOBJ.getDigipin());
                         if (benDetailsRMNCH_OBJ.getGpsTimestamp() == null && benAddressOBJ.getGpsTimestamp() != null)

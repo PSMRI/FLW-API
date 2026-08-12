@@ -248,12 +248,6 @@ public class RMNCHMBeneficiaryaddress implements Serializable {
 	@Column(name = "SyncedDate")
 	private Timestamp SyncedDate;
 
-	@Column(name = "gpsLatitude")
-	private Double gpsLatitude;
-
-	@Column(name = "gpsLongitude")
-	private Double gpsLongitude;
-
 	@Column(name = "digipin")
 	private String digipin;
 

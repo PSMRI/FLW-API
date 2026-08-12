@@ -229,7 +229,7 @@ public class TptFollowUpFormSeeder {
         qs.add(textQuestionMaxLength("TFU_REMARKS",
                 "Any other significant Information (e.g. missed doses, side effects, counselling notes)",
                 "कोई अन्य महत्वपूर्ण जानकारी (जैसे छूटी हुई खुराक, दुष्प्रभाव, परामर्श नोट्स)",
-                6, false, 3000, true));
+                6, false, 500, true));
 
         SectionQuestionDTO adherence = new SectionQuestionDTO();
         adherence.setQuestionUuid("TFU_ADHERENCE");
