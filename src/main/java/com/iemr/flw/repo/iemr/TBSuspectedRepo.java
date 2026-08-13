@@ -24,6 +24,8 @@ public interface TBSuspectedRepo extends JpaRepository<TBSuspected, Long> {
     TBSuspected getByUserIdAndBenIdAndVisitCode(@Param("benId") Long benId, @Param("userId") Integer userId,
                                                   @Param("visitCode") Long visitCode);
 
+    TBSuspected findFirstByBenIdOrderByCreatedDateDesc(Long benId);
+
     @Query("SELECT tbs FROM TBSuspected tbs WHERE tbs.userId = :userId and tbs.visitDate >= :fromDate and tbs.visitDate <= :toDate")
     List<TBSuspected> getByUserId(@Param("userId") Integer userId, @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
