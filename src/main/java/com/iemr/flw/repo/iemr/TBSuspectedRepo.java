@@ -37,4 +37,5 @@ public interface TBSuspectedRepo extends JpaRepository<TBSuspected, Long> {
     @Modifying
     @Query("UPDATE TBSuspected t SET t.vanSerialNo = t.id WHERE t.id = :id")
     void updateVanSerialNo(@Param("id") Long id);
+
 }
