@@ -279,6 +279,32 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         return dto;
     }
 
+    // Best-effort link from a diagnostic order back to the tb_suspected referral that presumably
+    // prompted it. Not every diagnostic order originates from a TB referral, so a miss here is
+    // expected and must never fail/block the push or result flow — just log and move on.
+    private TBSuspected findTbSuspected(Long beneficiaryId) {
+        TBSuspected tbSuspected = tbSuspectedRepo.findFirstByBenIdOrderByCreatedDateDesc(beneficiaryId);
+        if (tbSuspected == null) {
+            logger.warn("No tb_suspected row for beneficiaryId={} — skipping write-back", beneficiaryId);
+        }
+        return tbSuspected;
+    }
+
+    private void recordTbSuspectedResult(DiagnosticOrder order, DiagnosticResult result) {
+        TBSuspected tbSuspected = findTbSuspected(order.getBeneficiaryId());
+        if (tbSuspected == null) return;
+        DiagnosticOrderType type = DiagnosticOrderType.fromCode(order.getOrderType());
+        if (type == DiagnosticOrderType.XRAY_CHEST) {
+            tbSuspected.setIsChestXRayDone(true);
+            tbSuspected.setChestXRayResult(result.getResultSummary());
+        } else {
+            tbSuspected.setIsSputumCollected(true);
+            tbSuspected.setSputumTestResult(result.getResultSummary());
+        }
+        tbSuspected.setProcessed("N");
+        tbSuspectedRepo.save(tbSuspected);
+    }
+
     // Shared by processResult (single combined save+ingest call, e.g. submitManualResult) and
     // pollOnce's second, asset-only call (which must NOT re-save the already-saved result/order
     // fields a second time).
