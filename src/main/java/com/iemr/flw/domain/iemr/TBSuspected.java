@@ -60,6 +60,21 @@ public class TBSuspected {
     @Column(name = "chest_xray_result", length = 100)
     private String chestXRayResult;
 
+    @Column(name = "reason_for_refusal_xray")
+    private String reasonForRefusalXray;
+
+    @Column(name = "reason_for_refusal_mtb")
+    private String reasonForRefusalMTB;
+
+    @Column(name = "reaosn_for_refusal_mdrrif")
+    private String reasonForRefusalMDRRIF;
+
+    @Column(name = "reason_for_refusal_sputum")
+    private String reasonForRefusalSputum;
+
+    @Column(name = "mdr_rif_result")
+    private String mdrRifResult;
+
     // Referral & Confirmation
     @Column(name = "referral_facility", length = 200)
     private String referralFacility;
