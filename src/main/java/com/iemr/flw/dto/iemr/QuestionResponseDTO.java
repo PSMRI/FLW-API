@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Outbound representation of a single question's stored answer.
- * For MCQ/CHECKBOX_MULTI questions, multiple QuestionResponseDTO entries share the same questionId.
+ * For MCQ/CHECKBOX_MULTI/DROPDOWN_MULTI questions, multiple QuestionResponseDTO entries share the same questionId.
  *
  * @author Piramal Swasthya
  */
@@ -40,7 +40,7 @@ public class QuestionResponseDTO {
 
     private Long questionResponseId;
     private Long questionId;
-    /** Populated for RADIO, DROPDOWN, MCQ, CHECKBOX, and CHECKBOX_MULTI answers. */
+    /** Populated for RADIO, DROPDOWN, MCQ, CHECKBOX, CHECKBOX_MULTI, and DROPDOWN_MULTI answers. */
     private Long optionId;
     /** Populated for TEXT, DATE, AUTO_FILL, NUMBER_PICKER answers. */
     private String answerText;

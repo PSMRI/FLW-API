@@ -24,6 +24,8 @@ public interface TBSuspectedRepo extends JpaRepository<TBSuspected, Long> {
     TBSuspected getByUserIdAndBenIdAndVisitCode(@Param("benId") Long benId, @Param("userId") Integer userId,
                                                   @Param("visitCode") Long visitCode);
 
+    TBSuspected findFirstByBenIdOrderByCreatedDateDesc(Long benId);
+
     @Query("SELECT tbs FROM TBSuspected tbs WHERE tbs.userId = :userId and tbs.visitDate >= :fromDate and tbs.visitDate <= :toDate")
     List<TBSuspected> getByUserId(@Param("userId") Integer userId, @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
@@ -35,4 +37,5 @@ public interface TBSuspectedRepo extends JpaRepository<TBSuspected, Long> {
     @Modifying
     @Query("UPDATE TBSuspected t SET t.vanSerialNo = t.id WHERE t.id = :id")
     void updateVanSerialNo(@Param("id") Long id);
+
 }

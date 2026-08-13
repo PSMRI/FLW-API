@@ -55,7 +55,7 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
     // beneficiary with an old terminal order and a new in-flight retest of the same orderType
     // is bucketed only by the retest, not both.
     @Query("SELECT o.beneficiaryId FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
-            "AND o.status NOT IN ('COMPLETED', 'EXPIRED', 'FAILED', 'REFUSED') " +
+            "AND o.status NOT IN ('COMPLETED', 'EXPIRED', 'FAILED', 'REFUSED', 'MANUAL_ENTRY') " +
             "AND o.id = (SELECT MAX(o2.id) FROM DiagnosticOrder o2 " +
             "WHERE o2.beneficiaryId = o.beneficiaryId AND o2.orderType = :orderType AND o2.deleted = false) " +
             "AND o.beneficiaryId IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
@@ -102,5 +102,15 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
             "AND (:villageId IS NULL OR b.villageID = :villageId) " +
             "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
     List<Long> findBeneficiaryIdsRefused(@Param("orderType") String orderType,
+            @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
+
+    @Query("SELECT o.beneficiaryId FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
+            "AND o.status = 'MANUAL_ENTRY' " +
+            "AND o.id = (SELECT MAX(o2.id) FROM DiagnosticOrder o2 " +
+            "WHERE o2.beneficiaryId = o.beneficiaryId AND o2.orderType = :orderType AND o2.deleted = false) " +
+            "AND o.beneficiaryId IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
+            "AND (:villageId IS NULL OR b.villageID = :villageId) " +
+            "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
+    List<Long> findBeneficiaryIdsAwaitingManualEntry(@Param("orderType") String orderType,
             @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
 }

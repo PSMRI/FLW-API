@@ -2,6 +2,7 @@ package com.iemr.flw.service.impl;
 
 import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.domain.iemr.DiagnosticResult;
+import com.iemr.flw.domain.iemr.TBSuspected;
 import com.iemr.flw.dto.DiagnosticOrderRequestDto;
 import com.iemr.flw.dto.DiagnosticOrderResultDto;
 import com.iemr.flw.dto.DiagnosticOrderStatusSummaryDto;
@@ -16,6 +17,7 @@ import com.iemr.flw.masterEnum.DiagnosticOrderStatus;
 import com.iemr.flw.masterEnum.DiagnosticOrderType;
 import com.iemr.flw.repo.iemr.DiagnosticOrderRepo;
 import com.iemr.flw.repo.iemr.DiagnosticResultRepo;
+import com.iemr.flw.repo.iemr.TBSuspectedRepo;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.DiagnosticDocumentService;
 import com.iemr.flw.service.DiagnosticOrderService;
@@ -28,17 +30,26 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     private static final Logger logger = LoggerFactory.getLogger(DiagnosticOrderServiceImpl.class);
 
+    private static final Set<String> BLOCKING_STATUSES = Set.of(
+            DiagnosticOrderStatus.PENDING.name(),
+            DiagnosticOrderStatus.IN_PROGRESS.name(),
+            DiagnosticOrderStatus.EXPIRED.name());
+
     @Autowired
     private DiagnosticOrderRepo diagnosticOrderRepo;
 
     @Autowired
     private DiagnosticResultRepo diagnosticResultRepo;
+
+    @Autowired
+    private TBSuspectedRepo tbSuspectedRepo;
 
     @Autowired
     private DiagnosticProviderFactory providerFactory;
@@ -62,18 +73,32 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
         String providerCode = providerFactory.getProviderCodeForOrderType(orderType);
         String externalOrderId = String.format("%d-%d-%s", beneficiaryId, visitCode, orderType.name());
-
+        
         String reasonForRefusal = request.getReasonForRefusal();
         if (reasonForRefusal != null) {
             return saveRefusedOrder(beneficiaryId, visitCode, orderType, orderEvent, providerCode, externalOrderId,
                     patientFirstName, patientLastName, patientDateOfBirth, patientSex, reasonForRefusal);
         }
 
-        Optional<DiagnosticOrder> existing =
-                diagnosticOrderRepo.findByBeneficiaryIdAndVisitCodeAndOrderType(beneficiaryId, visitCode, orderType.name());
+        Optional<DiagnosticOrder> latestForType = diagnosticOrderRepo
+                .findFirstByBeneficiaryIdAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, orderType.name());
+
+        Optional<DiagnosticOrder> existing = (latestForType.isPresent() && visitCode.equals(latestForType.get().getVisitCode()))
+                ? latestForType
+                : diagnosticOrderRepo.findByBeneficiaryIdAndVisitCodeAndOrderType(beneficiaryId, visitCode, orderType.name());
 
         if (existing.isPresent() && !DiagnosticOrderStatus.FAILED.name().equals(existing.get().getStatus())) {
             return existing.get();
+        }
+
+        if (latestForType.isPresent()
+                && BLOCKING_STATUSES.contains(latestForType.get().getStatus())
+                && !visitCode.equals(latestForType.get().getVisitCode())) {
+            DiagnosticOrder blocker = latestForType.get();
+            logger.info("Duplicate order push suppressed for beneficiaryId={}, orderType={}: unresolved order id={} "
+                    + "(visitCode={}, status={}) already exists — returning it instead of pushing a new order for visitCode={}",
+                    beneficiaryId, orderType, blocker.getId(), blocker.getVisitCode(), blocker.getStatus(), visitCode);
+            return blocker;
         }
 
         DiagnosticOrder order = existing.orElseGet(DiagnosticOrder::new);
@@ -113,6 +138,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         if (providerCode == null || providerCode.isBlank()) {
             logger.info("No active vendor configured for orderType={}, beneficiaryId={} — order saved for manual entry",
                     orderType, beneficiaryId);
+            order.setStatus(DiagnosticOrderStatus.MANUAL_ENTRY.name());
+            order = diagnosticOrderRepo.save(order);
             return order;
         }
 
@@ -234,6 +261,10 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
         diagnosticOrderRepo.save(order);
 
+        if (DiagnosticOrderStatus.COMPLETED.name().equals(order.getStatus())) {
+            recordTbSuspectedResult(order, result);
+        }
+
         DiagnosticOrderResultDto dto = new DiagnosticOrderResultDto();
         dto.setExternalOrderId(order.getExternalOrderId());
         dto.setOrderType(order.getOrderType());
@@ -248,8 +279,35 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         return dto;
     }
 
-    // Shared by processResult (single combined save+ingest call, e.g. triggerManualPoll) and pollOnce's
-    // second, asset-only call (which must NOT re-save the already-saved result/order fields a second time).
+    // Best-effort link from a diagnostic order back to the tb_suspected referral that presumably
+    // prompted it. Not every diagnostic order originates from a TB referral, so a miss here is
+    // expected and must never fail/block the push or result flow — just log and move on.
+    private TBSuspected findTbSuspected(Long beneficiaryId) {
+        TBSuspected tbSuspected = tbSuspectedRepo.findFirstByBenIdOrderByCreatedDateDesc(beneficiaryId);
+        if (tbSuspected == null) {
+            logger.warn("No tb_suspected row for beneficiaryId={} — skipping write-back", beneficiaryId);
+        }
+        return tbSuspected;
+    }
+
+    private void recordTbSuspectedResult(DiagnosticOrder order, DiagnosticResult result) {
+        TBSuspected tbSuspected = findTbSuspected(order.getBeneficiaryId());
+        if (tbSuspected == null) return;
+        DiagnosticOrderType type = DiagnosticOrderType.fromCode(order.getOrderType());
+        if (type == DiagnosticOrderType.XRAY_CHEST) {
+            tbSuspected.setIsChestXRayDone(true);
+            tbSuspected.setChestXRayResult(result.getResultSummary());
+        } else {
+            tbSuspected.setIsSputumCollected(true);
+            tbSuspected.setSputumTestResult(result.getResultSummary());
+        }
+        tbSuspected.setProcessed("N");
+        tbSuspectedRepo.save(tbSuspected);
+    }
+
+    // Shared by processResult (single combined save+ingest call, e.g. submitManualResult) and
+    // pollOnce's second, asset-only call (which must NOT re-save the already-saved result/order
+    // fields a second time).
     private void ingestAssets(DiagnosticOrder order, DiagnosticPollResult pollResult) {
         if (pollResult.getAssets() == null) {
             return;
@@ -319,7 +377,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
         if (DiagnosticOrderStatus.COMPLETED.name().equals(status)
                 || DiagnosticOrderStatus.CANCELLED.name().equals(status)
-                || DiagnosticOrderStatus.REFUSED.name().equals(status)) {
+                || DiagnosticOrderStatus.REFUSED.name().equals(status)
+                || DiagnosticOrderStatus.MANUAL_ENTRY.name().equals(status)) {
             throw new IllegalStateException("Cannot retry polling for order in terminal status " + status);
         }
 
@@ -385,7 +444,10 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 .findBeneficiaryIdsFailed(type.name(), villageId, providerServiceMapId);
         List<Long> refused = diagnosticOrderRepo
                 .findBeneficiaryIdsRefused(type.name(), villageId, providerServiceMapId);
-        return new DiagnosticOrderStatusSummaryDto(awaitingProviderResult, completed, pollingTimedOut, failed, refused);
+        List<Long> awaitingManualEntry = diagnosticOrderRepo
+                .findBeneficiaryIdsAwaitingManualEntry(type.name(), villageId, providerServiceMapId);
+        return new DiagnosticOrderStatusSummaryDto(awaitingProviderResult, completed, pollingTimedOut, failed, refused,
+                awaitingManualEntry);
     }
 
     @Override
