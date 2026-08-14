@@ -43,8 +43,14 @@ public interface DynamicFormResponseService {
     /** Save POST_SUBMIT section answers and advance status to COMPLETE. */
     FormResponseDTO completeForm(FormResponseRequest request, String jwtToken) throws IEMRException;
 
-    /** All responses for a beneficiary filtered by form UUID. */
-    List<FormResponseDTO> getResponsesByBeneficiary(Long beneficiaryId, String formUuid);
+    /**
+     * Responses to the given form, either for one beneficiary or for every beneficiary matching
+     * villageId/providerServiceMapId. At least one of beneficiaryId, villageId, or
+     * providerServiceMapId is required: pass beneficiaryId for a single beneficiary, or leave it
+     * null and use villageId and/or providerServiceMapId to filter across beneficiaries.
+     */
+    List<FormResponseDTO> getResponsesByBeneficiary(Long beneficiaryId, Integer villageId,
+            Integer providerServiceMapId, String formUuid);
 
     /** Single response with all nested section and question answers. */
     FormResponseDTO getResponseById(Long responseId);

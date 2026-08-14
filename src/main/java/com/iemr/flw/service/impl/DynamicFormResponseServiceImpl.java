@@ -152,12 +152,18 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
     @Override
     @Transactional(readOnly = true)
-    public List<FormResponseDTO> getResponsesByBeneficiary(Long beneficiaryId, String formUuid) {
+    public List<FormResponseDTO> getResponsesByBeneficiary(Long beneficiaryId, Integer villageId,
+            Integer providerServiceMapId, String formUuid) {
+        if (beneficiaryId == null && villageId == null && providerServiceMapId == null) {
+            throw new IllegalArgumentException(
+                    "At least one of beneficiaryId, villageId, or providerServiceMapId must be provided");
+        }
         FormVersion version = resolveLatestVersion(formUuid);
         Long formId = version.getDynamicForm().getFormId();
 
-        List<FormResponse> responses =
-                formResponseRepo.findByBeneficiaryIdAndFormId(beneficiaryId, formId);
+        List<FormResponse> responses = beneficiaryId != null
+                ? formResponseRepo.findByBeneficiaryIdAndFormId(beneficiaryId, formId)
+                : formResponseRepo.findByFormIdFiltered(formId, villageId, providerServiceMapId);
         return responses.stream()
                 .map(r -> buildFormResponseDTO(r, loadSectionResponseDTOs(r.getResponseId())))
                 .collect(Collectors.toList());
