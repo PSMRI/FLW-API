@@ -40,7 +40,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     private static final Set<String> BLOCKING_STATUSES = Set.of(
             DiagnosticOrderStatus.PENDING.name(),
             DiagnosticOrderStatus.IN_PROGRESS.name(),
-            DiagnosticOrderStatus.EXPIRED.name());
+            DiagnosticOrderStatus.EXPIRED.name(),
+            DiagnosticOrderStatus.COMPLETED.name(),
+            DiagnosticOrderStatus.MANUAL_ENTRY.name());
 
     @Autowired
     private DiagnosticOrderRepo diagnosticOrderRepo;
@@ -297,6 +299,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         if (type == DiagnosticOrderType.XRAY_CHEST) {
             tbSuspected.setIsChestXRayDone(true);
             tbSuspected.setChestXRayResult(result.getResultSummary());
+        } else if (type == DiagnosticOrderType.MDR_RIF) {
+            tbSuspected.setIsSputumCollected(true);
+            tbSuspected.setMdrRifResult(result.getResultSummary());
         } else {
             tbSuspected.setIsSputumCollected(true);
             tbSuspected.setSputumTestResult(result.getResultSummary());

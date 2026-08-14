@@ -22,6 +22,11 @@ public class TBSuspectedDTO {
     private String sputumTestResult;
     private Boolean isChestXRayDone;
     private String chestXRayResult;
+    private String reasonForRefusalXray;
+    private String reasonForRefusalMTB;
+    private String reasonForRefusalMDRRIF;
+    private String reasonForRefusalSputum;
+    private String mdrRifResult;
     private String referralFacility;
     private Boolean isTBConfirmed;
     private Boolean isConfirmed;

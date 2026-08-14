@@ -136,32 +136,40 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         int pageSize = Integer.parseInt(door_to_door_page_size);
 
         // Stop TB path: filter by providerServiceMapID + villageID
+        // Paginated at the DB level (LIMIT/OFFSET) instead of loading every flow row for
+        // the whole village into memory and slicing in Java — cost is O(pageSize), not
+        // O(village size), on every page including page 0. See BeneficiaryRepo for the
+        // underlying query.
         if (request.getProviderServiceMapID() != null && request.getVillageID() != null) {
-            List<BenFlowStatus> flows = benFlowStatusRepo.getRegistrarWorklist(
+            long totalCount = beneficiaryRepo.countVillageWorklist(
                     request.getProviderServiceMapID(), request.getVillageID());
 
-            if (flows == null || flows.isEmpty()) return null;
+            if (totalCount == 0) return null;
 
-            List<RMNCHMBeneficiaryaddress> allAddresses = new ArrayList<>();
-            for (BenFlowStatus flow : flows) {
-                if (flow.getBeneficiaryRegID() == null) continue;
-                List<RMNCHMBeneficiarymapping> mappings = beneficiaryRepo.findByBenRegIdFromMapping(
-                        BigInteger.valueOf(flow.getBeneficiaryRegID()));
-                if (mappings.isEmpty()) continue;
-                RMNCHMBeneficiarymapping mapping = mappings.get(0);
-                if (mapping.getBenAddressId() == null) continue;
-                RMNCHMBeneficiaryaddress address = beneficiaryRepo.getAddressById(mapping.getBenAddressId());
-                if (address != null) allAddresses.add(address);
-            }
+            int totalPage = (int) Math.ceil((double) totalCount / pageSize);
+            int offset = request.getPageNo() * pageSize;
+            if (offset >= totalCount) return null;
 
-            if (allAddresses.isEmpty()) return null;
+            List<BigInteger> addressIds = beneficiaryRepo.getVillageWorklistAddressIds(
+                    request.getProviderServiceMapID(), request.getVillageID(), pageSize, offset);
 
-            int totalPage = (int) Math.ceil((double) allAddresses.size() / pageSize);
-            int start = request.getPageNo() * pageSize;
-            int end = Math.min(start + pageSize, allAddresses.size());
-            if (start >= allAddresses.size()) return null;
+            if (addressIds.isEmpty()) return null;
 
-            return getMappingsForAddressIDs(allAddresses.subList(start, end), totalPage, authorisation);
+            // Was findAddressesByIds() - a single "IN :ids" JPQL query. Hit a reproducible
+            // Hibernate 6.4.1 bug there: "Binding is multi-valued; illegal call to
+            // #getBindValue" even with a well-formed, non-empty id list (confirmed live
+            // against 192.168.45.40 - the 10 rows returned have no NULLs/type issues, so
+            // this isn't a data problem). Looping getAddressById() per id sidesteps
+            // Hibernate's collection-parameter binding entirely - only ever pageSize (10)
+            // calls per page, same order-preservation as before.
+            List<RMNCHMBeneficiaryaddress> pageAddresses = addressIds.stream()
+                    .map(beneficiaryRepo::getAddressById)
+                    .filter(java.util.Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            if (pageAddresses.isEmpty()) return null;
+
+            return getMappingsForAddressIDs(pageAddresses, totalPage, authorisation);
         }
 
         // Normal FLW/ASHA path
@@ -228,8 +236,9 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         for (RMNCHMBeneficiaryaddress a : addressList) {
             // exception by-passing
             try {
-                if(!beneficiaryRepo.getByAddressID(a.getId()).isEmpty()){
-                    RMNCHMBeneficiarymapping m = beneficiaryRepo.getByAddressID(a.getId()).get(0);
+                List<RMNCHMBeneficiarymapping> mappingsForAddress = beneficiaryRepo.getByAddressID(a.getId());
+                if(!mappingsForAddress.isEmpty()){
+                    RMNCHMBeneficiarymapping m = mappingsForAddress.get(0);
                     if (m != null) {
                         benHouseHoldRMNCH_ROBJ = new RMNCHHouseHoldDetails();
                         benDetailsRMNCH_OBJ = new RMNCHBeneficiaryDetailsRmnch();
@@ -262,20 +271,20 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             benID = beneficiaryRepo.getBenIdFromRegID(m.getBenRegId().longValue());
 
                         if (m.getBenRegId() != null) {
-                            if(!beneficiaryRepo
-                                    .getDetailsByRegID((m.getBenRegId()).longValue()).isEmpty()){
-                                benDetailsRMNCH_OBJ = beneficiaryRepo
-                                        .getDetailsByRegID((m.getBenRegId()).longValue()).get(0);
+                            List<RMNCHBeneficiaryDetailsRmnch> detailsByRegID = beneficiaryRepo
+                                    .getDetailsByRegID((m.getBenRegId()).longValue());
+                            if(!detailsByRegID.isEmpty()){
+                                benDetailsRMNCH_OBJ = detailsByRegID.get(0);
                             }
                             benBotnBirthRMNCH_ROBJ = beneficiaryRepo.getBornBirthByRegID((m.getBenRegId()).longValue());
 
-                            if (benDetailsRMNCH_OBJ != null && benDetailsRMNCH_OBJ.getHouseoldId() != null)
-                                if(!houseHoldRepo
-                                        .getByHouseHoldID(benDetailsRMNCH_OBJ.getHouseoldId()).isEmpty()){
-                                    benHouseHoldRMNCH_ROBJ = houseHoldRepo
-                                            .getByHouseHoldID(benDetailsRMNCH_OBJ.getHouseoldId()).get(0);
-
+                            if (benDetailsRMNCH_OBJ != null && benDetailsRMNCH_OBJ.getHouseoldId() != null) {
+                                List<RMNCHHouseHoldDetails> householdsById = houseHoldRepo
+                                        .getByHouseHoldID(benDetailsRMNCH_OBJ.getHouseoldId());
+                                if(!householdsById.isEmpty()){
+                                    benHouseHoldRMNCH_ROBJ = householdsById.get(0);
                                 }
+                            }
 
                         }
                         if (benDetailsRMNCH_OBJ == null)
@@ -420,7 +429,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                             benDetailsRMNCH_OBJ.setUser_image(benImageOBJ.getUser_image());
 
                         // new fields
-//                    benDetailsRMNCH_OBJ.setRegistrationDate(benDetailsOBJ.getCreatedDate());
+                        benDetailsRMNCH_OBJ.setRegistrationDate(benDetailsOBJ.getCreatedDate());
                         if (benID != null)
                             benDetailsRMNCH_OBJ.setBenficieryid(benID.longValue());
 
