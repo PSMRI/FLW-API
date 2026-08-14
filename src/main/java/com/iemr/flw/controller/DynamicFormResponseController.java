@@ -84,13 +84,17 @@ public class DynamicFormResponseController {
                 new ApiResponse(true, "Bulk submit complete: " + saved.size() + " saved", saved));
     }
 
-    @Operation(summary = "Get all form responses for a beneficiary filtered by form UUID")
+    @Operation(summary = "Get all form responses for a beneficiary filtered by form UUID. "
+            + "If beneficiaryId is omitted, villageId and/or providerServiceMapId are used instead "
+            + "to return responses for every matching beneficiary.")
     @RequestMapping(value = "/getByBeneficiary", method = RequestMethod.GET)
     public ResponseEntity<ApiResponse> getByBeneficiary(
-            @RequestParam Long beneficiaryId,
+            @RequestParam(required = false) Long beneficiaryId,
+            @RequestParam(required = false) Integer villageId,
+            @RequestParam(required = false) Integer providerServiceMapId,
             @RequestParam String formUuid) {
         List<FormResponseDTO> dtos =
-                responseService.getResponsesByBeneficiary(beneficiaryId, formUuid);
+                responseService.getResponsesByBeneficiary(beneficiaryId, villageId, providerServiceMapId, formUuid);
         return ResponseEntity.ok(new ApiResponse(true, "Responses fetched successfully", dtos));
     }
 
