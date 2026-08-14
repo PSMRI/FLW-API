@@ -66,7 +66,7 @@ public class TBSuspected {
     @Column(name = "reason_for_refusal_mtb")
     private String reasonForRefusalMTB;
 
-    @Column(name = "reaosn_for_refusal_mdrrif")
+    @Column(name = "reason_for_refusal_mdrrif")
     private String reasonForRefusalMDRRIF;
 
     @Column(name = "reason_for_refusal_sputum")
