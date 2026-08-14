@@ -25,6 +25,7 @@ import com.iemr.flw.dto.iemr.CompletedBeneficiaryDetailDTO;
 import com.iemr.flw.dto.iemr.FormResponseDTO;
 import com.iemr.flw.dto.iemr.FormResponseRequest;
 import com.iemr.flw.masterEnum.FormType;
+import com.iemr.flw.masterEnum.SectionPhase;
 import com.iemr.flw.service.DynamicFormResponseService;
 import com.iemr.flw.utils.ApiResponse;
 import com.iemr.flw.utils.exception.IEMRException;
@@ -99,14 +100,16 @@ public class DynamicFormResponseController {
         FormResponseDTO dto = responseService.getResponseById(responseId);
         return ResponseEntity.ok(new ApiResponse(true, "Response fetched successfully", dto));
     }
-    @Operation(summary = "Get COMPLETE/REFUSED form-response details (beneficiaryId, refusal flag, sections filled vs total) for the given form type, optionally filtered by village and/or provider service map")
+    @Operation(summary = "Get COMPLETE/REFUSED form-response details (beneficiaryId, refusal flag, sections filled vs total) for the given form type, optionally filtered by village and/or provider service map. "
+            + "sectionPhase selects which phase's sections are counted (default PRE_SUBMIT); pass POST_SUBMIT to count the sections filled after the main submit.")
     @RequestMapping(value = "/getCompletedBeneficiaries", method = RequestMethod.GET)
     public ResponseEntity<ApiResponse> getCompletedBeneficiaries(
             @RequestParam FormType formType,
             @RequestParam(required = false) Integer villageId,
-            @RequestParam(required = false) Integer providerServiceMapId) {
+            @RequestParam(required = false) Integer providerServiceMapId,
+            @RequestParam(required = false, defaultValue = "PRE_SUBMIT") SectionPhase sectionPhase) {
         List<CompletedBeneficiaryDetailDTO> result =
-                responseService.getCompletedBeneficiaries(formType, villageId, providerServiceMapId);
+                responseService.getCompletedBeneficiaries(formType, villageId, providerServiceMapId, sectionPhase);
         return ResponseEntity.ok(new ApiResponse(true, "Completed beneficiaries fetched successfully", result));
     }
 }

@@ -536,7 +536,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     @Override
     @Transactional(readOnly = true)
     public List<CompletedBeneficiaryDetailDTO> getCompletedBeneficiaries(
-            FormType formType, Integer villageId, Integer providerServiceMapId) {
+            FormType formType, Integer villageId, Integer providerServiceMapId, SectionPhase sectionPhase) {
         DynamicForm form = dynamicFormRepo.findByFormTypeAndIsActive(formType, true)
                 .orElseThrow(() -> new NoSuchElementException(
                         "No active form found for type: " + formType));
@@ -552,12 +552,12 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
         List<Long> responseIds = responses.stream().map(FormResponse::getResponseId).collect(Collectors.toList());
         Map<Long, Integer> sectionsFilledByResponseId = sectionResponseRepo
-                .countByResponseIdInAndSectionPhase(responseIds, SectionPhase.PRE_SUBMIT).stream()
+                .countByResponseIdInAndSectionPhase(responseIds, sectionPhase).stream()
                 .collect(Collectors.toMap(row -> (Long) row[0], row -> ((Number) row[1]).intValue()));
 
         List<Long> versionIds = responses.stream().map(FormResponse::getVersionId).distinct().collect(Collectors.toList());
         Map<Long, Integer> totalSectionsByVersionId = formSectionRepo
-                .countByFormVersion_VersionIdInAndSectionPhase(versionIds, SectionPhase.PRE_SUBMIT).stream()
+                .countByFormVersion_VersionIdInAndSectionPhase(versionIds, sectionPhase).stream()
                 .collect(Collectors.toMap(row -> (Long) row[0], row -> ((Number) row[1]).intValue()));
 
         return responses.stream()

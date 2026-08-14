@@ -25,6 +25,7 @@ import com.iemr.flw.dto.iemr.CompletedBeneficiaryDetailDTO;
 import com.iemr.flw.dto.iemr.FormResponseDTO;
 import com.iemr.flw.dto.iemr.FormResponseRequest;
 import com.iemr.flw.masterEnum.FormType;
+import com.iemr.flw.masterEnum.SectionPhase;
 import com.iemr.flw.utils.exception.IEMRException;
 
 import java.util.List;
@@ -65,7 +66,8 @@ public interface DynamicFormResponseService {
     /**
      * Returns per-beneficiary detail (outcome plus section-fill progress) for COMPLETE and REFUSED
      * responses to the given form type, optionally filtered by village and/or provider service map.
-     * sectionsFilled/totalSections only count PRE_SUBMIT-phase sections.
+     * sectionsFilled/totalSections only count sections in the given sectionPhase.
      */
-    List<CompletedBeneficiaryDetailDTO> getCompletedBeneficiaries(FormType formType, Integer villageId, Integer providerServiceMapId);
+    List<CompletedBeneficiaryDetailDTO> getCompletedBeneficiaries(FormType formType, Integer villageId,
+            Integer providerServiceMapId, SectionPhase sectionPhase);
 }
