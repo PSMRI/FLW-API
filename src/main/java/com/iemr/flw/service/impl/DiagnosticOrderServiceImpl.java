@@ -330,6 +330,16 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     @Override
     public DiagnosticPollResult pollOnce(DiagnosticOrder order) throws Exception {
+        // A null pushResponseJson means the order was never actually confirmed as pushed to the
+        // vendor (e.g. a stale/legacy row) — polling the vendor for it would be meaningless, so
+        // fail it outright instead of burning a vendor call every tick.
+        if (order.getPushResponseJson() == null || order.getPushResponseJson().isEmpty()) {
+            order.setStatus(DiagnosticOrderStatus.FAILED.name());
+            order.setErrorMessage("No push response recorded for this order — cannot poll");
+            order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
+            diagnosticOrderRepo.save(order);
+            return null;
+        }
         DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
         DiagnosticPollResult result = provider.pollResult(order, false);
         if (DiagnosticOrderStatus.COMPLETED.equals(result.getStatus())) {
