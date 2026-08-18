@@ -302,7 +302,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         } else if (type == DiagnosticOrderType.MDR_RIF) {
             tbSuspected.setIsSputumCollected(true);
             tbSuspected.setMdrRifResult(result.getResultSummary());
-        } else {
+        } else if (type == DiagnosticOrderType.MTB){
             tbSuspected.setIsSputumCollected(true);
             tbSuspected.setSputumTestResult(result.getResultSummary());
         }
