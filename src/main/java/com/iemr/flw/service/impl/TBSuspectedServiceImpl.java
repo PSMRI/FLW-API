@@ -75,7 +75,7 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
                         visit.getVisitCode(), beneficiaryRegID);
 
                 TBSuspected tbSuspected;
-                if (requestDTO.getFromStopTB() != null) {
+                if (requestDTO.getFromStopTB() != null && requestDTO.getFromStopTB()) {
                     // todo later - userId and visitCode based lookup will be reintroduced once orders are mapped with visitCode
                     List<TBSuspected> existingByBenId = tbSuspectedRepo.getByBenId(tbSuspectedDTO.getBenId());
                     tbSuspected = (existingByBenId == null || existingByBenId.isEmpty()) ? null : existingByBenId.get(0);
