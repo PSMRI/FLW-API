@@ -74,8 +74,14 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
                 logger.info("TBSuspectedServiceImpl.save - visitCode={} for beneficiaryRegID={}",
                         visit.getVisitCode(), beneficiaryRegID);
 
-                TBSuspected tbSuspected =
-                        tbSuspectedRepo.getByUserIdAndBenIdAndVisitCode(tbSuspectedDTO.getBenId(), requestDTO.getUserId(), visit.getVisitCode());
+                TBSuspected tbSuspected;
+                if (requestDTO.getFromStopTB() != null && requestDTO.getFromStopTB()) {
+                    // todo later - userId and visitCode based lookup will be reintroduced once orders are mapped with visitCode
+                    List<TBSuspected> existingByBenId = tbSuspectedRepo.getByBenId(tbSuspectedDTO.getBenId());
+                    tbSuspected = (existingByBenId == null || existingByBenId.isEmpty()) ? null : existingByBenId.get(0);
+                } else {
+                    tbSuspected = tbSuspectedRepo.getByUserIdAndBenIdAndVisitCode(tbSuspectedDTO.getBenId(), requestDTO.getUserId(), visit.getVisitCode());
+                }
 
                 boolean isNew = tbSuspected == null;
                 if (isNew) {
