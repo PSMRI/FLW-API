@@ -54,7 +54,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
     private NotificationService notificationService;
 
     @Override
-    public String getSupervisorDashboard(Integer supervisorUserID, Integer month, Integer year) {
+    public String getSupervisorDashboard(Integer supervisorUserID, Integer month, Integer year,Integer facilityId) {
         JSONObject result = new JSONObject();
         Integer stateId = userService.getUserDetail(supervisorUserID).getStateId();
         String rollName = userService.getUserDetail(supervisorUserID).getRoleName();
@@ -92,12 +92,19 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         List<Object[]> ashaRows;
 
         if ("ANM".equalsIgnoreCase(rollName) || "CHO".equalsIgnoreCase(rollName)) {
+            if(facilityId.equals(0)){
+                List<Integer> facilityIDs =
+                        facilityLoginRepo.getUserFacilityIDs(supervisorUserID);
 
-            List<Integer> facilityIDs =
-                    facilityLoginRepo.getUserFacilityIDs(supervisorUserID);
+                ashaRows =
+                        facilityLoginRepo.getAshaListByFacilities(facilityIDs);
+            }else {
 
-            ashaRows =
-                    facilityLoginRepo.getAshaListByFacilities(facilityIDs);
+
+                ashaRows = facilityLoginRepo.getAshaListByFacilities(
+                        Collections.singletonList(facilityId));
+            }
+
 
         } else {
 

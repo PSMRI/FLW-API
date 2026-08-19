@@ -76,7 +76,7 @@ public class AshaSupervisorIncentiveApproval {
 
         try {
             if(token!=null){
-                String result = supervisorDashboardService.getSupervisorDashboard(jwtUtil.extractUserId(token),request.getMonth(),request.getYear());
+                String result = supervisorDashboardService.getSupervisorDashboard(jwtUtil.extractUserId(token),request.getMonth(),request.getYear(),request.getFacilityId());
                 response.setResponse(result);
             }
 
