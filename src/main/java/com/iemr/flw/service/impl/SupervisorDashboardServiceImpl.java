@@ -344,6 +344,284 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
 
     @Override
+    public String getSupervisorSubCenter(Integer supervisorUserID, Integer month, Integer year) {
+        JSONObject result = new JSONObject();
+        Integer stateId = userService.getUserDetail(supervisorUserID).getStateId();
+        String rollName = userService.getUserDetail(supervisorUserID).getRoleName();
+
+        LocalDate today = LocalDate.now();
+
+
+        // 1. Supervisor user details
+        List<Object[]> supervisorRows = dashboardRepo.getSupervisorUserDetails(supervisorUserID);
+        if (supervisorRows != null && !supervisorRows.isEmpty()) {
+            Object[] sRow = supervisorRows.get(0);
+            JSONObject supervisor = new JSONObject();
+            supervisor.put("userId", sRow[0]);
+            supervisor.put("fullName", fullName(sRow[1], sRow[2]));
+            supervisor.put("employeeId", str(sRow[3]).isEmpty() ? JSONObject.NULL : str(sRow[3]));
+            supervisor.put("mobile", str(sRow[4]).isEmpty() ? JSONObject.NULL : str(sRow[4]));
+            supervisor.put("gender", str(sRow[5]).isEmpty() ? JSONObject.NULL : str(sRow[5]));
+            result.put("supervisor", supervisor);
+        }
+        logger.info("Supervisor id"+supervisorUserID);
+
+        // 2. Get all ASHAs with facility info
+        logger.info("Fetching ASHA details for supervisorUserID: {}", supervisorUserID);
+
+
+        LocalDate dueDate = LocalDate.of(year, month, 1)
+                .plusMonths(1)
+                .withDayOfMonth(5);
+
+        boolean isOverDue =
+                rollName.equalsIgnoreCase("ANM")
+                        && today.isAfter(dueDate);
+
+
+        List<Object[]> ashaRows;
+
+        if ("ANM".equalsIgnoreCase(rollName) || "CHO".equalsIgnoreCase(rollName)) {
+            List<Integer> facilityIDs =
+                    facilityLoginRepo.getUserFacilityIDs(supervisorUserID);
+
+            ashaRows =
+                    facilityLoginRepo.getAshaListByFacilities(facilityIDs);
+
+
+        } else {
+            ashaRows =
+                    dashboardRepo.getAshasWithFacilityInfo(supervisorUserID);
+
+
+        }
+
+        if (ashaRows == null || ashaRows.isEmpty()) {
+            logger.warn("No ASHA records found for supervisorUserID: {}", supervisorUserID);
+
+            result.put("totalAshaCount", 0);
+            result.put("incentiveSummary", buildEmptyIncentiveSummary());
+            result.put("facilities", new JSONArray());
+
+            logger.info("Returning empty dashboard response for supervisorUserID: {}", supervisorUserID);
+
+            return result.toString();
+        }
+
+
+
+        // Collect distinct facility IDs and ASHA IDs
+
+        logger.info("Processing {} ASHA records", ashaRows.size());
+
+        Set<Integer> facilityIDSet = new HashSet<>();
+        Set<Integer> ashaIDSet = new HashSet<>();
+
+        for (Object[] row : ashaRows) {
+
+            logger.info("Complete Row: {}", Arrays.toString(row));
+
+            for (int i = 0; i < row.length; i++) {
+                logger.info("row[{}] = {} ({})",
+                        i,
+                        row[i],
+                        row[i] != null ? row[i].getClass().getName() : "null");
+            }
+
+
+            if (row[4] != null)
+                facilityIDSet.add((Integer) row[4]);
+
+            if (row[0] != null)
+                ashaIDSet.add((Integer) row[0]);
+
+        }
+
+        List<Integer> facilityIDs = new ArrayList<>(facilityIDSet);
+        List<Integer> ashaIDs = new ArrayList<>(ashaIDSet);
+
+        logger.info("Facility IDs: {}", facilityIDs);
+        logger.info("ASHA IDs: {}", ashaIDs);
+        result.put("totalAshaCount", ashaIDs.size());
+
+        // 3. Location from first facility
+        List<Object[]> facilityRows = dashboardRepo.getFacilityDetails(facilityIDs);
+        if (facilityRows != null && !facilityRows.isEmpty()) {
+            Object[] fRow = facilityRows.get(0);
+            JSONObject location = new JSONObject();
+            location.put("state", str(fRow[2]));
+            location.put("district", str(fRow[3]));
+            location.put("blockOrUlb", str(fRow[4]));
+            location.put("locationType", str(fRow[5]));
+            result.put("location", location);
+        }
+
+        // 4. Build village map (facilityID -> villages)
+        Map<Integer, List<JSONObject>> villageMap = new HashMap<>();
+        List<Object[]> villageRows = dashboardRepo.getVillagesForFacilities(facilityIDs);
+        if (villageRows != null) {
+            for (Object[] vRow : villageRows) {
+                Integer facID = (Integer) vRow[0];
+                JSONObject village = new JSONObject();
+                village.put("villageId", vRow[1]);
+                village.put("villageName", str(vRow[2]));
+                villageMap.computeIfAbsent(facID, k -> new ArrayList<>()).add(village);
+            }
+        }
+
+        // 5. Get incentive status per ASHA (verified, rejected, pending, totalAmount)
+        long overallVerified = 0, overallRejected = 0, overallPending = 0, overallOverDue =0;
+        long overallUnclaimed = 0;
+
+        try {
+            logger.info("Month: {}", month);
+            logger.info("Year: {}", year);
+
+            LocalDate startLocalDate = LocalDate.of(year, month, 1);
+            LocalDate endLocalDate = startLocalDate.plusMonths(1);
+
+            logger.info("startLocalDate {}", startLocalDate);
+            logger.info("endLocalDate {}", endLocalDate);
+
+            Timestamp startDate = Timestamp.valueOf(startLocalDate.atStartOfDay());
+            Timestamp endDate = Timestamp.valueOf(endLocalDate.atStartOfDay());
+            logger.info("Asha ID" + ashaIDs);
+
+            if(stateId.equals(StateCode.AM.getStateCode())){
+                List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
+                if (statusRows != null) {
+                    for (Object[] sRow : statusRows) {
+                        long verified = ((Number) sRow[2]).longValue();
+                        long rejected = ((Number) sRow[3]).longValue();
+                        long pending = ((Number) sRow[4]).longValue();
+
+                        if (verified > 0) overallVerified += 1;
+                        if (rejected > 0) overallRejected += 1;
+                        if (pending > 0) overallPending += 1;
+                    }
+                }
+                List<Object[]> unclaimedRows = dashboardRepo.getUnclaimedCountByAshaIds(ashaIDs, startDate, endDate);
+                if (unclaimedRows != null) {
+                    for (Object[] uRow : unclaimedRows) {
+                        long count = ((Number) uRow[1]).longValue();
+                        if (count > 0) overallUnclaimed += 1;
+                    }
+                }
+            }else  if(stateId.equals(StateCode.CG.getStateCode())){
+                if("ASHA Supervisor".equalsIgnoreCase(rollName)){
+                    List<Object[]> statusRows = dashboardRepo.getDefaultIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
+                    if (statusRows != null) {
+                        for (Object[] sRow : statusRows) {
+                            long verified = ((Number) sRow[5]).longValue();
+                            long rejected = ((Number) sRow[3]).longValue();
+                            long pending = ((Number) sRow[4]).longValue();
+
+
+                            if (verified > 0) overallVerified += 1;
+                            if (rejected > 0) overallRejected += 1;
+                            if (pending > 0) overallPending += 1;
+                        }
+                    }
+                }else if("ANM".equalsIgnoreCase(rollName)){
+                    List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIdsForAnm(ashaIDs, startDate, endDate);
+                    if (statusRows != null) {
+                        for (Object[] sRow : statusRows) {
+                            long verified = ((Number) sRow[2]).longValue();
+                            long rejected = ((Number) sRow[3]).longValue();
+                            long pending = ((Number) sRow[5]).longValue();
+
+                            if (verified > 0) overallVerified += 1;
+                            if (rejected > 0) overallRejected += 1;
+                            if (pending > 0) {
+                                if (isOverDue) {
+                                    overallOverDue++;
+                                } else {
+                                    overallPending++;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                List<Object[]> unclaimedRows = dashboardRepo.getUnclaimedCountByAshaIds(ashaIDs, startDate, endDate);
+                if (unclaimedRows != null) {
+                    for (Object[] uRow : unclaimedRows) {
+                        long count = ((Number) uRow[1]).longValue();
+                        if (count > 0) overallUnclaimed += 1;
+                    }
+                }
+            }
+
+
+        } catch (Exception e) {
+            logger.error("Error fetching incentive status: " + e.getMessage(), e);
+
+        }
+
+
+
+        // Overall incentive summary across all ASHAs
+        JSONObject overallSummary = new JSONObject();
+        overallSummary.put("verified", overallVerified);
+        overallSummary.put("rejected", overallRejected);
+        overallSummary.put("pending", overallPending);
+        overallSummary.put("overDue", overallOverDue);
+        overallSummary.put("unclaimed", overallUnclaimed);
+        result.put("incentiveSummary", overallSummary);
+
+        // 7. Build facilities array with nested ASHAs
+        Map<Integer, List<Object[]>> ashasByFacility = new HashMap<>();
+        for (Object[] row : ashaRows) {
+            Integer facID = (Integer) row[4];
+            ashasByFacility.computeIfAbsent(facID, k -> new ArrayList<>()).add(row);
+        }
+
+        Map<Integer, Object[]> facilityDetailsMap = new HashMap<>();
+        if (facilityRows != null) {
+            for (Object[] fRow : facilityRows) {
+                facilityDetailsMap.put((Integer) fRow[0], fRow);
+            }
+        }
+
+        JSONArray facilitiesArray = new JSONArray();
+        for (Integer facID : facilityIDs) {
+            JSONObject facility = new JSONObject();
+            facility.put("facilityId", facID);
+
+            Object[] fDetails = facilityDetailsMap.get(facID);
+            if (fDetails != null) {
+                facility.put("facilityName", str(fDetails[1]));
+                facility.put("facilityType", str(fDetails[6]));
+            }
+
+
+            // ASHAs at this facility
+            JSONArray ashasArray = new JSONArray();
+            List<Object[]> facAshaRows = ashasByFacility.get(facID);
+            if (facAshaRows != null) {
+                for (Object[] row : facAshaRows) {
+                    Integer ashaId = (Integer) row[0];
+                    JSONObject asha = new JSONObject();
+                    asha.put("userId", ashaId);
+                    asha.put("fullName", fullName(row[1], row[2]));
+                    asha.put("employeeId", str(row[6]).isEmpty() ? JSONObject.NULL : str(row[6]));
+                    asha.put("mobile", str(row[7]).isEmpty() ? JSONObject.NULL : str(row[7]));
+
+                    ashasArray.put(asha);
+                }
+            }
+
+            facility.put("ashaCount", ashasArray.length());
+            facilitiesArray.put(facility);
+        }
+
+        result.put("facilities", facilitiesArray);
+        return result.toString();
+    }
+
+
+
+    @Override
     public Map<String, Object> getAshasAtFacility(Integer supervisorId, Integer facilityId,
                                                   Integer month, Integer year, Integer approvalStatusID) {
         Integer supervisorstateCode = userService.getUserDetail(supervisorId).getStateId();

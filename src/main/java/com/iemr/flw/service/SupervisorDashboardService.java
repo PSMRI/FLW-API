@@ -6,6 +6,7 @@ import java.util.Map;
 public interface SupervisorDashboardService {
 
 	String getSupervisorDashboard(Integer supervisorUserID, Integer month, Integer year,Integer facilityId);
+	String getSupervisorSubCenter(Integer supervisorUserID, Integer month, Integer year);
 
 	Map<String, Object> getAshasAtFacility(Integer supervisorId, Integer facilityId, Integer month, Integer year, Integer approvalStatusID);
 

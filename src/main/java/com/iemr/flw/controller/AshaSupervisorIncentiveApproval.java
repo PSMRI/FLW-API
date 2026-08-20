@@ -66,7 +66,24 @@ public class AshaSupervisorIncentiveApproval {
     }
 
 
+    @Operation(summary = "Get comprehensive ASHA Supervisor dashboard with facilities, ASHAs, villages and incentive data")
+    @PostMapping("/getSubCenter")
+    public String getSupervisorSubCenter(@RequestBody AshaByFacilityRequestDTO request,@RequestHeader(value = "JwtToken") String token ) {
+        OutputResponse response = new OutputResponse();
+        logger.info("dashboard request{}",request.getFacilityId());
 
+        try {
+            if(token!=null){
+                String result = supervisorDashboardService.getSupervisorSubCenter(jwtUtil.extractUserId(token),request.getMonth(),request.getYear());
+                response.setResponse(result);
+            }
+
+        } catch (Exception e) {
+            logger.error("getSupervisorDashboard failed: " + e.getMessage(), e);
+            response.setError(e);
+        }
+        return response.toString();
+    }
 
     @Operation(summary = "Get comprehensive ASHA Supervisor dashboard with facilities, ASHAs, villages and incentive data")
     @PostMapping("/dashboard")
