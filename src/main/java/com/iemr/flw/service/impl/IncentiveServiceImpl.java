@@ -517,7 +517,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                     incentivesRepo.findById(request.getActivityId()).orElse(null);
 
             String groupName = activity != null ? activity.getGroup() : "";
-            String groupCategoryName = activity != null ? activity.getGroupCategoryName() : "";
+            String groupCategoryName = activity != null ? activity.getGroupCategoryName() :activity.getGroup();
             String description = activity != null ? activity.getDescription() : "";
 
             // 🔹 Map result
