@@ -183,7 +183,10 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                 } else {
                     if (isCG) {
-                        dto.setGroupName(inc.getGroupCategoryName());
+                        if(inc.getGroupCategoryName()!=null || !inc.getGroupCategoryName().isEmpty()){
+                            dto.setGroupName(inc.getGroupCategoryName());
+
+                        }
 
                     } else {
                         dto.setGroupName(inc.getGroup());
