@@ -108,8 +108,11 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         } else {
              if(facilityId.equals(0)){
+                 List<Integer> facilityIDs =
+                         facilityLoginRepo.getUserFacilityIDs(supervisorUserID);
+
                  ashaRows =
-                         dashboardRepo.getAshasWithFacilityInfo(supervisorUserID);
+                         facilityLoginRepo.getAshaListByFacilities(facilityIDs);
              }else {
                  ashaRows = facilityLoginRepo.getAshaListByFacilities(
                          Collections.singletonList(facilityId));
