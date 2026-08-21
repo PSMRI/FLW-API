@@ -154,7 +154,13 @@ public class IncentiveServiceImpl implements IncentiveService {
                     dto.setName(mapping.getName());
 
                     if (isCG) {
-                        dto.setGroupName("");
+                        if(inc.getGroupCategoryName()!=null || !inc.getGroupCategoryName().isEmpty()){
+                            dto.setGroupName(inc.getGroupCategoryName());
+
+                        }else {
+                            dto.setGroupName(inc.getGroup());
+
+                        }
                     } else if (isAM) {
                         dto.setGroupName(mapping.getGroup());
                     }
@@ -177,7 +183,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                 } else {
                     if (isCG) {
-                        dto.setGroupName("");
+                        dto.setGroupName(inc.getGroupCategoryName());
 
                     } else {
                         dto.setGroupName(inc.getGroup());

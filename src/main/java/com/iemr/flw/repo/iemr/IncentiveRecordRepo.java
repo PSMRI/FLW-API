@@ -332,6 +332,29 @@ AND iar.createdDate < :endDate
     @Modifying
     @Transactional
     @Query("UPDATE IncentiveActivityRecord iar "
+            + "SET iar.approvalStatus = :status, "
+            + "iar.verifiedByUserId = :ashaSupervisorUserId, "
+            + "iar.reason = :reason, "
+            + "iar.otherReason = :otherReason, "
+            + "iar.approvalDate = :approvalDate, "
+            + "iar.verifiedByUserName = :ashaSupervisorUserName "
+            + "WHERE iar.isClaimed = true "
+            + "AND iar.id = incentiveId "
+            + "AND iar.ashaId = :ashaId")
+    int updateApprovalStatusByIdAndIncentiveId(
+            @Param("status") Integer status,
+            @Param("ashaId") Integer ashaId,
+            @Param("ashaSupervisorUserId") Integer ashaSupervisorUserId,
+            @Param("ashaSupervisorUserName") String ashaSupervisorUserName,
+            @Param("reason") String reason,
+            @Param("approvalDate") Timestamp approvalDate,
+            @Param("otherReason") String otherReason,
+            @Param("incentiveId") Integer incentiveId
+    );
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE IncentiveActivityRecord iar "
             + "SET iar.isClaimed = :isClaimed, "
             + "iar.calimedDate = :calimedDate, "
             + "iar.approvalStatus = 102 "
