@@ -525,7 +525,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                     incentivesRepo.findById(request.getActivityId()).orElse(null);
 
             String groupName = activity != null ? activity.getGroup() : "";
-            String groupCategoryName = activity != null ? activity.getGroupCategoryName() :activity.getGroup();
+//            String groupCategoryName = activity != null ? activity.getGroupCategoryName() :activity.getGroup();
             String description = activity != null ? activity.getDescription() : "";
 
             // 🔹 Map result
@@ -539,8 +539,9 @@ public class IncentiveServiceImpl implements IncentiveService {
                     }
                 }
 
-                r.setGroupName(groupCategoryName);
+                r.setGroupName(groupName);
                 r.setActivityDec(description);
+//                r.setGroupCategoryName(groupCategoryName);
 
                 return modelMapper.map(r, IncentiveRecordDTO.class);
 
