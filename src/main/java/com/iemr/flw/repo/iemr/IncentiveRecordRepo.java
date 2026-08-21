@@ -339,7 +339,7 @@ AND iar.createdDate < :endDate
             + "iar.approvalDate = :approvalDate, "
             + "iar.verifiedByUserName = :ashaSupervisorUserName "
             + "WHERE iar.isClaimed = true "
-            + "AND iar.id = incentiveId "
+            + "AND iar.id = incentiveId, "
             + "AND iar.ashaId = :ashaId")
     int updateApprovalStatusByIdAndIncentiveId(
             @Param("status") Integer status,
