@@ -245,6 +245,25 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                             if (verified > 0) overallVerified += 1;
                             if (rejected > 0) overallRejected += 1;
                             if (pending > 0) overallPending += 1;
+
+                            if (overallPending > 0) {
+                                try {
+                                    String title = "Pending Incentive Claims";
+
+                                    String body = "You have " + overallPending + " pending incentive claim(s) for "
+                                            + Month.of(month).name() + " " + year + ". Please review them.";
+
+                                    notificationService.sendNotification(
+                                            "FLW", "NA",
+                                            title,
+                                            body,
+                                            "INCENTIVE_PENDING",
+                                            "INCENTIVE",
+                                            supervisorUserID);
+                                } catch (Exception ex) {
+                                    logger.error("Failed to send pending incentive notification for ashaId {}: {}", supervisorUserID, ex.getMessage(), ex);
+                                }
+                            }
                         }
                     }
                 }else if("ANM".equalsIgnoreCase(rollName)){
@@ -262,6 +281,25 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                     overallOverDue++;
                                 } else {
                                     overallPending++;
+                                }
+                            }
+
+                            if (overallPending > 0) {
+                                try {
+                                    String title = "Pending Incentive Claims";
+
+                                    String body = "You have " + overallPending + " pending incentive claim(s) for "
+                                            + Month.of(month).name() + " " + year + ". Please review them.";
+
+                                    notificationService.sendNotification(
+                                            "FLW", "NA",
+                                            title,
+                                            body,
+                                            "INCENTIVE_PENDING",
+                                            "INCENTIVE",
+                                            supervisorUserID);
+                                } catch (Exception ex) {
+                                    logger.error("Failed to send pending incentive notification for ashaId {}: {}", supervisorUserID, ex.getMessage(), ex);
                                 }
                             }
                         }
