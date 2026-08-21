@@ -437,7 +437,13 @@ public class IncentiveServiceImpl implements IncentiveService {
             if(isCG){
                 map.put("activityId", activityId);
                 map.put("activityDec", activity.getDescription());
-                map.put("groupName", activity.getGroup());
+                if(activity.getGroupCategoryName()!=null && !activity.getGroupCategoryName().isEmpty()){
+                    map.put("groupName", activity.getGroupCategoryName());
+
+                }else {
+                    map.put("groupName", activity.getGroup());
+
+                }
                 map.put("isDefault", activity.getIsDefaultActivity());
                 map.put("approvalStatus", approvalStatus);
                 map.put("claimCount", list.size());
