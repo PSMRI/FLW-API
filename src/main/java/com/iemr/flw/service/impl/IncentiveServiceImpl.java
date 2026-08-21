@@ -539,9 +539,8 @@ public class IncentiveServiceImpl implements IncentiveService {
                     }
                 }
 
-                r.setGroupName(groupName);
+                r.setGroupName(groupCategoryName);
                 r.setActivityDec(description);
-                r.setGroupCategoryName(groupCategoryName);
 
                 return modelMapper.map(r, IncentiveRecordDTO.class);
 
