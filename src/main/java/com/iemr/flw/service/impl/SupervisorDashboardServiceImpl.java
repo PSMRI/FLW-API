@@ -1170,45 +1170,113 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             UserServiceRoleDTO ashaSupervisorDetails = userService.getUserDetail(ashaSupervisorUserId);
 
             int updatedCount = 0;
+             if(incentiveIds.isEmpty()){
+                 if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
+                     updatedCount = incentiveRecordRepo.updateApprovalStatusById(
+                             approvalStatus,
+                             ashaId,
+                             ashaSupervisorUserId,
+                             ashaSupervisorDetails.getUserName(),
+                             reason,
+                             approvalDate,
+                             otherReason
+                     );
+                 } else {
 
-            if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
-                updatedCount = incentiveRecordRepo.updateApprovalStatusById(
-                        approvalStatus,
-                        ashaId,
-                        ashaSupervisorUserId,
-                        ashaSupervisorDetails.getUserName(),
-                        reason,
-                        approvalDate,
-                        otherReason
-                );
-            } else {
+                     if (ashaSupervisorDetails.getStateId().equals(StateCode.AM.getStateCode())) {
 
-                if (ashaSupervisorDetails.getStateId().equals(StateCode.AM.getStateCode())) {
+                         updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
+                                 ashaId, approvalStatus, startDate, endDate,
+                                 approvalDate, ashaSupervisorUserId,
+                                 ashaSupervisorDetails.getUserName());
 
-                    updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
-                            ashaId, approvalStatus, startDate, endDate,
-                            approvalDate, ashaSupervisorUserId,
-                            ashaSupervisorDetails.getUserName());
+                     } else if(ashaSupervisorDetails.getStateId().equals(StateCode.CG.getStateCode())){
 
-                } else if(ashaSupervisorDetails.getStateId().equals(StateCode.CG.getStateCode())){
+                         if ("ASHA Supervisor".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())) {
 
-                    if ("ASHA Supervisor".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())) {
+                             updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
+                                     ashaId, 105, startDate, endDate,
+                                     approvalDate, ashaSupervisorUserId,
+                                     ashaSupervisorDetails.getUserName());
 
-                        updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
-                                ashaId, 105, startDate, endDate,
-                                approvalDate, ashaSupervisorUserId,
-                                ashaSupervisorDetails.getUserName());
+                         } else if("ANM".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())){
 
-                    } else if("ANM".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())){
+                             updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRangeForDefaultActivity(
+                                     ashaId, approvalStatus, startDate, endDate,
+                                     approvalDate, ashaSupervisorUserId,
+                                     ashaSupervisorDetails.getUserName());
 
-                        updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRangeForDefaultActivity(
-                                ashaId, approvalStatus, startDate, endDate,
-                                approvalDate, ashaSupervisorUserId,
-                                ashaSupervisorDetails.getUserName());
+                         }
+                     }
+                 }
+             }else {
+                 if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
+                     if (incentiveIds != null && !incentiveIds.trim().isEmpty()) {
 
-                    }
-                }
-            }
+                         for (String incentiveId : incentiveIds.split(",")) {
+
+                             Long id = Long.parseLong(incentiveId.trim());
+
+                             updatedCount += incentiveRecordRepo.updateApprovalStatusByIdAndIncentiveId(
+                                     approvalStatus,
+                                     ashaId,
+                                     ashaSupervisorUserId,
+                                     ashaSupervisorDetails.getUserName(),
+                                     reason,
+                                     approvalDate,
+                                     otherReason,
+                                     id
+                             );
+                         }
+                     }
+                 } else {
+
+                     if (ashaSupervisorDetails.getStateId().equals(StateCode.AM.getStateCode())) {
+                         if (incentiveIds != null && !incentiveIds.trim().isEmpty()) {
+
+                             for (String incentiveId : incentiveIds.split(",")) {
+
+                                 Long id = Long.parseLong(incentiveId.trim());
+
+                                 updatedCount = incentiveRecordRepo.updateApprovalStatusByIncentiveId(id, ashaId, approvalStatus, approvalDate, ashaSupervisorUserId, ashaSupervisorDetails.getUserName());
+
+                             }
+                         }
+
+
+                     } else if(ashaSupervisorDetails.getStateId().equals(StateCode.CG.getStateCode())){
+
+                         if ("ASHA Supervisor".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())) {
+                             if (incentiveIds != null && !incentiveIds.trim().isEmpty()) {
+
+                                 for (String incentiveId : incentiveIds.split(",")) {
+
+                                     Long id = Long.parseLong(incentiveId.trim());
+
+                                     updatedCount = incentiveRecordRepo.updateApprovalStatusByIncentiveId(id, ashaId, 105, approvalDate, ashaSupervisorUserId, ashaSupervisorDetails.getUserName());
+
+                                 }
+                             }
+
+
+                         } else if("ANM".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())){
+                             if (incentiveIds != null && !incentiveIds.trim().isEmpty()) {
+
+                                 for (String incentiveId : incentiveIds.split(",")) {
+                                     Long id = Long.parseLong(incentiveId.trim());
+
+                                     updatedCount = incentiveRecordRepo.updateApprovalStatusByIncentiveIdForDefaultActivity(id,
+                                             ashaId, approvalStatus,
+                                             approvalDate, ashaSupervisorUserId,
+                                             ashaSupervisorDetails.getUserName());
+                                 }
+                             }
+
+                         }
+                     }
+                 }
+             }
+
 
             if (updatedCount > 0) {
                 sendApprovalNotification(
