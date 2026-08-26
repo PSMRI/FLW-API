@@ -375,24 +375,47 @@ public class ChildCareServiceImpl implements ChildCareService {
     public List<ChildVaccinationDTO> getChildVaccinationDetails(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
-            List<ChildVaccination> vaccinationDetails = childVaccinationRepo.getChildVaccinationDetails(user, dto.getFromDate(), dto.getToDate());
+            List<ChildVaccination> vaccinationDetails =
+                    childVaccinationRepo.getChildVaccinationDetails(user, dto.getFromDate(), dto.getToDate());
+
+            if (vaccinationDetails.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            // Bulk fetch all beneficiary IDs in ONE query instead of one-per-record
+            List<Long> regIds = vaccinationDetails.stream()
+                    .map(ChildVaccination::getBeneficiaryRegId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            Map<Long, BigInteger> regIdToBenIdMap = new HashMap<>();
+            if (!regIds.isEmpty()) {
+                List<Object[]> benIdRows = beneficiaryRepo.getBenIdsFromRegIds(regIds);
+                for (Object[] row : benIdRows) {
+                    Long regId = ((Number) row[0]).longValue();
+                    BigInteger benId = (BigInteger) row[1];
+                    regIdToBenIdMap.put(regId, benId);
+                }
+            }
+
+            // Call ONCE for the whole batch — not per record
+            checkAndAddIncentives(vaccinationDetails);
 
             List<ChildVaccinationDTO> result = new ArrayList<>();
-            vaccinationDetails.forEach(childVaccination -> {
+            for (ChildVaccination childVaccination : vaccinationDetails) {
                 ChildVaccinationDTO vaccinationDTO = mapper.convertValue(childVaccination, ChildVaccinationDTO.class);
-                if(childVaccination.getBeneficiaryRegId()!=null){
-                    BigInteger benId = beneficiaryRepo.getBenIdFromRegID(childVaccination.getBeneficiaryRegId());
-                    vaccinationDTO.setBeneficiaryId(benId.longValue());
 
+                if (childVaccination.getBeneficiaryRegId() != null) {
+                    BigInteger benId = regIdToBenIdMap.get(childVaccination.getBeneficiaryRegId());
+                    if (benId != null) {
+                        vaccinationDTO.setBeneficiaryId(benId.longValue());
+                    }
                 }
-                if(!vaccinationDetails.isEmpty()){
-                    checkAndAddIncentives(vaccinationDetails);
-
-                }
-
 
                 result.add(vaccinationDTO);
-            });
+            }
+
             return result;
         } catch (Exception e) {
             logger.error(e.getMessage());
