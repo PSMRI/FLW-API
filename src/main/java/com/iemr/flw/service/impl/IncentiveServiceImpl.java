@@ -641,7 +641,6 @@ public class IncentiveServiceImpl implements IncentiveService {
                                     && r.getActivityId().equals(request.getActivityId())
                                     && r.getCreatedDate() != null
                                     && !r.getCreatedDate().before(startTs)
-                                    && r.getApprovalStatus().equals(request.getApprovalStatus())
                                     && r.getCreatedDate().before(endTs))
                             .collect(Collectors.toList());
 

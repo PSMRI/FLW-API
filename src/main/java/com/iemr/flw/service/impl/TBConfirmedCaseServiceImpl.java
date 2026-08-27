@@ -113,6 +113,64 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
             }
 
         }
+
+
+        if (!Boolean.TRUE.equals(entity.getTreatmentCompleted())
+                || entity.getActualTreatmentCompletionDate() == null
+                || entity.getTreatmentStartDate() == null) {
+            return;
+        }
+
+        if (!hasMinimumFollowUpsCompleted(entity)) {
+            return;
+        }
+
+        Timestamp completionDate = Timestamp.valueOf(
+                entity.getActualTreatmentCompletionDate().atStartOfDay()
+        );
+
+        incentiveLogicService.incentiveForTbPreventiveFollowUp(
+                entity.getBenId(),
+                completionDate,
+                completionDate,
+                entity.getUserId()
+        );
+    }
+
+
+    private boolean hasMinimumFollowUpsCompleted(TBConfirmedCase entity) {
+
+        String regimen = entity.getRegimenType();
+
+        int requiredMonths;
+
+        switch (regimen) {
+            case "1HP":
+                requiredMonths = 1;
+                break;
+
+            case "3HP":
+            case "3RH":
+                requiredMonths = 3;
+                break;
+
+            case "6H":
+            case "6Lfx":
+                requiredMonths = 6;
+                break;
+
+            case "4R":
+                requiredMonths = 4;
+                break;
+
+            default:
+                return false;
+        }
+
+        // TODO:
+        // actual monthly follow-up records count should be checked here
+
+        return true;
     }
 
     @Override
