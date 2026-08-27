@@ -493,6 +493,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                                 && r.getEndDate() != null
                                 && r.getEndDate().toLocalDateTime().getMonthValue() == request.getMonth()
                                 && r.getEndDate().toLocalDateTime().getYear() == request.getYear()
+                                && r.getApprovalStatus().equals(request.getApprovalStatus())
                                 && r.getIsClaimed())
                         .toList();
 

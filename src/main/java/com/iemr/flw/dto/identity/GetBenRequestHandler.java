@@ -4,6 +4,7 @@
 
 	public class GetBenRequestHandler {
 		private Integer villageID;
+		private Integer approvalStatus;
 		private Timestamp fromDate;
 		private Timestamp toDate;
 		private Integer pageNo;
@@ -98,4 +99,11 @@
 			this.toDate = toDate;
 		}
 
+		public Integer getApprovalStatus() {
+			return approvalStatus;
+		}
+
+		public void setApprovalStatus(Integer approvalStatus) {
+			this.approvalStatus = approvalStatus;
+		}
 	}
