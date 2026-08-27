@@ -559,7 +559,10 @@ public class IncentiveServiceImpl implements IncentiveService {
                     .max(Comparator.comparing(IncentiveActivityRecord::getCreatedDate))
                     .map(IncentiveActivityRecord::getApprovalStatus)
                     .orElse(0);
-
+            Long incentiveId = list.stream()
+                    .max(Comparator.comparing(IncentiveActivityRecord::getCreatedDate))
+                    .map(IncentiveActivityRecord::getId)
+                    .orElse(null);
 
             if (activity == null) continue;
 
@@ -570,6 +573,7 @@ public class IncentiveServiceImpl implements IncentiveService {
             Map<String, Object> map = new HashMap<>();
             if(isCG){
                 map.put("activityId", activityId);
+                map.put("incentiveId",incentiveId);
                 map.put("activityDec", activity.getDescription());
                 if(activity.getGroupCategoryName()!=null && !activity.getGroupCategoryName().isEmpty()){
                     map.put("groupName", activity.getGroupCategoryName());
@@ -586,6 +590,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             }else {
                 map.put("activityId", activityId);
+                map.put("incentiveId",incentiveId);
                 map.put("activityDec", activity.getDescription());
                 map.put("groupName", activity.getGroup());
                 map.put("claimCount", list.size());
