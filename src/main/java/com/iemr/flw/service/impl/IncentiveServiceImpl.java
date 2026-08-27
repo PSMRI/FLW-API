@@ -485,7 +485,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
         Integer villageID = userRepo.getUserRole(request.getUserId()).get(0).getStateId();
         boolean isCG = villageID != null && villageID.intValue() == StateCode.CG.getStateCode();
-
+        logger.info("Request getAllIncentivesGroupedSummary: "+request.getApprovalStatus());
         List<IncentiveActivityRecord> records =
                 recordRepo.findRecordsByAsha(request.getUserId())
                         .stream()
@@ -641,6 +641,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                                     && r.getActivityId().equals(request.getActivityId())
                                     && r.getCreatedDate() != null
                                     && !r.getCreatedDate().before(startTs)
+                                    && r.getApprovalStatus().equals(request.getApprovalStatus())
                                     && r.getCreatedDate().before(endTs))
                             .collect(Collectors.toList());
 
