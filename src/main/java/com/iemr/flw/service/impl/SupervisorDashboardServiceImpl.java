@@ -1167,6 +1167,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             Integer ashaSupervisorUserId = jwtUtil.extractUserId(token);
             logger.info("Asha Supervisor User Id : {}", ashaSupervisorUserId);
+            logger.info("Asha Incentive   Id : {}", incentiveIds);
             UserServiceRoleDTO ashaSupervisorDetails = userService.getUserDetail(ashaSupervisorUserId);
 
             int updatedCount = 0;
