@@ -886,11 +886,11 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                              && r.getCalimedDate() != null
                                              && isAfter24Hours(r.getCalimedDate())) {
 
-                                         r.setApprovalStatus(102);
+                                         r.setApprovalStatus(105);
                                      }
                                  })
                                  .filter(r ->
-                                         r.getApprovalStatus().equals(102)
+                                         r.getApprovalStatus().equals(105)
                                                  || (r.getApprovalStatus().equals(102)))
                                  .collect(Collectors.toList());
                           totalAmount = incentiveActivityRecord.stream()
@@ -907,7 +907,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          if(isOverDue){
                              incentiveActivityRecord = dbRecords.stream()
                                      .filter(r ->
-                                             r.getApprovalStatus().equals(102)
+                                             r.getApprovalStatus().equals(105)
                                                      || (r.getApprovalStatus().equals(104)))
                                      .peek(r -> {
                                          if (r.getApprovalStatus().equals(102) || r.getApprovalStatus().equals(105)) {
