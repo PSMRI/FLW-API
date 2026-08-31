@@ -517,16 +517,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                 if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                     records = records.stream()
                             .filter(r ->
-                                    validActivityIds.contains(r.getActivityId()) &&
-                                            (
-                                                    r.getApprovalStatus() == 101
-                                                            || r.getApprovalStatus() == 103
-                                                            || r.getApprovalStatus() == 105
-                                                            || r.getApprovalStatus() == 104
-                                                            || (
-                                                            r.getApprovalStatus() == 102
-                                                    )
-                                            )
+                                    validActivityIds.contains(r.getActivityId())
                             )
                             .collect(Collectors.toList());
                 }

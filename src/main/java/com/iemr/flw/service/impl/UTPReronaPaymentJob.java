@@ -45,9 +45,58 @@ public class UTPReronaPaymentJob implements CommandLineRunner {
     @Override
     public void run(String... args) {
         log.info("Running UTP Rerona Payment Job on startup...");
-        triggerPayment();
+        triggerStaticPayment();
     }
     // ✅ Separate method — call this for immediate testing
+
+    public void triggerStaticPayment() {
+        try {
+
+            Period period = new Period();
+            period.setStart("2026-01-01");
+            period.setEnd("2026-01-31");
+
+            VerifiedBy verifiedBy = new VerifiedBy();
+            verifiedBy.setEmployeeId("34455");
+            verifiedBy.setName("ASHA Supervisor/CHO name");
+
+            List<PaymentItem> items = new ArrayList<>();
+
+            PaymentItem item1 = new PaymentItem();
+            item1.setActivityCode("1");
+            item1.setCount("3");
+            item1.setIncentiveAmount("300");
+            items.add(item1);
+
+            PaymentItem item2 = new PaymentItem();
+            item2.setActivityCode("2");
+            item2.setCount("4");
+            item2.setIncentiveAmount("400");
+            items.add(item2);
+
+            PaymentRequest paymentRequest = new PaymentRequest(
+                    "4d0d8f3a-0bh9b-fff4e7edd-8bdd7a-rfgggdjhdd",
+                    "AMRIT",
+                    period,
+                    "4566",
+                    "2026-02-01T02:00:00+05:30",
+                    verifiedBy,
+                    items
+            );
+
+            log.info("========================================");
+            log.info("STATIC PAYMENT REQUEST");
+            log.info("Payload: {}", new Gson().toJson(paymentRequest));
+            log.info("========================================");
+
+            paymentService.sendPaymentRequest(paymentRequest);
+
+            log.info("Static payment request sent successfully.");
+
+        } catch (Exception e) {
+            log.error("Static payment request failed: {}", e.getMessage(), e);
+        }
+    }
     public void triggerPayment() {
 
         LocalDate today = LocalDate.now();

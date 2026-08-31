@@ -1,9 +1,8 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iemr.flw.dto.PaymentResponse;
 import com.iemr.flw.dto.iemr.PaymentRequest;
-import io.swagger.v3.oas.models.responses.ApiResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -15,9 +14,13 @@ import java.time.Duration;
 
 @Service
 public class UtpreronaPaymentIntegrationImpl {
-//    @Value("${ssdPortalUrl}")
-    private  String API_URL = "https://nhmssd.assam.gov.in/APPMS_2024_25/api/utpreronaPayment.php";
-    private  String API_KEY = "41202fa384eab2725a17bbac58cf708bf04cd1dd5175010941606156dc36d6b5";
+
+    private String API_URL =
+            "https://nhmssd.assam.gov.in/APPMS_2024_25/api/utpreronaPayment.php";
+
+    private String API_KEY =
+            "YOUR_API_KEY";
+
     private static final int TIMEOUT_SECONDS = 30;
 
     private final HttpClient httpClient;
@@ -27,16 +30,21 @@ public class UtpreronaPaymentIntegrationImpl {
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(TIMEOUT_SECONDS))
                 .build();
+
         this.objectMapper = new ObjectMapper();
     }
 
-    public ApiResponse sendPaymentRequest(PaymentRequest paymentRequest)
+    public PaymentResponse sendPaymentRequest(PaymentRequest paymentRequest)
             throws IOException, InterruptedException {
 
-        String jsonBody = objectMapper.writeValueAsString(paymentRequest);
+        String jsonBody =
+                objectMapper.writeValueAsString(paymentRequest);
+
         System.out.println("Sending Request:");
-        System.out.println(objectMapper.writerWithDefaultPrettyPrinter()
-                .writeValueAsString(paymentRequest));
+        System.out.println(
+                objectMapper.writerWithDefaultPrettyPrinter()
+                        .writeValueAsString(paymentRequest)
+        );
 
         HttpRequest httpRequest = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL))
@@ -47,20 +55,51 @@ public class UtpreronaPaymentIntegrationImpl {
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
 
-        HttpResponse<String> httpResponse = httpClient.send(
-                httpRequest,
-                HttpResponse.BodyHandlers.ofString()
+        HttpResponse<String> httpResponse =
+                httpClient.send(
+                        httpRequest,
+                        HttpResponse.BodyHandlers.ofString()
+                );
+
+        System.out.println(
+                "Response Status: " + httpResponse.statusCode()
         );
 
-        System.out.println("Response Status: " + httpResponse.statusCode());
-        System.out.println("Response Body: " + httpResponse.body());
+        System.out.println(
+                "Response Body: " + httpResponse.body()
+        );
 
-        if (httpResponse.statusCode() == 200) {
-            return objectMapper.readValue(httpResponse.body(), ApiResponse.class);
+        if (httpResponse.statusCode() >= 200
+                && httpResponse.statusCode() < 300) {
+
+            PaymentResponse response =
+                    objectMapper.readValue(
+                            httpResponse.body(),
+                            PaymentResponse.class
+                    );
+
+            System.out.println(
+                    "Submission ID: " + response.getSubmissionId()
+            );
+
+            System.out.println(
+                    "Status: " + response.getStatus()
+            );
+
+            System.out.println(
+                    "Receipt: " + response.getReceipt()
+            );
+
+            return response;
+
         } else {
-            throw new IOException("API Error - Status: " + httpResponse.statusCode()
-                    + " | Body: " + httpResponse.body());
+
+            throw new IOException(
+                    "API Error - Status: "
+                            + httpResponse.statusCode()
+                            + " | Body: "
+                            + httpResponse.body()
+            );
         }
     }
-
 }
