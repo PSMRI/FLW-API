@@ -767,21 +767,42 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     // ================= UPDATE CLAIM =================
     @Transactional
-    public String updateClaimStatus(Integer ashaId, Integer month, Integer year, Boolean isClaimed, String token) {
+    public String updateClaimStatus(Integer ashaId, Integer month, Integer year, Boolean isClaimed, String token,String incentive) {
         String title = null;
         try {
             LocalDate start = LocalDate.of(year, month, 1);
             LocalDate end = start.plusMonths(1);
 
+            int updated=0;
 
-            int updated = recordRepo.updateClaimStatusByAshaAndDateRange(
-                    ashaId,
-                    isClaimed,
-                    Timestamp.valueOf(LocalDateTime.now()),
-                    Timestamp.valueOf(start.atStartOfDay()),
-                    Timestamp.valueOf(end.atStartOfDay())
-            );
-            if(updated>0){
+            Timestamp claimedDate = Timestamp.valueOf(LocalDateTime.now());
+
+            if (incentive == null || incentive.isEmpty()) {
+
+                // No incentive IDs → all incentives for selected month/date range
+                updated = recordRepo.updateClaimStatusByAshaAndDateRange(
+                        ashaId,
+                        isClaimed,
+                        claimedDate,
+                        Timestamp.valueOf(start.atStartOfDay()),
+                        Timestamp.valueOf(end.atStartOfDay())
+                );
+
+            } else {
+
+                for (String incentiveId : incentive.split(",")) {
+
+                    Long id = Long.parseLong(incentiveId.trim());
+                    updated = recordRepo.updateClaimStatusByAshaAndIncentiveIds(
+                            ashaId,
+                            isClaimed,
+                            claimedDate,id
+                    );
+                }
+            }
+
+            if (updated > 0) {
+
                 Map<String, String> data = new HashMap<>();
                 data.put("notification_type", "INCENTIVE_APPROVAL");
                 data.put("nav_id", "INCENTIVE_HISTORY");
@@ -791,31 +812,41 @@ public class IncentiveServiceImpl implements IncentiveService {
                 data.put("year", String.valueOf(year));
                 data.put("approval_status", String.valueOf(102));
                 data.put("priority", "HIGH");
+
                 title = "Incentive Claimed";
 
-
-
                 if (isClaimed) {
-                 String body = "Your incentive Successfully claimed for month of" + Month.of(month).name() + " " + year;
+
+                    String body = "Your incentive successfully claimed for month of "
+                            + Month.of(month).name() + " " + year;
+
                     notificationService.sendNotification(
-                            "FLW","NA" ,
+                            "FLW",
+                            "NA",
                             title,
                             body,
-                            "INCENTIVE_CLAIMED","INCENTIVE",ashaId
+                            "INCENTIVE_CLAIMED",
+                            "INCENTIVE",
+                            ashaId
                     );
-                }
-                if (isClaimed) {
-                  String  body = userService.getUserDetail(ashaId).getName()+" Successfully claimed Incentive for month of " + Month.of(month).name() + " " + year;
+
+                    String supervisorBody =
+                            userService.getUserDetail(ashaId).getName()
+                                    + " successfully claimed incentive for month of "
+                                    + Month.of(month).name()
+                                    + " "
+                                    + year;
+
                     notificationService.sendNotification(
-                            "FLW","NA" ,
+                            "FLW",
+                            "NA",
                             title,
-                            body,
-                            "INCENTIVE_CLAIMED","INCENTIVE",dashboardRepo.getSupervisorUserIdByAshaId(ashaId)
+                            supervisorBody,
+                            "INCENTIVE_CLAIMED",
+                            "INCENTIVE",
+                            dashboardRepo.getSupervisorUserIdByAshaId(ashaId)
                     );
                 }
-
-
-
             }
 
             return updated > 0 ? "Success" : "No records";

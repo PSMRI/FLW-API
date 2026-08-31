@@ -200,7 +200,7 @@ public class IncentiveController {
                     request.getMonth(),
                     request.getYear(),
                     request.isClaimed(),
-                    token
+                    token,request.getIncentiveId()
             );
 
             Map<String, Object> response = new HashMap<>();

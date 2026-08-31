@@ -451,4 +451,18 @@ AND iar.isClaimed = true
             @Param("startDate") Timestamp startDate,
             @Param("endDate") Timestamp endDate,
             @Param("approvalStatus") Integer approvalStatus);
+    @Modifying
+    @Transactional
+    @Query("UPDATE IncentiveActivityRecord iar "
+            + "SET iar.isClaimed = :isClaimed, "
+            + "iar.calimedDate = :calimedDate, "
+            + "iar.approvalStatus = 102 "
+            + "WHERE iar.ashaId = :ashaId "
+            + "AND iar.id = :incentiveId ")
+    int updateClaimStatusByAshaAndIncentiveIds(
+            @Param("ashaId") Integer ashaId,
+            @Param("isClaimed") Boolean isClaimed,
+            @Param("calimedDate") Timestamp calimedDate,
+            @Param("incentiveId") Long incentiveId
+    );
 }
