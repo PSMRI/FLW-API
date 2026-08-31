@@ -215,7 +215,6 @@ public class ChildCareServiceImpl implements ChildCareService {
                 addIfValid(fields, "breathing_difficulty", convert(hbycChildVisit.getBreathing_difficulty()));
                 addIfValid(fields, "temperature_check", hbycChildVisit.getTemperature());
                 addIfValid(fields, "mcp_card_images", hbycChildVisit.getMcp_card_images());
-                addIfValid(fields,"is_admitted_in_sncu",hbycChildVisit.getIs_child_sick());
 
 
                 // Set fields map in DTO
@@ -280,6 +279,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                     addIfValid(fields, "umbilical_stump", visit.getUmbilical_stump());
                     addIfValid(fields, "discharged_from_sncu", convert(visit.getDischarged_from_sncu()));
                     addIfValid(fields, "discharge_summary_upload", visit.getDischarge_summary_upload());
+                    addIfValid(fields, "is_admitted_in_sncu", visit.getIs_admitted_in_sncu());
 
                     // Add more fields as required
 
