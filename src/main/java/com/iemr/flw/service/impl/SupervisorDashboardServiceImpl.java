@@ -253,13 +253,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                     String body = "You have " + overallPending + " pending incentive claim(s) for "
                                             + Month.of(month).name() + " " + year + ". Please review them.";
 
-                                    notificationService.sendNotification(
-                                            "FLW", "NA",
-                                            title,
-                                            body,
-                                            "INCENTIVE_PENDING",
-                                            "INCENTIVE",
-                                            supervisorUserID);
+//                                    notificationService.sendNotification(
+//                                            "FLW", "NA",
+//                                            title,
+//                                            body,
+//                                            "INCENTIVE_PENDING",
+//                                            "INCENTIVE",
+//                                            supervisorUserID);
                                 } catch (Exception ex) {
                                     logger.error("Failed to send pending incentive notification for ashaId {}: {}", supervisorUserID, ex.getMessage(), ex);
                                 }
@@ -291,13 +291,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                     String body = "You have " + overallPending + " pending incentive claim(s) for "
                                             + Month.of(month).name() + " " + year + ". Please review them.";
 
-                                    notificationService.sendNotification(
-                                            "FLW", "NA",
-                                            title,
-                                            body,
-                                            "INCENTIVE_PENDING",
-                                            "INCENTIVE",
-                                            supervisorUserID);
+//                                    notificationService.sendNotification(
+//                                            "FLW", "NA",
+//                                            title,
+//                                            body,
+//                                            "INCENTIVE_PENDING",
+//                                            "INCENTIVE",
+//                                            supervisorUserID);
                                 } catch (Exception ex) {
                                     logger.error("Failed to send pending incentive notification for ashaId {}: {}", supervisorUserID, ex.getMessage(), ex);
                                 }
@@ -775,8 +775,10 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         countList = incentiveRecordRepo.getStatusUnclaimedCountByAshaId(ashaId, startDate, endDate);
 
                     }else {
-                        countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate);
 
+                        countList = incentiveRecordRepo
+                                .getStatusCountByAshaId(
+                                        ashaId, startDate, endDate);
                     }
 
                     logger.info("countList = {}", Arrays.deepToString(countList.toArray()));
@@ -857,15 +859,15 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                  if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                      if(approvalStatusID.equals(105)){
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r -> (r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(105)) && r.getIsDefaultActivity())
+                                 .filter(r -> (r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(105)))
                                  .collect(Collectors.toList());
                      }else if(approvalStatusID.equals(106)){
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r ->r.getApprovalStatus().equals(102) && r.getIsDefaultActivity() && !r.getIsClaimed())
+                                 .filter(r ->r.getApprovalStatus().equals(102)  && !r.getIsClaimed())
                                  .collect(Collectors.toList());
                      }else if(approvalStatusID.equals(0)){
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r ->((r.getApprovalStatus().equals(102) && r.getIsClaimed()) ||(r.getApprovalStatus().equals(102) && !r.getIsClaimed())|| r.getApprovalStatus().equals(103) || r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(104)) && r.getIsDefaultActivity())
+                                 .filter(r ->((r.getApprovalStatus().equals(102) && r.getIsClaimed()) ||(r.getApprovalStatus().equals(102) && !r.getIsClaimed())|| r.getApprovalStatus().equals(103) || r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(104)))
                                  .collect(Collectors.toList());
                      }else{
                          incentiveActivityRecord = dbRecords.stream()
@@ -881,7 +883,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          incentiveActivityRecord = dbRecords.stream()
                                  .peek(r -> {
                                      if (r.getApprovalStatus().equals(102)
-                                             && Boolean.FALSE.equals(r.getIsDefaultActivity())
                                              && r.getCalimedDate() != null
                                              && isAfter24Hours(r.getCalimedDate())) {
 
@@ -890,8 +891,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  })
                                  .filter(r ->
                                          r.getApprovalStatus().equals(105)
-                                                 || (r.getApprovalStatus().equals(102)
-                                                 && Boolean.FALSE.equals(r.getIsDefaultActivity())))
+                                                 || (r.getApprovalStatus().equals(102)))
                                  .collect(Collectors.toList());
                           totalAmount = incentiveActivityRecord.stream()
                                  .mapToLong(r -> r.getAmount())

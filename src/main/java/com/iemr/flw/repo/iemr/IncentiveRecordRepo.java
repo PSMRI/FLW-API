@@ -219,7 +219,6 @@ AND record.createdDate < :endDate
             "WHERE record.ashaId = :ashaId " +
             "AND master.state = :stateCode " +
             "AND record.isClaimed = true " +
-            "AND record.isDefaultActivity = true " +
             "AND record.startDate >= :fromDate " +
             "AND record.endDate <= :toDate " +
             "AND (" +

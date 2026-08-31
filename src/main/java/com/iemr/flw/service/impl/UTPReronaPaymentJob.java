@@ -11,6 +11,8 @@ import com.iemr.flw.repo.iemr.IncentiveRecordRepo;
 import com.iemr.flw.repo.iemr.IncentivesRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-public class UTPReronaPaymentJob {
+public class UTPReronaPaymentJob implements CommandLineRunner {
 
     @Autowired
     private IncentiveRecordRepo recordRepo;
@@ -34,18 +36,23 @@ public class UTPReronaPaymentJob {
     @Autowired
     private UtpreronaPaymentIntegrationImpl paymentService;
 
-    // Runs automatically on 1st of every month at midnight
-    @Scheduled(cron = "0 0 0 1 * *")
-    public void sendMonthlyPayments() {
+//    // Runs automatically on 1st of every month at midnight
+//    @Scheduled(cron = "0 0 0 1 * *")
+//    public void sendMonthlyPayments() {
+//        triggerPayment();
+//    }
+
+    @Override
+    public void run(String... args) {
+        log.info("Running UTP Rerona Payment Job on startup...");
         triggerPayment();
     }
-
     // ✅ Separate method — call this for immediate testing
     public void triggerPayment() {
 
         LocalDate today = LocalDate.now();
 
-// ✅ Current month ka data — testing ke liye
+// ✅ Current month ka data
         LocalDate firstDay = today.withDayOfMonth(1);        // Mar 1, 2026
         LocalDate lastDay = today;                            // Mar 11, 2026 (aaj)
 
@@ -192,4 +199,6 @@ public class UTPReronaPaymentJob {
         log.info("Job Complete | Success: {} | Failed: {} | Skipped: {}", success, failed, skipped);
         log.info("========================================");
     }
+
+
 }
