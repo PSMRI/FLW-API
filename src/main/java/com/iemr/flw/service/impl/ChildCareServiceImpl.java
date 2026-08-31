@@ -212,9 +212,10 @@ public class ChildCareServiceImpl implements ChildCareService {
                 addIfValid(fields, "parenting_counseling", convert(hbycChildVisit.getParenting_counseling()));
                 addIfValid(fields, "family_planning_counseling", convert(hbycChildVisit.getFamily_planning_counseling()));
                 addIfValid(fields, "diarrhoea_episode", convert(hbycChildVisit.getDiarrhoea_episode()));
-//                addIfValid(fields, "breathing_difficulty", convert(hbycChildVisit.getBreathing_difficulty()));
+                addIfValid(fields, "breathing_difficulty", convert(hbycChildVisit.getBreathing_difficulty()));
                 addIfValid(fields, "temperature_check", hbycChildVisit.getTemperature());
                 addIfValid(fields, "mcp_card_images", hbycChildVisit.getMcp_card_images());
+                addIfValid(fields,"is_admitted_in_sncu",hbycChildVisit.getIs_child_sick());
 
 
                 // Set fields map in DTO
