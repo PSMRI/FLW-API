@@ -198,7 +198,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 addIfValid(fields, "is_child_sick", convert(hbycChildVisit.getIs_child_sick()));
                 addIfValid(fields, "exclusive_breastfeeding", convert(hbycChildVisit.getExclusive_breastfeeding()));
                 addIfValid(fields, "mother_counseled_ebf", convert(hbycChildVisit.getMother_counseled_ebf()));
-//                addIfValid(fields, "complementary_feeding", convert(hbycChildVisit.getComplementary_feeding()));
+                addIfValid(fields, "complementary_feeding", convert(hbycChildVisit.getComplementary_feeding()));
                 addIfValid(fields, "mother_counseled_cf", convert(hbycChildVisit.getMother_counseled_cf()));
                 addIfValid(fields, "weight_recorded", convert(hbycChildVisit.getWeight_recorded()));
                 addIfValid(fields, "developmental_delay", convert(hbycChildVisit.getDevelopmental_delay()));
