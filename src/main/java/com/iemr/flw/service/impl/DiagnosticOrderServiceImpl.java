@@ -142,6 +142,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                     orderType, beneficiaryId);
             order.setStatus(DiagnosticOrderStatus.MANUAL_ENTRY.name());
             order = diagnosticOrderRepo.save(order);
+            if (order.getVanSerialNo() == null) diagnosticOrderRepo.updateVanSerialNo(order.getId());
             return order;
         }
 
@@ -223,9 +224,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     @Override
     public DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult pollResult) throws Exception {
-        Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId());
+        Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId());
         DiagnosticResult result = existingResult.orElseGet(DiagnosticResult::new);
-        result.setDiagnosticOrderId(order.getId());
+        result.setExternalOrderId(order.getExternalOrderId());
         result.setBeneficiaryId(order.getBeneficiaryId());
         result.setProviderStatus(pollResult.getStatus().name());
         result.setResultSummary(pollResult.getResultSummary());
@@ -249,8 +250,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             diagnosticResultRepo.save(result);
             if (result.getVanSerialNo() == null) diagnosticResultRepo.updateVanSerialNo(result.getId());
         } catch (DataIntegrityViolationException dive) {
-            logger.warn("Lost result upsert race for diagnosticOrderId={}", order.getId());
-            result = diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId()).orElse(result);
+            logger.warn("Lost result upsert race for externalOrderId={}", order.getExternalOrderId());
+            result = diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId()).orElse(result);
         }
 
         ingestAssets(order, pollResult);
@@ -319,7 +320,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         }
         for (DiagnosticDocumentAsset asset : pollResult.getAssets()) {
             try {
-                diagnosticDocumentService.ingestAsset(order.getId(), order.getBeneficiaryId(), order.getOrderType(),
+                diagnosticDocumentService.ingestAsset(order.getBeneficiaryId(), order.getOrderType(),
                         order.getExternalOrderId(), asset);
             } catch (Exception e) {
                 logger.error("Failed to ingest document asset for orderId={}, assetType={}, fileName={}: {}",
@@ -435,7 +436,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         dto.setErrorMessage(order.getErrorMessage());
         dto.setReasonForRefusal(order.getReasonForRefusal());
 
-        diagnosticResultRepo.findByDiagnosticOrderIdAndDeletedFalse(order.getId()).ifPresent(result -> {
+        diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId()).ifPresent(result -> {
             dto.setProviderStatus(result.getProviderStatus());
             dto.setResultSummary(result.getResultSummary());
             dto.setTbPresence(result.getTbPresence());

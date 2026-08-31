@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "tb_diagnostic_document", schema = "db_iemr",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"diagnostic_order_id", "document_type"}),
+        uniqueConstraints = @UniqueConstraint(columnNames = {"external_order_id", "document_type"}),
         indexes = {
         @Index(name = "idx_diagnostic_document_beneficiary_id", columnList = "beneficiary_id"),
         @Index(name = "idx_diagnostic_document_order_type", columnList = "order_type"),
@@ -24,6 +24,9 @@ public class DiagnosticDocument {
 
     @Column(name = "diagnostic_order_id")
     private Long diagnosticOrderId;
+
+    @Column(name = "external_order_id", length = 100)
+    private String externalOrderId;
 
     @Column(name = "beneficiary_id")
     private Long beneficiaryId;

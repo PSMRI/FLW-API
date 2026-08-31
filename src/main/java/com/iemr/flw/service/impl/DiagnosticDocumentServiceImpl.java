@@ -45,7 +45,7 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
     private CryptoUtil cryptoUtil;
 
     @Override
-    public void ingestAsset(Long diagnosticOrderId, Long beneficiaryId, String orderType, String externalOrderId,
+    public void ingestAsset(Long beneficiaryId, String orderType, String externalOrderId,
             DiagnosticDocumentAsset asset) throws Exception {
         if (asset == null || asset.getBase64Content() == null) {
             logger.warn("Skipping document ingest for beneficiaryId={}, orderType={}: empty asset content",
@@ -58,16 +58,16 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
 
         DiagnosticDocumentType documentType = DiagnosticDocumentType.from(orderType, asset.getType());
         Optional<DiagnosticDocument> existing = diagnosticDocumentRepo
-                .findByDiagnosticOrderIdAndDocumentTypeAndDeletedFalse(diagnosticOrderId, documentType.name());
+                .findByExternalOrderIdAndDocumentTypeAndDeletedFalse(externalOrderId, documentType.name());
         if (existing.isPresent() && sha256Hash.equals(existing.get().getSha256Hash())) {
-            logger.info("Diagnostic document already stored, skipping duplicate: diagnosticOrderId={}, documentType={}",
-                    diagnosticOrderId, documentType);
+            logger.info("Diagnostic document already stored, skipping duplicate: externalOrderId={}, documentType={}",
+                    externalOrderId, documentType);
             return;
         }
 
         long epochTime = Instant.now().toEpochMilli();
-        String storedFileName = documentType.name() + ".enc";
-        String relativeDir = beneficiaryId + "/" + diagnosticOrderId;
+        String storedFileName = externalOrderId + ".enc";
+        String relativeDir = beneficiaryId + "/" + orderType + "/" + documentType.name();
 
         // Documents must never touch disk unencrypted: encrypt in memory first, write only ciphertext.
         String base64Original = Base64.getEncoder().encodeToString(originalBytes);
@@ -82,18 +82,18 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         if (document.getVanID() == null) {
             // Inherit from the parent order rather than re-reading Redis — the document belongs
             // to whichever van originated the order, not whichever van happens to be polling now.
-            diagnosticOrderRepo.findById(diagnosticOrderId).ifPresent(order -> {
+            diagnosticOrderRepo.findByExternalOrderId(externalOrderId).ifPresent(order -> {
                 document.setVanID(order.getVanID());
                 document.setParkingPlaceID(order.getParkingPlaceID());
             });
         }
-        document.setDiagnosticOrderId(diagnosticOrderId);
+        document.setExternalOrderId(externalOrderId);
         document.setBeneficiaryId(beneficiaryId);
         document.setOrderType(orderType);
         document.setAssetType(asset.getType());
         document.setDocumentType(documentType.name());
         document.setEpochTime(epochTime);
-        document.setStoredFileName(storedFileName);
+        document.setStoredFileName(externalOrderId);
         document.setStoredPath(relativeDir + "/" + storedFileName);
         document.setSha256Hash(sha256Hash);
         document.setContentType(asset.getContentType() != null ? asset.getContentType() : DEFAULT_CONTENT_TYPE);
@@ -103,7 +103,7 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
             diagnosticDocumentRepo.save(document);
             if (document.getVanSerialNo() == null) diagnosticDocumentRepo.updateVanSerialNo(document.getId());
         } catch (DataIntegrityViolationException dive) {
-            logger.warn("Lost document upsert race for diagnosticOrderId={}, documentType={}", diagnosticOrderId, documentType);
+            logger.warn("Lost document upsert race for externalOrderId={}, documentType={}", externalOrderId, documentType);
             return;
         }
 
@@ -127,9 +127,9 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         }
 
         DiagnosticDocument document = diagnosticDocumentRepo
-                .findByDiagnosticOrderIdAndDocumentTypeAndDeletedFalse(order.getId(), documentType.name())
+                .findByExternalOrderIdAndDocumentTypeAndDeletedFalse(order.getExternalOrderId(), documentType.name())
                 .orElseThrow(() -> new Exception(
-                        "No document found for diagnosticOrderId=" + order.getId() + ", documentType=" + documentType));
+                        "No document found for externalOrderId=" + order.getExternalOrderId() + ", documentType=" + documentType));
 
         Path filePath = Paths.get(storageRoot, document.getStoredPath());
         String encryptedPayload = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
