@@ -868,7 +868,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          if(isOverDue){
                              incentiveActivityRecord = dbRecords.stream()
                                      .filter(r ->
-                                             r.getApprovalStatus().equals(105)
+                                             r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(102)
                                                      || (r.getApprovalStatus().equals(104)))
                                      .peek(r -> {
                                          if (r.getApprovalStatus().equals(102) || r.getApprovalStatus().equals(105)) {
