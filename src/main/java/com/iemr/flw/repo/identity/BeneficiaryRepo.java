@@ -53,20 +53,29 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     @Query(value = " SELECT t FROM RMNCHMBeneficiarymapping t WHERE t.benRegId = :BenRegId")
     RMNCHMBeneficiarymapping getById(@Param("BenRegId") BigInteger BenRegId);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiarydetail t WHERE t.id = :vanSerialNo")
-    RMNCHMBeneficiarydetail getDetailsById(@Param("vanSerialNo") BigInteger vanSerialNo);
+    // NOTE: these 5 lookups take the row's real primary key (BenDetailsId/BenAccountID/
+    // BenImageId/BenAddressId/BenContactsId, sourced from RMNCHMBeneficiarymapping) as their
+    // argument. They used to query WHERE t.id = :vanSerialNo — but each entity's "id" field is
+    // mapped to the VanSerialNo column (a per-van sync counter that repeats across different
+    // vans), not the real @Id primary key. Passing a real PK value into a VanSerialNo comparison
+    // either matched the wrong row by coincidence, or — whenever that VanSerialNo happened to be
+    // shared by another row (common; confirmed live via IncorrectResultSizeDataAccessException:
+    // "Query did not return a unique result: 2 results were returned") — threw outright. Fixed to
+    // query the actual primary key column on each entity instead.
+    @Query(value = " SELECT t FROM RMNCHMBeneficiarydetail t WHERE t.beneficiaryDetailsId = :benDetailsId")
+    RMNCHMBeneficiarydetail getDetailsById(@Param("benDetailsId") BigInteger benDetailsId);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiaryAccount t WHERE t.id = :vanSerialNo")
-    RMNCHMBeneficiaryAccount getAccountById(@Param("vanSerialNo") BigInteger vanSerialNo);
+    @Query(value = " SELECT t FROM RMNCHMBeneficiaryAccount t WHERE t.benAccountID = :benAccountId")
+    RMNCHMBeneficiaryAccount getAccountById(@Param("benAccountId") BigInteger benAccountId);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiaryImage t WHERE t.id = :vanSerialNo")
-    RMNCHMBeneficiaryImage getImageById(@Param("vanSerialNo") Long vanSerialNo);
+    @Query(value = " SELECT t FROM RMNCHMBeneficiaryImage t WHERE t.benImageId = :benImageId")
+    RMNCHMBeneficiaryImage getImageById(@Param("benImageId") Long benImageId);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE t.id = :vanSerialNo")
-    RMNCHMBeneficiaryaddress getAddressById(@Param("vanSerialNo") BigInteger vanSerialNo);
+    @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE t.benAddressID = :benAddressId")
+    RMNCHMBeneficiaryaddress getAddressById(@Param("benAddressId") BigInteger benAddressId);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiarycontact t WHERE t.id = :vanSerialNo")
-    RMNCHMBeneficiarycontact getContactById(@Param("vanSerialNo") BigInteger vanSerialNo);
+    @Query(value = " SELECT t FROM RMNCHMBeneficiarycontact t WHERE t.benContactsID = :benContactsId")
+    RMNCHMBeneficiarycontact getContactById(@Param("benContactsId") BigInteger benContactsId);
 
     @Query(value = " SELECT t.beneficiaryID FROM RMNCHMBeneficiaryregidmapping t  WHERE t.benRegId = :benRegID ")
     BigInteger getBenIdFromRegID(@Param("benRegID") Long benRegID);
