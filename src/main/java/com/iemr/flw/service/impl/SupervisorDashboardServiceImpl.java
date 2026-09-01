@@ -815,26 +815,12 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                             ashaId, startDate, endDate, approvalStatusID, stateCode);
                 }else if(stateCode.equals(StateCode.CG.getStateCode())){
                     if("ASHA Supervisor".equalsIgnoreCase(roleName)){
-                       if(approvalStatusID.equals(105)){
-                           totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
-                                   ashaId, startDate, endDate, 101, stateCode);
-                       }else {
-                           totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
-                                   ashaId, startDate, endDate, approvalStatusID, stateCode);
-                       }
+                        totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
+                                ashaId, startDate, endDate, approvalStatusID, stateCode);
 
                     }else if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName) ){
-                        if(approvalStatusID.equals(102)){
-                            totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
-                                    ashaId, startDate, endDate, approvalStatusID, stateCode);
-                        }else if(approvalStatusID.equals(104)){
-                            totalAmount = incentiveRecordRepo.getTotalAmountByAshaANM(
-                                    ashaId, startDate, endDate, 105, stateCode);
-                        } else {
-                            totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
-                                    ashaId, startDate, endDate, approvalStatusID, stateCode);
-                        }
-
+                        totalAmount = incentiveRecordRepo.getTotalAmountByAsha(
+                                ashaId, startDate, endDate, approvalStatusID, stateCode);
                     }
 
                 }
@@ -878,32 +864,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
 
-                     if (approvalStatusID.equals(102)) {
-
-                         incentiveActivityRecord = dbRecords.stream()
-                                 .peek(r -> {
-                                     if (r.getApprovalStatus().equals(102)
-                                             && r.getCalimedDate() != null
-                                             && isAfter24Hours(r.getCalimedDate())) {
-
-                                         r.setApprovalStatus(105);
-                                     }
-                                 })
-                                 .filter(r ->
-                                         r.getApprovalStatus().equals(105)
-                                                 || (r.getApprovalStatus().equals(102)))
-                                 .collect(Collectors.toList());
-                          totalAmount = incentiveActivityRecord.stream()
-                                 .mapToLong(r -> r.getAmount())
-                                 .sum();
-                         incentiveActivityRecord.forEach(r -> logger.info(
-                                 "activityId={}, status={}, isDefaultActivity={}",
-                                 r.getActivityId(),
-                                 r.getApprovalStatus(),
-                                 r.getIsDefaultActivity()
-                         ));
-
-                     }else if (approvalStatusID.equals(104)) {
+                     if (approvalStatusID.equals(104)) {
                          if(isOverDue){
                              incentiveActivityRecord = dbRecords.stream()
                                      .filter(r ->
