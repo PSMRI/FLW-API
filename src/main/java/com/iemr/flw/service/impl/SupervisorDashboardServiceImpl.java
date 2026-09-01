@@ -855,6 +855,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                      }else if(approvalStatusID.equals(106)){
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r ->r.getApprovalStatus().equals(102)  && !r.getIsClaimed())
+                                 .peek(r->{r.setApprovalStatus(106);})
                                  .collect(Collectors.toList());
                          totalAmount = incentiveActivityRecord.stream()
                                  .map(IncentiveActivityRecord::getAmount)
@@ -942,7 +943,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          }
                      }else if(approvalStatusID.equals(106)){
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r->!r.getIsClaimed() && r.getApprovalStatus().equals(102)).collect(Collectors.toList());
+                                 .filter(r->!r.getIsClaimed() && r.getApprovalStatus().equals(102)).peek(r->{r.setApprovalStatus(106);}).collect(Collectors.toList());
                          totalAmount = incentiveActivityRecord.stream()
                                  .map(IncentiveActivityRecord::getAmount)
                                  .filter(Objects::nonNull)
