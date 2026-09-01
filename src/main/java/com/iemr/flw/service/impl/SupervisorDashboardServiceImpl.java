@@ -865,19 +865,66 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
 
                      if (approvalStatusID.equals(104)) {
-                         if(isOverDue){
+
+                         logger.info("Approval Status ID: {}, isOverDue: {}", approvalStatusID, isOverDue);
+
+                         // Before filtering
+                         logger.info("Total dbRecords count: {}", dbRecords.size());
+
+                         dbRecords.forEach(r ->
+                                 logger.info(
+                                         "DB Record -> id: {}, approvalStatus: {}, ashaId: {}, benId: {}, activityId: {}",
+                                         r.getId(),
+                                         r.getApprovalStatus(),
+                                         r.getAshaId(),
+                                         r.getBenId(),
+                                         r.getActivityId()
+                                 )
+                         );
+
+                         if (isOverDue) {
+
                              incentiveActivityRecord = dbRecords.stream()
                                      .filter(r ->
-                                             r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(102)
-                                                     || (r.getApprovalStatus().equals(104)))
+                                             Objects.equals(r.getApprovalStatus(), 105)
+                                                     || Objects.equals(r.getApprovalStatus(), 102)
+                                                     || Objects.equals(r.getApprovalStatus(), 104)
+                                     )
                                      .peek(r -> {
-                                         if (r.getApprovalStatus().equals(102) || r.getApprovalStatus().equals(105)) {
+                                         logger.info(
+                                                 "Matched Record -> id: {}, original approvalStatus: {}",
+                                                 r.getId(),
+                                                 r.getApprovalStatus()
+                                         );
+
+                                         if (Objects.equals(r.getApprovalStatus(), 102)
+                                                 || Objects.equals(r.getApprovalStatus(), 105)) {
+
+                                             logger.info(
+                                                     "Changing approvalStatus for record id: {} from {} to 104",
+                                                     r.getId(),
+                                                     r.getApprovalStatus()
+                                             );
+
                                              r.setApprovalStatus(104);
                                          }
                                      })
                                      .collect(Collectors.toList());
-                         }
 
+                             logger.info("Filtered incentiveActivityRecord count: {}",
+                                     incentiveActivityRecord.size());
+
+                             incentiveActivityRecord.forEach(r ->
+                                     logger.info(
+                                             "Final Record -> id: {}, approvalStatus: {}, ashaId: {}, benId: {}, activityId: {}",
+                                             r.getId(),
+                                             r.getApprovalStatus(),
+                                             r.getAshaId(),
+                                             r.getBenId(),
+                                             r.getActivityId()
+                                     )
+                             );
+                         }
                      }else if(approvalStatusID.equals(106)){
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r->!r.getIsClaimed() && r.getApprovalStatus().equals(102)).collect(Collectors.toList());
