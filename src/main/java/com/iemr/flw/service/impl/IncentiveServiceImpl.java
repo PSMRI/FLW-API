@@ -489,27 +489,43 @@ public class IncentiveServiceImpl implements IncentiveService {
         List<IncentiveActivityRecord> records =
                 recordRepo.findRecordsByAsha(request.getUserId())
                         .stream()
-                        .filter(r -> r.getCreatedDate() != null
-                                && r.getEndDate() != null
-                                && r.getEndDate().toLocalDateTime().getMonthValue() == request.getMonth()
-                                && r.getEndDate().toLocalDateTime().getYear() == request.getYear()
+                        .filter(r ->
+                                r.getCreatedDate() != null
+                                        && r.getEndDate() != null
+                                        && r.getEndDate().toLocalDateTime().getMonthValue() == request.getMonth()
+                                        && r.getEndDate().toLocalDateTime().getYear() == request.getYear()
+                                        && Boolean.TRUE.equals(r.getIsClaimed())
                                         && (
-                                        Objects.equals(request.getApprovalStatus(), 104)
-                                                ? (Objects.equals(r.getApprovalStatus(), 102)
-                                                || Objects.equals(r.getApprovalStatus(), 105))
-                                                : Objects.equals(r.getApprovalStatus(), request.getApprovalStatus())
+                                        // 104 => 102 OR 105
+                                        (Objects.equals(request.getApprovalStatus(), 104)
+                                                && (
+                                                Objects.equals(r.getApprovalStatus(), 102)
+                                                        || Objects.equals(r.getApprovalStatus(), 105)
+                                        )
+                                        )
 
+                                                ||
 
+                                                // 105 => 101 OR 105
+                                                (Objects.equals(request.getApprovalStatus(), 105)
+                                                        && (
+                                                        Objects.equals(r.getApprovalStatus(), 101)
+                                                                || Objects.equals(r.getApprovalStatus(), 105)
+                                                )
+                                                )
 
+                                                ||
 
-
+                                                // Normal status
+                                                (!Objects.equals(request.getApprovalStatus(), 104)
+                                                        && !Objects.equals(request.getApprovalStatus(), 105)
+                                                        && Objects.equals(
+                                                        r.getApprovalStatus(),
+                                                        request.getApprovalStatus()
+                                                )
+                                                )
+                                )
                         )
-                                && (
-                                Objects.equals(request.getApprovalStatus(), 105)
-                                        ? (Objects.equals(r.getApprovalStatus(), 101)
-                                        || Objects.equals(r.getApprovalStatus(), 105))
-                                        : Objects.equals(r.getApprovalStatus(), request.getApprovalStatus()))
-                                && r.getIsClaimed())
                         .toList();
 
 
