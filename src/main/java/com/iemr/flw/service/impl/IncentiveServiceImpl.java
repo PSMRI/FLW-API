@@ -807,7 +807,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                 data.put("notification_type", "INCENTIVE_APPROVAL");
                 data.put("nav_id", "INCENTIVE_HISTORY");
                 data.put("sender_user_id", String.valueOf(ashaId));
-                data.put("receiver_user_id", String.valueOf(ashaId));
+                data.put("receiver_user_id", String.valueOf(dashboardRepo.getSupervisorUserIdByAshaId(ashaId)));
                 data.put("month", String.valueOf(month));
                 data.put("year", String.valueOf(year));
                 data.put("approval_status", String.valueOf(102));
@@ -827,7 +827,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                             body,
                             "INCENTIVE_CLAIMED",
                             "INCENTIVE",
-                            ashaId
+                            dashboardRepo.getSupervisorUserIdByAshaId(ashaId)
                     );
 
                     String supervisorBody =
