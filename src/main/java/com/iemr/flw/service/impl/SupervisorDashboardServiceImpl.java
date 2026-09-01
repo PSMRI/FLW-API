@@ -825,7 +825,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                     }else if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName) ){
                         if(approvalStatusID.equals(102)){
-                            totalAmount = incentiveRecordRepo.getTotalAmountByAshaANM(
+                            totalAmount = incentiveRecordRepo.getDefaultActivityTotalAmountByAsha(
                                     ashaId, startDate, endDate, approvalStatusID, stateCode);
                         }else if(approvalStatusID.equals(104)){
                             totalAmount = incentiveRecordRepo.getTotalAmountByAshaANM(
