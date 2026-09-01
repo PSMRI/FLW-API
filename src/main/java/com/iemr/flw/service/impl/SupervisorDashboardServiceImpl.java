@@ -851,6 +851,11 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r ->r.getApprovalStatus().equals(102)  && !r.getIsClaimed())
                                  .collect(Collectors.toList());
+                         totalAmount = incentiveActivityRecord.stream()
+                                 .map(IncentiveActivityRecord::getAmount)
+                                 .filter(Objects::nonNull)
+                                 .mapToLong(Long::longValue)
+                                 .sum();
                      }else if(approvalStatusID.equals(0)){
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r ->((r.getApprovalStatus().equals(102) && r.getIsClaimed()) ||(r.getApprovalStatus().equals(102) && !r.getIsClaimed())|| r.getApprovalStatus().equals(103) || r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(104)))
@@ -933,6 +938,11 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                      }else if(approvalStatusID.equals(106)){
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r->!r.getIsClaimed() && r.getApprovalStatus().equals(102)).collect(Collectors.toList());
+                         totalAmount = incentiveActivityRecord.stream()
+                                 .map(IncentiveActivityRecord::getAmount)
+                                 .filter(Objects::nonNull)
+                                 .mapToLong(Long::longValue)
+                                 .sum();
                      }else if(approvalStatusID.equals(0)){
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(r->((r.getApprovalStatus().equals(102) && r.getIsClaimed()) ||(r.getApprovalStatus().equals(102) && !r.getIsClaimed()) || r.getApprovalStatus().equals(103) || r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(104))).collect(Collectors.toList());
@@ -1090,10 +1100,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             if (!activityList.isEmpty()) {
                 approvalStatus = (int) activityList.get(0).get("approvalStatus");
             }
-            if(!approvalStatusID.equals(106)){
-                if (totalAmount == null || totalAmount <= 0) continue;
 
-            }
 
 
             if (pending == 0 && verified == 0 && rejected == 0 && unclaimedCount == 0 && overallOverDue==0) continue;
