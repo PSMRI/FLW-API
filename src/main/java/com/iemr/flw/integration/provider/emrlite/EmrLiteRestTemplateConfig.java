@@ -18,8 +18,6 @@ public class EmrLiteRestTemplateConfig {
     @Bean
     public RestTemplate emrLiteRestTemplate(EmrLiteTokenManager emrLiteTokenManager) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(VENDOR_CALL_TIMEOUT_MS);
-        factory.setReadTimeout(VENDOR_CALL_TIMEOUT_MS);
         RestTemplate restTemplate = new RestTemplate(factory);
         restTemplate.getInterceptors().add(new EmrLiteAuthInterceptor(emrLiteTokenManager));
         return restTemplate;

@@ -13,7 +13,7 @@ import java.util.Optional;
 @Repository
 public interface DiagnosticResultRepo extends JpaRepository<DiagnosticResult, Long> {
 
-    Optional<DiagnosticResult> findByDiagnosticOrderIdAndDeletedFalse(Long diagnosticOrderId);
+    Optional<DiagnosticResult> findByExternalOrderIdAndDeletedFalse(String externalOrderId);
 
     @Transactional
     @Modifying
