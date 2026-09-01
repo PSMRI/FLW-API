@@ -924,6 +924,11 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                              r.getActivityId()
                                      )
                              );
+                             totalAmount = incentiveActivityRecord.stream()
+                                     .map(IncentiveActivityRecord::getAmount)
+                                     .filter(Objects::nonNull)
+                                     .mapToLong(Long::longValue)
+                                     .sum();
                          }
                      }else if(approvalStatusID.equals(106)){
                          incentiveActivityRecord = dbRecords.stream()
@@ -1003,7 +1008,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
 
 
-            long pending = 0, verified = 0, rejected = 0 , unclaimedCount = 0 , overDue ;
+            long pending = 0, verified = 0, rejected = 0 , unclaimedCount = 0 , overDue = 0 ;
 
 
             if (countList != null && !countList.isEmpty()) {
@@ -1262,7 +1267,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                                      Long id = Long.parseLong(incentiveId.trim());
 
-                                     updatedCount = incentiveRecordRepo.updateApprovalStatusByIncentiveId(id, ashaId, 105, approvalDate, ashaSupervisorUserId, ashaSupervisorDetails.getUserName());
+                                     updatedCount = incentiveRecordRepo.updateApprovalStatusByIncentiveId(id, ashaId, approvalStatus, approvalDate, ashaSupervisorUserId, ashaSupervisorDetails.getUserName());
 
                                  }
                              }
