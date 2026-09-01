@@ -1052,13 +1052,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
 
                     }else if(roleName.equalsIgnoreCase("ASHA Supervisor")) {
-                        if (approvalStatusID.equals(105)) {
-                            // 101 + 105
-                            verified = counts[3] != null ? ((Number) counts[3]).longValue() : 0;
-                        } else {
-                            // only 101
-                            verified = counts[0] != null ? ((Number) counts[0]).longValue() : 0;
-                        }
+                        verified = counts[0] != null ? ((Number) counts[0]).longValue() : 0;
+
                         if(approvalStatusID.equals(106)){
                             unclaimedCount = counts[1] != null ? ((Number) counts[1]).longValue() : 0;
 
