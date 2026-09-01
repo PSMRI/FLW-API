@@ -499,7 +499,16 @@ public class IncentiveServiceImpl implements IncentiveService {
                                                 || Objects.equals(r.getApprovalStatus(), 105))
                                                 : Objects.equals(r.getApprovalStatus(), request.getApprovalStatus())
 
+
+
+
+
                         )
+                                && (
+                                Objects.equals(request.getApprovalStatus(), 105)
+                                        ? (Objects.equals(r.getApprovalStatus(), 101)
+                                        || Objects.equals(r.getApprovalStatus(), 105))
+                                        : Objects.equals(r.getApprovalStatus(), request.getApprovalStatus()))
                                 && r.getIsClaimed())
                         .toList();
 
