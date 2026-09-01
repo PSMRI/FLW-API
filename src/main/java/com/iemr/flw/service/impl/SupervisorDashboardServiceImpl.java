@@ -237,7 +237,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     List<Object[]> statusRows = dashboardRepo.getDefaultIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
                     if (statusRows != null) {
                         for (Object[] sRow : statusRows) {
-                            long verified = ((Number) sRow[5]).longValue();
+                            long verified = ((Number) sRow[2]).longValue();
                             long rejected = ((Number) sRow[3]).longValue();
                             long pending = ((Number) sRow[4]).longValue();
 
