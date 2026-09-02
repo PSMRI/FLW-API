@@ -338,7 +338,7 @@ public class CoupleServiceImpl implements CoupleService {
                     IncentiveActivity handoverKitActivityAM =
                             incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.FAMILY_PLANNING.getDisplayName());
                     if (handoverKitActivityAM != null) {
-                        createIncentiveRecord(eligibleCoupleRegister, handoverKitActivityAM);
+                        createIncentiveRecordForKitHandOver(eligibleCoupleRegister, handoverKitActivityAM);
 
                     }
 
@@ -346,7 +346,7 @@ public class CoupleServiceImpl implements CoupleService {
                     IncentiveActivity handoverKitActivityCH =
                             incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.ACTIVITY.getDisplayName());
                     if (handoverKitActivityCH != null) {
-                        createIncentiveRecord(eligibleCoupleRegister, handoverKitActivityCH);
+                        createIncentiveRecordForKitHandOver(eligibleCoupleRegister, handoverKitActivityCH);
 
                     }
                 }
