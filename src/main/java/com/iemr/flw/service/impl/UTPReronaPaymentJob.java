@@ -44,8 +44,12 @@ public class UTPReronaPaymentJob implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        log.info("Running UTP Rerona Payment Job on startup...");
-        triggerStaticPayment();
+        log.info("========================================");
+
+        log.info("FLW application started successfully and is now running.");
+
+        log.info("========================================");
+
     }
     // ✅ Separate method — call this for immediate testing
 
