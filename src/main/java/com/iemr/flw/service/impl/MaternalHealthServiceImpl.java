@@ -660,18 +660,24 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
 
                     if (PPIUCDActivityCH != null) {
-                        if (ect.getContraceptionMethod().equals("POST PARTUM IUCD (PPIUCD)")) {
-                            addIncenticeRecord(ect, userId, PPIUCDActivityCH);
+                        if(ect.getContraceptionMethod()!=null){
+                            if (ect.getContraceptionMethod().equals("POST PARTUM IUCD (PPIUCD)")) {
+                                addIncenticeRecord(ect, userId, PPIUCDActivityCH);
 
+                            }
                         }
+
                     }
 
 
                     if (femaleSterilizationActivityCH != null) {
-                        if (ect.getContraceptionMethod().equals("FEMALE STERILIZATION")) {
-                            addIncenticeRecord(ect, userId, femaleSterilizationActivityCH);
+                        if(ect.getAnyContraceptionMethod()!=null){
+                            if (ect.getContraceptionMethod().equals("FEMALE STERILIZATION")) {
+                                addIncenticeRecord(ect, userId, femaleSterilizationActivityCH);
 
+                            }
                         }
+
                     }
 
 

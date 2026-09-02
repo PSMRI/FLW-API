@@ -16,6 +16,7 @@ import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.CoupleService;
 import com.iemr.flw.service.UserService;
+import org.joda.time.DateTime;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -164,7 +167,7 @@ public class CoupleServiceImpl implements CoupleService {
                                              GroupName.FAMILY_PLANNING.getDisplayName());
 
                              if (activity != null) {
-                                 createIncentiveRecord(existingECR, activity);
+                                 createIncentiveRecordForKitHandOver(existingECR, activity);
                              }
                          }
                         if(stateId.equals(StateCode.CG.getStateCode())){
@@ -174,7 +177,7 @@ public class CoupleServiceImpl implements CoupleService {
                                             GroupName.ACTIVITY.getDisplayName());
 
                             if (activity != null) {
-                                createIncentiveRecord(existingECR, activity);
+                                createIncentiveRecordForKitHandOver(existingECR, activity);
                             }
                         }
 
@@ -335,7 +338,7 @@ public class CoupleServiceImpl implements CoupleService {
                     IncentiveActivity handoverKitActivityAM =
                             incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.FAMILY_PLANNING.getDisplayName());
                     if (handoverKitActivityAM != null) {
-                        createIncentiveRecord(eligibleCoupleRegister, handoverKitActivityAM);
+                        createIncentiveRecordForKitHandOver(eligibleCoupleRegister, handoverKitActivityAM);
 
                     }
 
@@ -343,7 +346,7 @@ public class CoupleServiceImpl implements CoupleService {
                     IncentiveActivity handoverKitActivityCH =
                             incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.ACTIVITY.getDisplayName());
                     if (handoverKitActivityCH != null) {
-                        createIncentiveRecord(eligibleCoupleRegister, handoverKitActivityCH);
+                        createIncentiveRecordForKitHandOver(eligibleCoupleRegister, handoverKitActivityCH);
 
                     }
                 }
@@ -378,6 +381,54 @@ public class CoupleServiceImpl implements CoupleService {
                     record.setCreatedBy(eligibleCoupleDTO.getCreatedBy());
                     record.setStartDate(eligibleCoupleDTO.getCreatedDate());
                     record.setEndDate(eligibleCoupleDTO.getCreatedDate());
+                    record.setUpdatedDate(eligibleCoupleDTO.getCreatedDate());
+                    record.setUpdatedBy(eligibleCoupleDTO.getCreatedBy());
+                    record.setBenId(eligibleCoupleDTO.getBenId());
+                    record.setAshaId(userId);
+                    record.setAmount(Long.valueOf(activity.getRate()));
+                    recordRepo.save(record);
+                }
+            }
+        }
+        lockMap.remove(lockKey, lock);
+
+
+
+    }
+
+    private void createIncentiveRecordForKitHandOver(EligibleCoupleRegister eligibleCoupleDTO, IncentiveActivity activity) {
+        String lockKey = activity.getId() + "_" + eligibleCoupleDTO.getBenId() + "_" + eligibleCoupleDTO.getCreatedDate();
+
+        Object lock = lockMap.computeIfAbsent(lockKey, k -> new Object());
+        if (activity == null
+                || eligibleCoupleDTO == null
+                || eligibleCoupleDTO.getKitHandedOverDate() == null
+                || eligibleCoupleDTO.getKitHandedOverDate().trim().isEmpty()) {
+            return;
+        }
+
+        LocalDate kitHandOverDate =
+                LocalDate.parse(eligibleCoupleDTO.getKitHandedOverDate());
+
+        Timestamp kitHandOverTimestamp =
+                Timestamp.valueOf(kitHandOverDate.atStartOfDay());
+        synchronized (lock){
+            if (activity != null) {
+                if(eligibleCoupleDTO.getKitHandedOverDate()!=null && !eligibleCoupleDTO.getKitHandedOverDate().isEmpty()){
+
+                }
+                Integer userId = userRepo.getUserIdByName(eligibleCoupleDTO.getCreatedBy());
+
+                IncentiveActivityRecord record = recordRepo
+                        .findRecordByActivityIdCreatedDateBenId(activity.getId(), eligibleCoupleDTO.getCreatedDate(), eligibleCoupleDTO.getBenId(),userId);
+
+                if (record == null) {
+                    record = new IncentiveActivityRecord();
+                    record.setActivityId(activity.getId());
+                    record.setCreatedDate(kitHandOverTimestamp);
+                    record.setCreatedBy(eligibleCoupleDTO.getCreatedBy());
+                    record.setStartDate(kitHandOverTimestamp);
+                    record.setEndDate(kitHandOverTimestamp);
                     record.setUpdatedDate(eligibleCoupleDTO.getCreatedDate());
                     record.setUpdatedBy(eligibleCoupleDTO.getCreatedBy());
                     record.setBenId(eligibleCoupleDTO.getBenId());

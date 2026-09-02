@@ -87,4 +87,6 @@ public class IncentiveActivityRecord {
 
     @Transient
     private String groupName;
+
+    @Transient String groupCategoryName;
 }

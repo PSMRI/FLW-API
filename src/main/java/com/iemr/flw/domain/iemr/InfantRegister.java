@@ -100,4 +100,7 @@ public class InfantRegister {
 
     @Column(name = "is_sncu")
     private String isSNCU;
+
+    @Column(name = "is_Referred_higher_facility")
+    private Boolean isReferredHigherFacility;
 }

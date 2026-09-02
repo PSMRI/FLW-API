@@ -54,10 +54,9 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
             tbSuspected.setUserId(requestDTO.getUserId());
             tbSuspectedRepo.save(tbSuspected);
             if(tbSuspected!=null){
-                if(tbSuspected.getIsConfirmed()){
-                    incentiveLogicService.incentiveForTbSuspected(tbSuspected.getBenId(),tbSuspected.getVisitDate(),tbSuspected.getVisitDate(),tbSuspected.getUserId());
 
-                }
+                incentiveLogicService.incentiveForTbSuspected(tbSuspected.getBenId(),tbSuspected.getVisitDate(),tbSuspected.getVisitDate(),tbSuspected.getUserId());
+
 
             }
 

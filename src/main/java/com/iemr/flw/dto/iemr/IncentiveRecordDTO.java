@@ -47,6 +47,8 @@ public class IncentiveRecordDTO {
 
     private String groupName;
 
+    private String groupCategoryName;
+
     private String reason;
 
     private String otherReason;

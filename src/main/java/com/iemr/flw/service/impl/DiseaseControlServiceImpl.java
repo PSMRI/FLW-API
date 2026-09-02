@@ -1268,6 +1268,16 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
             }
 
+        }else {
+            if(!diseaseScreening.getMalariaTestType().isEmpty()){
+                if (stateId.equals(StateCode.CG.getStateCode())) {
+                    if (incentiveActivityForCollectSlideCG != null) {
+                        addIncentive(incentiveActivityForCollectSlideCG, diseaseScreening);
+
+                    }
+                }
+
+            }
         }
         if (diseaseScreening.getCaseStatus().equals("Suspected")) {
             if (!diseaseScreening.getMalariaTestType().isEmpty()) {

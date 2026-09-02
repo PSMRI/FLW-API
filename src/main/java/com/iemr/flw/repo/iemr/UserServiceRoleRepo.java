@@ -36,4 +36,10 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
     """, nativeQuery = true)
     String getUserNamedByUserId(@Param("userId") Integer userId);
 
+    @Query("SELECT new com.iemr.flw.dto.iemr.UserServiceRoleDTO(u.userId, u.name, u.userName, u.stateId, u.stateName, u.workingDistrictId," +
+            "u.workingDistrictName, u.serviceProviderId, u.roleId, u.roleName, u.providerServiceMapId, u.blockid, u.blockname, u.villageid, " +
+            "u.villagename) FROM UserServiceRole u WHERE u.userId IN :userIds " +
+            "AND u.userServciceRoleDeleted = false AND u.userDeleted = false")
+    List<UserServiceRoleDTO> getUserRolesByIds(@Param("userIds") List<Integer> userIds);
+
 }
