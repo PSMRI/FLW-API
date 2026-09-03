@@ -56,26 +56,21 @@ public class MicroBirthPlanController {
 
 
     @RequestMapping(value = "getAll", method = RequestMethod.GET)
-    public ResponseEntity<Map<String, Object>> getAllMicroBirthPlans(@RequestParam("userId") Integer userId) {
+    public ResponseEntity<Map<String, Object>> getAllMicroBirthPlans(
+            @RequestHeader(value = "JwtToken") String jwtToken) {
 
         Map<String, Object> response = new HashMap<>();
-
-
         Map<String, Object> data = new HashMap<>();
         try {
-            if (userId != null) {
-                data.put("userId", userId);
-                data.put("entries", service.getAllMicroBirthPlans(userId));
-                response.put("data", data);
-                response.put("statusCode", 200);
-                response.put("status", "Success");
-            }
-
+            Integer userId = jwtUtil.extractUserId(jwtToken);
+            data.put("userId", userId);
+            data.put("entries", service.getAllMicroBirthPlans(userId));
+            response.put("data", data);
+            response.put("statusCode", 200);
+            response.put("status", "Success");
         } catch (Exception e) {
             response.put("statusCode", 500);
             response.put("errorMessage", e.getMessage());
-
-
         }
 
         return ResponseEntity.ok(response);
