@@ -25,11 +25,15 @@
 package com.iemr.flw.dto.iemr;
 
 import lombok.Data;
+
+import java.sql.Timestamp;
 import java.util.Date;
 
 @Data
 public class MalariaFollowListUpDTO {
     private Long id;
+    private Timestamp updateDate;
+    private String updatedBy;
     private Long benId;
     private Long houseHoldDetailsId;
     private Integer userId ;

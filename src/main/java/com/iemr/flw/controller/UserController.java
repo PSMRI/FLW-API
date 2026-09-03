@@ -3,13 +3,13 @@ package com.iemr.flw.controller;
 import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.ApiResponse;
+import com.iemr.flw.utils.JwtUtil;
 
 import io.swagger.v3.oas.annotations.Operation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,11 +23,15 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @Operation(summary = "get user Detail of userId and roleId")
     @RequestMapping(value = { "/getUserDetail" }, method = { RequestMethod.GET })
-    public ResponseEntity<?> getUserDetail(@RequestParam(value = "userId") Integer userId,
-            @RequestHeader(value = "Authorization") String Authorization) {
+    public ResponseEntity<?> getUserDetail(
+            @RequestHeader(value = "JwtToken") String jwtToken) {
         try {
+            Integer userId = jwtUtil.extractUserId(jwtToken);
             UserServiceRoleDTO result = userService.getUserDetail(userId);
             return new ResponseEntity<>(
                     new ApiResponse(true, null, result), HttpStatus.ACCEPTED);

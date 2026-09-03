@@ -53,20 +53,29 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     @Query(value = " SELECT t FROM RMNCHMBeneficiarymapping t WHERE t.benRegId = :BenRegId")
     RMNCHMBeneficiarymapping getById(@Param("BenRegId") BigInteger BenRegId);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiarydetail t WHERE t.id = :vanSerialNo")
-    RMNCHMBeneficiarydetail getDetailsById(@Param("vanSerialNo") BigInteger vanSerialNo);
+    // NOTE: these 5 lookups take the row's real primary key (BenDetailsId/BenAccountID/
+    // BenImageId/BenAddressId/BenContactsId, sourced from RMNCHMBeneficiarymapping) as their
+    // argument. They used to query WHERE t.id = :vanSerialNo — but each entity's "id" field is
+    // mapped to the VanSerialNo column (a per-van sync counter that repeats across different
+    // vans), not the real @Id primary key. Passing a real PK value into a VanSerialNo comparison
+    // either matched the wrong row by coincidence, or — whenever that VanSerialNo happened to be
+    // shared by another row (common; confirmed live via IncorrectResultSizeDataAccessException:
+    // "Query did not return a unique result: 2 results were returned") — threw outright. Fixed to
+    // query the actual primary key column on each entity instead.
+    @Query(value = " SELECT t FROM RMNCHMBeneficiarydetail t WHERE t.beneficiaryDetailsId = :benDetailsId")
+    RMNCHMBeneficiarydetail getDetailsById(@Param("benDetailsId") BigInteger benDetailsId);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiaryAccount t WHERE t.id = :vanSerialNo")
-    RMNCHMBeneficiaryAccount getAccountById(@Param("vanSerialNo") BigInteger vanSerialNo);
+    @Query(value = " SELECT t FROM RMNCHMBeneficiaryAccount t WHERE t.benAccountID = :benAccountId")
+    RMNCHMBeneficiaryAccount getAccountById(@Param("benAccountId") BigInteger benAccountId);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiaryImage t WHERE t.id = :vanSerialNo")
-    RMNCHMBeneficiaryImage getImageById(@Param("vanSerialNo") Long vanSerialNo);
+    @Query(value = " SELECT t FROM RMNCHMBeneficiaryImage t WHERE t.benImageId = :benImageId")
+    RMNCHMBeneficiaryImage getImageById(@Param("benImageId") Long benImageId);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE t.id = :vanSerialNo")
-    RMNCHMBeneficiaryaddress getAddressById(@Param("vanSerialNo") BigInteger vanSerialNo);
+    @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE t.benAddressID = :benAddressId")
+    RMNCHMBeneficiaryaddress getAddressById(@Param("benAddressId") BigInteger benAddressId);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiarycontact t WHERE t.id = :vanSerialNo")
-    RMNCHMBeneficiarycontact getContactById(@Param("vanSerialNo") BigInteger vanSerialNo);
+    @Query(value = " SELECT t FROM RMNCHMBeneficiarycontact t WHERE t.benContactsID = :benContactsId")
+    RMNCHMBeneficiarycontact getContactById(@Param("benContactsId") BigInteger benContactsId);
 
     @Query(value = " SELECT t.beneficiaryID FROM RMNCHMBeneficiaryregidmapping t  WHERE t.benRegId = :benRegID ")
     BigInteger getBenIdFromRegID(@Param("benRegID") Long benRegID);
@@ -90,11 +99,17 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     @Query(nativeQuery = true, value = " SELECT HealthID,HealthIdNumber,isNewAbha FROM db_iemr.t_healthid WHERE HealthIdNumber = :healthIdNumber ")
     ArrayList<Object[]> getBenHealthDetails(@Param("healthIdNumber") String healthIdNumber);
 
-    @Query("SELECT b FROM RMNCHMBeneficiarymapping b WHERE b.benRegId = :benRegId")
-    RMNCHMBeneficiarymapping findByBenRegIdFromMapping(@Param("benRegId") BigInteger benRegId);
+    // benRegId has no unique constraint on i_beneficiarymapping — a beneficiary can have
+    // more than one mapping row, so this must return a list, not assume a single result.
+    @Query("SELECT b FROM RMNCHMBeneficiarymapping b WHERE b.benRegId = :benRegId ORDER BY b.benMapId DESC")
+    List<RMNCHMBeneficiarymapping> findByBenRegIdFromMapping(@Param("benRegId") BigInteger benRegId);
+
 
     @Query("SELECT d FROM RMNCHMBeneficiarydetail d WHERE d.beneficiaryDetailsId = :beneficiaryDetailsId")
     RMNCHMBeneficiarydetail findByBeneficiaryDetailsId(@Param("beneficiaryDetailsId") BigInteger beneficiaryDetailsId);
+
+    @Query("SELECT d FROM RMNCHMBeneficiarydetail d WHERE d.BenRegId = :benRegID")
+    RMNCHMBeneficiarydetail getDetailByBenRegID(@Param("benRegID") BigInteger benRegID);
 
 
     // BeneficiaryRepo — replaces 3 separate queries per beneficiary
@@ -117,4 +132,33 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
         "FROM RMNCHBeneficiaryDetailsRmnch b " +
         "WHERE b.BenRegId IN :regIds AND b.benficieryid IS NOT NULL")
 List<Object[]> getBenIdsFromRegIDs(@Param("regIds") List<Long> regIds);
+
+    // Village worklist (Stop TB path) — paginated at the DB level via LIMIT/OFFSET,
+    // replacing the old approach of loading every flow row for the whole village into
+    // memory and slicing it in Java. Cost is now O(pageSize) instead of O(village size)
+    // on every page request, including page 0. See BeneficiaryServiceImpl.getBenData().
+    @Query(value = """
+        SELECT bm.BenAddressId
+        FROM db_iemr.i_ben_flow_outreach bfs
+        JOIN db_identity.i_beneficiarymapping bm ON bm.BenRegId = bfs.beneficiary_reg_id
+        WHERE bfs.providerServiceMapID = :psmId AND bfs.villageID = :villageId AND bfs.deleted = 0
+        ORDER BY bfs.registrationDate DESC
+        LIMIT :pageSize OFFSET :offset
+        """, nativeQuery = true)
+    List<BigInteger> getVillageWorklistAddressIds(
+            @Param("psmId") Integer psmId,
+            @Param("villageId") Integer villageId,
+            @Param("pageSize") int pageSize,
+            @Param("offset") int offset);
+
+    @Query(value = """
+        SELECT COUNT(*)
+        FROM db_iemr.i_ben_flow_outreach bfs
+        JOIN db_identity.i_beneficiarymapping bm ON bm.BenRegId = bfs.beneficiary_reg_id
+        WHERE bfs.providerServiceMapID = :psmId AND bfs.villageID = :villageId AND bfs.deleted = 0
+        """, nativeQuery = true)
+    long countVillageWorklist(@Param("psmId") Integer psmId, @Param("villageId") Integer villageId);
+
+    @Query("SELECT t FROM RMNCHMBeneficiaryaddress t WHERE t.benAddressID IN :ids")
+    List<RMNCHMBeneficiaryaddress> findAddressesByIds(@Param("ids") List<BigInteger> ids);
 }
