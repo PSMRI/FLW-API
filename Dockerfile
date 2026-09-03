@@ -14,6 +14,8 @@ FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
+ENV TZ=Asia/Kolkata
+
 # Copy the built WAR file from the build stage
 COPY --from=build /app/target/*.war app.war
 

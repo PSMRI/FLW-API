@@ -1,0 +1,19 @@
+package com.iemr.flw.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class DiagnosticOrderStatusSummaryDto {
+    private List<Long> awaitingProviderResult;
+    private List<Long> completed;
+    private List<Long> pollingTimedOut;
+    private List<Long> failed;
+    private List<Long> refused;
+    private List<Long> awaitingManualEntry;
+}
