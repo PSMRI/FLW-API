@@ -578,6 +578,11 @@ public class IncentiveServiceImpl implements IncentiveService {
                     .max(Comparator.comparing(IncentiveActivityRecord::getCreatedDate))
                     .map(IncentiveActivityRecord::getApprovalStatus)
                     .orElse(0);
+
+            boolean isApproved = list.stream()
+                    .max(Comparator.comparing(IncentiveActivityRecord::getCreatedDate))
+                    .map(IncentiveActivityRecord::getIsApproved)
+                    .orElse(false);
             Long incentiveId = list.stream()
                     .max(Comparator.comparing(IncentiveActivityRecord::getCreatedDate))
                     .map(IncentiveActivityRecord::getId)
@@ -603,6 +608,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                 }
                 map.put("isDefault", activity.getIsDefaultActivity());
                 map.put("approvalStatus", approvalStatus);
+                map.put("isApproved", isApproved);
                 map.put("claimCount", list.size());
                 map.put("totalAmount", total);
                 map.put("amount", activity.getRate());

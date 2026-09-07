@@ -91,5 +91,5 @@ public class IncentiveActivityRecord {
     @Transient String groupCategoryName;
 
     @Column(name = "is_approved")
-    private boolean isApproved;
+    private Boolean isApproved;
 }
