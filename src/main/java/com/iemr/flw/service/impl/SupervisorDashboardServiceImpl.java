@@ -532,7 +532,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                             if (verified > 0) overallVerified += 1;
                             if (rejected > 0) overallRejected += 1;
-                            if (pending > 0) overallPending += 1;
 
                             if (pending > 0) {
                                 if (isOverDue) {
