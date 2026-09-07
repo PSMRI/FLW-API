@@ -85,7 +85,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 .withDayOfMonth(5);
 
         boolean isOverDue =
-                rollName.equalsIgnoreCase("ANM")
+                (rollName.equalsIgnoreCase("ANM") || rollName.equalsIgnoreCase("ASHA Supervisor"))
                         && today.isAfter(dueDate);
 
 
@@ -757,9 +757,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     }else {
                         countList = incentiveRecordRepo.getStatusCountByAshaIdOfDefaultActivity(ashaId, startDate, endDate);
 
-                        countList = incentiveRecordRepo
-                                .getStatusCountByAshaId(
-                                        ashaId, startDate, endDate);
                     }
 
                     logger.info("countList = {}", Arrays.deepToString(countList.toArray()));
