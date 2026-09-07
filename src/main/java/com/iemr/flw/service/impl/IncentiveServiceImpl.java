@@ -542,7 +542,7 @@ public class IncentiveServiceImpl implements IncentiveService {
         if(isCG){
             if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                 records = records.stream()
-                        .filter(r -> validActivityIds.contains(r.getActivityId()))
+                        .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
                         .collect(Collectors.toList());
             }else  if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                 if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
