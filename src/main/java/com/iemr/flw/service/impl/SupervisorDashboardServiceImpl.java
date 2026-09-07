@@ -838,10 +838,60 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  .filter(r ->(r.getApprovalStatus().equals(102) || r.getApprovalStatus().equals(103) || r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(104)) && r.getIsDefaultActivity() && !r.getIsClaimed())
                                  .collect(Collectors.toList());
                      }else{
-                         incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r ->( approvalStatusID == 0 ||
-                                         approvalStatusID.equals(r.getApprovalStatus())) && r.getIsDefaultActivity()  && isWithin24Hours(r.getCalimedDate()))
-                                 .collect(Collectors.toList());
+
+                         if (isOverDue) {
+
+                             incentiveActivityRecord = dbRecords.stream()
+                                     .filter(r ->
+                                             Objects.equals(r.getApprovalStatus(), 105)
+                                                     || Objects.equals(r.getApprovalStatus(), 102)
+                                                     || Objects.equals(r.getApprovalStatus(), 104)
+                                     )
+                                     .peek(r -> {
+                                         logger.info(
+                                                 "Matched Record -> id: {}, original approvalStatus: {}",
+                                                 r.getId(),
+                                                 r.getApprovalStatus()
+                                         );
+
+                                         if (Objects.equals(r.getApprovalStatus(), 102)
+                                                 || Objects.equals(r.getApprovalStatus(), 105)) {
+
+                                             logger.info(
+                                                     "Changing approvalStatus for record id: {} from {} to 104",
+                                                     r.getId(),
+                                                     r.getApprovalStatus()
+                                             );
+
+                                             r.setApprovalStatus(104);
+                                         }
+                                     })
+                                     .collect(Collectors.toList());
+
+                             logger.info("Filtered incentiveActivityRecord count: {}",
+                                     incentiveActivityRecord.size());
+
+                             incentiveActivityRecord.forEach(r ->
+                                     logger.info(
+                                             "Final Record -> id: {}, approvalStatus: {}, ashaId: {}, benId: {}, activityId: {}",
+                                             r.getId(),
+                                             r.getApprovalStatus(),
+                                             r.getAshaId(),
+                                             r.getBenId(),
+                                             r.getActivityId()
+                                     )
+                             );
+                             totalAmount = incentiveActivityRecord.stream()
+                                     .map(IncentiveActivityRecord::getAmount)
+                                     .filter(Objects::nonNull)
+                                     .mapToLong(Long::longValue)
+                                     .sum();
+                         }else {
+                             incentiveActivityRecord = dbRecords.stream()
+                                     .filter(r ->( approvalStatusID == 0 ||
+                                             approvalStatusID.equals(r.getApprovalStatus())) && r.getIsDefaultActivity())
+                                     .collect(Collectors.toList());
+                         }
                      }
 
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
@@ -1196,7 +1246,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          if ("ASHA Supervisor".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())) {
 
                              updatedCount = incentiveRecordRepo.updateApprovalStatusByAshaAndDateRange(
-                                     ashaId, approvalStatus, startDate, endDate,
+                                     ashaId, 105, startDate, endDate,
                                      approvalDate, ashaSupervisorUserId,
                                      ashaSupervisorDetails.getUserName());
 
@@ -1254,7 +1304,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                                      Long id = Long.parseLong(incentiveId.trim());
 
-                                     updatedCount = incentiveRecordRepo.updateApprovalStatusByIncentiveId(id, ashaId, approvalStatus, approvalDate, ashaSupervisorUserId, ashaSupervisorDetails.getUserName());
+                                     updatedCount = incentiveRecordRepo.updateApprovalStatusByIncentiveId(id, ashaId, 105, approvalDate, ashaSupervisorUserId, ashaSupervisorDetails.getUserName());
 
                                  }
                              }
