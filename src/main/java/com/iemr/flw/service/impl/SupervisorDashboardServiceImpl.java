@@ -1009,14 +1009,37 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                      if (approvalStatusID.equals(102)) {
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r ->
-                                         r.getApprovalStatus().equals(105)
-                                                 || (r.getApprovalStatus().equals(102)))
-                                 .peek(r -> {
-                                     if (r.getApprovalStatus().equals(102)
-                                             && isAfter24Hours(r.getCalimedDate())) {
-                                         r.setApprovalStatus(105);
+                                 .peek(record -> {
+                                     if (Objects.equals(record.getApprovalStatus(), 102)) {
+                                         record.setApprovalStatus(105);
                                      }
+                                 })
+                                 .filter(record -> {
+                                     boolean validStatus =
+                                             Objects.equals(record.getApprovalStatus(), 102)
+                                                     || Objects.equals(
+                                                     record.getApprovalStatus(), 105
+                                             );
+
+                                     if (!validStatus) {
+                                         return false;
+                                     }
+
+                                     boolean isDefaultActivity =
+                                             Boolean.TRUE.equals(
+                                                     record.getIsDefaultActivity()
+                                             );
+
+                                     boolean isApproved =
+                                             Boolean.TRUE.equals(record.getIsApproved());
+
+                                     if (!isDefaultActivity) {
+                                         return true;
+                                     }
+
+
+                                     return Objects.equals(record.getApprovalStatus(), 105)
+                                             || isApproved;
                                  })
                                  .collect(Collectors.toList());
 
