@@ -1016,11 +1016,19 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                      }
                                  })
                                  .filter(record ->
-                                         Boolean.TRUE.equals(record.getIsDefaultActivity())
-                                                 && (
-                                                 Objects.equals(record.getApprovalStatus(), 105)
-                                                         || Boolean.TRUE.equals(
-                                                         record.getIsApproved()
+                                         // Non-default activity always show
+                                         !Boolean.TRUE.equals(record.getIsDefaultActivity())
+
+                                                 // Default activity condition
+                                                 || (
+                                                 Boolean.TRUE.equals(record.getIsDefaultActivity())
+                                                         && (
+                                                         Objects.equals(
+                                                                 record.getApprovalStatus(), 105
+                                                         )
+                                                                 || Boolean.TRUE.equals(
+                                                                 record.getIsApproved()
+                                                         )
                                                  )
                                          )
                                  )
