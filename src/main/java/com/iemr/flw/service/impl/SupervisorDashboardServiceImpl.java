@@ -244,7 +244,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                             if (verified > 0) overallVerified += 1;
                             if (rejected > 0) overallRejected += 1;
-                            if (pending > 0) overallPending += 1;
 
                             if (pending > 0) {
                                 if (isOverDue) {
@@ -1064,8 +1063,17 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             if (!activityList.isEmpty()) {
                 approvalStatus = (int) activityList.get(0).get("approvalStatus");
             }
-            if(!approvalStatusID.equals(106) ||  !facilityId.equals(0)){
-                if (totalAmount == null || totalAmount <= 0) continue;
+            if (!approvalStatusID.equals(104)
+                    && (!approvalStatusID.equals(106) || !facilityId.equals(0))) {
+
+                if (totalAmount == null || totalAmount <= 0) {
+                    logger.info(
+                            "Skipping ASHA {} because totalAmount={}",
+                            ashaId,
+                            totalAmount
+                    );
+                    continue;
+                }
             }
 
             logger.info(
