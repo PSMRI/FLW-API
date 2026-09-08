@@ -1013,22 +1013,23 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                          Objects.equals(record.getApprovalStatus(), 102)
                                                  || Objects.equals(record.getApprovalStatus(), 105)
                                  )
+
                                  .peek(record -> {
                                      if (Objects.equals(record.getApprovalStatus(), 102)
                                              && Boolean.TRUE.equals(record.getIsDefaultActivity())
                                              && Boolean.TRUE.equals(record.getIsApproved())) {
 
-                                         logger.info(
-                                                 "Changing status 102 to 105: recordId={}, " +
-                                                         "isDefaultActivity={}, isApproved={}",
-                                                 record.getId(),
-                                                 record.getIsDefaultActivity(),
-                                                 record.getIsApproved()
-                                         );
-
                                          record.setApprovalStatus(105);
                                      }
                                  })
+
+                                 .filter(record ->
+                                         !Boolean.TRUE.equals(record.getIsDefaultActivity())
+                                                 || (
+                                                 Objects.equals(record.getApprovalStatus(), 105)
+                                                         && Boolean.TRUE.equals(record.getIsApproved())
+                                         )
+                                 )
                                  .collect(Collectors.toList());
                          totalAmount = incentiveActivityRecord.stream()
                                  .map(IncentiveActivityRecord::getAmount)
