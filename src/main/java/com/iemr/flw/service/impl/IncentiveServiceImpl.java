@@ -1023,15 +1023,15 @@ public class IncentiveServiceImpl implements IncentiveService {
             IncentiveActivity ADDITIONAL_ASHA_INCENTIVE = incentivesRepo.findIncentiveMasterByNameAndGroup("ADDITIONAL_ASHA_INCENTIVE", GroupName.ADDITIONAL_INCENTIVE.getDisplayName());
             IncentiveActivity ASHA_MONTHLY_ROUTINE = incentivesRepo.findIncentiveMasterByNameAndGroup("ASHA_MONTHLY_ROUTINE", GroupName.ASHA_MONTHLY_ROUTINE.getDisplayName());
             if (MOBILEBILLREIMB_ACTIVITY != null) {
-                addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY, ashaId, userName);
+                addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY, ashaId, userName,false);
             }
             if (ADDITIONAL_ASHA_INCENTIVE != null) {
-                addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE, ashaId, userName);
+                addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE, ashaId, userName,false);
 
             }
 
             if (ASHA_MONTHLY_ROUTINE != null) {
-                addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId, userName);
+                addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId, userName,false);
 
             }
         } catch (Exception e) {
@@ -1049,15 +1049,15 @@ public class IncentiveServiceImpl implements IncentiveService {
             IncentiveActivity MITANIN_REGISTER_5_INFO_FILL = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER_5_INFO_FILL", GroupName.ACTIVITY.getDisplayName());
             IncentiveActivity MITANIN_REGISTER = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER", GroupName.ACTIVITY.getDisplayName());
             if (MONTHLY_HONORARIUM != null) {
-                addMonthlyAshaIncentiveRecord(MONTHLY_HONORARIUM, ashaId, userName);
+                addMonthlyAshaIncentiveRecord(MONTHLY_HONORARIUM, ashaId, userName,true);
             }
             if (MITANIN_REGISTER_5_INFO_FILL != null) {
-                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER_5_INFO_FILL, ashaId, userName);
+                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER_5_INFO_FILL, ashaId, userName,false);
 
             }
 
             if (MITANIN_REGISTER != null) {
-                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER, ashaId, userName);
+                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER, ashaId, userName,false);
 
             }
         } catch (Exception e) {
@@ -1067,7 +1067,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     }
 
-    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId, String userName) {
+    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId, String userName,Boolean isApproved) {
         try {
             Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
 
@@ -1096,6 +1096,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                 record.setAshaId(ashaId);
                 record.setIsEligible(true);
                 record.setIsDefaultActivity(true);
+                record.setIsApproved(isApproved);
                 record.setAmount(Long.valueOf(incentiveActivity.getRate()));
                 recordRepo.save(record);
             }
