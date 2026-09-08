@@ -1009,29 +1009,26 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                      if (approvalStatusID.equals(102)) {
                          incentiveActivityRecord = dbRecords.stream()
+                                 .filter(record ->
+                                         Objects.equals(record.getApprovalStatus(), 102)
+                                                 || Objects.equals(record.getApprovalStatus(), 105)
+                                 )
                                  .peek(record -> {
                                      if (Objects.equals(record.getApprovalStatus(), 102)
-                                             && isAfter24Hours(record.getCalimedDate())) {
+                                             && Boolean.TRUE.equals(record.getIsDefaultActivity())
+                                             && Boolean.TRUE.equals(record.getIsApproved())) {
+
+                                         logger.info(
+                                                 "Changing status 102 to 105: recordId={}, " +
+                                                         "isDefaultActivity={}, isApproved={}",
+                                                 record.getId(),
+                                                 record.getIsDefaultActivity(),
+                                                 record.getIsApproved()
+                                         );
+
                                          record.setApprovalStatus(105);
                                      }
                                  })
-                                 .filter(record ->
-                                         // Non-default activity always show
-                                         !Boolean.TRUE.equals(record.getIsDefaultActivity())
-
-                                                 // Default activity condition
-                                                 || (
-                                                 Boolean.TRUE.equals(record.getIsDefaultActivity())
-                                                         && (
-                                                         Objects.equals(
-                                                                 record.getApprovalStatus(), 105
-                                                         )
-                                                                 || Boolean.TRUE.equals(
-                                                                 record.getIsApproved()
-                                                         )
-                                                 )
-                                         )
-                                 )
                                  .collect(Collectors.toList());
                          totalAmount = incentiveActivityRecord.stream()
                                  .map(IncentiveActivityRecord::getAmount)
