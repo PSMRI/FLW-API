@@ -658,9 +658,10 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 .plusMonths(1)
                 .withDayOfMonth(5);
 
-        boolean isOverDue =
-                roleName.equalsIgnoreCase("ANM")
-                        && today.isAfter(dueDate);
+            boolean isOverDue =
+                    ("ANM".equalsIgnoreCase(roleName)
+                            || "ASHA Supervisor".equalsIgnoreCase(roleName))
+                            && today.isAfter(dueDate);
 
 
         logger.info("Login user role:"+ roleName);
