@@ -886,6 +886,8 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                      .filter(Objects::nonNull)
                                      .mapToLong(Long::longValue)
                                      .sum();
+                             overallOverDue++;
+
                          }else {
                              incentiveActivityRecord = dbRecords.stream()
                                      .filter(r ->( approvalStatusID == 0 ||
@@ -966,6 +968,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                      .filter(Objects::nonNull)
                                      .mapToLong(Long::longValue)
                                      .sum();
+                             overallOverDue++;
                          }
                      }else if(approvalStatusID.equals(106)){
                          incentiveActivityRecord = dbRecords.stream()
