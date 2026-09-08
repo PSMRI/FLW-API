@@ -1008,29 +1008,72 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                      if (approvalStatusID.equals(102)) {
-                         incentiveActivityRecord = dbRecords.stream()
-                                 .filter(record ->
-                                         Objects.equals(record.getApprovalStatus(), 102)
-                                                 || Objects.equals(record.getApprovalStatus(), 105)
-                                 )
+                         if (Objects.equals(approvalStatusID, 102)) {
 
-                                 .peek(record -> {
-                                     if (Objects.equals(record.getApprovalStatus(), 102)
-                                             && Boolean.TRUE.equals(record.getIsDefaultActivity())
-                                             && Boolean.TRUE.equals(record.getIsApproved())) {
+                             incentiveActivityRecord = dbRecords.stream()
 
-                                         record.setApprovalStatus(105);
-                                     }
-                                 })
+                                     .filter(record ->
+                                             Objects.equals(record.getApprovalStatus(), 102)
+                                                     || Objects.equals(
+                                                     record.getApprovalStatus(), 105
+                                             )
+                                     )
 
-                                 .filter(record ->
-                                         !Boolean.TRUE.equals(record.getIsDefaultActivity())
-                                                 || (
-                                                 Objects.equals(record.getApprovalStatus(), 105)
-                                                         && Boolean.TRUE.equals(record.getIsApproved())
+                                     .peek(record -> {
+                                         if (Objects.equals(record.getApprovalStatus(), 102)
+                                                 && Boolean.TRUE.equals(
+                                                 record.getIsDefaultActivity()
                                          )
-                                 )
-                                 .collect(Collectors.toList());
+                                                 && Boolean.TRUE.equals(
+                                                 record.getIsApproved()
+                                         )) {
+
+                                             logger.info(
+                                                     "Changing record status 102 to 105: " +
+                                                             "id={}, activityId={}",
+                                                     record.getId(),
+                                                     record.getActivityId()
+                                             );
+
+                                             record.setApprovalStatus(105);
+                                         }
+                                     })
+
+
+                                     .filter(record ->
+                                             !Boolean.TRUE.equals(
+                                                     record.getIsDefaultActivity()
+                                             )
+                                                     || Boolean.TRUE.equals(
+                                                     record.getIsApproved()
+                                             )
+                                     )
+                                     .collect(Collectors.toList());
+
+                             totalAmount = incentiveActivityRecord.stream()
+                                     .map(IncentiveActivityRecord::getAmount)
+                                     .filter(Objects::nonNull)
+                                     .mapToLong(Long::longValue)
+                                     .sum();
+
+                             logger.info(
+                                     "ANM final filtered records: count={}, totalAmount={}",
+                                     incentiveActivityRecord.size(),
+                                     totalAmount
+                             );
+
+                             incentiveActivityRecord.forEach(record ->
+                                     logger.info(
+                                             "Final record: id={}, activityId={}, status={}, " +
+                                                     "default={}, approved={}",
+                                             record.getId(),
+                                             record.getActivityId(),
+                                             record.getApprovalStatus(),
+                                             record.getIsDefaultActivity(),
+                                             record.getIsApproved()
+                                     )
+                             );
+                         }
                          totalAmount = incentiveActivityRecord.stream()
                                  .map(IncentiveActivityRecord::getAmount)
                                  .filter(Objects::nonNull)
