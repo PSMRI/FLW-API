@@ -824,35 +824,65 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                  List<IncentiveActivityRecord> dbRecords =
                          incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate);
 
-                 if (approvalStatusID.equals(104) && isOverDue) {
+                 if (Objects.equals(approvalStatusID, 104) && isOverDue) {
 
                      incentiveActivityRecord = dbRecords.stream()
+
+                             // Overdue applicable statuses
                              .filter(record ->
                                      Objects.equals(record.getApprovalStatus(), 102)
-                                             || Objects.equals(record.getApprovalStatus(), 105)
                                              || Objects.equals(record.getApprovalStatus(), 104)
+                                             || Objects.equals(record.getApprovalStatus(), 105)
                              )
-                             .filter(record ->
-                                     !"ASHA Supervisor".equalsIgnoreCase(roleName)
-                                             || Boolean.TRUE.equals(
-                                             record.getIsDefaultActivity()
-                                     )
-                             )
+
+                             // Role-wise activity filtering
+                             .filter(record -> {
+
+                                 boolean isDefault =
+                                         Boolean.TRUE.equals(
+                                                 record.getIsDefaultActivity()
+                                         );
+
+                                 boolean isApproved =
+                                         Boolean.TRUE.equals(
+                                                 record.getIsApproved()
+                                         );
+
+                                 if ("ASHA Supervisor".equalsIgnoreCase(roleName)) {
+                                     // Supervisor: only approved default activities
+                                     return isDefault && isApproved;
+                                 }
+
+                                 if ("ANM".equalsIgnoreCase(roleName)
+                                         || "CHO".equalsIgnoreCase(roleName)) {
+                                     // ANM/CHO:
+                                     // all non-default activities
+                                     // default activity only when approved
+                                     return !isDefault || isApproved;
+                                 }
+
+                                 return false;
+                             })
+
                              .peek(record -> {
                                  logger.info(
-                                         "Overdue record matched: ashaId={}, recordId={}, " +
-                                                 "oldStatus={}, claimedDate={}",
+                                         "Overdue record matched: role={}, ashaId={}, " +
+                                                 "recordId={}, oldStatus={}, default={}, " +
+                                                 "approved={}, claimedDate={}",
+                                         roleName,
                                          ashaId,
                                          record.getId(),
                                          record.getApprovalStatus(),
+                                         record.getIsDefaultActivity(),
+                                         record.getIsApproved(),
                                          record.getCalimedDate()
                                  );
 
                                  record.setApprovalStatus(104);
                              })
                              .collect(Collectors.toList());
-                     overDue = incentiveActivityRecord.size();
 
+                     overDue = incentiveActivityRecord.size();
 
                      totalAmount = incentiveActivityRecord.stream()
                              .map(IncentiveActivityRecord::getAmount)
@@ -860,6 +890,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                              .mapToLong(Long::longValue)
                              .sum();
 
+                     logger.info(
+                             "Overdue final: role={}, ashaId={}, count={}, totalAmount={}",
+                             roleName,
+                             ashaId,
+                             overDue,
+                             totalAmount
+                     );
                  } else  if("ASHA Supervisor".equalsIgnoreCase(roleName)){
                      if (approvalStatusID.equals(102)) {
 
@@ -888,7 +925,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                      );
 
                                      if (isOverDue) {
-                                         // Response में overdue दिखाना है
                                          record.setApprovalStatus(104);
                                      }
                                  })
