@@ -1131,7 +1131,15 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                 if (totalAmount == null || totalAmount <= 0) continue;
             }
 
-
+            logger.info(
+                    "Incentive counts for ASHA ID {} - pending: {}, verified: {}, rejected: {}, unclaimedCount: {}, overallOverDue: {}",
+                    ashaId,
+                    pending,
+                    verified,
+                    rejected,
+                    unclaimedCount,
+                    overallOverDue
+            );
 
             if (pending == 0 && verified == 0 && rejected == 0 && unclaimedCount == 0 && overallOverDue==0) continue;
 
