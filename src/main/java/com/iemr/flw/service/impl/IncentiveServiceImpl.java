@@ -545,13 +545,25 @@ public class IncentiveServiceImpl implements IncentiveService {
                         .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
                         .collect(Collectors.toList());
             }else  if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
-                if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
-                    records = records.stream()
-                            .filter(r ->
-                                    validActivityIds.contains(r.getActivityId())
-                            )
-                            .collect(Collectors.toList());
-                }
+                records = records.stream()
+                        .filter(record ->
+                                validActivityIds.contains(record.getActivityId())
+                        )
+                        .filter(record ->
+                                !Boolean.TRUE.equals(
+                                        record.getIsDefaultActivity()
+                                )
+
+                                        || Boolean.TRUE.equals(
+                                        record.getIsApproved()
+                                )
+                        )
+                        .collect(Collectors.toList());
+
+                logger.info(
+                        "ANM/CHO records after default activity filter: {}",
+                        records.size()
+                );
             }
 
         }else {
