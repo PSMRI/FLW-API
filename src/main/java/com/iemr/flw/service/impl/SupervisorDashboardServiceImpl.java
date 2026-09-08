@@ -861,23 +861,149 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                              .sum();
 
                  } else  if("ASHA Supervisor".equalsIgnoreCase(roleName)){
-                     if(approvalStatusID.equals(105)){
+                     if (approvalStatusID.equals(102)) {
+
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r -> (r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(105)) && r.getIsDefaultActivity())
+                                 .filter(record ->
+                                         Objects.equals(record.getApprovalStatus(), 102)
+                                                 || Objects.equals(
+                                                 record.getApprovalStatus(), 105
+                                         )
+                                 )
+                                 .filter(record ->
+                                         Boolean.TRUE.equals(
+                                                 record.getIsDefaultActivity()
+                                         )
+                                 )
+                                 .peek(record -> {
+                                     logger.info(
+                                             "Supervisor record matched: ashaId={}, " +
+                                                     "recordId={}, oldStatus={}, isOverDue={}, " +
+                                                     "defaultActivity={}",
+                                             ashaId,
+                                             record.getId(),
+                                             record.getApprovalStatus(),
+                                             isOverDue,
+                                             record.getIsDefaultActivity()
+                                     );
+
+                                     if (isOverDue) {
+                                         // Response में overdue दिखाना है
+                                         record.setApprovalStatus(104);
+                                     }
+                                 })
                                  .collect(Collectors.toList());
-                     }else if(approvalStatusID.equals(106)){
-                         incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r ->r.getApprovalStatus().equals(102) && r.getIsDefaultActivity() && !r.getIsClaimed())
-                                 .collect(Collectors.toList());
+
+                         if (isOverDue) {
+                             overDue = incentiveActivityRecord.size();
+                         }
+
                          totalAmount = incentiveActivityRecord.stream()
                                  .map(IncentiveActivityRecord::getAmount)
                                  .filter(Objects::nonNull)
                                  .mapToLong(Long::longValue)
                                  .sum();
-                     }else if(approvalStatusID.equals(0)){
+
+                     } else if (approvalStatusID.equals(104) && isOverDue) {
+
+                         /*
+                          */
                          incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r ->(r.getApprovalStatus().equals(102) || r.getApprovalStatus().equals(103) || r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(104)) && r.getIsDefaultActivity() && !r.getIsClaimed())
+                                 .filter(record ->
+                                         Objects.equals(record.getApprovalStatus(), 102)
+                                                 || Objects.equals(
+                                                 record.getApprovalStatus(), 104
+                                         )
+                                                 || Objects.equals(
+                                                 record.getApprovalStatus(), 105
+                                         )
+                                 )
+                                 .filter(record ->
+                                         Boolean.TRUE.equals(
+                                                 record.getIsDefaultActivity()
+                                         )
+                                 )
+                                 .peek(record ->
+                                         record.setApprovalStatus(104)
+                                 )
                                  .collect(Collectors.toList());
+
+                         overDue = incentiveActivityRecord.size();
+
+                         totalAmount = incentiveActivityRecord.stream()
+                                 .map(IncentiveActivityRecord::getAmount)
+                                 .filter(Objects::nonNull)
+                                 .mapToLong(Long::longValue)
+                                 .sum();
+
+                     } else if (approvalStatusID.equals(105)) {
+
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(record ->
+                                         (
+                                                 Objects.equals(
+                                                         record.getApprovalStatus(), 101
+                                                 )
+                                                         || Objects.equals(
+                                                         record.getApprovalStatus(), 105
+                                                 )
+                                         )
+                                                 && Boolean.TRUE.equals(
+                                                 record.getIsDefaultActivity()
+                                         )
+                                 )
+                                 .collect(Collectors.toList());
+
+                     } else if (approvalStatusID.equals(106)) {
+
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(record ->
+                                         Objects.equals(record.getApprovalStatus(), 102)
+                                                 && Boolean.TRUE.equals(
+                                                 record.getIsDefaultActivity()
+                                         )
+                                                 && !Boolean.TRUE.equals(
+                                                 record.getIsClaimed()
+                                         )
+                                 )
+                                 .collect(Collectors.toList());
+
+                         totalAmount = incentiveActivityRecord.stream()
+                                 .map(IncentiveActivityRecord::getAmount)
+                                 .filter(Objects::nonNull)
+                                 .mapToLong(Long::longValue)
+                                 .sum();
+
+                     } else if (approvalStatusID.equals(0)) {
+
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(record ->
+                                         (
+                                                 Objects.equals(
+                                                         record.getApprovalStatus(), 101
+                                                 )
+                                                         || Objects.equals(
+                                                         record.getApprovalStatus(), 102
+                                                 )
+                                                         || Objects.equals(
+                                                         record.getApprovalStatus(), 103
+                                                 )
+                                                         || Objects.equals(
+                                                         record.getApprovalStatus(), 104
+                                                 )
+                                                         || Objects.equals(
+                                                         record.getApprovalStatus(), 105
+                                                 )
+                                         )
+                                                 && Boolean.TRUE.equals(
+                                                 record.getIsDefaultActivity()
+                                         )
+                                 )
+                                 .collect(Collectors.toList());
+
+                     } else {
+
+                         incentiveActivityRecord = Collections.emptyList();
                      }
 
                  }else if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
