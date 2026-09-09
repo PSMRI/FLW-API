@@ -31,6 +31,19 @@ public class UserServiceImpl implements UserService {
         UserServiceRoleDTO userRole = userServiceRoleRepo.getUserRole(userId).get(0);
         userRole.setFacilityData(facilityDataService.buildFacilityData(userId, userRole.getRoleName()));
 
+        // Two different villages can legitimately share the same name (confirmed live:
+        // Nikshay village IDs 275135 and 275136 are both named "Sanapindapadar", under
+        // two different facilities in Boriguma block, Koraput). The mobile app's village
+        // dropdown displays villageName only, so a user has no way to tell which one
+        // they're picking - selecting the wrong one loads zero HH records for that
+        // village, since worklists filter by ID, not name. Append the ID into each name
+        // segment so duplicates are visually distinguishable. Response shape is
+        // unchanged - still two parallel comma-separated strings - so this needs zero
+        // mobile app changes: it just displays whatever text is in the name string
+        // (confirmed against ServiceLocationViewModel/BindingUtils.setSpinnerItems -
+        // plain ArrayAdapter, selection is by array position, not by name content).
+        userRole.setVillageName(appendVillageIds(userRole.getVillageId(), userRole.getVillageName()));
+
         // Stop TB / Nikshay — additive only. This naturally returns nothing for
         // any user whose rows don't have NikshayTUID set, i.e. every non-Stop-TB
         // user. Fetched first so the district-by-block patch below can tell
@@ -88,6 +101,32 @@ public class UserServiceImpl implements UserService {
         }
 
         return userRole;
+    }
+
+    // Zips the parallel villageId/villageName comma lists and rejoins each pair as
+    // "name (id)", e.g. "Sanapindapadar,Sanapindapadar" + "275135,275136" becomes
+    // "Sanapindapadar (275135),Sanapindapadar (275136)". Falls back to the original,
+    // unmodified villageName on any shape mismatch (null/blank, or unequal segment
+    // counts between the two lists) rather than risk emitting a malformed string.
+    private String appendVillageIds(String villageId, String villageName) {
+        if (villageId == null || villageId.isBlank() || villageName == null || villageName.isBlank()) {
+            return villageName;
+        }
+        String[] ids = villageId.split(",", -1);
+        String[] names = villageName.split(",", -1);
+        if (ids.length != names.length) {
+            logger.warn("villageId/villageName segment count mismatch ({} vs {}); leaving villageName unmodified",
+                    ids.length, names.length);
+            return villageName;
+        }
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < names.length; i++) {
+            if (i > 0) {
+                result.append(",");
+            }
+            result.append(names[i].trim()).append(" (").append(ids[i].trim()).append(")");
+        }
+        return result.toString();
     }
 
     private void addCsvIds(String csv, Collection<Integer> target) {
