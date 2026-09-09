@@ -1446,7 +1446,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
             ashaList.add(asha);
 
-            if (pending == 0 && verified == 0 && rejected == 0 && unclaimedCount == 0 && overallOverDue==0) continue;
+            if (pending == 0 && verified == 0 && rejected == 0 && unclaimedCount == 0 && overDue==0) continue;
 
             if (approvalStatusID.equals(0)) {
                 asha.put("approvalStatus", approvalStatus);
