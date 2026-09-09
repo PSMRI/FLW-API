@@ -1078,6 +1078,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  )
                                  .collect(Collectors.toList());
 
+                         overDue = incentiveActivityRecord.size();
 
                          totalAmount = incentiveActivityRecord.stream()
                                  .map(IncentiveActivityRecord::getAmount)
