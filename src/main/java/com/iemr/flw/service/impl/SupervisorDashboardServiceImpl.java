@@ -1078,7 +1078,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  )
                                  .collect(Collectors.toList());
 
-                         overDue = incentiveActivityRecord.size();
 
                          totalAmount = incentiveActivityRecord.stream()
                                  .map(IncentiveActivityRecord::getAmount)
@@ -1415,42 +1414,39 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             if (!activityList.isEmpty()) {
                 approvalStatus = (int) activityList.get(0).get("approvalStatus");
             }
-            if (!approvalStatusID.equals(104)
-                    && (!approvalStatusID.equals(106) || !facilityId.equals(0))) {
-
-                // Do not show the ASHA card when there are no activities
-// or the total incentive amount is zero
-                if (incentiveActivityRecord == null
-                        || incentiveActivityRecord.isEmpty()
-                        || totalAmount == null
-                        || totalAmount <= 0) {
-
-                    logger.info(
-                            "Skipping ASHA card: ashaId={}, status={}, " +
-                                    "activityCount={}, totalAmount={}",
-                            ashaId,
-                            approvalStatusID,
-                            incentiveActivityRecord == null
-                                    ? 0
-                                    : incentiveActivityRecord.size(),
-                            totalAmount
-                    );
-
-                    continue;
-                }
-            }
-
             logger.info(
-                    "Incentive counts for ASHA ID {} - pending: {}, verified: {}, rejected: {}, unclaimedCount: {}, overallOverDue: {}",
+                    "Card validation: ashaId={}, status={}, activityCount={}, totalAmount={}",
                     ashaId,
-                    pending,
-                    verified,
-                    rejected,
-                    unclaimedCount,
-                    overallOverDue
+                    approvalStatusID,
+                    incentiveActivityRecord == null
+                            ? 0
+                            : incentiveActivityRecord.size(),
+                    totalAmount
             );
 
-            if (pending == 0 && verified == 0 && rejected == 0 && unclaimedCount == 0 && overDue==0) continue;
+// Do not return a card when there are no matching activities
+// or the total amount is zero
+            if (incentiveActivityRecord == null
+                    || incentiveActivityRecord.isEmpty()
+                    || totalAmount == null
+                    || totalAmount <= 0) {
+
+                logger.info(
+                        "Skipping ASHA card: ashaId={}, activityCount={}, totalAmount={}",
+                        ashaId,
+                        incentiveActivityRecord == null
+                                ? 0
+                                : incentiveActivityRecord.size(),
+                        totalAmount
+                );
+
+                continue;
+            }
+
+
+            ashaList.add(asha);
+
+            if (pending == 0 && verified == 0 && rejected == 0 && unclaimedCount == 0 && overallOverDue==0) continue;
 
             if (approvalStatusID.equals(0)) {
                 asha.put("approvalStatus", approvalStatus);
