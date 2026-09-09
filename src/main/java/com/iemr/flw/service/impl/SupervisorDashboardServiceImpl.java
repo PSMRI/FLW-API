@@ -1037,6 +1037,23 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  .mapToLong(Long::longValue)
                                  .sum();
 
+                     }else if (approvalStatusID.equals(103)) {
+
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(record ->
+                                         Objects.equals(record.getApprovalStatus(), 103)
+                                                 && !Boolean.TRUE.equals(
+                                                 record.getIsClaimed()
+                                         )
+                                 )
+                                 .collect(Collectors.toList());
+
+                         totalAmount = incentiveActivityRecord.stream()
+                                 .map(IncentiveActivityRecord::getAmount)
+                                 .filter(Objects::nonNull)
+                                 .mapToLong(Long::longValue)
+                                 .sum();
+
                      } else if (approvalStatusID.equals(104) && isOverDue) {
 
                          /*
@@ -1095,6 +1112,23 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                                  && Boolean.TRUE.equals(
                                                  record.getIsDefaultActivity()
                                          )
+                                                 && !Boolean.TRUE.equals(
+                                                 record.getIsClaimed()
+                                         )
+                                 )
+                                 .collect(Collectors.toList());
+
+                         totalAmount = incentiveActivityRecord.stream()
+                                 .map(IncentiveActivityRecord::getAmount)
+                                 .filter(Objects::nonNull)
+                                 .mapToLong(Long::longValue)
+                                 .sum();
+
+                     }else if (approvalStatusID.equals(103)) {
+
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(record ->
+                                         Objects.equals(record.getApprovalStatus(), 103)
                                                  && !Boolean.TRUE.equals(
                                                  record.getIsClaimed()
                                          )
@@ -1252,8 +1286,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  return true;
                              })
                              .peek(r -> {
-                                 if (r.getApprovalStatus().equals(102)
-                                         && isAfter24Hours(r.getCalimedDate())) {
+                                 if (r.getApprovalStatus().equals(102)) {
                                      r.setApprovalStatus(105);
                                  }
                              })
@@ -1385,12 +1418,24 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             if (!approvalStatusID.equals(104)
                     && (!approvalStatusID.equals(106) || !facilityId.equals(0))) {
 
-                if (totalAmount == null || totalAmount <= 0) {
+                // Do not show the ASHA card when there are no activities
+// or the total incentive amount is zero
+                if (incentiveActivityRecord == null
+                        || incentiveActivityRecord.isEmpty()
+                        || totalAmount == null
+                        || totalAmount <= 0) {
+
                     logger.info(
-                            "Skipping ASHA {} because totalAmount={}",
+                            "Skipping ASHA card: ashaId={}, status={}, " +
+                                    "activityCount={}, totalAmount={}",
                             ashaId,
+                            approvalStatusID,
+                            incentiveActivityRecord == null
+                                    ? 0
+                                    : incentiveActivityRecord.size(),
                             totalAmount
                     );
+
                     continue;
                 }
             }
