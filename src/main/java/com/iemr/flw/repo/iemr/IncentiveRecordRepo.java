@@ -466,4 +466,28 @@ AND iar.isClaimed = true
             @Param("calimedDate") Timestamp calimedDate,
             @Param("incentiveId") Long incentiveId
     );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("""
+    UPDATE IncentiveActivityRecord iar
+    SET iar.approvalStatus = 102,
+        iar.isClaimed = false,
+        iar.calimedDate = NULL,
+        iar.approvalDate = NULL,
+        iar.reason = NULL,
+        iar.otherReason = NULL,
+        iar.verifiedByUserId = NULL,
+        iar.verifiedByUserName = NULL,
+        iar.updatedDate = :updatedDate,
+        iar.updatedBy = :updatedBy
+    WHERE iar.approvalStatus = 103
+      AND iar.isClaimed = true
+      AND iar.endDate < :currentMonthStart
+""")
+    int resetRejectedIncentivesForNewMonth(
+            @Param("currentMonthStart") Timestamp currentMonthStart,
+            @Param("updatedDate") Timestamp updatedDate,
+            @Param("updatedBy") String updatedBy
+    );
 }

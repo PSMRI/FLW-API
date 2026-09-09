@@ -30,9 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.Month;
+import java.time.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -339,140 +337,28 @@ public class IncentiveServiceImpl implements IncentiveService {
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         return gson.toJson(finalDtos);
     }
-//    @Override
-//    public String getAllIncentivesByUserId(GetBenRequestHandler request) {
-//        int page = 0;
-//        int size = 20;
-//        Page<IncentiveActivityRecord> pageResult;
-//        List<IncentiveRecordDTO> finalDtos = new ArrayList<>();
-//
-//        Integer stateCode = userService.getUserDetail(request.getAshaId()).getStateId();
-//        String userName = userService.getUserDetail(request.getAshaId()).getUserName();
-//        try {
-//
-//            if (stateCode.equals(StateCode.AM.getStateCode())) {
-//                checkMonthlyAshaIncentive(request.getAshaId());
-//            }
-//            if (stateCode.equals(StateCode.CG.getStateCode())) {
-//                checkMonthlyAshaIncentiveForCg(request.getAshaId());
-//
-//            }
-//
-//        } catch (Exception e) {
-//            logger.error("Error in checkMonthlyAshaIncentive: ", e);
-//        }
-//
-//        try {
-//            addIncentiveForIronTablets(request.getAshaId());
-//            incentiveOfNcdReferal(request.getAshaId(), request.getVillageID());
-//
-//        } catch (Exception e) {
-//            logger.error("Error in incentiveOfNcdReferal: ", e);
-//        }
-//
-//        boolean isCG = stateCode != null && stateCode.equals(StateCode.CG.getStateCode());
-//
-//        do {
-//
-//            Pageable pageable = PageRequest.of(
-//                    page,
-//                    size,
-//                    Sort.by("id").descending() // latest first
-//            );
-//
-//            pageResult = recordRepo.findRecordsByAsha(
-//                    request.getAshaId(),
-//                    pageable
-//            );
-//
-//            List<IncentiveActivityRecord> entities = pageResult.getContent();
-//
-//            if (entities.isEmpty()) {
-//                return new Gson().toJson(Collections.emptyList());
-//            }
-//
-//            // Step 2: Collect all activityIds — fetch valid ones in ONE query
-//            List<Long> activityIds = entities.stream()
-//                    .map(IncentiveActivityRecord::getActivityId)
-//                    .distinct()
-//                    .collect(Collectors.toList());
-//
-//            // Single bulk query instead of N individual findIncentiveMasterById() calls
-//            Set<Long> validActivityIds = isCG
-//                    ? incentivesRepo.findValidActivityIds(activityIds, true)
-//                    : incentivesRepo.findValidActivityIds(activityIds, false);
-//
-//            // Filter entities based on valid activity IDs
-//            entities = entities.stream()
-//                    .filter(e -> validActivityIds.contains(e.getActivityId()))
-//                    .collect(Collectors.toList());
-//
-//            // Step 3: Collect all benIds that need name lookup (name == null and benId > 0)
-//            List<Long> benIdsToFetch = entities.stream()
-//                    .filter(e -> e.getName() == null && e.getBenId() != null && e.getBenId() > 0)
-//                    .map(IncentiveActivityRecord::getBenId)
-//                    .distinct()
-//                    .collect(Collectors.toList());
-//
-//            // Step 4: Bulk fetch all beneficiary names in ONE query instead of 3 queries per record
-//            Map<Long, String> benIdToNameMap = new HashMap<>();
-//            if (!benIdsToFetch.isEmpty()) {
-//                List<Object[]> benDetails = beneficiaryRepo.findBenNamesByBenIds(benIdsToFetch);
-//                for (Object[] row : benDetails) {
-//                    Long benId = ((Number) row[0]).longValue();
-//                    String first = row[1] != null ? (String) row[1] : "";
-//                    String last = row[2] != null ? (String) row[2] : "";
-//                    benIdToNameMap.put(benId, (first + " " + last).trim());
-//                }
-//            }
-//
-//            // Step 5: Map entities to DTOs
-//            List<IncentiveRecordDTO> dtos = entities.stream().map(entry -> {
-//                if (entry.getName() == null) {
-//                    if (entry.getBenId() != null && entry.getBenId() > 0) {
-//                        String name = benIdToNameMap.getOrDefault(entry.getBenId(), "");
-//                        entry.setName(name);
-//                        if (isCG) {
-//                            entry.setIsEligible(true);
-//                        }
-//                    } else {
-//                        entry.setName("");
-//                    }
-//                    if (entry.getVerifiedByUserId() != null) {
-//                        entry.setSupervisorRole(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getRoleName());
-//                        entry.setVerifiedByUserName(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getName());
-//
-//                    }
-//                    if (entry.getAshaId() != null) {
-//                        if (entry.getCreatedBy() == null) {
-//                            entry.setCreatedBy(userName);
-//                        }
-//
-//                        if (entry.getUpdatedBy() == null) {
-//                            entry.setUpdatedBy(userName);
-//                        }
-//
-//                        if (entry.getIsEligible() == null) {
-//                            entry.setIsEligible(true);
-//                        }
-//                    }
-//
-//
-//                }
-//                return modelMapper.map(entry, IncentiveRecordDTO.class);
-//            }).collect(Collectors.toList());
-//            finalDtos.addAll(dtos);
-//
-//            page++;
-//
-//        } while (pageResult.hasNext());
-//
-//
-//
-//        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
-//        return gson.toJson(finalDtos);
-//    }
 
+
+    @Transactional
+    public void resetRejectedIncentivesForPreviousMonths() {
+
+        ZoneId zoneId = ZoneId.of("Asia/Kolkata");
+
+        LocalDate firstDayOfCurrentMonth =
+                LocalDate.now(zoneId).withDayOfMonth(1);
+
+        Timestamp currentMonthStart =
+                Timestamp.valueOf(firstDayOfCurrentMonth.atStartOfDay());
+
+        Timestamp now =
+                Timestamp.from(ZonedDateTime.now(zoneId).toInstant());
+
+        recordRepo.resetRejectedIncentivesForNewMonth(
+                currentMonthStart,
+                now,
+                "SYSTEM"
+        );
+    }
     // ================= GROUPED SUMMARY =================
     @Override
     public String getAllIncentivesGroupedSummary(GetBenRequestHandler request,Integer userId) {
