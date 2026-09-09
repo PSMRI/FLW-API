@@ -1249,18 +1249,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                          r.getActivityId()
                                  )
                          );
-                     }else if(approvalStatusID.equals(106)){
-                         incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r->!r.getIsClaimed() && r.getApprovalStatus().equals(102)).peek(r->{r.setApprovalStatus(106);}).collect(Collectors.toList());
-                         totalAmount = incentiveActivityRecord.stream()
-                                 .map(IncentiveActivityRecord::getAmount)
-                                 .filter(Objects::nonNull)
-                                 .mapToLong(Long::longValue)
-                                 .sum();
-                     }else if(approvalStatusID.equals(0)){
-                         incentiveActivityRecord = dbRecords.stream()
-                                 .filter(r->((r.getApprovalStatus().equals(102) && r.getIsClaimed()) ||(r.getApprovalStatus().equals(102) && !r.getIsClaimed()) || r.getApprovalStatus().equals(103) || r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(104))).collect(Collectors.toList());
-                     }if (Objects.equals(approvalStatusID, 103)) {
+                     }else if (Objects.equals(approvalStatusID, 103)) {
 
                          // ANM/CHO can view all rejected activities
                          // that are unclaimed
@@ -1277,6 +1266,17 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                  .filter(Objects::nonNull)
                                  .mapToLong(Long::longValue)
                                  .sum();
+                     }else if(approvalStatusID.equals(106)){
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(r->!r.getIsClaimed() && r.getApprovalStatus().equals(102)).peek(r->{r.setApprovalStatus(106);}).collect(Collectors.toList());
+                         totalAmount = incentiveActivityRecord.stream()
+                                 .map(IncentiveActivityRecord::getAmount)
+                                 .filter(Objects::nonNull)
+                                 .mapToLong(Long::longValue)
+                                 .sum();
+                     }else if(approvalStatusID.equals(0)){
+                         incentiveActivityRecord = dbRecords.stream()
+                                 .filter(r->((r.getApprovalStatus().equals(102) && r.getIsClaimed()) ||(r.getApprovalStatus().equals(102) && !r.getIsClaimed()) || r.getApprovalStatus().equals(103) || r.getApprovalStatus().equals(105) || r.getApprovalStatus().equals(101) || r.getApprovalStatus().equals(104))).collect(Collectors.toList());
                      } else{
                          incentiveActivityRecord = dbRecords.stream()
                              .filter(r -> {
