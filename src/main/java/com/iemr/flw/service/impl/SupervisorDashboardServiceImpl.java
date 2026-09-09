@@ -1272,6 +1272,11 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                          )
                                  )
                                  .collect(Collectors.toList());
+                         totalAmount = incentiveActivityRecord.stream()
+                                 .map(IncentiveActivityRecord::getAmount)
+                                 .filter(Objects::nonNull)
+                                 .mapToLong(Long::longValue)
+                                 .sum();
                      } else{
                          incentiveActivityRecord = dbRecords.stream()
                              .filter(r -> {
