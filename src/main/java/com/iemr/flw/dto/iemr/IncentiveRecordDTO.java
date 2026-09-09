@@ -61,6 +61,7 @@ public class IncentiveRecordDTO {
 
     private String supervisorRole;
 
+    private Boolean isApproved;
 
 
 
