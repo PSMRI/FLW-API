@@ -232,59 +232,156 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         if (count > 0) overallUnclaimed += 1;
                     }
                 }
-            }else  if(stateId.equals(StateCode.CG.getStateCode())){
-                if("ASHA Supervisor".equalsIgnoreCase(rollName)){
-                    List<Object[]> statusRows = dashboardRepo.getDefaultIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
-                    if (statusRows != null) {
-                        for (Object[] sRow : statusRows) {
-                            long verified = ((Number) sRow[5]).longValue();
-                            long rejected = ((Number) sRow[3]).longValue();
-                            long pending = ((Number) sRow[4]).longValue();
+            }else if (stateId.equals(StateCode.CG.getStateCode())) {
 
+            if ("ASHA Supervisor".equalsIgnoreCase(rollName)) {
 
-                            if (verified > 0) overallVerified += 1;
-                            if (rejected > 0) overallRejected += 1;
+                List<Object[]> statusRows =
+                        dashboardRepo.getDefaultIncentiveStatusByAshaIds(
+                                ashaIDs,
+                                startDate,
+                                endDate
+                        );
 
-                            if (pending > 0) {
-                                if (isOverDue) {
-                                    overallOverDue++;
-                                } else {
-                                    overallPending++;
-                                }
-                            }
+                if (statusRows != null) {
+                    for (Object[] statusRow : statusRows) {
 
+                        long verified = statusRow[5] != null
+                                ? ((Number) statusRow[5]).longValue()
+                                : 0L;
+
+                        long rejected = statusRow[3] != null
+                                ? ((Number) statusRow[3]).longValue()
+                                : 0L;
+
+                        long pending = statusRow[4] != null
+                                ? ((Number) statusRow[4]).longValue()
+                                : 0L;
+
+                        if (verified > 0) {
+                            overallVerified++;
                         }
-                    }
-                }else if("ANM".equalsIgnoreCase(rollName)){
-                    List<Object[]> statusRows = dashboardRepo.getIncentiveStatusByAshaIdsForAnm(ashaIDs, startDate, endDate);
-                    if (statusRows != null) {
-                        for (Object[] sRow : statusRows) {
-                            long verified = ((Number) sRow[2]).longValue();
-                            long rejected = ((Number) sRow[3]).longValue();
-                            long pending = ((Number) sRow[5]).longValue();
 
-                            if (verified > 0) overallVerified += 1;
-                            if (rejected > 0) overallRejected += 1;
-                            if (pending > 0) {
-                                if (isOverDue) {
-                                    overallOverDue++;
-                                } else {
-                                    overallPending++;
-                                }
+                        if (rejected > 0) {
+                            overallRejected++;
+                        }
+
+                        if (pending > 0) {
+                            if (isOverDue) {
+                                overallOverDue++;
+                            } else {
+                                overallPending++;
                             }
-
                         }
                     }
                 }
 
-                List<Object[]> unclaimedRows = dashboardRepo.getUnclaimedCountByAshaIds(ashaIDs, startDate, endDate);
+                // ASHA Supervisor: only default unclaimed activities
+                List<Object[]> unclaimedRows =
+                        dashboardRepo.getDefaultUnclaimedCountByAshaIds(
+                                ashaIDs,
+                                startDate,
+                                endDate
+                        );
+
                 if (unclaimedRows != null) {
-                    for (Object[] uRow : unclaimedRows) {
-                        long count = ((Number) uRow[1]).longValue();
-                        if (count > 0) overallUnclaimed += 1;
+                    for (Object[] unclaimedRow : unclaimedRows) {
+
+                        Integer ashaId = unclaimedRow[0] != null
+                                ? ((Number) unclaimedRow[0]).intValue()
+                                : null;
+
+                        long unclaimedCount = unclaimedRow[1] != null
+                                ? ((Number) unclaimedRow[1]).longValue()
+                                : 0L;
+
+                        logger.info(
+                                "Supervisor unclaimed count: ashaId={}, count={}",
+                                ashaId,
+                                unclaimedCount
+                        );
+
+                        if (unclaimedCount > 0) {
+                            overallUnclaimed++;
+                        }
+                    }
+                }
+
+            } else if ("ANM".equalsIgnoreCase(rollName)
+                    || "CHO".equalsIgnoreCase(rollName)) {
+
+                List<Object[]> statusRows =
+                        dashboardRepo.getIncentiveStatusByAshaIdsForAnm(
+                                ashaIDs,
+                                startDate,
+                                endDate
+                        );
+
+                if (statusRows != null) {
+                    for (Object[] statusRow : statusRows) {
+
+                        long verified = statusRow[2] != null
+                                ? ((Number) statusRow[2]).longValue()
+                                : 0L;
+
+                        long rejected = statusRow[3] != null
+                                ? ((Number) statusRow[3]).longValue()
+                                : 0L;
+
+                        long pending = statusRow[5] != null
+                                ? ((Number) statusRow[5]).longValue()
+                                : 0L;
+
+                        if (verified > 0) {
+                            overallVerified++;
+                        }
+
+                        if (rejected > 0) {
+                            overallRejected++;
+                        }
+
+                        if (pending > 0) {
+                            if (isOverDue) {
+                                overallOverDue++;
+                            } else {
+                                overallPending++;
+                            }
+                        }
+                    }
+                }
+
+                // ANM/CHO: all unclaimed activities
+                List<Object[]> unclaimedRows =
+                        dashboardRepo.getUnclaimedCountByAshaIds(
+                                ashaIDs,
+                                startDate,
+                                endDate
+                        );
+
+                if (unclaimedRows != null) {
+                    for (Object[] unclaimedRow : unclaimedRows) {
+
+                        Integer ashaId = unclaimedRow[0] != null
+                                ? ((Number) unclaimedRow[0]).intValue()
+                                : null;
+
+                        long unclaimedCount = unclaimedRow[1] != null
+                                ? ((Number) unclaimedRow[1]).longValue()
+                                : 0L;
+
+                        logger.info(
+                                "ANM/CHO unclaimed count: ashaId={}, count={}",
+                                ashaId,
+                                unclaimedCount
+                        );
+
+                        if (unclaimedCount > 0) {
+                            overallUnclaimed++;
+                        }
                     }
                 }
             }
+        }
 
 
         } catch (Exception e) {

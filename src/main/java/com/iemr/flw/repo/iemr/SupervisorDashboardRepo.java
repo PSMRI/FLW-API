@@ -66,19 +66,38 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 	Integer getSupervisorUserIdByAshaId(@Param("ashaUserID") Integer ashaUserID);
 
 	// Unclaimed incentive count per ASHA
+
 	@Query(value = "SELECT iar.asha_id, "
 			+ "COUNT(*) AS unclaimedCount "
 			+ "FROM incentive_activity_record iar "
 			+ "WHERE iar.asha_id IN (:ashaIds) "
 			+ "AND iar.created_date >= :startDate "
 			+ "AND iar.created_date < :endDate "
+			+ "AND iar.approval_status = 102 "
+			+ "AND iar.is_default_activity = true "
+			+ "AND (iar.is_claimed = false OR iar.is_claimed IS NULL) "
+			+ "GROUP BY iar.asha_id",
+			nativeQuery = true)
+	List<Object[]> getDefaultUnclaimedCountByAshaIds(
+			@Param("ashaIds") List<Integer> ashaIds,
+			@Param("startDate") Timestamp startDate,
+			@Param("endDate") Timestamp endDate
+	);
+	@Query(value = "SELECT iar.asha_id, "
+			+ "COUNT(*) AS unclaimedCount "
+			+ "FROM incentive_activity_record iar "
+			+ "WHERE iar.asha_id IN (:ashaIds) "
+			+ "AND iar.created_date >= :startDate "
+			+ "AND iar.created_date < :endDate "
+			+ "AND iar.approval_status = 102 "
 			+ "AND (iar.is_claimed = false OR iar.is_claimed IS NULL) "
 			+ "GROUP BY iar.asha_id",
 			nativeQuery = true)
 	List<Object[]> getUnclaimedCountByAshaIds(
 			@Param("ashaIds") List<Integer> ashaIds,
 			@Param("startDate") Timestamp startDate,
-			@Param("endDate") Timestamp endDate);
+			@Param("endDate") Timestamp endDate
+	);
 
 
 	@Query(value = "SELECT COUNT(*) " +
