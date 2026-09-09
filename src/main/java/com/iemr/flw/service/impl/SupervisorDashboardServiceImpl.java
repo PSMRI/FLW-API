@@ -1046,9 +1046,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                              incentiveActivityRecord = dbRecords.stream()
                                      .filter(record ->
                                              Objects.equals(record.getApprovalStatus(), 103)
-                                                     && !Boolean.TRUE.equals(
-                                                     record.getIsClaimed()
-                                             )
                                                      && Boolean.TRUE.equals(
                                                      record.getIsDefaultActivity()
                                              )
@@ -1256,9 +1253,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(record ->
                                          Objects.equals(record.getApprovalStatus(), 103)
-                                                 && !Boolean.TRUE.equals(
-                                                 record.getIsClaimed()
-                                         )
+
                                  )
                                  .collect(Collectors.toList());
                          totalAmount = incentiveActivityRecord.stream()
