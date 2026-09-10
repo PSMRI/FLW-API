@@ -1003,16 +1003,16 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                        record.setApprovalStatus(104);
                                    })
                                    .collect(Collectors.toList());
-                           overDue = incentiveActivityRecord.size();
 
-                           totalAmount = incentiveActivityRecord.stream()
-                                   .map(IncentiveActivityRecord::getAmount)
-                                   .filter(Objects::nonNull)
-                                   .mapToLong(Long::longValue)
-                                   .sum();
                        }
 
+                     overDue = incentiveActivityRecord.size();
 
+                     totalAmount = incentiveActivityRecord.stream()
+                             .map(IncentiveActivityRecord::getAmount)
+                             .filter(Objects::nonNull)
+                             .mapToLong(Long::longValue)
+                             .sum();
 
 
                      logger.info(
