@@ -483,6 +483,10 @@ public class IncentiveServiceImpl implements IncentiveService {
                                 );
                             })
                             .collect(Collectors.toList());
+                }else {
+                    records = records.stream()
+                            .filter(r -> validActivityIds.contains(r.getActivityId()))
+                            .collect(Collectors.toList());
                 }
 
 
