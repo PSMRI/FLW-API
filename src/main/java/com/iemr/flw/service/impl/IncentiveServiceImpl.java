@@ -377,9 +377,13 @@ public class IncentiveServiceImpl implements IncentiveService {
                         .stream()
                         .filter(r ->
                                 r.getCreatedDate() != null
-                                        && r.getEndDate() != null
-                                        && r.getEndDate().toLocalDateTime().getMonthValue() == request.getMonth()
-                                        && r.getEndDate().toLocalDateTime().getYear() == request.getYear()
+                                        && r.getStartDate() != null
+                                        && r.getStartDate()
+                                        .toLocalDateTime()
+                                        .getMonthValue() == request.getMonth()
+                                        && r.getStartDate()
+                                        .toLocalDateTime()
+                                        .getYear() == request.getYear()
                                         && Boolean.TRUE.equals(r.getIsClaimed())
                                         && (
                                         // 104 => 102 OR 105
