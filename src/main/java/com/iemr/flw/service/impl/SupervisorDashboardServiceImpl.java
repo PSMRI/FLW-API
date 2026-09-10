@@ -928,38 +928,10 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                    // Overdue applicable statuses
 
                                    .filter(record ->
-                                           Objects.equals(record.getApprovalStatus(), 102)
-                                                   || Objects.equals(record.getApprovalStatus(), 104)
+                                           (Objects.equals(record.getApprovalStatus(), 102)
+                                                   || Objects.equals(record.getApprovalStatus(), 104)) && record.getIsDefaultActivity()
                                    )
 
-                                   // Role-wise activity filtering
-                                   .filter(record -> {
-
-                                       boolean isDefault =
-                                               Boolean.TRUE.equals(
-                                                       record.getIsDefaultActivity()
-                                               );
-
-                                       boolean isApproved =
-                                               Boolean.TRUE.equals(
-                                                       record.getIsApproved()
-                                               );
-
-                                       if ("ASHA Supervisor".equalsIgnoreCase(roleName)) {
-                                           // Supervisor: only approved default activities
-                                           return isDefault || isApproved;
-                                       }
-
-                                       if ("ANM".equalsIgnoreCase(roleName)
-                                               || "CHO".equalsIgnoreCase(roleName)) {
-                                           // ANM/CHO:
-                                           // all non-default activities
-                                           // default activity only when approved
-                                           return !isDefault || isApproved;
-                                       }
-
-                                       return false;
-                                   })
 
                                    .peek(record -> {
                                        logger.info(
@@ -1002,10 +974,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                                        record.getIsApproved()
                                                );
 
-                                       if ("ASHA Supervisor".equalsIgnoreCase(roleName)) {
-                                           // Supervisor: only approved default activities
-                                           return isDefault || isApproved;
-                                       }
 
                                        if ("ANM".equalsIgnoreCase(roleName)
                                                || "CHO".equalsIgnoreCase(roleName)) {
