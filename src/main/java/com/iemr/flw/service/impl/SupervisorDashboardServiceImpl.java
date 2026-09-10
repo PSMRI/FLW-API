@@ -947,7 +947,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                                        if ("ASHA Supervisor".equalsIgnoreCase(roleName)) {
                                            // Supervisor: only approved default activities
-                                           return isDefault && isApproved;
+                                           return isDefault || isApproved;
                                        }
 
                                        if ("ANM".equalsIgnoreCase(roleName)
@@ -1004,7 +1004,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
                                        if ("ASHA Supervisor".equalsIgnoreCase(roleName)) {
                                            // Supervisor: only approved default activities
-                                           return isDefault && isApproved;
+                                           return isDefault || isApproved;
                                        }
 
                                        if ("ANM".equalsIgnoreCase(roleName)
@@ -1035,16 +1035,17 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                        record.setApprovalStatus(104);
                                    })
                                    .collect(Collectors.toList());
+                           overDue = incentiveActivityRecord.size();
+
+                           totalAmount = incentiveActivityRecord.stream()
+                                   .map(IncentiveActivityRecord::getAmount)
+                                   .filter(Objects::nonNull)
+                                   .mapToLong(Long::longValue)
+                                   .sum();
                        }
 
 
-                     overDue = incentiveActivityRecord.size();
 
-                     totalAmount = incentiveActivityRecord.stream()
-                             .map(IncentiveActivityRecord::getAmount)
-                             .filter(Objects::nonNull)
-                             .mapToLong(Long::longValue)
-                             .sum();
 
                      logger.info(
                              "Overdue final: role={}, ashaId={}, count={}, totalAmount={}",
