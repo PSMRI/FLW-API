@@ -922,62 +922,121 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          incentiveRecordRepo.getRecordsByAsha(ashaId, startDate, endDate);
 
                  if (Objects.equals(approvalStatusID, 104) && isOverDue) {
+                       if("ASHA Supervisor".equalsIgnoreCase(roleName)){
+                           incentiveActivityRecord = dbRecords.stream()
 
-                     incentiveActivityRecord = dbRecords.stream()
+                                   // Overdue applicable statuses
 
-                             // Overdue applicable statuses
-                             .filter(record ->
-                                     Objects.equals(record.getApprovalStatus(), 102)
-                                             || Objects.equals(record.getApprovalStatus(), 104)
-                                             || Objects.equals(record.getApprovalStatus(), 105)
-                             )
+                                   .filter(record ->
+                                           Objects.equals(record.getApprovalStatus(), 102)
+                                                   || Objects.equals(record.getApprovalStatus(), 104)
+                                   )
 
-                             // Role-wise activity filtering
-                             .filter(record -> {
+                                   // Role-wise activity filtering
+                                   .filter(record -> {
 
-                                 boolean isDefault =
-                                         Boolean.TRUE.equals(
-                                                 record.getIsDefaultActivity()
-                                         );
+                                       boolean isDefault =
+                                               Boolean.TRUE.equals(
+                                                       record.getIsDefaultActivity()
+                                               );
 
-                                 boolean isApproved =
-                                         Boolean.TRUE.equals(
-                                                 record.getIsApproved()
-                                         );
+                                       boolean isApproved =
+                                               Boolean.TRUE.equals(
+                                                       record.getIsApproved()
+                                               );
 
-                                 if ("ASHA Supervisor".equalsIgnoreCase(roleName)) {
-                                     // Supervisor: only approved default activities
-                                     return isDefault && isApproved;
-                                 }
+                                       if ("ASHA Supervisor".equalsIgnoreCase(roleName)) {
+                                           // Supervisor: only approved default activities
+                                           return isDefault && isApproved;
+                                       }
 
-                                 if ("ANM".equalsIgnoreCase(roleName)
-                                         || "CHO".equalsIgnoreCase(roleName)) {
-                                     // ANM/CHO:
-                                     // all non-default activities
-                                     // default activity only when approved
-                                     return !isDefault || isApproved;
-                                 }
+                                       if ("ANM".equalsIgnoreCase(roleName)
+                                               || "CHO".equalsIgnoreCase(roleName)) {
+                                           // ANM/CHO:
+                                           // all non-default activities
+                                           // default activity only when approved
+                                           return !isDefault || isApproved;
+                                       }
 
-                                 return false;
-                             })
+                                       return false;
+                                   })
 
-                             .peek(record -> {
-                                 logger.info(
-                                         "Overdue record matched: role={}, ashaId={}, " +
-                                                 "recordId={}, oldStatus={}, default={}, " +
-                                                 "approved={}, claimedDate={}",
-                                         roleName,
-                                         ashaId,
-                                         record.getId(),
-                                         record.getApprovalStatus(),
-                                         record.getIsDefaultActivity(),
-                                         record.getIsApproved(),
-                                         record.getCalimedDate()
-                                 );
+                                   .peek(record -> {
+                                       logger.info(
+                                               "Overdue record matched: role={}, ashaId={}, " +
+                                                       "recordId={}, oldStatus={}, default={}, " +
+                                                       "approved={}, claimedDate={}",
+                                               roleName,
+                                               ashaId,
+                                               record.getId(),
+                                               record.getApprovalStatus(),
+                                               record.getIsDefaultActivity(),
+                                               record.getIsApproved(),
+                                               record.getCalimedDate()
+                                       );
 
-                                 record.setApprovalStatus(104);
-                             })
-                             .collect(Collectors.toList());
+                                       record.setApprovalStatus(104);
+                                   })
+                                   .collect(Collectors.toList());
+                       }else  if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)){
+                           incentiveActivityRecord = dbRecords.stream()
+
+                                   // Overdue applicable statuses
+
+                                   .filter(record ->
+                                           Objects.equals(record.getApprovalStatus(), 102)
+                                                   || Objects.equals(record.getApprovalStatus(), 104)
+                                                   || Objects.equals(record.getApprovalStatus(), 105)
+                                   )
+
+                                   // Role-wise activity filtering
+                                   .filter(record -> {
+
+                                       boolean isDefault =
+                                               Boolean.TRUE.equals(
+                                                       record.getIsDefaultActivity()
+                                               );
+
+                                       boolean isApproved =
+                                               Boolean.TRUE.equals(
+                                                       record.getIsApproved()
+                                               );
+
+                                       if ("ASHA Supervisor".equalsIgnoreCase(roleName)) {
+                                           // Supervisor: only approved default activities
+                                           return isDefault && isApproved;
+                                       }
+
+                                       if ("ANM".equalsIgnoreCase(roleName)
+                                               || "CHO".equalsIgnoreCase(roleName)) {
+                                           // ANM/CHO:
+                                           // all non-default activities
+                                           // default activity only when approved
+                                           return !isDefault || isApproved;
+                                       }
+
+                                       return false;
+                                   })
+
+                                   .peek(record -> {
+                                       logger.info(
+                                               "Overdue record matched: role={}, ashaId={}, " +
+                                                       "recordId={}, oldStatus={}, default={}, " +
+                                                       "approved={}, claimedDate={}",
+                                               roleName,
+                                               ashaId,
+                                               record.getId(),
+                                               record.getApprovalStatus(),
+                                               record.getIsDefaultActivity(),
+                                               record.getIsApproved(),
+                                               record.getCalimedDate()
+                                       );
+
+                                       record.setApprovalStatus(104);
+                                   })
+                                   .collect(Collectors.toList());
+                       }
+
 
                      overDue = incentiveActivityRecord.size();
 
