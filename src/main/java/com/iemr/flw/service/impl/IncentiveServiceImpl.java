@@ -366,8 +366,18 @@ public class IncentiveServiceImpl implements IncentiveService {
         LocalDate start = LocalDate.of(request.getYear(), request.getMonth(), 1);
         LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
 
-        Timestamp startTs = Timestamp.valueOf(start.atStartOfDay());
-        Timestamp endTs = Timestamp.valueOf(end.atTime(23, 59, 59));
+
+        LocalDate monthStart = LocalDate.of(
+                request.getYear(),
+                request.getMonth(),
+                1
+        );
+
+        Timestamp startTs =
+                Timestamp.valueOf(monthStart.atStartOfDay());
+
+        Timestamp nextMonthTs =
+                Timestamp.valueOf(monthStart.plusMonths(1).atStartOfDay());
 
         Integer villageID = userRepo.getUserRole(request.getUserId()).get(0).getStateId();
         boolean isCG = villageID != null && villageID.intValue() == StateCode.CG.getStateCode();
@@ -377,46 +387,83 @@ public class IncentiveServiceImpl implements IncentiveService {
                         .stream()
                         .filter(r ->
                                 r.getCreatedDate() != null
-                                        && r.getStartDate() != null
-                                        && r.getStartDate()
+
+                                        // Month filter using createdDate
+                                        && r.getCreatedDate()
                                         .toLocalDateTime()
-                                        .getMonthValue() == request.getMonth()
-                                        && r.getStartDate()
+                                        .getMonthValue()
+                                        == request.getMonth()
+
+                                        && r.getCreatedDate()
                                         .toLocalDateTime()
-                                        .getYear() == request.getYear()
+                                        .getYear()
+                                        == request.getYear()
+
                                         && Boolean.TRUE.equals(r.getIsClaimed())
+
                                         && (
-                                        // 104 => 102 OR 105
-                                        (Objects.equals(request.getApprovalStatus(), 104)
-                                                && (
-                                                Objects.equals(r.getApprovalStatus(), 102)
-                                                        || Objects.equals(r.getApprovalStatus(), 105)
-                                        )
-                                        )
-
-                                                ||
-
-                                                // 105 => 101 OR 105
-                                                (Objects.equals(request.getApprovalStatus(), 105)
+                                        // Overdue: 102, 104 or 105
+                                        (
+                                                Objects.equals(
+                                                        request.getApprovalStatus(),
+                                                        104
+                                                )
                                                         && (
-                                                        Objects.equals(r.getApprovalStatus(), 101)
-                                                                || Objects.equals(r.getApprovalStatus(), 105)
+                                                        Objects.equals(
+                                                                r.getApprovalStatus(),
+                                                                102
+                                                        )
+                                                                || Objects.equals(
+                                                                r.getApprovalStatus(),
+                                                                104
+                                                        )
+                                                                || Objects.equals(
+                                                                r.getApprovalStatus(),
+                                                                105
+                                                        )
                                                 )
+                                        )
+
+                                                ||
+
+                                                // Verified: 101 or 105
+                                                (
+                                                        Objects.equals(
+                                                                request.getApprovalStatus(),
+                                                                105
+                                                        )
+                                                                && (
+                                                                Objects.equals(
+                                                                        r.getApprovalStatus(),
+                                                                        101
+                                                                )
+                                                                        || Objects.equals(
+                                                                        r.getApprovalStatus(),
+                                                                        105
+                                                                )
+                                                        )
                                                 )
 
                                                 ||
 
-                                                // Normal status
-                                                (!Objects.equals(request.getApprovalStatus(), 104)
-                                                        && !Objects.equals(request.getApprovalStatus(), 105)
-                                                        && Objects.equals(
-                                                        r.getApprovalStatus(),
-                                                        request.getApprovalStatus()
-                                                )
+                                                // Other statuses
+                                                (
+                                                        !Objects.equals(
+                                                                request.getApprovalStatus(),
+                                                                104
+                                                        )
+                                                                && !Objects.equals(
+                                                                request.getApprovalStatus(),
+                                                                105
+                                                        )
+                                                                && Objects.equals(
+                                                                r.getApprovalStatus(),
+                                                                request.getApprovalStatus()
+                                                        )
                                                 )
                                 )
                         )
-                        .toList();
+                        .collect(Collectors.toList());
 
 
         // Bulk fetch valid activity IDs — state wise
