@@ -950,20 +950,44 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                        record.setApprovalStatus(104);
                                    })
                                    .collect(Collectors.toList());
+
+                           overDue = incentiveActivityRecord.size();
+
+                           totalAmount = incentiveActivityRecord.stream()
+                                   .map(IncentiveActivityRecord::getAmount)
+                                   .filter(Objects::nonNull)
+                                   .mapToLong(Long::longValue)
+                                   .sum();
                        }else  if("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)){
                            incentiveActivityRecord = dbRecords.stream()
+                                   .filter(record -> {
 
-                                   // Overdue applicable statuses
+                                       boolean isDefault =
+                                               Boolean.TRUE.equals(record.getIsDefaultActivity());
 
-                                   .filter(record ->
-                                           (Objects.equals(record.getApprovalStatus(), 102)
-                                                   || Objects.equals(record.getApprovalStatus(), 104)
-                                                   || Objects.equals(record.getApprovalStatus(), 105)) || (record.getIsDefaultActivity() && record.getApprovalStatus().equals(105) || (record.getIsDefaultActivity() && record.getIsApproved()))
-                                   )
+                                       boolean isApproved =
+                                               Boolean.TRUE.equals(record.getIsApproved());
 
-                                   // Role-wise activity filtering
+                                       Integer status = record.getApprovalStatus();
 
+                                       // 102:
+                                       // Non-default OR approved default activity
+                                       boolean status102 =
+                                               Objects.equals(status, 102)
+                                                       && (!isDefault || isApproved);
 
+                                       // 105:
+                                       // Only default activity
+                                       boolean status105 =
+                                               Objects.equals(status, 105)
+                                                       && isDefault;
+
+                                       // Already overdue
+                                       boolean status104 =
+                                               Objects.equals(status, 104);
+
+                                       return status102 || status105 || status104;
+                                   })
                                    .peek(record -> {
                                        logger.info(
                                                "Overdue record matched: role={}, ashaId={}, " +
@@ -982,15 +1006,15 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                    })
                                    .collect(Collectors.toList());
 
+                           overDue = incentiveActivityRecord.size();
+
+                           totalAmount = incentiveActivityRecord.stream()
+                                   .map(IncentiveActivityRecord::getAmount)
+                                   .filter(Objects::nonNull)
+                                   .mapToLong(Long::longValue)
+                                   .sum();
+
                        }
-
-                     overDue = incentiveActivityRecord.size();
-
-                     totalAmount = incentiveActivityRecord.stream()
-                             .map(IncentiveActivityRecord::getAmount)
-                             .filter(Objects::nonNull)
-                             .mapToLong(Long::longValue)
-                             .sum();
 
 
                      logger.info(
