@@ -465,9 +465,41 @@ public class IncentiveServiceImpl implements IncentiveService {
             }
 
         }else {
-            records = records.stream()
-                    .filter(r -> validActivityIds.contains(r.getActivityId()))
-                    .collect(Collectors.toList());
+            if(request.getApprovalStatus().equals(104)){
+                records = records.stream()
+                        .filter(r -> validActivityIds.contains(r.getActivityId()))
+                        .filter(r -> {
+                            if (Objects.equals(request.getApprovalStatus(), 104)) {
+
+                                // All status 102 records
+                                boolean status102 =
+                                        Objects.equals(r.getApprovalStatus(), 102);
+
+                                // Status 105 only for default activities
+                                boolean status105 =
+                                        Objects.equals(r.getApprovalStatus(), 105)
+                                                && Boolean.TRUE.equals(
+                                                r.getIsDefaultActivity()
+                                        );
+
+                                // Existing overdue records
+                                boolean status104 =
+                                        Objects.equals(r.getApprovalStatus(), 104);
+
+                                return status102 || status105 || status104;
+                            }
+
+                            return Objects.equals(
+                                    r.getApprovalStatus(),
+                                    request.getApprovalStatus()
+                            );
+                        })
+                        .collect(Collectors.toList());
+            }else {
+                records = records.stream()
+                        .filter(r -> validActivityIds.contains(r.getActivityId()))
+                        .collect(Collectors.toList());
+            }
         }
 
 
