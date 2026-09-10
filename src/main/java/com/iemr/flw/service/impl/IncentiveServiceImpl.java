@@ -459,16 +459,22 @@ public class IncentiveServiceImpl implements IncentiveService {
                             .filter(r -> {
                                 if (Objects.equals(request.getApprovalStatus(), 104)) {
 
-                                    // All status 102 records
-                                    boolean status102 =
-                                            Objects.equals(r.getApprovalStatus(), 102);
+                                    boolean isDefault =
+                                            Boolean.TRUE.equals(r.getIsDefaultActivity());
 
-                                    // Status 105 only for default activities
+                                    boolean isApproved =
+                                            Boolean.TRUE.equals(r.getIsApproved());
+
+                                    // All non-default 102 records,
+                                    // and approved default 102 records
+                                    boolean status102 =
+                                            Objects.equals(r.getApprovalStatus(), 102)
+                                                    && (!isDefault || isApproved);
+
+                                    // Default 105 records, regardless of isApproved
                                     boolean status105 =
                                             Objects.equals(r.getApprovalStatus(), 105)
-                                                    && Boolean.TRUE.equals(
-                                                    r.getIsDefaultActivity()
-                                            );
+                                                    && isDefault;
 
                                     // Existing overdue records
                                     boolean status104 =
