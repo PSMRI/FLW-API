@@ -1000,9 +1000,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          incentiveActivityRecord = dbRecords.stream()
                                  .filter(record ->
                                          Objects.equals(record.getApprovalStatus(), 102)
-                                                 || Objects.equals(
-                                                 record.getApprovalStatus(), 105
-                                         )
                                  )
                                  .filter(record ->
                                          Boolean.TRUE.equals(
