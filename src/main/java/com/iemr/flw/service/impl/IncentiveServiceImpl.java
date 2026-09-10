@@ -433,7 +433,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                             .collect(Collectors.toList());
                 }else {
                     records = records.stream()
-                            .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity() && r.getApprovalStatus().equals(102))
+                            .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
                             .collect(Collectors.toList());
                 }
 
