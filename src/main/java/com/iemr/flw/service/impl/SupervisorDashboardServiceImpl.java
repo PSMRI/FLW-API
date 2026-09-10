@@ -956,35 +956,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                    // Overdue applicable statuses
 
                                    .filter(record ->
-                                           Objects.equals(record.getApprovalStatus(), 102)
+                                           (Objects.equals(record.getApprovalStatus(), 102)
                                                    || Objects.equals(record.getApprovalStatus(), 104)
-                                                   || Objects.equals(record.getApprovalStatus(), 105)
+                                                   || Objects.equals(record.getApprovalStatus(), 105)) || (record.getIsDefaultActivity() && record.getApprovalStatus().equals(105) || (record.getIsDefaultActivity() && record.getIsApproved()))
                                    )
 
                                    // Role-wise activity filtering
-                                   .filter(record -> {
 
-                                       boolean isDefault =
-                                               Boolean.TRUE.equals(
-                                                       record.getIsDefaultActivity()
-                                               );
-
-                                       boolean isApproved =
-                                               Boolean.TRUE.equals(
-                                                       record.getIsApproved()
-                                               );
-
-
-                                       if ("ANM".equalsIgnoreCase(roleName)
-                                               || "CHO".equalsIgnoreCase(roleName)) {
-                                           // ANM/CHO:
-                                           // all non-default activities
-                                           // default activity only when approved
-                                           return !isDefault || isApproved;
-                                       }
-
-                                       return false;
-                                   })
 
                                    .peek(record -> {
                                        logger.info(
