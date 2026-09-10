@@ -427,9 +427,16 @@ public class IncentiveServiceImpl implements IncentiveService {
         // Filter records based on valid activity IDs
         if(isCG){
             if("ASHA Supervisor".equalsIgnoreCase(roleName)){
-                records = records.stream()
-                        .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
-                        .collect(Collectors.toList());
+                if(request.getApprovalStatus().equals(104)){
+                    records = records.stream()
+                            .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity() && r.getApprovalStatus().equals(102))
+                            .collect(Collectors.toList());
+                }else {
+                    records = records.stream()
+                            .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity() && r.getApprovalStatus().equals(102))
+                            .collect(Collectors.toList());
+                }
+
             }else  if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                 if(request.getApprovalStatus().equals(102) || request.getApprovalStatus().equals(105)){
                     records = records.stream()
@@ -447,6 +454,8 @@ public class IncentiveServiceImpl implements IncentiveService {
                             )
                             .collect(Collectors.toList());
                 }
+
+
 
 
                 logger.info(
