@@ -662,16 +662,74 @@ public class IncentiveServiceImpl implements IncentiveService {
             List<IncentiveActivityRecord> records =
                     recordRepo.findRecordsByAsha(request.getUserId())
                             .stream()
-                            .filter(r -> r.getActivityId() != null
-                                    && r.getActivityId().equals(request.getActivityId())
-                                    && r.getCreatedDate() != null
-                                    && !r.getCreatedDate().before(startTs)
-                                    && r.getCreatedDate().before(endTs))
+                            .filter(r ->
+                                    r.getActivityId() != null
+                                            && Objects.equals(
+                                            r.getActivityId(),
+                                            request.getActivityId()
+                                    )
+                                            && r.getCreatedDate() != null
+                                            && !r.getCreatedDate().before(startTs)
+                                            && r.getCreatedDate().before(endTs)
+                            )
+                            .filter(r -> {
+
+                                Integer requestedStatus =
+                                        request.getApprovalStatus();
+
+                                Integer recordStatus =
+                                        r.getApprovalStatus();
+
+                                boolean isDefault =
+                                        Boolean.TRUE.equals(
+                                                r.getIsDefaultActivity()
+                                        );
+
+                                boolean isApproved =
+                                        Boolean.TRUE.equals(
+                                                r.getIsApproved()
+                                        );
+
+                                // Overdue
+                                if (Objects.equals(requestedStatus, 104)) {
+
+                                    // 102 non-default records OR approved default records
+                                    boolean status102 =
+                                            Objects.equals(recordStatus, 102)
+                                                    && (!isDefault || isApproved);
+
+                                    // 105 only for default activities
+                                    boolean status105 =
+                                            Objects.equals(recordStatus, 105)
+                                                    && isDefault;
+
+                                    // Existing overdue records
+                                    boolean status104 =
+                                            Objects.equals(recordStatus, 104);
+
+                                    return status102
+                                            || status105
+                                            || status104;
+                                }
+
+                                // Verified: 101 or 105
+                                if (Objects.equals(requestedStatus, 105)) {
+                                    return Objects.equals(recordStatus, 101)
+                                            || Objects.equals(recordStatus, 105);
+                                }
+
+                                // Pending, rejected or other status
+                                return Objects.equals(
+                                        recordStatus,
+                                        requestedStatus
+                                );
+                            })
                             .collect(Collectors.toList());
 
             if (records.isEmpty()) {
                 return new Gson().toJson(new ArrayList<>());
             }
+
 
             // 🔹 Get beneficiary names
             Set<Long> benIds = records.stream()
