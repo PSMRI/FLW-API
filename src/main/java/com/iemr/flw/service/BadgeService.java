@@ -47,11 +47,19 @@ public class BadgeService {
 
     public List<BadgeEarnedDTO> getEarned(Integer userId) {
         return earnedRepo.findByUserIdOrderByEarnedAtAsc(userId).stream()
-                .map(e -> new BadgeEarnedDTO(e.getBadgeId(), e.getLevel(), e.getEarnedAt()))
+                .map(e -> new BadgeEarnedDTO(
+                        e.getBadgeId(), e.getLevel(), e.getEarnedAt(), e.getAwardKey()))
                 .toList();
     }
 
-    /** Idempotent: rows already known for (user, badge, level) are skipped. Returns rows inserted. */
+    /**
+     * Idempotent: rows already known for (user, badge, level, awardKey) are skipped. Returns
+     * rows inserted.
+     *
+     * A missing awardKey is stored as empty rather than rejected, which is what a streak or
+     * cumulative badge sends and also what an older client sends for everything. That client
+     * then behaves exactly as it did before this field existed.
+     */
     @Transactional
     public int saveEarned(Integer userId, List<BadgeEarnedDTO> badges) {
         if (badges == null || badges.isEmpty()) return 0;
@@ -59,11 +67,14 @@ public class BadgeService {
         int inserted = 0;
         for (BadgeEarnedDTO dto : badges) {
             if (dto == null || dto.getBadgeId() == null || dto.getLevel() == null) continue;
-            if (earnedRepo.existsByUserIdAndBadgeIdAndLevel(userId, dto.getBadgeId(), dto.getLevel())) continue;
+            String awardKey = dto.getAwardKey() != null ? dto.getAwardKey() : "";
+            if (earnedRepo.existsByUserIdAndBadgeIdAndLevelAndAwardKey(
+                    userId, dto.getBadgeId(), dto.getLevel(), awardKey)) continue;
             BadgeEarned row = new BadgeEarned();
             row.setUserId(userId);
             row.setBadgeId(dto.getBadgeId());
             row.setLevel(dto.getLevel());
+            row.setAwardKey(awardKey);
             row.setEarnedAt(dto.getEarnedAt() != null ? dto.getEarnedAt() : now);
             row.setReceivedAt(now);
             earnedRepo.save(row);

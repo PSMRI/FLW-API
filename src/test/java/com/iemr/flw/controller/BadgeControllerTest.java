@@ -70,7 +70,7 @@ class BadgeControllerTest {
     @Test
     void getEarned_returnsListUnderEarned() throws Exception {
         when(jwtUtil.extractUserId("tok")).thenReturn(960);
-        when(badgeService.getEarned(960)).thenReturn(List.of(new BadgeEarnedDTO("timely_reporter", 1, 5L)));
+        when(badgeService.getEarned(960)).thenReturn(List.of(new BadgeEarnedDTO("timely_reporter", 1, 5L, "")));
 
         mockMvc.perform(get("/badges/earned").header("JwtToken", "tok"))
                 .andExpect(status().isOk())

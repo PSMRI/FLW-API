@@ -10,5 +10,6 @@ import java.util.List;
 public interface BadgeEarnedRepo extends JpaRepository<BadgeEarned, Long> {
     List<BadgeEarned> findByUserIdOrderByEarnedAtAsc(Integer userId);
 
-    boolean existsByUserIdAndBadgeIdAndLevel(Integer userId, String badgeId, Integer level);
+    boolean existsByUserIdAndBadgeIdAndLevelAndAwardKey(
+            Integer userId, String badgeId, Integer level, String awardKey);
 }
