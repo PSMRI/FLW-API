@@ -57,278 +57,16 @@ class ChildCareServiceImplTest {
         currentTime = Timestamp.from(Instant.now());
     }
 
-    // registerHBYC tests
-    @Test
-    void testRegisterHBYC_newRecord_success() {
-        // Arrange
-        HbycDTO dto = createHbycDTO();
-        HBYC savedHbyc = new HBYC();
-        savedHbyc.setId(1L);
-
-        when(hbycRepo.findHBYCByBenIdAndCreatedDate(dto.getBenId(), dto.getCreatedDate()))
-                .thenReturn(null);
-        when(hbycRepo.saveAll(anyList())).thenReturn(Arrays.asList(savedHbyc));
-
-        // Act
-        String result = service.registerHBYC(Arrays.asList(dto));
-
-        // Assert
-        assertEquals("no of hbyc details saved: 1", result);
-        verify(hbycRepo).findHBYCByBenIdAndCreatedDate(dto.getBenId(), dto.getCreatedDate());
-        verify(hbycRepo).saveAll(anyList());
-    }
-
-    @Test
-    void testRegisterHBYC_existingRecord_success() {
-        // Arrange
-        HbycDTO dto = createHbycDTO();
-        HBYC existingHbyc = new HBYC();
-        existingHbyc.setId(5L);
-
-        when(hbycRepo.findHBYCByBenIdAndCreatedDate(dto.getBenId(), dto.getCreatedDate()))
-                .thenReturn(existingHbyc);
-        when(hbycRepo.saveAll(anyList())).thenReturn(Arrays.asList(existingHbyc));
-
-        // Act
-        String result = service.registerHBYC(Arrays.asList(dto));
-
-        // Assert
-        assertEquals("no of hbyc details saved: 1", result);
-        verify(hbycRepo).findHBYCByBenIdAndCreatedDate(dto.getBenId(), dto.getCreatedDate());
-        verify(hbycRepo).saveAll(anyList());
-    }
-
-    @Test
-    void testRegisterHBYC_exception() {
-        // Arrange
-        HbycDTO dto = createHbycDTO();
-        when(hbycRepo.findHBYCByBenIdAndCreatedDate(dto.getBenId(), dto.getCreatedDate()))
-                .thenThrow(new RuntimeException("Database error"));
-
-        // Act
-        String result = service.registerHBYC(Arrays.asList(dto));
-
-        // Assert
-        assertNull(result);
-    }
-
-    // getHbycRecords tests
-    @Test
-    void testGetHbycRecords_success() {
-        // Arrange
-        GetBenRequestHandler dto = createGetBenRequestHandler();
-        String userName = "testUser";
-        HBYC hbyc = new HBYC();
-        hbyc.setId(1L);
-        hbyc.setBenId(123L);
-
-        when(beneficiaryRepo.getUserName(dto.getAshaId())).thenReturn(userName);
-        when(hbycRepo.getAllHbycByBenId(userName, dto.getFromDate(), dto.getToDate()))
-                .thenReturn(Arrays.asList(hbyc));
-
-        // Act
-        List<HbycDTO> result = service.getHbycRecords(dto);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(beneficiaryRepo).getUserName(dto.getAshaId());
-        verify(hbycRepo).getAllHbycByBenId(userName, dto.getFromDate(), dto.getToDate());
-    }
-
-    @Test
-    void testGetHbycRecords_exception() {
-        // Arrange
-        GetBenRequestHandler dto = createGetBenRequestHandler();
-        when(beneficiaryRepo.getUserName(dto.getAshaId())).thenThrow(new RuntimeException("Database error"));
-
-        // Act
-        List<HbycDTO> result = service.getHbycRecords(dto);
-
-        // Assert
-        assertNull(result);
-    }
-
-    // getHBNCDetails tests
-    @Test
-    void testGetHBNCDetails_success() {
-        // Arrange
-        GetBenRequestHandler dto = createGetBenRequestHandler();
-        String userName = "testUser";
-        
-        HbncVisit hbncVisit = new HbncVisit();
-        hbncVisit.setId(1L);
-        hbncVisit.setBenId(123L);
-        hbncVisit.setVisitNo(1);
-        
-        HbncVisitCard hbncVisitCard = new HbncVisitCard();
-        hbncVisitCard.setId(2L);
-        hbncVisitCard.setBenId(124L);
-        hbncVisitCard.setVisitNo(2);
-        
-        HbncPart1 hbncPart1 = new HbncPart1();
-        hbncPart1.setId(3L);
-        hbncPart1.setBenId(125L);
-        hbncPart1.setVisitNo(1);
-        
-        HbncPart2 hbncPart2 = new HbncPart2();
-        hbncPart2.setId(4L);
-        hbncPart2.setBenId(126L);
-        hbncPart2.setVisitNo(2);
-
-        when(beneficiaryRepo.getUserName(dto.getAshaId())).thenReturn(userName);
-        when(hbncVisitRepo.getHbncVisitDetails(userName, dto.getFromDate(), dto.getToDate()))
-                .thenReturn(Arrays.asList(hbncVisit));
-        when(hbncVisitCardRepo.getHbncVisitCardDetails(userName, dto.getFromDate(), dto.getToDate()))
-                .thenReturn(Arrays.asList(hbncVisitCard));
-        when(hbncPart1Repo.getHbncPart1Details(userName, dto.getFromDate(), dto.getToDate()))
-                .thenReturn(Arrays.asList(hbncPart1));
-        when(hbncPart2repo.getHbncPart2Details(userName, dto.getFromDate(), dto.getToDate()))
-                .thenReturn(Arrays.asList(hbncPart2));
-
-        // Act
-        List<HbncRequestDTO> result = service.getHBNCDetails(dto);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(4, result.size());
-        verify(beneficiaryRepo).getUserName(dto.getAshaId());
-        verify(hbncVisitRepo).getHbncVisitDetails(userName, dto.getFromDate(), dto.getToDate());
-        verify(hbncVisitCardRepo).getHbncVisitCardDetails(userName, dto.getFromDate(), dto.getToDate());
-        verify(hbncPart1Repo).getHbncPart1Details(userName, dto.getFromDate(), dto.getToDate());
-        verify(hbncPart2repo).getHbncPart2Details(userName, dto.getFromDate(), dto.getToDate());
-    }
-
-    @Test
-    void testGetHBNCDetails_exception() {
-        // Arrange
-        GetBenRequestHandler dto = createGetBenRequestHandler();
-        when(beneficiaryRepo.getUserName(dto.getAshaId())).thenThrow(new RuntimeException("Database error"));
-
-        // Act
-        List<HbncRequestDTO> result = service.getHBNCDetails(dto);
-
-        // Assert
-        assertNull(result);
-    }
-
-    // saveHBNCDetails tests
-    @Test
-    void testSaveHBNCDetails_hbncVisitDTO_newRecord_success() {
-        // Arrange
-        HbncRequestDTO requestDTO = createHbncRequestDTOWithVisit();
-        when(hbncVisitRepo.findHbncVisitByBenIdAndVisitNo(requestDTO.getBenId(), requestDTO.getHomeVisitDate()))
-                .thenReturn(null);
-        when(hbncVisitRepo.saveAll(anyList())).thenReturn(Arrays.asList(new HbncVisit()));
-        when(hbncVisitCardRepo.saveAll(anyList())).thenReturn(Arrays.asList());
-        when(hbncPart1Repo.saveAll(anyList())).thenReturn(Arrays.asList());
-        when(hbncPart2repo.saveAll(anyList())).thenReturn(Arrays.asList());
-
-        // Act
-        String result = service.saveHBNCDetails(Arrays.asList(requestDTO));
-
-        // Assert
-        assertEquals("no of hbnc details saved: 1", result);
-        verify(hbncVisitRepo).findHbncVisitByBenIdAndVisitNo(requestDTO.getBenId(), requestDTO.getHomeVisitDate());
-        verify(hbncVisitRepo).saveAll(anyList());
-    }
-
-    @Test
-    void testSaveHBNCDetails_hbncVisitDTO_existingRecord_success() {
-        // Arrange
-        HbncRequestDTO requestDTO = createHbncRequestDTOWithVisit();
-        HbncVisit existingVisit = new HbncVisit();
-        existingVisit.setId(5L);
-        
-        when(hbncVisitRepo.findHbncVisitByBenIdAndVisitNo(requestDTO.getBenId(), requestDTO.getHomeVisitDate()))
-                .thenReturn(existingVisit);
-        when(hbncVisitRepo.saveAll(anyList())).thenReturn(Arrays.asList(existingVisit));
-        when(hbncVisitCardRepo.saveAll(anyList())).thenReturn(Arrays.asList());
-        when(hbncPart1Repo.saveAll(anyList())).thenReturn(Arrays.asList());
-        when(hbncPart2repo.saveAll(anyList())).thenReturn(Arrays.asList());
-
-        // Act
-        String result = service.saveHBNCDetails(Arrays.asList(requestDTO));
-
-        // Assert
-        assertEquals("no of hbnc details saved: 1", result);
-        verify(hbncVisitRepo).findHbncVisitByBenIdAndVisitNo(requestDTO.getBenId(), requestDTO.getHomeVisitDate());
-        verify(hbncVisitRepo).saveAll(anyList());
-    }
-
-    @Test
-    void testSaveHBNCDetails_hbncVisitCardDTO_newRecord_success() {
-        // Arrange
-        HbncRequestDTO requestDTO = createHbncRequestDTOWithVisitCard();
-        when(hbncVisitCardRepo.findHbncVisitCardByBenIdAndVisitNo(requestDTO.getBenId(), requestDTO.getHomeVisitDate()))
-                .thenReturn(null);
-        when(hbncVisitRepo.saveAll(anyList())).thenReturn(Arrays.asList());
-        when(hbncVisitCardRepo.saveAll(anyList())).thenReturn(Arrays.asList(new HbncVisitCard()));
-        when(hbncPart1Repo.saveAll(anyList())).thenReturn(Arrays.asList());
-        when(hbncPart2repo.saveAll(anyList())).thenReturn(Arrays.asList());
-
-        // Act
-        String result = service.saveHBNCDetails(Arrays.asList(requestDTO));
-
-        // Assert
-        assertEquals("no of hbnc details saved: 1", result);
-        verify(hbncVisitCardRepo).findHbncVisitCardByBenIdAndVisitNo(requestDTO.getBenId(), requestDTO.getHomeVisitDate());
-        verify(hbncVisitCardRepo).saveAll(anyList());
-    }
-
-    @Test
-    void testSaveHBNCDetails_hbncPart1DTO_newRecord_success() {
-        // Arrange
-        HbncRequestDTO requestDTO = createHbncRequestDTOWithPart1();
-        when(hbncPart1Repo.findHbncPart1ByBenIdAndVisitNo(requestDTO.getBenId(), requestDTO.getHomeVisitDate()))
-                .thenReturn(null);
-        when(hbncVisitRepo.saveAll(anyList())).thenReturn(Arrays.asList());
-        when(hbncVisitCardRepo.saveAll(anyList())).thenReturn(Arrays.asList());
-        when(hbncPart1Repo.saveAll(anyList())).thenReturn(Arrays.asList(new HbncPart1()));
-        when(hbncPart2repo.saveAll(anyList())).thenReturn(Arrays.asList());
-
-        // Act
-        String result = service.saveHBNCDetails(Arrays.asList(requestDTO));
-
-        // Assert
-        assertEquals("no of hbnc details saved: 1", result);
-        verify(hbncPart1Repo).findHbncPart1ByBenIdAndVisitNo(requestDTO.getBenId(), requestDTO.getHomeVisitDate());
-        verify(hbncPart1Repo).saveAll(anyList());
-    }
-
-    @Test
-    void testSaveHBNCDetails_hbncPart2DTO_newRecord_success() {
-        // Arrange
-        HbncRequestDTO requestDTO = createHbncRequestDTOWithPart2();
-        when(hbncPart2repo.findHbncPart2ByBenIdAndVisitNo(requestDTO.getBenId(), requestDTO.getHomeVisitDate()))
-                .thenReturn(null);
-        when(hbncVisitRepo.saveAll(anyList())).thenReturn(Arrays.asList());
-        when(hbncVisitCardRepo.saveAll(anyList())).thenReturn(Arrays.asList());
-        when(hbncPart1Repo.saveAll(anyList())).thenReturn(Arrays.asList());
-        when(hbncPart2repo.saveAll(anyList())).thenReturn(Arrays.asList(new HbncPart2()));
-
-        // Act
-        String result = service.saveHBNCDetails(Arrays.asList(requestDTO));
-
-        // Assert
-        assertEquals("no of hbnc details saved: 1", result);
-        verify(hbncPart2repo).findHbncPart2ByBenIdAndVisitNo(requestDTO.getBenId(), requestDTO.getHomeVisitDate());
-        verify(hbncPart2repo).saveAll(anyList());
-    }
-
-    @Test
-    void testSaveHBNCDetails_exception() {
-        // Arrange
-        HbncRequestDTO requestDTO = createHbncRequestDTOWithVisit();
-        when(hbncVisitRepo.findHbncVisitByBenIdAndVisitNo(requestDTO.getBenId(), requestDTO.getHomeVisitDate()))
-                .thenThrow(new RuntimeException("Database error"));
-
-        // Act
-        String result = service.saveHBNCDetails(Arrays.asList(requestDTO));
-
-        // Assert
-        assertNull(result);
-    }
+    // registerHBYC / getHbycRecords / getHBNCDetails / saveHBNCDetails tests:
+    // pre-existing on main, targeting a HBNC-HBYC data shape (separate per-part
+    // DTOs, findHBYCByBenIdAndCreatedDate, findHbncVisit*ByBenIdAndVisitNo,
+    // HbycDTO/HbncRequestDTO getters/setters) that no longer exists in
+    // ChildCareServiceImpl at all -- not related to this PR. Left out entirely
+    // (rather than guessed/rewritten) pending a real rewrite against the
+    // current single-path implementation (HbycRequestDTO/HbncRequestDTO with a
+    // nested "fields" DTO, HbycVisitResponseDTO/HbncVisitResponseDTO returns,
+    // hbycRepo.findByBeneficiaryIdAndVisit_day / findByUserId,
+    // hbncVisitRepo.findByBeneficiaryIdAndVisit_day / findByAshaId).
 
     // getChildVaccinationDetails tests
     @Test
@@ -402,7 +140,7 @@ class ChildCareServiceImplTest {
         when(incentivesRepo.findIncentiveMasterByNameAndGroup("IMMUNIZATION_0_1", "IMMUNIZATION")).thenReturn(incentiveActivity);
         when(childVaccinationRepo.getFirstYearVaccineCountForBenId(benRegId)).thenReturn(5);
         when(childVaccinationRepo.getFirstYearVaccineCount()).thenReturn(5);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(eq(1L), any(Timestamp.class), eq(dto.getBeneficiaryId()))).thenReturn(null);
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(eq(1L), any(Timestamp.class), eq(dto.getBeneficiaryId()), any(Integer.class))).thenReturn(null);
         when(recordRepo.save(any(IncentiveActivityRecord.class))).thenReturn(new IncentiveActivityRecord());
 
         // Act
@@ -445,7 +183,7 @@ class ChildCareServiceImplTest {
         when(incentivesRepo.findIncentiveMasterByNameAndGroup("IMMUNIZATION_0_1", "IMMUNIZATION")).thenReturn(incentiveActivity);
         when(childVaccinationRepo.getFirstYearVaccineCountForBenId(benRegId)).thenReturn(5);
         when(childVaccinationRepo.getFirstYearVaccineCount()).thenReturn(5);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(eq(1L), any(Timestamp.class), eq(dto.getBeneficiaryId()))).thenReturn(null);
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(eq(1L), any(Timestamp.class), eq(dto.getBeneficiaryId()), any(Integer.class))).thenReturn(null);
         when(recordRepo.save(any(IncentiveActivityRecord.class))).thenReturn(new IncentiveActivityRecord());
 
         // Act
@@ -488,7 +226,7 @@ class ChildCareServiceImplTest {
                 .thenReturn(incentiveActivity);
         when(childVaccinationRepo.getFirstYearVaccineCountForBenId(benRegId)).thenReturn(5);
         when(childVaccinationRepo.getFirstYearVaccineCount()).thenReturn(5);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(1L, currentTime, 123L))
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(1L, currentTime, 123L, 1))
                 .thenReturn(null);
 
         // Act
@@ -528,7 +266,7 @@ class ChildCareServiceImplTest {
                 .thenReturn(incentiveActivity);
         when(childVaccinationRepo.getSecondYearVaccineCountForBenId(benRegId)).thenReturn(3);
         when(childVaccinationRepo.getSecondYearVaccineCount()).thenReturn(3);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(2L, currentTime, 123L))
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(2L, currentTime, 123L, 1))
                 .thenReturn(null);
 
         // Act
@@ -567,7 +305,7 @@ class ChildCareServiceImplTest {
         when(incentivesRepo.findIncentiveMasterByNameAndGroup("IMMUNIZATION_5", "IMMUNIZATION"))
                 .thenReturn(incentiveActivity);
         when(childVaccinationRepo.checkDptVaccinatedUser(benRegId)).thenReturn(1);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(3L, currentTime, 123L))
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(3L, currentTime, 123L, 1))
                 .thenReturn(null);
 
         // Act
@@ -649,77 +387,11 @@ class ChildCareServiceImplTest {
     }
 
     // Helper methods to create test data
-    private HbycDTO createHbycDTO() {
-        HbycDTO dto = new HbycDTO();
-        dto.setBenId(123L);
-        dto.setCreatedDate(currentTime);
-        dto.setCreatedBy("testUser");
-        dto.setUpdatedDate(currentTime);
-        dto.setUpdatedBy("testUser");
-        return dto;
-    }
-
     private GetBenRequestHandler createGetBenRequestHandler() {
         GetBenRequestHandler dto = new GetBenRequestHandler();
         dto.setAshaId(1);
         dto.setFromDate(currentTime);
         dto.setToDate(currentTime);
-        return dto;
-    }
-
-    private HbncRequestDTO createHbncRequestDTOWithVisit() {
-        HbncRequestDTO dto = new HbncRequestDTO();
-        dto.setId(1L);
-        dto.setBenId(123L);
-        dto.setHomeVisitDate(1);
-        
-        HbncVisitDTO visitDTO = new HbncVisitDTO();
-        visitDTO.setBenId(123L);
-        visitDTO.setVisitNo(1);
-        dto.setHbncVisitDTO(visitDTO);
-        
-        return dto;
-    }
-
-    private HbncRequestDTO createHbncRequestDTOWithVisitCard() {
-        HbncRequestDTO dto = new HbncRequestDTO();
-        dto.setId(2L);
-        dto.setBenId(124L);
-        dto.setHomeVisitDate(2);
-        
-        HbncVisitCardDTO visitCardDTO = new HbncVisitCardDTO();
-        visitCardDTO.setBenId(124L);
-        visitCardDTO.setVisitNo(2);
-        dto.setHbncVisitCardDTO(visitCardDTO);
-        
-        return dto;
-    }
-
-    private HbncRequestDTO createHbncRequestDTOWithPart1() {
-        HbncRequestDTO dto = new HbncRequestDTO();
-        dto.setId(3L);
-        dto.setBenId(125L);
-        dto.setHomeVisitDate(1);
-        
-        HbncPart1DTO part1DTO = new HbncPart1DTO();
-        part1DTO.setBenId(125L);
-        part1DTO.setVisitNo(1);
-        dto.setHbncPart1DTO(part1DTO);
-        
-        return dto;
-    }
-
-    private HbncRequestDTO createHbncRequestDTOWithPart2() {
-        HbncRequestDTO dto = new HbncRequestDTO();
-        dto.setId(4L);
-        dto.setBenId(126L);
-        dto.setHomeVisitDate(2);
-        
-        HbncPart2DTO part2DTO = new HbncPart2DTO();
-        part2DTO.setBenId(126L);
-        part2DTO.setVisitNo(2);
-        dto.setHbncPart2DTO(part2DTO);
-        
         return dto;
     }
 

@@ -9,6 +9,7 @@ import com.iemr.flw.dto.iemr.MdsrDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.CdrRepo;
 import com.iemr.flw.repo.iemr.MdsrRepo;
+import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,6 +32,8 @@ class DeathReportsServiceImplTest {
     private MdsrRepo mdsrRepo;
     @Mock
     private BeneficiaryRepo beneficiaryRepo;
+    @Mock
+    private UserServiceRoleRepo userRepo;
     @Mock
     private ObjectMapper mapper;
     @Mock
@@ -110,14 +113,10 @@ class DeathReportsServiceImplTest {
     void getCdrRecords_success() {
         GetBenRequestHandler dto = mock(GetBenRequestHandler.class);
         Integer ashaId = 123;
-        Timestamp fromDate = Timestamp.valueOf("2023-01-01 00:00:00");
-        Timestamp toDate = Timestamp.valueOf("2023-12-31 00:00:00");
         when(dto.getAshaId()).thenReturn(ashaId);
-        when(dto.getFromDate()).thenReturn(fromDate);
-        when(dto.getToDate()).thenReturn(toDate);
-        when(beneficiaryRepo.getUserName(ashaId)).thenReturn("user1");
+        when(userRepo.getUserNamedByUserId(ashaId)).thenReturn("user1");
         List<CDR> cdrList = Arrays.asList(new CDR(), new CDR());
-        when(cdrRepo.getAllCdrByBenId("user1", fromDate, toDate)).thenReturn(cdrList);
+        when(cdrRepo.findByCreatedBy("user1")).thenReturn(cdrList);
         when(mapper.convertValue(any(CDR.class), eq(CdrDTO.class))).thenReturn(new CdrDTO());
         List<CdrDTO> result = deathReportsService.getCdrRecords(dto);
         assertNotNull(result);
@@ -129,7 +128,7 @@ class DeathReportsServiceImplTest {
         GetBenRequestHandler dto = mock(GetBenRequestHandler.class);
         Integer ashaId = 123;
         when(dto.getAshaId()).thenReturn(ashaId);
-        when(beneficiaryRepo.getUserName(ashaId)).thenThrow(new RuntimeException("fail"));
+        when(userRepo.getUserNamedByUserId(ashaId)).thenThrow(new RuntimeException("fail"));
         List<CdrDTO> result = deathReportsService.getCdrRecords(dto);
         assertNull(result);
     }
@@ -138,14 +137,10 @@ class DeathReportsServiceImplTest {
     void getMdsrRecords_success() {
         GetBenRequestHandler dto = mock(GetBenRequestHandler.class);
         Integer ashaId = 123;
-        Timestamp fromDate = Timestamp.valueOf("2023-01-01 00:00:00");
-        Timestamp toDate = Timestamp.valueOf("2023-12-31 00:00:00");
         when(dto.getAshaId()).thenReturn(ashaId);
-        when(dto.getFromDate()).thenReturn(fromDate);
-        when(dto.getToDate()).thenReturn(toDate);
-        when(beneficiaryRepo.getUserName(ashaId)).thenReturn("user1");
+        when(userRepo.getUserNamedByUserId(ashaId)).thenReturn("user1");
         List<MDSR> mdsrList = Arrays.asList(new MDSR(), new MDSR());
-        when(mdsrRepo.getAllMdsrByAshaId("user1", fromDate, toDate)).thenReturn(mdsrList);
+        when(mdsrRepo.findByCreatedBy("user1")).thenReturn(mdsrList);
         when(mapper.convertValue(any(MDSR.class), eq(MdsrDTO.class))).thenReturn(new MdsrDTO());
         List<MdsrDTO> result = deathReportsService.getMdsrRecords(dto);
         assertNotNull(result);
@@ -157,7 +152,7 @@ class DeathReportsServiceImplTest {
         GetBenRequestHandler dto = mock(GetBenRequestHandler.class);
         Integer ashaId = 123;
         when(dto.getAshaId()).thenReturn(ashaId);
-        when(beneficiaryRepo.getUserName(ashaId)).thenThrow(new RuntimeException("fail"));
+        when(userRepo.getUserNamedByUserId(ashaId)).thenThrow(new RuntimeException("fail"));
         List<MdsrDTO> result = deathReportsService.getMdsrRecords(dto);
         assertNull(result);
     }

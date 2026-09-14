@@ -91,7 +91,7 @@ class TBScreeningServiceImplTest {
         when(req.getFromDate()).thenReturn(fromDate);
         when(req.getToDate()).thenReturn(toDate);
         List<TBScreening> tbList = Arrays.asList(new TBScreening(), new TBScreening());
-        when(tbScreeningRepo.getByUserId(ashaId, fromDate, toDate)).thenReturn(tbList);
+        when(tbScreeningRepo.getByUserId(ashaId)).thenReturn(tbList);
         String json = tbScreeningService.getByUserId(req);
         assertNotNull(json);
         TBScreeningRequestDTO result = new Gson().fromJson(json, TBScreeningRequestDTO.class);
@@ -108,7 +108,7 @@ class TBScreeningServiceImplTest {
         when(req.getAshaId()).thenReturn(ashaId);
         when(req.getFromDate()).thenReturn(fromDate);
         when(req.getToDate()).thenReturn(toDate);
-        when(tbScreeningRepo.getByUserId(ashaId, fromDate, toDate)).thenReturn(Collections.emptyList());
+        when(tbScreeningRepo.getByUserId(ashaId)).thenReturn(Collections.emptyList());
         String json = tbScreeningService.getByUserId(req);
         assertNotNull(json);
         TBScreeningRequestDTO result = new Gson().fromJson(json, TBScreeningRequestDTO.class);
