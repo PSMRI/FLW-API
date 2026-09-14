@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -458,8 +459,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         Integer stateId = userService.getUserDetail(supervisorUserID).getStateId();
         String rollName = userService.getUserDetail(supervisorUserID).getRoleName();
 
-        LocalDate today = LocalDate.now();
-
 
         // 1. Supervisor user details
         List<Object[]> supervisorRows = dashboardRepo.getSupervisorUserDetails(supervisorUserID);
@@ -479,12 +478,14 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         logger.info("Fetching ASHA details for supervisorUserID: {}", supervisorUserID);
 
 
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+
         LocalDate dueDate = LocalDate.of(year, month, 1)
                 .plusMonths(1)
                 .withDayOfMonth(5);
 
         boolean isOverDue =
-                rollName.equalsIgnoreCase("ANM")
+                "ASHA Supervisor".equalsIgnoreCase(rollName)
                         && today.isAfter(dueDate);
 
 
@@ -619,15 +620,54 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             }else  if(stateId.equals(StateCode.CG.getStateCode())){
                 if("ASHA Supervisor".equalsIgnoreCase(rollName)){
                     List<Object[]> statusRows = dashboardRepo.getDefaultIncentiveStatusByAshaIds(ashaIDs, startDate, endDate);
+                    logger.info(
+                            "Supervisor dashboard: role={}, today={}, dueDate={}, " +
+                                    "isOverDue={}, month={}, year={}, ashaIDs={}",
+                            rollName,
+                            today,
+                            dueDate,
+                            isOverDue,
+                            month,
+                            year,
+                            ashaIDs
+                    );
+
                     if (statusRows != null) {
-                        for (Object[] sRow : statusRows) {
-                            long verified = ((Number) sRow[5]).longValue();
-                            long rejected = ((Number) sRow[3]).longValue();
-                            long pending = ((Number) sRow[4]).longValue();
+                        for (Object[] statusRow : statusRows) {
 
+                            Integer ashaId = statusRow[0] != null
+                                    ? ((Number) statusRow[0]).intValue()
+                                    : null;
 
-                            if (verified > 0) overallVerified += 1;
-                            if (rejected > 0) overallRejected += 1;
+                            long verified = statusRow[2] != null
+                                    ? ((Number) statusRow[2]).longValue()
+                                    : 0L;
+
+                            long rejected = statusRow[3] != null
+                                    ? ((Number) statusRow[3]).longValue()
+                                    : 0L;
+
+                            long pending = statusRow[4] != null
+                                    ? ((Number) statusRow[4]).longValue()
+                                    : 0L;
+
+                            logger.info(
+                                    "Supervisor status: ashaId={}, verified={}, rejected={}, " +
+                                            "pending={}, isOverDue={}",
+                                    ashaId,
+                                    verified,
+                                    rejected,
+                                    pending,
+                                    isOverDue
+                            );
+
+                            if (verified > 0) {
+                                overallVerified++;
+                            }
+
+                            if (rejected > 0) {
+                                overallRejected++;
+                            }
 
                             if (pending > 0) {
                                 if (isOverDue) {
