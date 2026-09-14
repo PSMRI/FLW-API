@@ -83,7 +83,7 @@ class ChildCareControllerTest {
 
     @Test
     void getHbycRecords_success() throws Exception {
-        when(childCareService.getHbycRecords(any())).thenReturn(Collections.singletonList(new HbycDTO()));
+        when(childCareService.getHbycRecords(any())).thenReturn(Collections.singletonList(new HbycVisitResponseDTO()));
         GetBenRequestHandler req = new GetBenRequestHandler();
         mockMvc.perform(post("/child-care/hbyc/getAll")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -126,7 +126,7 @@ class ChildCareControllerTest {
     @Test
     void saveHBNCVisit_success() throws Exception {
         List<HbncRequestDTO> dtos = Collections.singletonList(new HbncRequestDTO());
-        when(childCareService.saveHBNCDetails(any())).thenReturn("data");
+        when(childCareService.saveHBNCDetails(any(), any())).thenReturn("data");
         mockMvc.perform(post("/child-care/hbncVisit/saveAll")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer token")
@@ -137,7 +137,7 @@ class ChildCareControllerTest {
     @Test
     void saveHBNCVisit_noRecordFound() throws Exception {
         List<HbncRequestDTO> dtos = Collections.singletonList(new HbncRequestDTO());
-        when(childCareService.saveHBNCDetails(any())).thenReturn(null);
+        when(childCareService.saveHBNCDetails(any(), any())).thenReturn(null);
         mockMvc.perform(post("/child-care/hbncVisit/saveAll")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer token")
@@ -165,7 +165,7 @@ class ChildCareControllerTest {
     @Test
     void saveHBNCVisit_exception() throws Exception {
         List<HbncRequestDTO> dtos = Collections.singletonList(new HbncRequestDTO());
-        when(childCareService.saveHBNCDetails(any())).thenThrow(new RuntimeException("fail"));
+        when(childCareService.saveHBNCDetails(any(), any())).thenThrow(new RuntimeException("fail"));
         mockMvc.perform(post("/child-care/hbncVisit/saveAll")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer token")
@@ -175,7 +175,7 @@ class ChildCareControllerTest {
 
     @Test
     void getHBNCVisitDetails_success() throws Exception {
-        when(childCareService.getHBNCDetails(any())).thenReturn(Collections.singletonList(new HbncRequestDTO()));
+        when(childCareService.getHBNCDetails(any())).thenReturn(Collections.singletonList(new HbncVisitResponseDTO()));
         GetBenRequestHandler req = new GetBenRequestHandler();
         mockMvc.perform(post("/child-care/hbncVisit/getAll")
                 .contentType(MediaType.APPLICATION_JSON)
