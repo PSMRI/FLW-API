@@ -468,7 +468,7 @@ class MaternalHealthServiceImplTest {
         pncVisit.setBenId(123L);
 
         when(beneficiaryRepo.getUserName(dto.getAshaId())).thenReturn(userName);
-        when(pncVisitRepo.getPNCForPW(userName, dto.getFromDate(), dto.getToDate()))
+        when(pncVisitRepo.getPNCForPW(userName))
                 .thenReturn(Arrays.asList(pncVisit));
 
         // Act
@@ -478,7 +478,7 @@ class MaternalHealthServiceImplTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         verify(beneficiaryRepo).getUserName(dto.getAshaId());
-        verify(pncVisitRepo).getPNCForPW(userName, dto.getFromDate(), dto.getToDate());
+        verify(pncVisitRepo).getPNCForPW(userName);
     }
 
     @Test
