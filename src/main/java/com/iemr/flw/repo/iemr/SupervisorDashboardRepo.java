@@ -173,26 +173,81 @@ public interface SupervisorDashboardRepo extends JpaRepository<IncentiveActivity
 			@Param("startDate") Timestamp startDate,
 			@Param("endDate") Timestamp endDate);
 
-	@Query(value = "SELECT iar.asha_id, "
-			+ "COUNT(*) AS totalRecords, "
-			+ "SUM(CASE WHEN iar.approval_status = 101 THEN 1 ELSE 0 END) AS verified, "
-			+ "SUM(CASE WHEN iar.approval_status = 103 THEN 1 ELSE 0 END) AS rejected, "
-			+ "SUM(CASE WHEN iar.approval_status = 102 THEN 1 ELSE 0 END) AS pending, "
-			+ "SUM(CASE WHEN iar.approval_status IN (101, 105) THEN 1 ELSE 0 END) AS approved "
-			+ "FROM incentive_activity_record iar "
-			+ "WHERE iar.asha_id IN (:ashaIds) "
-			+ "AND iar.created_date >= :startDate "
-			+ "AND iar.is_claimed = true "
-			+ "AND iar.is_default_activity = true "
-			+ "AND iar.is_default_activity = true "
-			+ "AND iar.is_approved = false "
-			+ "AND iar.created_date < :endDate "
-			+ "GROUP BY iar.asha_id",
+//	@Query(value = "SELECT iar.asha_id, "
+//			+ "COUNT(*) AS totalRecords, "
+//			+ "SUM(CASE WHEN iar.approval_status = 101 THEN 1 ELSE 0 END) AS verified, "
+//			+ "SUM(CASE WHEN iar.approval_status = 103 THEN 1 ELSE 0 END) AS rejected, "
+//			+ "SUM(CASE WHEN iar.approval_status = 102 THEN 1 ELSE 0 END) AS pending, "
+//			+ "SUM(CASE WHEN iar.approval_status IN (101, 105) THEN 1 ELSE 0 END) AS approved "
+//			+ "FROM incentive_activity_record iar "
+//			+ "WHERE iar.asha_id IN (:ashaIds) "
+//			+ "AND iar.created_date >= :startDate "
+//			+ "AND iar.is_claimed = true "
+//			+ "AND iar.is_default_activity = true "
+//			+ "AND iar.is_default_activity = true "
+//			+ "AND iar.is_approved = false "
+//			+ "AND iar.created_date < :endDate "
+//			+ "GROUP BY iar.asha_id",
+//			nativeQuery = true)
+//	List<Object[]> getDefaultIncentiveStatusByAshaIds(
+//			@Param("ashaIds") List<Integer> ashaIds,
+//			@Param("startDate") Timestamp startDate,
+//			@Param("endDate") Timestamp endDate);
+
+
+	@Query(value = """
+    SELECT
+        iar.asha_id,
+        COUNT(*) AS totalRecords,
+
+        SUM(
+            CASE
+                WHEN iar.approval_status = 101
+                     OR (
+                         iar.approval_status = 105
+                         AND iar.is_approved = true
+                     )
+                THEN 1 ELSE 0
+            END
+        ) AS verified,
+
+        SUM(
+            CASE
+                WHEN iar.approval_status = 103
+                THEN 1 ELSE 0
+            END
+        ) AS rejected,
+
+        SUM(
+            CASE
+                WHEN iar.approval_status = 102
+                THEN 1 ELSE 0
+            END
+        ) AS pending,
+
+        SUM(
+            CASE
+                WHEN iar.approval_status IN (101, 105)
+                THEN 1 ELSE 0
+            END
+        ) AS approved
+
+    FROM incentive_activity_record iar
+
+    WHERE iar.asha_id IN (:ashaIds)
+      AND iar.created_date >= :startDate
+      AND iar.created_date < :endDate
+      AND iar.is_claimed = true
+      AND iar.is_default_activity = true
+
+    GROUP BY iar.asha_id
+    """,
 			nativeQuery = true)
 	List<Object[]> getDefaultIncentiveStatusByAshaIds(
 			@Param("ashaIds") List<Integer> ashaIds,
 			@Param("startDate") Timestamp startDate,
-			@Param("endDate") Timestamp endDate);
+			@Param("endDate") Timestamp endDate
+	);
 
 	// Incentive activity history per ASHA (recent records)
 	@Query(value = "SELECT iar.asha_id, iar.name AS activityName, "
