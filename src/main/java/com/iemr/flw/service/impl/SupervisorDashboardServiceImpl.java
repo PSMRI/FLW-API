@@ -1638,22 +1638,22 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
              }else {
                  if (approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode())) {
                      if (incentiveIds != null && !incentiveIds.trim().isEmpty()) {
+                         List<Long> ids = Arrays.stream(incentiveIds.split(","))
+                                 .map(String::trim)
+                                 .filter(value -> !value.isEmpty())
+                                 .map(Long::valueOf)
+                                 .collect(Collectors.toList());
 
-                         for (String incentiveId : incentiveIds.split(",")) {
-
-                             Long id = Long.parseLong(incentiveId.trim());
-
-                             updatedCount += incentiveRecordRepo.updateApprovalStatusByIdAndIncentiveId(
-                                     approvalStatus,
-                                     ashaId,
-                                     ashaSupervisorUserId,
-                                     ashaSupervisorDetails.getUserName(),
-                                     reason,
-                                     approvalDate,
-                                     otherReason,
-                                     id
-                             );
-                         }
+                         updatedCount += incentiveRecordRepo.updateApprovalStatusByIdsAndIncentiveIds(
+                                 approvalStatus,
+                                 ashaId,
+                                 ashaSupervisorUserId,
+                                 ashaSupervisorDetails.getUserName(),
+                                 reason,
+                                 approvalDate,
+                                 otherReason,
+                                 ids
+                         );
                      }
                  } else {
 
@@ -1673,29 +1673,33 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                      } else if(ashaSupervisorDetails.getStateId().equals(StateCode.CG.getStateCode())){
 
                          if ("ASHA Supervisor".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())) {
+
                              if (incentiveIds != null && !incentiveIds.trim().isEmpty()) {
 
-                                 for (String incentiveId : incentiveIds.split(",")) {
+                                 List<Long> ids = Arrays.stream(incentiveIds.split(","))
+                                         .map(String::trim)
+                                         .filter(value -> !value.isEmpty())
+                                         .map(Long::valueOf)
+                                         .collect(Collectors.toList());
 
-                                     Long id = Long.parseLong(incentiveId.trim());
+                                 updatedCount = incentiveRecordRepo.updateApprovalStatusByIncentiveIds(ids, ashaId, 105, approvalDate, ashaSupervisorUserId, ashaSupervisorDetails.getUserName());
 
-                                     updatedCount = incentiveRecordRepo.updateApprovalStatusByIncentiveId(id, ashaId, 105, approvalDate, ashaSupervisorUserId, ashaSupervisorDetails.getUserName());
-
-                                 }
                              }
 
 
                          } else if("ANM".equalsIgnoreCase(ashaSupervisorDetails.getRoleName())){
+
                              if (incentiveIds != null && !incentiveIds.trim().isEmpty()) {
+                                 List<Long> ids = Arrays.stream(incentiveIds.split(","))
+                                         .map(String::trim)
+                                         .filter(value -> !value.isEmpty())
+                                         .map(Long::valueOf)
+                                         .collect(Collectors.toList());
 
-                                 for (String incentiveId : incentiveIds.split(",")) {
-                                     Long id = Long.parseLong(incentiveId.trim());
-
-                                     updatedCount = incentiveRecordRepo.updateApprovalStatusByIncentiveIdForDefaultActivity(id,
-                                             ashaId, approvalStatus,
-                                             approvalDate, ashaSupervisorUserId,
-                                             ashaSupervisorDetails.getUserName());
-                                 }
+                                 updatedCount = incentiveRecordRepo.updateApprovalStatusByIncentiveIdsForDefaultActivity(ids,
+                                         ashaId, approvalStatus,
+                                         approvalDate, ashaSupervisorUserId,
+                                         ashaSupervisorDetails.getUserName());
                              }
 
                          }
