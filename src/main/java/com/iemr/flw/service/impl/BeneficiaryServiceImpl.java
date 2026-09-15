@@ -153,13 +153,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
             List<BigInteger> addressIds = beneficiaryRepo.getVillageWorklistAddressIds(
                     request.getProviderServiceMapID(), request.getVillageID(), pageSize, offset);
 
-            // TRACE (getBenData root-cause investigation): per-page counts as seen server-side,
-            // so they can be compared against what each device shows on screen. Remove once resolved.
-            logger.info("[TRACE getBeneficiaryData] StopTB page result: providerServiceMapID="
-                    + request.getProviderServiceMapID() + " villageID=" + request.getVillageID()
-                    + " pageNo=" + request.getPageNo() + " totalCount=" + totalCount
-                    + " totalPage=" + totalPage + " addressIdsOnPage=" + addressIds.size());
-
             if (addressIds.isEmpty()) return null;
 
             // Was findAddressesByIds() - a single "IN :ids" JPQL query. Hit a reproducible
@@ -244,14 +237,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
             // exception by-passing
             try {
                 List<RMNCHMBeneficiarymapping> mappingsForAddress = beneficiaryRepo.getByAddressID(a.getId());
-                if (mappingsForAddress.size() > 1) {
-                    // TRACE (getBenData root-cause investigation): duplicate mapping rows for one
-                    // address — .get(0) below picks whichever comes back first, no ORDER BY.
-                    // Remove once resolved.
-                    logger.warn("[TRACE getBeneficiaryData] addressID=" + a.getId() + " has "
-                            + mappingsForAddress.size() + " mapping rows (expected 1); picking first: benMapId="
-                            + mappingsForAddress.get(0).getBenMapId());
-                }
                 if(!mappingsForAddress.isEmpty()){
                     RMNCHMBeneficiarymapping m = mappingsForAddress.get(0);
                     if (m != null) {
@@ -288,21 +273,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         if (m.getBenRegId() != null) {
                             List<RMNCHBeneficiaryDetailsRmnch> detailsByRegID = beneficiaryRepo
                                     .getDetailsByRegID((m.getBenRegId()).longValue());
-                            if (detailsByRegID.size() > 1) {
-                                // TRACE (getBenData root-cause investigation): duplicate detail rows for
-                                // one beneficiary — .get(0) below picks whichever comes back first, no
-                                // ORDER BY. Logging distinct houseoldId values seen: if they actually
-                                // differ, this is the household/non-household flip-flop root cause; if
-                                // they're all identical, this is a (separate) harmless-duplicate-insert
-                                // issue and NOT the cause. Remove once resolved.
-                                java.util.Set<Long> distinctHouseholdIds = detailsByRegID.stream()
-                                        .map(RMNCHBeneficiaryDetailsRmnch::getHouseoldId)
-                                        .collect(java.util.stream.Collectors.toSet());
-                                logger.warn("[TRACE getBeneficiaryData] BenRegId=" + m.getBenRegId() + " has "
-                                        + detailsByRegID.size() + " detail rows (expected 1); distinct houseoldId values="
-                                        + distinctHouseholdIds + "; picking first: beneficiaryDetails_RmnchId="
-                                        + detailsByRegID.get(0).getBeneficiaryDetails_RmnchId());
-                            }
                             if(!detailsByRegID.isEmpty()){
                                 benDetailsRMNCH_OBJ = detailsByRegID.get(0);
                             }
@@ -652,23 +622,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                 logger.error("error for addressID :" + e.getMessage() + a.getId() + " and vanID : " + a.getVanID());
             }
         }
-
-        // TRACE (getBenData root-cause investigation): household vs non-household split as
-        // actually sent to the client on this call, for direct comparison with what each
-        // device shows on screen. Remove once resolved.
-        long householdLinkedCount = resultList.stream()
-                .filter(r -> r.get("houseoldId") != null)
-                .count();
-        String traceCaller;
-        try {
-            traceCaller = jwtUtil.extractUsername(authorisation);
-        } catch (Exception ex) {
-            traceCaller = "unknown";
-        }
-        logger.info("[TRACE getBeneficiaryData] response summary: caller=" + traceCaller
-                + " addressesRequested=" + addressList.size() + " beneficiariesReturned=" + resultList.size()
-                + " householdLinked=" + householdLinkedCount
-                + " nonHousehold=" + (resultList.size() - householdLinkedCount));
 
         Map<String, Object> response = new HashMap<>();
         response.put("data", resultList);

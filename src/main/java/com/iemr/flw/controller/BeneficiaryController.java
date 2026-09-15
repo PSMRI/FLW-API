@@ -52,19 +52,8 @@ public class BeneficiaryController {
         try {
 
             if (requestDTO != null) {
-                String callerUserName;
-                try {
-                    callerUserName = jwtUtil.extractUsername(authorization);
-                } catch (Exception ex) {
-                    callerUserName = "unknown";
-                }
-                // TRACE (getBenData root-cause investigation): who called, for which village/page,
-                // so device-vs-device call counts can be compared from logs. Remove once resolved.
-                logger.info("[TRACE getBeneficiaryData] caller=" + callerUserName
-                        + " providerServiceMapID=" + requestDTO.getProviderServiceMapID()
-                        + " villageID=" + requestDTO.getVillageID()
-                        + " pageNo=" + requestDTO.getPageNo()
-                        + " timestamp=" + new Timestamp(System.currentTimeMillis()));
+                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
                 String s = beneficiaryService.getBenData(requestDTO, authorization);
                 if (s != null)
                     response.setResponse(s);
