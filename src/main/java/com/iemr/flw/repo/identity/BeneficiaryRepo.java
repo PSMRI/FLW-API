@@ -150,7 +150,7 @@ List<Object[]> getBenIdsFromRegIDs(@Param("regIds") List<Long> regIds);
         FROM db_iemr.i_ben_flow_outreach bfs
         JOIN db_identity.i_beneficiarymapping bm ON bm.BenRegId = bfs.beneficiary_reg_id
         WHERE bfs.providerServiceMapID = :psmId AND bfs.villageID = :villageId AND bfs.deleted = 0
-        ORDER BY bfs.registrationDate DESC
+        ORDER BY bfs.registrationDate ASC
         LIMIT :pageSize OFFSET :offset
         """, nativeQuery = true)
     List<BigInteger> getVillageWorklistAddressIds(
