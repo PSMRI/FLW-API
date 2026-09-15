@@ -63,8 +63,6 @@ public class IncentiveActivity {
     @Column(name = "is_default_activity")
     private Boolean isDefaultActivity;
 
-    @Column(name = "group_category_name")
-    private String groupCategoryName;
 
 
 
