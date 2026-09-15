@@ -134,10 +134,8 @@ public class StopTBServiceImpl implements StopTBService {
             exam.setCyanosis(getString(data, "cyanosis"));
             exam.setClubbingId(getInt(data, "clubbingId"));
             exam.setClubbing(getString(data, "clubbing"));
-            exam.setKeyPopulationRiskFactorIds(toJsonString(data.get("keyPopulationRiskFactorIds")));
-            exam.setKeyPopulationRiskFactors(toJsonString(data.get("keyPopulationRiskFactors")));
-            exam.setHivStatusId(getInt(data, "hivStatusId"));
-            exam.setHivStatus(getString(data, "hivStatus"));
+            // hivStatus*/keyPopulationRiskFactor* are intentionally not set here — TB Screening
+            // is the single source of truth for these fields (see examToMap).
             exam.setCreatedBy(getString(data, "createdBy"));
             exam.setModifiedBy(getString(data, "createdBy"));
             exam.setDeleted(false);
@@ -203,10 +201,13 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("cyanosis", e.getCyanosis());
         m.put("clubbingId", e.getClubbingId());
         m.put("clubbing", e.getClubbing());
-        m.put("keyPopulationRiskFactorIds", e.getKeyPopulationRiskFactorIds());
-        m.put("keyPopulationRiskFactors", e.getKeyPopulationRiskFactors());
-        m.put("hivStatusId", e.getHivStatusId());
-        m.put("hivStatus", e.getHivStatus());
+        // hivStatus*/keyPopulationRiskFactor* are sourced from TB Screening (the source of
+        // truth for these fields) rather than from this entity's own (deprecated) columns.
+        TBScreening screening = tbScreeningRepo.findByBenRegIDAndVisitCode(e.getBeneficiaryRegID(), e.getVisitCode());
+        m.put("keyPopulationRiskFactorIds", screening != null ? screening.getKeyPopulationRiskFactorIds() : null);
+        m.put("keyPopulationRiskFactors", screening != null ? screening.getKeyPopulationRiskFactors() : null);
+        m.put("hivStatusId", screening != null ? screening.getHivStatusId() : null);
+        m.put("hivStatus", screening != null ? screening.getHivStatus() : null);
         m.put("referralToHWCNeeded", e.getReferralToHWCNeeded());
         m.put("createdBy", e.getCreatedBy());
         m.put("createdDate", e.getCreatedDate());
