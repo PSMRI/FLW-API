@@ -25,7 +25,7 @@ public class AncCounsellingCare {
     private LocalDate homeVisitDate;
 
     @Column(name = "anc_visit_id", nullable = false)
-    private Long ancVisitId;
+    private Long ancVisitId=0L;
 
     @Column(name = "user_id")
     private Integer userId;
@@ -124,5 +124,4 @@ public class AncCounsellingCare {
     }
 
     /* ---------- Getters & Setters ---------- */
-    // Lombok use kar raha ho toh @Getter @Setter laga sakta hai
 }
