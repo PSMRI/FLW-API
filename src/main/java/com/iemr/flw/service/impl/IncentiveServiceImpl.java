@@ -152,8 +152,12 @@ public class IncentiveServiceImpl implements IncentiveService {
                     dto.setName(mapping.getName());
 
                     if (isCG) {
-                        dto.setGroupName(inc.getGroup());
-
+                        if (inc.getGroupCategoryName() != null
+                                && !inc.getGroupCategoryName().isEmpty()) {
+                            dto.setGroupName(inc.getGroupCategoryName());
+                        } else {
+                            dto.setGroupName(inc.getGroup());
+                        }
                     } else if (isAM) {
                         dto.setGroupName(mapping.getGroup());
                     }
@@ -176,8 +180,12 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                 } else {
                     if (isCG) {
-                        dto.setGroupName(inc.getGroup());
-
+                        if (inc.getGroupCategoryName() != null
+                                && !inc.getGroupCategoryName().isEmpty()) {
+                            dto.setGroupName(inc.getGroupCategoryName());
+                        } else {
+                            dto.setGroupName(inc.getGroup());
+                        }
                     } else {
                         dto.setGroupName(inc.getGroup());
                     }
@@ -492,8 +500,13 @@ public class IncentiveServiceImpl implements IncentiveService {
                 map.put("activityId", activityId);
                 map.put("incentiveId",incentiveId);
                 map.put("activityDec", activity.getDescription());
-                map.put("groupName", activity.getGroup());
+                if(activity.getGroupCategoryName()!=null && !activity.getGroupCategoryName().isEmpty()){
+                    map.put("groupName", activity.getGroupCategoryName());
 
+                }else {
+                    map.put("groupName", activity.getGroup());
+
+                }
                 map.put("isDefault", activity.getIsDefaultActivity());
                 map.put("approvalStatus", approvalStatus);
                 map.put("isApproved", isApproved);
@@ -583,7 +596,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                     incentivesRepo.findById(request.getActivityId()).orElse(null);
 
             String groupName = activity != null ? activity.getGroup() : "";
-            String groupCategoryName = activity != null ?  activity.getGroup():"";
+            String groupCategoryName = activity != null ? activity.getGroupCategoryName() :activity.getGroup();
             String description = activity != null ? activity.getDescription() : "";
 
             // 🔹 Map result
