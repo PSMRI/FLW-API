@@ -505,18 +505,41 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                         .orElseThrow(() -> new IllegalArgumentException(
                                 "ANC visit not found for id: " + dto.getId()));
 
-                // Only the record owner can update it
-                if (!java.util.Objects.equals(entity.getUserId(), userId)) {
-                    throw new IllegalArgumentException(
-                            "You are not authorized to update this ANC visit");
-                }
+                entity.setBeneficiaryId(dto.getBeneficiaryId());
+                entity.setUserId(userId);
+                entity.setCreatedBy(userName);
+                entity.setVisitDate(visitDate);
+                entity.setHomeVisitDate(homeVisitDate);
 
-                // Prevent moving an existing visit to another beneficiary
-                if (!java.util.Objects.equals(
-                        entity.getBeneficiaryId(), dto.getBeneficiaryId())) {
-                    throw new IllegalArgumentException(
-                            "Beneficiary does not match the existing ANC visit");
-                }
+                entity.setSelectAll(yesNoToBoolean(fields.getSelectAll()));
+                entity.setSwelling(yesNoToBoolean(fields.getSwelling()));
+                entity.setHighBp(yesNoToBoolean(fields.getHighBp()));
+                entity.setConvulsions(yesNoToBoolean(fields.getConvulsions()));
+                entity.setAnemia(yesNoToBoolean(fields.getAnemia()));
+                entity.setReducedFetalMovement(
+                        yesNoToBoolean(fields.getReducedFetalMovement()));
+                entity.setAgeRisk(yesNoToBoolean(fields.getAgeRisk()));
+                entity.setChildGap(yesNoToBoolean(fields.getChildGap()));
+                entity.setShortHeight(yesNoToBoolean(fields.getShortHeight()));
+                entity.setPrePregWeight(yesNoToBoolean(fields.getPrePregWeight()));
+                entity.setBleeding(yesNoToBoolean(fields.getBleeding()));
+                entity.setMiscarriageHistory(
+                        yesNoToBoolean(fields.getMiscarriageHistory()));
+                entity.setFourPlusDelivery(yesNoToBoolean(fields.getFourPlusDelivery()));
+                entity.setFirstDelivery(yesNoToBoolean(fields.getFirstDelivery()));
+                entity.setTwinPregnancy(yesNoToBoolean(fields.getTwinPregnancy()));
+                entity.setCSectionHistory(yesNoToBoolean(fields.getCSectionHistory()));
+                entity.setPreExistingDisease(
+                        yesNoToBoolean(fields.getPreExistingDisease()));
+                entity.setFeverMalaria(yesNoToBoolean(fields.getFeverMalaria()));
+                entity.setJaundice(yesNoToBoolean(fields.getJaundice()));
+                entity.setSickleCell(yesNoToBoolean(fields.getSickleCell()));
+                entity.setProlongedLabor(yesNoToBoolean(fields.getProlongedLabor()));
+                entity.setMalpresentation(yesNoToBoolean(fields.getMalpresentation()));
+                entity.setVisitNumber(fields.getVisitNumber());
+
+                entity.setUpdatedBy(userName);
+                entities.add(entity);
             } else {
                 // Create new record
                 entity = new AncCounsellingCare();
