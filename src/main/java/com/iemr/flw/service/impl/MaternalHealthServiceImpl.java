@@ -578,6 +578,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
             AncCounsellingCareResponseDTO responseDTO = new AncCounsellingCareResponseDTO();
             responseDTO.setFormId("anc_form_001");
+            responseDTO.setId(entity.getId());
             responseDTO.setBeneficiaryId(entity.getBeneficiaryId()); // Update with actual value
             responseDTO.setVisitDate(entity.getVisitDate().format(formatter)); // Format visit.getVisitDate()
 
