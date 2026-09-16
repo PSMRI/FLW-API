@@ -75,5 +75,8 @@ public class AncCounsellingCareListDTO {
         @SerializedName("malpresentation")
         private String malpresentation;
 
+        @SerializedName("visit_number")
+        private String visitNumber;
+
 
 }

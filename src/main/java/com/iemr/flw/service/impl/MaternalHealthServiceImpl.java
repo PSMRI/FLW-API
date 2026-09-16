@@ -553,6 +553,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             entity.setSickleCell(yesNoToBoolean(fields.getSickleCell()));
             entity.setProlongedLabor(yesNoToBoolean(fields.getProlongedLabor()));
             entity.setMalpresentation(yesNoToBoolean(fields.getMalpresentation()));
+            entity.setVisitNumber(fields.getVisitNumber());
 
             entity.setUpdatedBy(userName);
             entities.add(entity);
@@ -611,6 +612,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             fields.put("prolonged_labor", booleanToYesNo(entity.getProlongedLabor()));
             fields.put("malpresentation", booleanToYesNo(entity.getMalpresentation()));
             fields.put("id", entity.getId());
+            fields.put("visit_number", entity.getVisitNumber());
             responseDTO.setFields(fields);
             responseDTOList.add(responseDTO);
 
