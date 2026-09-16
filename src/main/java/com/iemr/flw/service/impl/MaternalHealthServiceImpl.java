@@ -499,7 +499,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
             AncCounsellingCare entity;
 
-            if (dto.getId() != null) {
+            if (dto.getId() != null && dto.getId() > 0) {
                 // Update existing record
                 entity = ancCounsellingCareRepo.findById(dto.getId())
                         .orElseThrow(() -> new IllegalArgumentException(
