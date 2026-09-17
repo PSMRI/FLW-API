@@ -304,6 +304,30 @@ AND record.createdDate < :endDate
     @Modifying
     @Transactional
     @Query("""
+    UPDATE IncentiveActivityRecord iar
+    SET iar.approvalStatus = :approvalStatus,
+        iar.verifiedByUserId = :ashaSupervisorUserId,
+        iar.reason = NULL,
+        iar.otherReason = NULL,
+        iar.approvalDate = :approvalDate,
+        iar.verifiedByUserName = :ashaSupervisorUserName
+    WHERE iar.id IN :incentiveIds
+      AND iar.ashaId = :ashaId
+      AND iar.isClaimed = true
+    """)
+    int updateApprovalStatusByIncentiveIds(
+            @Param("incentiveIds") List<Long> incentiveIds,
+            @Param("ashaId") Integer ashaId,
+            @Param("approvalStatus") Integer approvalStatus,
+            @Param("approvalDate") Timestamp approvalDate,
+            @Param("ashaSupervisorUserId") Integer ashaSupervisorUserId,
+            @Param("ashaSupervisorUserName") String ashaSupervisorUserName
+    );
+
+
+    @Modifying
+    @Transactional
+    @Query("""
 UPDATE IncentiveActivityRecord iar
 SET
     iar.approvalStatus = :approvalStatus,
@@ -344,6 +368,30 @@ AND iar.isClaimed = true
 """)
     int updateApprovalStatusByIncentiveIdForDefaultActivity(
             @Param("incentiveId") Long incentiveId,
+            @Param("ashaId") Integer ashaId,
+            @Param("approvalStatus") Integer approvalStatus,
+            @Param("approvalDate") Timestamp approvalDate,
+            @Param("ashaSupervisorUserId") Integer ashaSupervisorUserId,
+            @Param("ashaSupervisorUserName") String ashaSupervisorUserName
+    );
+
+    @Modifying
+    @Transactional
+    @Query("""
+    UPDATE IncentiveActivityRecord iar
+    SET iar.approvalStatus = :approvalStatus,
+        iar.verifiedByUserId = :ashaSupervisorUserId,
+        iar.verifiedByUserName = :ashaSupervisorUserName,
+        iar.approvalDate = :approvalDate,
+        iar.reason = NULL,
+        iar.otherReason = NULL
+    WHERE iar.id IN :incentiveIds
+      AND iar.ashaId = :ashaId
+      AND iar.isClaimed = true
+      AND iar.isDefaultActivity = true
+    """)
+    int updateApprovalStatusByIncentiveIdsForDefaultActivity(
+            @Param("incentiveIds") List<Long> incentiveIds,
             @Param("ashaId") Integer ashaId,
             @Param("approvalStatus") Integer approvalStatus,
             @Param("approvalDate") Timestamp approvalDate,
@@ -392,6 +440,32 @@ AND iar.isClaimed = true
             @Param("approvalDate") Timestamp approvalDate,
             @Param("otherReason") String otherReason,
             @Param("incentiveId") Long incentiveId
+    );
+
+
+    @Modifying
+    @Transactional
+    @Query("""
+    UPDATE IncentiveActivityRecord iar
+    SET iar.approvalStatus = :status,
+        iar.verifiedByUserId = :ashaSupervisorUserId,
+        iar.verifiedByUserName = :ashaSupervisorUserName,
+        iar.reason = :reason,
+        iar.otherReason = :otherReason,
+        iar.approvalDate = :approvalDate
+    WHERE iar.id IN :incentiveIds
+      AND iar.ashaId = :ashaId
+      AND iar.isClaimed = true
+    """)
+    int updateApprovalStatusByIdsAndIncentiveIds(
+            @Param("status") Integer status,
+            @Param("ashaId") Integer ashaId,
+            @Param("ashaSupervisorUserId") Integer ashaSupervisorUserId,
+            @Param("ashaSupervisorUserName") String ashaSupervisorUserName,
+            @Param("reason") String reason,
+            @Param("approvalDate") Timestamp approvalDate,
+            @Param("otherReason") String otherReason,
+            @Param("incentiveIds") List<Long> incentiveIds
     );
 
     @Modifying

@@ -447,14 +447,28 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
     @Override
     @Transactional
-    public String saveANCVisitQuestions(List<AncCounsellingCareDTO> dtos, String authorization) throws IEMRException {
+    public String saveANCVisitQuestions(
+            List<AncCounsellingCareDTO> dtos,
+            String authorization) throws IEMRException {
+
         Integer userId = jwtUtil.extractUserId(authorization);
         String userName = userRepo.getUserNamedByUserId(userId);
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        if (dtos == null || dtos.isEmpty()) {
+            throw new IllegalArgumentException("ANC visit data is mandatory");
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter
+                .ofPattern("dd-MM-uuuu")
+                .withResolverStyle(java.time.format.ResolverStyle.STRICT);
+
         List<AncCounsellingCare> entities = new ArrayList<>();
 
         for (AncCounsellingCareDTO dto : dtos) {
+
+            if (dto == null) {
+                throw new IllegalArgumentException("ANC visit record cannot be null");
+            }
 
             if (!StringUtils.hasText(dto.getVisitDate())) {
                 throw new IllegalArgumentException("visitDate is mandatory");
@@ -469,21 +483,35 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             try {
                 visitDate = LocalDate.parse(dto.getVisitDate(), formatter);
             } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException("Invalid visitDate format, expected dd-MM-yyyy");
+                throw new IllegalArgumentException(
+                        "Invalid visitDate, expected dd-MM-yyyy");
             }
 
             LocalDate homeVisitDate;
             try {
                 homeVisitDate = StringUtils.hasText(fields.getHomeVisitDate())
                         ? LocalDate.parse(fields.getHomeVisitDate(), formatter)
-                        : visitDate; // ✅ fallback
+                        : visitDate;
             } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException("Invalid home_visit_date format, expected dd-MM-yyyy");
+                throw new IllegalArgumentException(
+                        "Invalid home_visit_date, expected dd-MM-yyyy");
             }
 
-            AncCounsellingCare entity = new AncCounsellingCare();
-            entity.setBeneficiaryId(dto.getBeneficiaryId());
-            entity.setAncVisitId(0L);
+            AncCounsellingCare entity;
+
+            if (dto.getId() != null && dto.getId() > 0) {
+                // Update existing record
+                entity = ancCounsellingCareRepo.findById(dto.getId())
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "ANC visit not found for id: " + dto.getId()));
+            } else {
+                // Create new record
+                entity = new AncCounsellingCare();
+                entity.setBeneficiaryId(dto.getBeneficiaryId());
+                entity.setUserId(userId);
+                entity.setCreatedBy(userName);
+            }
+
             entity.setVisitDate(visitDate);
             entity.setHomeVisitDate(homeVisitDate);
 
@@ -492,28 +520,28 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             entity.setHighBp(yesNoToBoolean(fields.getHighBp()));
             entity.setConvulsions(yesNoToBoolean(fields.getConvulsions()));
             entity.setAnemia(yesNoToBoolean(fields.getAnemia()));
-            entity.setReducedFetalMovement(yesNoToBoolean(fields.getReducedFetalMovement()));
+            entity.setReducedFetalMovement(
+                    yesNoToBoolean(fields.getReducedFetalMovement()));
             entity.setAgeRisk(yesNoToBoolean(fields.getAgeRisk()));
             entity.setChildGap(yesNoToBoolean(fields.getChildGap()));
             entity.setShortHeight(yesNoToBoolean(fields.getShortHeight()));
             entity.setPrePregWeight(yesNoToBoolean(fields.getPrePregWeight()));
             entity.setBleeding(yesNoToBoolean(fields.getBleeding()));
-            entity.setMiscarriageHistory(yesNoToBoolean(fields.getMiscarriageHistory()));
+            entity.setMiscarriageHistory(
+                    yesNoToBoolean(fields.getMiscarriageHistory()));
             entity.setFourPlusDelivery(yesNoToBoolean(fields.getFourPlusDelivery()));
             entity.setFirstDelivery(yesNoToBoolean(fields.getFirstDelivery()));
             entity.setTwinPregnancy(yesNoToBoolean(fields.getTwinPregnancy()));
             entity.setCSectionHistory(yesNoToBoolean(fields.getCSectionHistory()));
-            entity.setPreExistingDisease(yesNoToBoolean(fields.getPreExistingDisease()));
+            entity.setPreExistingDisease(
+                    yesNoToBoolean(fields.getPreExistingDisease()));
             entity.setFeverMalaria(yesNoToBoolean(fields.getFeverMalaria()));
             entity.setJaundice(yesNoToBoolean(fields.getJaundice()));
             entity.setSickleCell(yesNoToBoolean(fields.getSickleCell()));
             entity.setProlongedLabor(yesNoToBoolean(fields.getProlongedLabor()));
             entity.setMalpresentation(yesNoToBoolean(fields.getMalpresentation()));
 
-            entity.setUserId(userId);
-            entity.setCreatedBy(userName);
             entity.setUpdatedBy(userName);
-
             entities.add(entity);
         }
 
@@ -536,6 +564,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
             AncCounsellingCareResponseDTO responseDTO = new AncCounsellingCareResponseDTO();
             responseDTO.setFormId("anc_form_001");
+            responseDTO.setId(entity.getId());
             responseDTO.setBeneficiaryId(entity.getBeneficiaryId()); // Update with actual value
             responseDTO.setVisitDate(entity.getVisitDate().format(formatter)); // Format visit.getVisitDate()
 
@@ -569,7 +598,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             fields.put("sickle_cell", booleanToYesNo(entity.getSickleCell()));
             fields.put("prolonged_labor", booleanToYesNo(entity.getProlongedLabor()));
             fields.put("malpresentation", booleanToYesNo(entity.getMalpresentation()));
-
+            fields.put("id", entity.getId());
             responseDTO.setFields(fields);
             responseDTOList.add(responseDTO);
 

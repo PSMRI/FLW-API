@@ -366,8 +366,18 @@ public class IncentiveServiceImpl implements IncentiveService {
         LocalDate start = LocalDate.of(request.getYear(), request.getMonth(), 1);
         LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
 
-        Timestamp startTs = Timestamp.valueOf(start.atStartOfDay());
-        Timestamp endTs = Timestamp.valueOf(end.atTime(23, 59, 59));
+
+        LocalDate monthStart = LocalDate.of(
+                request.getYear(),
+                request.getMonth(),
+                1
+        );
+
+        Timestamp startTs =
+                Timestamp.valueOf(monthStart.atStartOfDay());
+
+        Timestamp nextMonthTs =
+                Timestamp.valueOf(monthStart.plusMonths(1).atStartOfDay());
 
         Integer villageID = userRepo.getUserRole(request.getUserId()).get(0).getStateId();
         boolean isCG = villageID != null && villageID.intValue() == StateCode.CG.getStateCode();
@@ -377,42 +387,83 @@ public class IncentiveServiceImpl implements IncentiveService {
                         .stream()
                         .filter(r ->
                                 r.getCreatedDate() != null
-                                        && r.getEndDate() != null
-                                        && r.getEndDate().toLocalDateTime().getMonthValue() == request.getMonth()
-                                        && r.getEndDate().toLocalDateTime().getYear() == request.getYear()
+
+                                        // Month filter using createdDate
+                                        && r.getCreatedDate()
+                                        .toLocalDateTime()
+                                        .getMonthValue()
+                                        == request.getMonth()
+
+                                        && r.getCreatedDate()
+                                        .toLocalDateTime()
+                                        .getYear()
+                                        == request.getYear()
+
                                         && Boolean.TRUE.equals(r.getIsClaimed())
+
                                         && (
-                                        // 104 => 102 OR 105
-                                        (Objects.equals(request.getApprovalStatus(), 104)
-                                                && (
-                                                Objects.equals(r.getApprovalStatus(), 102)
-                                                        || Objects.equals(r.getApprovalStatus(), 105)
-                                        )
-                                        )
-
-                                                ||
-
-                                                // 105 => 101 OR 105
-                                                (Objects.equals(request.getApprovalStatus(), 105)
+                                        // Overdue: 102, 104 or 105
+                                        (
+                                                Objects.equals(
+                                                        request.getApprovalStatus(),
+                                                        104
+                                                )
                                                         && (
-                                                        Objects.equals(r.getApprovalStatus(), 101)
-                                                                || Objects.equals(r.getApprovalStatus(), 105)
+                                                        Objects.equals(
+                                                                r.getApprovalStatus(),
+                                                                102
+                                                        )
+                                                                || Objects.equals(
+                                                                r.getApprovalStatus(),
+                                                                104
+                                                        )
+                                                                || Objects.equals(
+                                                                r.getApprovalStatus(),
+                                                                105
+                                                        )
                                                 )
+                                        )
+
+                                                ||
+
+                                                // Verified: 101 or 105
+                                                (
+                                                        Objects.equals(
+                                                                request.getApprovalStatus(),
+                                                                105
+                                                        )
+                                                                && (
+                                                                Objects.equals(
+                                                                        r.getApprovalStatus(),
+                                                                        101
+                                                                )
+                                                                        || Objects.equals(
+                                                                        r.getApprovalStatus(),
+                                                                        105
+                                                                )
+                                                        )
                                                 )
 
                                                 ||
 
-                                                // Normal status
-                                                (!Objects.equals(request.getApprovalStatus(), 104)
-                                                        && !Objects.equals(request.getApprovalStatus(), 105)
-                                                        && Objects.equals(
-                                                        r.getApprovalStatus(),
-                                                        request.getApprovalStatus()
-                                                )
+                                                // Other statuses
+                                                (
+                                                        !Objects.equals(
+                                                                request.getApprovalStatus(),
+                                                                104
+                                                        )
+                                                                && !Objects.equals(
+                                                                request.getApprovalStatus(),
+                                                                105
+                                                        )
+                                                                && Objects.equals(
+                                                                r.getApprovalStatus(),
+                                                                request.getApprovalStatus()
+                                                        )
                                                 )
                                 )
                         )
-                        .toList();
+                        .collect(Collectors.toList());
 
 
         // Bulk fetch valid activity IDs — state wise
@@ -427,9 +478,16 @@ public class IncentiveServiceImpl implements IncentiveService {
         // Filter records based on valid activity IDs
         if(isCG){
             if("ASHA Supervisor".equalsIgnoreCase(roleName)){
-                records = records.stream()
-                        .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
-                        .collect(Collectors.toList());
+                if(request.getApprovalStatus().equals(104)){
+                    records = records.stream()
+                            .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity() && r.getApprovalStatus().equals(102))
+                            .collect(Collectors.toList());
+                }else {
+                    records = records.stream()
+                            .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
+                            .collect(Collectors.toList());
+                }
+
             }else  if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
                 if(request.getApprovalStatus().equals(102) || request.getApprovalStatus().equals(105)){
                     records = records.stream()
@@ -446,7 +504,49 @@ public class IncentiveServiceImpl implements IncentiveService {
                                     )
                             )
                             .collect(Collectors.toList());
+                }else if(request.getApprovalStatus().equals(104)){
+                    records = records.stream()
+                            .filter(r -> validActivityIds.contains(r.getActivityId()))
+                            .filter(r -> {
+                                if (Objects.equals(request.getApprovalStatus(), 104)) {
+
+                                    boolean isDefault =
+                                            Boolean.TRUE.equals(r.getIsDefaultActivity());
+
+                                    boolean isApproved =
+                                            Boolean.TRUE.equals(r.getIsApproved());
+
+                                    // All non-default 102 records,
+                                    // and approved default 102 records
+                                    boolean status102 =
+                                            Objects.equals(r.getApprovalStatus(), 102)
+                                                    && (!isDefault || isApproved);
+
+                                    // Default 105 records, regardless of isApproved
+                                    boolean status105 =
+                                            Objects.equals(r.getApprovalStatus(), 105)
+                                                    && isDefault;
+
+                                    // Existing overdue records
+                                    boolean status104 =
+                                            Objects.equals(r.getApprovalStatus(), 104);
+
+                                    return status102 || status105 || status104;
+                                }
+
+                                return Objects.equals(
+                                        r.getApprovalStatus(),
+                                        request.getApprovalStatus()
+                                );
+                            })
+                            .collect(Collectors.toList());
+                }else {
+                    records = records.stream()
+                            .filter(r -> validActivityIds.contains(r.getActivityId()))
+                            .collect(Collectors.toList());
                 }
+
+
 
 
                 logger.info(
@@ -562,16 +662,74 @@ public class IncentiveServiceImpl implements IncentiveService {
             List<IncentiveActivityRecord> records =
                     recordRepo.findRecordsByAsha(request.getUserId())
                             .stream()
-                            .filter(r -> r.getActivityId() != null
-                                    && r.getActivityId().equals(request.getActivityId())
-                                    && r.getCreatedDate() != null
-                                    && !r.getCreatedDate().before(startTs)
-                                    && r.getCreatedDate().before(endTs))
+                            .filter(r ->
+                                    r.getActivityId() != null
+                                            && Objects.equals(
+                                            r.getActivityId(),
+                                            request.getActivityId()
+                                    )
+                                            && r.getCreatedDate() != null
+                                            && !r.getCreatedDate().before(startTs)
+                                            && r.getCreatedDate().before(endTs)
+                            )
+                            .filter(r -> {
+
+                                Integer requestedStatus =
+                                        request.getApprovalStatus();
+
+                                Integer recordStatus =
+                                        r.getApprovalStatus();
+
+                                boolean isDefault =
+                                        Boolean.TRUE.equals(
+                                                r.getIsDefaultActivity()
+                                        );
+
+                                boolean isApproved =
+                                        Boolean.TRUE.equals(
+                                                r.getIsApproved()
+                                        );
+
+                                // Overdue
+                                if (Objects.equals(requestedStatus, 104)) {
+
+                                    // 102 non-default records OR approved default records
+                                    boolean status102 =
+                                            Objects.equals(recordStatus, 102)
+                                                    && (!isDefault || isApproved);
+
+                                    // 105 only for default activities
+                                    boolean status105 =
+                                            Objects.equals(recordStatus, 105)
+                                                    && isDefault;
+
+                                    // Existing overdue records
+                                    boolean status104 =
+                                            Objects.equals(recordStatus, 104);
+
+                                    return status102
+                                            || status105
+                                            || status104;
+                                }
+
+                                // Verified: 101 or 105
+                                if (Objects.equals(requestedStatus, 105)) {
+                                    return Objects.equals(recordStatus, 101)
+                                            || Objects.equals(recordStatus, 105);
+                                }
+
+                                // Pending, rejected or other status
+                                return Objects.equals(
+                                        recordStatus,
+                                        requestedStatus
+                                );
+                            })
                             .collect(Collectors.toList());
 
             if (records.isEmpty()) {
                 return new Gson().toJson(new ArrayList<>());
             }
+
 
             // 🔹 Get beneficiary names
             Set<Long> benIds = records.stream()
