@@ -504,42 +504,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                 entity = ancCounsellingCareRepo.findById(dto.getId())
                         .orElseThrow(() -> new IllegalArgumentException(
                                 "ANC visit not found for id: " + dto.getId()));
-
-                entity.setBeneficiaryId(dto.getBeneficiaryId());
-                entity.setUserId(userId);
-                entity.setCreatedBy(userName);
-                entity.setVisitDate(visitDate);
-                entity.setHomeVisitDate(homeVisitDate);
-
-                entity.setSelectAll(yesNoToBoolean(fields.getSelectAll()));
-                entity.setSwelling(yesNoToBoolean(fields.getSwelling()));
-                entity.setHighBp(yesNoToBoolean(fields.getHighBp()));
-                entity.setConvulsions(yesNoToBoolean(fields.getConvulsions()));
-                entity.setAnemia(yesNoToBoolean(fields.getAnemia()));
-                entity.setReducedFetalMovement(
-                        yesNoToBoolean(fields.getReducedFetalMovement()));
-                entity.setAgeRisk(yesNoToBoolean(fields.getAgeRisk()));
-                entity.setChildGap(yesNoToBoolean(fields.getChildGap()));
-                entity.setShortHeight(yesNoToBoolean(fields.getShortHeight()));
-                entity.setPrePregWeight(yesNoToBoolean(fields.getPrePregWeight()));
-                entity.setBleeding(yesNoToBoolean(fields.getBleeding()));
-                entity.setMiscarriageHistory(
-                        yesNoToBoolean(fields.getMiscarriageHistory()));
-                entity.setFourPlusDelivery(yesNoToBoolean(fields.getFourPlusDelivery()));
-                entity.setFirstDelivery(yesNoToBoolean(fields.getFirstDelivery()));
-                entity.setTwinPregnancy(yesNoToBoolean(fields.getTwinPregnancy()));
-                entity.setCSectionHistory(yesNoToBoolean(fields.getCSectionHistory()));
-                entity.setPreExistingDisease(
-                        yesNoToBoolean(fields.getPreExistingDisease()));
-                entity.setFeverMalaria(yesNoToBoolean(fields.getFeverMalaria()));
-                entity.setJaundice(yesNoToBoolean(fields.getJaundice()));
-                entity.setSickleCell(yesNoToBoolean(fields.getSickleCell()));
-                entity.setProlongedLabor(yesNoToBoolean(fields.getProlongedLabor()));
-                entity.setMalpresentation(yesNoToBoolean(fields.getMalpresentation()));
-                entity.setVisitNumber(fields.getVisitNumber());
-
-                entity.setUpdatedBy(userName);
-                entities.add(entity);
             } else {
                 // Create new record
                 entity = new AncCounsellingCare();
@@ -576,7 +540,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             entity.setSickleCell(yesNoToBoolean(fields.getSickleCell()));
             entity.setProlongedLabor(yesNoToBoolean(fields.getProlongedLabor()));
             entity.setMalpresentation(yesNoToBoolean(fields.getMalpresentation()));
-            entity.setVisitNumber(fields.getVisitNumber());
 
             entity.setUpdatedBy(userName);
             entities.add(entity);
@@ -636,7 +599,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             fields.put("prolonged_labor", booleanToYesNo(entity.getProlongedLabor()));
             fields.put("malpresentation", booleanToYesNo(entity.getMalpresentation()));
             fields.put("id", entity.getId());
-            fields.put("visit_number", entity.getVisitNumber());
             responseDTO.setFields(fields);
             responseDTOList.add(responseDTO);
 

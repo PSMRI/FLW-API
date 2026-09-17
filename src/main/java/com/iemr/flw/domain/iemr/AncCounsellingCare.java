@@ -108,8 +108,6 @@ public class AncCounsellingCare {
     @Column(name = "prolonged_labor")
     private Boolean prolongedLabor = false;
 
-    @Column(name = "visit_number")
-    private String  visitNumber ;
 
     @Column(name = "malpresentation")
     private Boolean malpresentation = false;
