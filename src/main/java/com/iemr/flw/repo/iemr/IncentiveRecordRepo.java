@@ -398,6 +398,30 @@ AND iar.isClaimed = true
             @Param("ashaSupervisorUserId") Integer ashaSupervisorUserId,
             @Param("ashaSupervisorUserName") String ashaSupervisorUserName
     );
+
+
+    @Modifying
+    @Transactional
+    @Query("""
+    UPDATE IncentiveActivityRecord iar
+    SET iar.approvalStatus = :approvalStatus,
+        iar.verifiedByUserId = :ashaSupervisorUserId,
+        iar.verifiedByUserName = :ashaSupervisorUserName,
+        iar.approvalDate = :approvalDate,
+        iar.reason = NULL,
+        iar.otherReason = NULL
+    WHERE iar.id IN :incentiveIds
+      AND iar.ashaId = :ashaId
+      AND iar.isClaimed = true
+    """)
+    int updateApprovalStatusByIncentiveIdsForDefaultActivityForAnm(
+            @Param("incentiveIds") List<Long> incentiveIds,
+            @Param("ashaId") Integer ashaId,
+            @Param("approvalStatus") Integer approvalStatus,
+            @Param("approvalDate") Timestamp approvalDate,
+            @Param("ashaSupervisorUserId") Integer ashaSupervisorUserId,
+            @Param("ashaSupervisorUserName") String ashaSupervisorUserName
+    );
     @Modifying
     @Transactional
     @Query("UPDATE IncentiveActivityRecord iar "
