@@ -5,7 +5,8 @@ public enum IncentiveApprovalStatus {
     VERIFIED(101, "Verified"),
     PENDING(102, "Pending"),
     REJECTED(103, "Rejected"),
-    OVERDUE(104, "Overdue");
+    OVERDUE(104, "Overdue"),
+    APPROVED(105, "Approved");
 
     private final int code;
     private final String label;

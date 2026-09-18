@@ -15,8 +15,6 @@ public class NotificationSchedulerService {
 
    
     @Autowired
-    private NotificationService notificationService;
-    @Autowired
     EmployeeMasterInter employeeMasterInter;
 
     @Autowired
@@ -43,13 +41,6 @@ public class NotificationSchedulerService {
         String topic = "All"; // or some user/topic identifier
         String title = "ANC Reminder";
 
-        notificationService.sendNotification(
-                appType,
-                topic,
-                title,
-                body,
-                redirectPath
-        );
 
     }
 

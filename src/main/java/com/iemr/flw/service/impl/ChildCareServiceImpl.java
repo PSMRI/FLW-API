@@ -198,7 +198,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 addIfValid(fields, "is_child_sick", convert(hbycChildVisit.getIs_child_sick()));
                 addIfValid(fields, "exclusive_breastfeeding", convert(hbycChildVisit.getExclusive_breastfeeding()));
                 addIfValid(fields, "mother_counseled_ebf", convert(hbycChildVisit.getMother_counseled_ebf()));
-//                addIfValid(fields, "complementary_feeding", convert(hbycChildVisit.getComplementary_feeding()));
+                addIfValid(fields, "complementary_feeding", convert(hbycChildVisit.getComplementary_feeding()));
                 addIfValid(fields, "mother_counseled_cf", convert(hbycChildVisit.getMother_counseled_cf()));
                 addIfValid(fields, "weight_recorded", convert(hbycChildVisit.getWeight_recorded()));
                 addIfValid(fields, "developmental_delay", convert(hbycChildVisit.getDevelopmental_delay()));
@@ -212,7 +212,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 addIfValid(fields, "parenting_counseling", convert(hbycChildVisit.getParenting_counseling()));
                 addIfValid(fields, "family_planning_counseling", convert(hbycChildVisit.getFamily_planning_counseling()));
                 addIfValid(fields, "diarrhoea_episode", convert(hbycChildVisit.getDiarrhoea_episode()));
-//                addIfValid(fields, "breathing_difficulty", convert(hbycChildVisit.getBreathing_difficulty()));
+                addIfValid(fields, "breathing_difficulty", convert(hbycChildVisit.getBreathing_difficulty()));
                 addIfValid(fields, "temperature_check", hbycChildVisit.getTemperature());
                 addIfValid(fields, "mcp_card_images", hbycChildVisit.getMcp_card_images());
 
@@ -279,6 +279,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                     addIfValid(fields, "umbilical_stump", visit.getUmbilical_stump());
                     addIfValid(fields, "discharged_from_sncu", convert(visit.getDischarged_from_sncu()));
                     addIfValid(fields, "discharge_summary_upload", visit.getDischarge_summary_upload());
+                    addIfValid(fields, "is_admitted_in_sncu", convert(visit.getIs_admitted_in_sncu()));
 
                     // Add more fields as required
 
@@ -372,27 +373,91 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     @Override
+    public String saveHBNCDetails(List<HbncRequestDTO> hbncRequestDTOs) {
+        try {
+            List<HbncVisit> hbncList = new ArrayList<>();
+
+            hbncRequestDTOs.forEach(it -> {
+                if (it.getVisitDate() != null) {
+
+                    HbncVisitDTO hbncVisitDTO = it.getFields();
+                    hbncVisitDTO.setVisit_date(it.getVisitDate());
+                    HbncVisit hbncVisit = hbncVisitRepo.findByBeneficiaryIdAndVisit_day(it.getBeneficiaryId(), hbncVisitDTO.getVisit_day());
+
+                    if (hbncVisit != null) {
+                        Long id = hbncVisit.getId();
+                        modelMapper.map(hbncVisitDTO, hbncVisit);
+                        hbncVisit.setId(id);
+                    } else {
+                        hbncVisit = new HbncVisit();
+                        modelMapper.map(hbncVisitDTO, hbncVisit);
+                        hbncVisit.setBeneficiaryId(it.getBeneficiaryId());
+                        hbncVisit.setAshaId(userRepo.getUserIdByName(it.getUserName()));
+                        hbncVisit.setCreatedBy(it.getUserName());
+                        hbncVisit.setHouseHoldId(it.getHouseHoldId());
+                        hbncVisit.setId(null);
+                    }
+                    hbncList.add(hbncVisit);
+                }
+            });
+
+
+            hbncVisitRepo.saveAll(hbncList);
+
+
+            logger.info("HBNC details saved");
+            return "no of hbnc details saved: " + (hbncList.size());
+        } catch (Exception e) {
+            logger.info("Saving HBNC details failed with error : " + e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
     public List<ChildVaccinationDTO> getChildVaccinationDetails(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
-            List<ChildVaccination> vaccinationDetails = childVaccinationRepo.getChildVaccinationDetails(user, dto.getFromDate(), dto.getToDate());
+            List<ChildVaccination> vaccinationDetails =
+                    childVaccinationRepo.getChildVaccinationDetails(user, dto.getFromDate(), dto.getToDate());
+
+            if (vaccinationDetails.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            // Bulk fetch all beneficiary IDs in ONE query instead of one-per-record
+            List<Long> regIds = vaccinationDetails.stream()
+                    .map(ChildVaccination::getBeneficiaryRegId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            Map<Long, BigInteger> regIdToBenIdMap = new HashMap<>();
+            if (!regIds.isEmpty()) {
+                List<Object[]> benIdRows = beneficiaryRepo.getBenIdsFromRegIds(regIds);
+                for (Object[] row : benIdRows) {
+                    Long regId = ((Number) row[0]).longValue();
+                    BigInteger benId = (BigInteger) row[1];
+                    regIdToBenIdMap.put(regId, benId);
+                }
+            }
+
+            // Call ONCE for the whole batch — not per record
+            checkAndAddIncentives(vaccinationDetails);
 
             List<ChildVaccinationDTO> result = new ArrayList<>();
-            vaccinationDetails.forEach(childVaccination -> {
+            for (ChildVaccination childVaccination : vaccinationDetails) {
                 ChildVaccinationDTO vaccinationDTO = mapper.convertValue(childVaccination, ChildVaccinationDTO.class);
-                if(childVaccination.getBeneficiaryRegId()!=null){
-                    BigInteger benId = beneficiaryRepo.getBenIdFromRegID(childVaccination.getBeneficiaryRegId());
-                    vaccinationDTO.setBeneficiaryId(benId.longValue());
 
+                if (childVaccination.getBeneficiaryRegId() != null) {
+                    BigInteger benId = regIdToBenIdMap.get(childVaccination.getBeneficiaryRegId());
+                    if (benId != null) {
+                        vaccinationDTO.setBeneficiaryId(benId.longValue());
+                    }
                 }
-                if(!vaccinationDetails.isEmpty()){
-                    checkAndAddIncentives(vaccinationDetails);
-
-                }
-
 
                 result.add(vaccinationDTO);
-            });
+            }
+
             return result;
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -709,7 +774,8 @@ public class ChildCareServiceImpl implements ChildCareService {
         savedList.forEach(data -> {
             Timestamp visitTimestamp =
                     Timestamp.valueOf(data.getIfaProvisionDate().atStartOfDay());
-            if(data.getIfaBottleCount().equals("10.0")){
+
+            if(data!=null){
                 incentiveLogicService.incentiveForGiveingIFA(
                         data.getBeneficiaryId(),
                         visitTimestamp,
@@ -774,8 +840,10 @@ public class ChildCareServiceImpl implements ChildCareService {
             fields.setIfa_provision_date(entity.getIfaProvisionDate().format(FORMATTER));
         }
         fields.setMcp_card_upload(entity.getMcpCardUpload());
-        fields.setIfa_bottle_count(Double.valueOf(entity.getIfaBottleCount()));
+        if(entity.getIfaBottleCount()!=null){
+            fields.setIfa_bottle_count(Double.valueOf(entity.getIfaBottleCount()));
 
+        }
         dto.setFields(fields);
         return dto;
     }
@@ -803,7 +871,10 @@ public class ChildCareServiceImpl implements ChildCareService {
                     entity.setIfaProvisionDate(null);
                 }
             }
-            entity.setIfaBottleCount(dto.getFields().getIfa_bottle_count().toString());
+            if(dto.getFields().getIfa_bottle_count()!=null){
+                entity.setIfaBottleCount(dto.getFields().getIfa_bottle_count().toString());
+
+            }
             entity.setMcpCardUpload(dto.getFields().getMcp_card_upload());
         }
 

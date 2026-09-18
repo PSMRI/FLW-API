@@ -13,6 +13,7 @@ public class AncCounsellingCare {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @Column(name = "beneficiary_id", nullable = false)
@@ -25,7 +26,7 @@ public class AncCounsellingCare {
     private LocalDate homeVisitDate;
 
     @Column(name = "anc_visit_id", nullable = false)
-    private Long ancVisitId;
+    private Long ancVisitId=0L;
 
     @Column(name = "user_id")
     private Integer userId;
@@ -106,6 +107,7 @@ public class AncCounsellingCare {
 
     @Column(name = "prolonged_labor")
     private Boolean prolongedLabor = false;
+
 
     @Column(name = "malpresentation")
     private Boolean malpresentation = false;

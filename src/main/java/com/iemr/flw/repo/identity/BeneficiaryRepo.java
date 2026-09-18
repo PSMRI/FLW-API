@@ -161,4 +161,9 @@ List<Object[]> getBenIdsFromRegIDs(@Param("regIds") List<Long> regIds);
 
     @Query("SELECT t FROM RMNCHMBeneficiaryaddress t WHERE t.benAddressID IN :ids")
     List<RMNCHMBeneficiaryaddress> findAddressesByIds(@Param("ids") List<BigInteger> ids);
+
+    @Query("SELECT b.BenRegId, b.benficieryid " +
+            "FROM RMNCHBeneficiaryDetailsRmnch b " +
+            "WHERE b.BenRegId IN :regIds AND b.benficieryid IS NOT NULL")
+    List<Object[]> getBenIdsFromRegIds(@Param("regIds") List<Long> regIds);
 }

@@ -32,4 +32,6 @@ public interface IncentiveLogicService {
     IncentiveActivityRecord incentiveForGiveingIFA(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
 
     IncentiveActivityRecord incentiveForTbSuspected(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
+
+    IncentiveActivityRecord incentiveForTbPreventiveFollowUp(Long benId, Timestamp completionDate, Timestamp completionDate1, Integer userId);
 }
