@@ -1696,7 +1696,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                          .map(Long::valueOf)
                                          .collect(Collectors.toList());
 
-                                 updatedCount = incentiveRecordRepo.updateApprovalStatusByIncentiveIdsForDefaultActivityForAnm(ids,
+                                 updatedCount = incentiveRecordRepo.updateApprovalStatusByIncentiveIds(ids,
                                          ashaId, approvalStatus,
                                          approvalDate, ashaSupervisorUserId,
                                          ashaSupervisorDetails.getUserName());
