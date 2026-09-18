@@ -329,4 +329,28 @@ public class RMNCHHouseHoldDetails {
 	@Column(name = "isDeactivate")
 	private Boolean isDeactivate;
 
+	@Expose
+	@Column(name = "gpsLatitude")
+	private Double gpsLatitude;
+
+	@Expose
+	@Column(name = "gpsLongitude")
+	private Double gpsLongitude;
+
+	@Expose
+	@Column(name = "address")
+	private String address;
+
+	@Expose
+	@Column(name = "totalHhMembers")
+	private Integer totalHhMembers;
+
+	@Expose
+	@Column(name = "registeredAtCampSite")
+	private String registeredAtCampSite;
+
+	@Expose
+	@Column(name = "registeredAtCampSiteId")
+	private Integer registeredAtCampSiteId;
+
 }

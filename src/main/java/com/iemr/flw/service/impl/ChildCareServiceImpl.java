@@ -373,6 +373,47 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     @Override
+    public String saveHBNCDetails(List<HbncRequestDTO> hbncRequestDTOs) {
+        try {
+            List<HbncVisit> hbncList = new ArrayList<>();
+
+            hbncRequestDTOs.forEach(it -> {
+                if (it.getVisitDate() != null) {
+
+                    HbncVisitDTO hbncVisitDTO = it.getFields();
+                    hbncVisitDTO.setVisit_date(it.getVisitDate());
+                    HbncVisit hbncVisit = hbncVisitRepo.findByBeneficiaryIdAndVisit_day(it.getBeneficiaryId(), hbncVisitDTO.getVisit_day());
+
+                    if (hbncVisit != null) {
+                        Long id = hbncVisit.getId();
+                        modelMapper.map(hbncVisitDTO, hbncVisit);
+                        hbncVisit.setId(id);
+                    } else {
+                        hbncVisit = new HbncVisit();
+                        modelMapper.map(hbncVisitDTO, hbncVisit);
+                        hbncVisit.setBeneficiaryId(it.getBeneficiaryId());
+                        hbncVisit.setAshaId(userRepo.getUserIdByName(it.getUserName()));
+                        hbncVisit.setCreatedBy(it.getUserName());
+                        hbncVisit.setHouseHoldId(it.getHouseHoldId());
+                        hbncVisit.setId(null);
+                    }
+                    hbncList.add(hbncVisit);
+                }
+            });
+
+
+            hbncVisitRepo.saveAll(hbncList);
+
+
+            logger.info("HBNC details saved");
+            return "no of hbnc details saved: " + (hbncList.size());
+        } catch (Exception e) {
+            logger.info("Saving HBNC details failed with error : " + e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
     public List<ChildVaccinationDTO> getChildVaccinationDetails(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());

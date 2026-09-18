@@ -49,13 +49,13 @@ public class UTPReronaPaymentJob implements CommandLineRunner {
         log.info("FLW application started successfully and is now running.");
 
         log.info("========================================");
+        triggerStaticPayment();
 
     }
     // ✅ Separate method — call this for immediate testing
 
     public void triggerStaticPayment() {
         try {
-
             Period period = new Period();
             period.setStart("2026-01-01");
             period.setEnd("2026-01-31");
@@ -79,10 +79,10 @@ public class UTPReronaPaymentJob implements CommandLineRunner {
             items.add(item2);
 
             PaymentRequest paymentRequest = new PaymentRequest(
-                    "4d0d8f3a-0bh9b-fff4e7edd-8bdd7a-rfgggdjhdd",
+                    "4d0d8f3a-0bh9b-fff4e7edd-8bdd7a-rfgggdjhCCrrj",
                     "AMRIT",
                     period,
-                    "4566",
+                    "1857708",
                     "2026-02-01T02:00:00+05:30",
                     verifiedBy,
                     items

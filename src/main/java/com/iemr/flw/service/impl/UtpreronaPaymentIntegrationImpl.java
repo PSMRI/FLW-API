@@ -16,10 +16,10 @@ import java.time.Duration;
 public class UtpreronaPaymentIntegrationImpl {
 
     private String API_URL =
-            "https://nhmssd.assam.gov.in/APPMS_2024_25/api/utpreronaPayment.php";
+            "https://nhmssd.assam.gov.in/APPMS_2024_25/api/api_receipt_entry.php";
 
     private String API_KEY =
-            "YOUR_API_KEY";
+            "41202fa384eab2725a17bbac58cf708bf04cd1dd5175010941606156dc36d6b5";
 
     private static final int TIMEOUT_SECONDS = 30;
 
