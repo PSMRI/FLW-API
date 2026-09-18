@@ -247,4 +247,5 @@ public class RMNCHMBeneficiaryaddress implements Serializable {
 	@Expose
 	@Column(name = "SyncedDate")
 	private Timestamp SyncedDate;
+	
 }

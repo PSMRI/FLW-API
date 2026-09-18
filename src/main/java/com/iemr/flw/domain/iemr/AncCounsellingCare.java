@@ -126,4 +126,5 @@ public class AncCounsellingCare {
     }
 
     /* ---------- Getters & Setters ---------- */
+    // Lombok use kar raha ho toh @Getter @Setter laga sakta hai
 }

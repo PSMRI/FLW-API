@@ -13,4 +13,6 @@ public interface TBConfirmedCaseService {
     String getByBenId(Long benId, String authorisation) throws Exception;
 
     String getByUserId(String authorisation) throws Exception;
+
+    String getByProviderServiceMapId(Integer providerServiceMapID, Integer villageID) throws Exception;
 }

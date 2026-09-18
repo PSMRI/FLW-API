@@ -8,6 +8,8 @@ import java.sql.Timestamp;
 public class TBSuspectedDTO {
 
     private Long id;
+    private Timestamp updateDate;
+    private String updatedBy;
 
     private Long benId;
     private String visitLabel;
@@ -20,6 +22,11 @@ public class TBSuspectedDTO {
     private String sputumTestResult;
     private Boolean isChestXRayDone;
     private String chestXRayResult;
+    private String reasonForRefusalXray;
+    private String reasonForRefusalMTB;
+    private String reasonForRefusalMDRRIF;
+    private String reasonForRefusalSputum;
+    private String mdrRifResult;
     private String referralFacility;
     private Boolean isTBConfirmed;
     private Boolean isConfirmed;

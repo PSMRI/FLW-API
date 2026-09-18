@@ -1,0 +1,79 @@
+/*
+ * AMRIT – Accessible Medical Records via Integrated Technology
+ * Integrated EHR (Electronic Health Records) Solution
+ *
+ * Copyright (C) "Piramal Swasthya Management and Research Institute"
+ *
+ * This file is part of AMRIT.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see https://www.gnu.org/licenses/.
+ */
+package com.iemr.flw.service;
+
+import com.iemr.flw.dto.iemr.CompletedBeneficiaryDetailDTO;
+import com.iemr.flw.dto.iemr.FormResponseDTO;
+import com.iemr.flw.dto.iemr.FormResponseRequest;
+import com.iemr.flw.masterEnum.FormType;
+import com.iemr.flw.masterEnum.SectionPhase;
+import com.iemr.flw.utils.exception.IEMRException;
+
+import java.util.List;
+
+/**
+ * Contract for saving and retrieving dynamic form responses.
+ *
+ * @author Piramal Swasthya
+ */
+public interface DynamicFormResponseService {
+
+    /** Save GENERAL_INFO and PRE_SUBMIT section answers and advance status to SUBMITTED. */
+    FormResponseDTO submitForm(FormResponseRequest request);
+
+    /** Save POST_SUBMIT section answers and advance status to COMPLETE. */
+    FormResponseDTO completeForm(FormResponseRequest request, String jwtToken) throws IEMRException;
+
+    /**
+     * Responses to the given form, either for one beneficiary or for every beneficiary matching
+     * villageId/providerServiceMapId. At least one of beneficiaryId, villageId, or
+     * providerServiceMapId is required: pass beneficiaryId for a single beneficiary, or leave it
+     * null and use villageId and/or providerServiceMapId to filter across beneficiaries.
+     */
+    List<FormResponseDTO> getResponsesByBeneficiary(Long beneficiaryId, Integer villageId,
+            Integer providerServiceMapId, String formUuid);
+
+    /** Single response with all nested section and question answers. */
+    FormResponseDTO getResponseById(Long responseId);
+
+    /**
+     * Submit multiple form responses in one bulk transaction.
+     * All FormResponse rows are batch-inserted via saveAll() so responseIds are available
+     * before section/question processing begins. All-or-nothing: any failure rolls back all.
+     */
+    List<FormResponseDTO> submitBulk(List<FormResponseRequest> requests, String jwtToken);
+
+    /**
+     * Returns SUBMITTED responses for the given form IDs whose {@code lastFollowUpAt}
+     * falls within the 24-hour window that started exactly {@code delayDays} days ago.
+     * Used by the follow-up notification scheduler.
+     */
+    List<FormResponseDTO> findPendingFollowUps(List<Long> formIds, int delayDays);
+
+    /**
+     * Returns per-beneficiary detail (outcome plus section-fill progress) for COMPLETE and REFUSED
+     * responses to the given form type, optionally filtered by village and/or provider service map.
+     * sectionsFilled/totalSections only count sections in the given sectionPhase.
+     */
+    List<CompletedBeneficiaryDetailDTO> getCompletedBeneficiaries(FormType formType, Integer villageId,
+            Integer providerServiceMapId, SectionPhase sectionPhase);
+}

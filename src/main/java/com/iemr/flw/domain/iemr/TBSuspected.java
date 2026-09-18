@@ -1,6 +1,7 @@
 package com.iemr.flw.domain.iemr;
 
 import lombok.Data;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import jakarta.persistence.*;
 import java.sql.Timestamp;
@@ -59,6 +60,21 @@ public class TBSuspected {
     @Column(name = "chest_xray_result", length = 100)
     private String chestXRayResult;
 
+    @Column(name = "reason_for_refusal_xray")
+    private String reasonForRefusalXray;
+
+    @Column(name = "reason_for_refusal_mtb")
+    private String reasonForRefusalMTB;
+
+    @Column(name = "reason_for_refusal_mdrrif")
+    private String reasonForRefusalMDRRIF;
+
+    @Column(name = "reason_for_refusal_sputum")
+    private String reasonForRefusalSputum;
+
+    @Column(name = "mdr_rif_result")
+    private String mdrRifResult;
+
     // Referral & Confirmation
     @Column(name = "referral_facility", length = 200)
     private String referralFacility;
@@ -73,7 +89,37 @@ public class TBSuspected {
     private Integer providerServiceMapId;
 
     @Column(name = "is_confirmed")
-     private Boolean isConfirmed;
+    private Boolean isConfirmed;
 
+    @Column(name = "modified_by")
+    private String modifiedBy;
 
+    @UpdateTimestamp
+    @Column(name = "last_mod_date")
+    private Timestamp lastModDate;
+
+    // Sync fields
+    @Column(name = "vanID")
+    private Integer vanID;
+
+    @Column(name = "parkingPlaceID")
+    private Integer parkingPlaceID;
+
+    @Column(name = "processed")
+    private String processed = "N";
+
+    @Column(name = "vanSerialNo")
+    private Long vanSerialNo;
+
+    @Column(name = "benRegID")
+    private Long benRegID;
+
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "created_date")
+    private Timestamp createdDate;
+
+    @Column(name = "visitCode")
+    private Long visitCode;
 }
