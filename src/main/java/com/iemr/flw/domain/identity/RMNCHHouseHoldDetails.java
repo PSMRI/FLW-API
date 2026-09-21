@@ -4,7 +4,6 @@ import com.google.gson.annotations.Expose;
 import lombok.Data;
 
 import jakarta.persistence.*;
-
 import java.sql.Timestamp;
 
 @Entity
@@ -169,9 +168,9 @@ public class RMNCHHouseHoldDetails {
     @Column(name = "residentialArea")
     private String residentialArea;
 
-	@Expose
-	@Column(name = "residentialAreaId")
-	private Integer residentialAreaId;
+    @Expose
+    @Column(name = "residentialAreaId")
+    private Integer residentialAreaId;
 
     @Expose
     @Column(name = "seperateKitchen")
@@ -289,45 +288,45 @@ public class RMNCHHouseHoldDetails {
     @Column(name = "deviceId")
     private Integer deviceId;
 
-	@Expose
-	@Column(name = "beneficiaryId")
-	private Integer beneficiaryId;
+    @Expose
+    @Column(name = "beneficiaryId")
+    private Integer beneficiaryId;
 
-	// new fields, 30-06-2021
+    // new fields, 30-06-2021
 
-	@Expose
-	@Column(name = "MotarizedVehicle")
-	private String motarizedVehicle;
+    @Expose
+    @Column(name = "MotarizedVehicle")
+    private String motarizedVehicle;
 
-	@Expose
-	@Column(name = "LiveStockOwnerShip")
-	private String liveStockOwnerShip;
+    @Expose
+    @Column(name = "LiveStockOwnerShip")
+    private String liveStockOwnerShip;
 
-	@Expose
-	@Column(name = "LandOwned")
-	private String landOwned;
+    @Expose
+    @Column(name = "LandOwned")
+    private String landOwned;
 
-	@Expose
-	@Column(name = "Blockid")
-	private Integer blockid;
+    @Expose
+    @Column(name = "Blockid")
+    private Integer blockid;
 
-	@Expose
-	@Column(name = "landIrregated")
-	private String landIrregated;
+    @Expose
+    @Column(name = "landIrregated")
+    private String landIrregated;
 
-	// 19-09-2021
-	@Expose
-	@Column(name = "wardNo")
-	private String wardNo;
-	@Expose
-	@Column(name = "wardName")
-	private String wardName;
-	@Expose
-	@Column(name = "mohallaName")
-	private String mohallaName;
+    // 19-09-2021
+    @Expose
+    @Column(name = "wardNo")
+    private String wardNo;
+    @Expose
+    @Column(name = "wardName")
+    private String wardName;
+    @Expose
+    @Column(name = "mohallaName")
+    private String mohallaName;
 
-	@Expose
-	@Column(name = "isDeactivate")
-	private Boolean isDeactivate;
+    @Expose
+    @Column(name = "isDeactivate")
+    private Boolean isDeactivate;
 
 }
