@@ -93,8 +93,8 @@ import java.util.List;
   @Column(name = "baby_eyes_swollen")
   private Boolean babyEyesSwollen;
 
-  @Column(name = "is_admitted_in_sncu")
-  private Boolean is_admitted_in_sncu;
+  @SerializedName("is_admitted_in_sncu")
+  private String is_admitted_in_sncu;
 
 
  }
