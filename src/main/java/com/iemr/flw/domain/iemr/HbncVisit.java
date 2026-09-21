@@ -107,4 +107,7 @@ public class HbncVisit {
     @Column(name = "baby_eyes_swollen")
     private Boolean babyEyesSwollen;
 
+    @Column(name = "is_admitted_in_sncu")
+    private Boolean is_admitted_in_sncu;
+
 };

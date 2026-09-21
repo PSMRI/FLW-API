@@ -3,18 +3,17 @@ package com.iemr.flw.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.masterEnum.IncentiveApprovalStatus;
-import com.iemr.flw.masterEnum.IncentiveName;
 import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.IncentiveService;
 import com.iemr.flw.service.MaaMeetingService;
+import com.iemr.flw.service.NotificationService;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -30,11 +29,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigInteger;
 import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,6 +80,12 @@ public class IncentiveServiceImpl implements IncentiveService {
     private IFAFormSubmissionRepository ifaFormSubmissionRepository;
 
     private final ConcurrentHashMap<String, Object> lockMap = new ConcurrentHashMap<>();
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private SupervisorDashboardRepo dashboardRepo;
 
 
 
@@ -150,7 +152,12 @@ public class IncentiveServiceImpl implements IncentiveService {
                     dto.setName(mapping.getName());
 
                     if (isCG) {
-                        dto.setGroupName("");
+                        if (inc.getGroupCategoryName() != null
+                                && !inc.getGroupCategoryName().isEmpty()) {
+                            dto.setGroupName(inc.getGroupCategoryName());
+                        } else {
+                            dto.setGroupName(inc.getGroup());
+                        }
                     } else if (isAM) {
                         dto.setGroupName(mapping.getGroup());
                     }
@@ -173,11 +180,14 @@ public class IncentiveServiceImpl implements IncentiveService {
 
                 } else {
                     if (isCG) {
-                        dto.setGroupName("");
-
+                        if (inc.getGroupCategoryName() != null
+                                && !inc.getGroupCategoryName().isEmpty()) {
+                            dto.setGroupName(inc.getGroupCategoryName());
+                        } else {
+                            dto.setGroupName(inc.getGroup());
+                        }
                     } else {
                         dto.setGroupName(inc.getGroup());
-
                     }
                 }
 
@@ -192,26 +202,25 @@ public class IncentiveServiceImpl implements IncentiveService {
         }
         return null;
     }
-
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
         int page = 0;
-        int size = 20;
+        int size = 200; // bumped from 20 — fewer round trips for large histories
         Page<IncentiveActivityRecord> pageResult;
         List<IncentiveRecordDTO> finalDtos = new ArrayList<>();
 
-        Integer stateCode = userService.getUserDetail(request.getAshaId()).getStateId();
-        String userName = userService.getUserDetail(request.getAshaId()).getUserName();
-        try {
+        // Fetch user detail ONCE instead of twice
+        UserServiceRoleDTO userDetail = userService.getUserDetail(request.getAshaId());
+        Integer stateCode = userDetail.getStateId();
+        String userName = userDetail.getUserName();
 
+        try {
             if (stateCode.equals(StateCode.AM.getStateCode())) {
                 checkMonthlyAshaIncentive(request.getAshaId());
             }
             if (stateCode.equals(StateCode.CG.getStateCode())) {
                 checkMonthlyAshaIncentiveForCg(request.getAshaId());
-
             }
-
         } catch (Exception e) {
             logger.error("Error in checkMonthlyAshaIncentive: ", e);
         }
@@ -219,7 +228,6 @@ public class IncentiveServiceImpl implements IncentiveService {
         try {
             addIncentiveForIronTablets(request.getAshaId());
             incentiveOfNcdReferal(request.getAshaId(), request.getVillageID());
-
         } catch (Exception e) {
             logger.error("Error in incentiveOfNcdReferal: ", e);
         }
@@ -227,17 +235,9 @@ public class IncentiveServiceImpl implements IncentiveService {
         boolean isCG = stateCode != null && stateCode.equals(StateCode.CG.getStateCode());
 
         do {
+            Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
 
-            Pageable pageable = PageRequest.of(
-                    page,
-                    size,
-                    Sort.by("id").descending() // latest first
-            );
-
-            pageResult = recordRepo.findRecordsByAsha(
-                    request.getAshaId(),
-                    pageable
-            );
+            pageResult = recordRepo.findRecordsByAsha(request.getAshaId(), pageable);
 
             List<IncentiveActivityRecord> entities = pageResult.getContent();
 
@@ -245,30 +245,27 @@ public class IncentiveServiceImpl implements IncentiveService {
                 return new Gson().toJson(Collections.emptyList());
             }
 
-            // Step 2: Collect all activityIds — fetch valid ones in ONE query
+            // Bulk fetch valid activity ids
             List<Long> activityIds = entities.stream()
                     .map(IncentiveActivityRecord::getActivityId)
                     .distinct()
                     .collect(Collectors.toList());
 
-            // Single bulk query instead of N individual findIncentiveMasterById() calls
             Set<Long> validActivityIds = isCG
                     ? incentivesRepo.findValidActivityIds(activityIds, true)
                     : incentivesRepo.findValidActivityIds(activityIds, false);
 
-            // Filter entities based on valid activity IDs
             entities = entities.stream()
                     .filter(e -> validActivityIds.contains(e.getActivityId()))
                     .collect(Collectors.toList());
 
-            // Step 3: Collect all benIds that need name lookup (name == null and benId > 0)
+            // Bulk fetch beneficiary names
             List<Long> benIdsToFetch = entities.stream()
                     .filter(e -> e.getName() == null && e.getBenId() != null && e.getBenId() > 0)
                     .map(IncentiveActivityRecord::getBenId)
                     .distinct()
                     .collect(Collectors.toList());
 
-            // Step 4: Bulk fetch all beneficiary names in ONE query instead of 3 queries per record
             Map<Long, String> benIdToNameMap = new HashMap<>();
             if (!benIdsToFetch.isEmpty()) {
                 List<Object[]> benDetails = beneficiaryRepo.findBenNamesByBenIds(benIdsToFetch);
@@ -280,7 +277,23 @@ public class IncentiveServiceImpl implements IncentiveService {
                 }
             }
 
-            // Step 5: Map entities to DTOs
+            // NEW: Bulk fetch verifier (supervisor) roles — replaces N+1 userRepo.getUserRole() calls
+            // Bulk fetch verifier (supervisor) roles — replaces N+1 userRepo.getUserRole() calls
+            List<Integer> verifierIds = entities.stream()
+                    .filter(e -> e.getName() == null && e.getVerifiedByUserId() != null)
+                    .map(e -> e.getVerifiedByUserId().intValue()) // adjust if getVerifiedByUserId() already returns Integer
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            Map<Integer, UserServiceRoleDTO> verifierRoleMap = new HashMap<>();
+            if (!verifierIds.isEmpty()) {
+                List<UserServiceRoleDTO> roles = userRepo.getUserRolesByIds(verifierIds);
+                for (UserServiceRoleDTO r : roles) {
+                    verifierRoleMap.put(r.getUserId(), r);
+                }
+            }
+
+            // Map entities to DTOs
             List<IncentiveRecordDTO> dtos = entities.stream().map(entry -> {
                 if (entry.getName() == null) {
                     if (entry.getBenId() != null && entry.getBenId() > 0) {
@@ -292,63 +305,165 @@ public class IncentiveServiceImpl implements IncentiveService {
                     } else {
                         entry.setName("");
                     }
-                    if (entry.getVerifiedByUserId() != null) {
-                        entry.setSupervisorRole(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getRoleName());
-                        entry.setVerifiedByUserName(userRepo.getUserRole(entry.getVerifiedByUserId()).get(0).getName());
 
+                    if (entry.getVerifiedByUserId() != null) {
+                        UserServiceRoleDTO role = verifierRoleMap.get(entry.getVerifiedByUserId());
+                        if (role != null) {
+                            entry.setSupervisorRole(role.getRoleName());
+                            entry.setVerifiedByUserName(role.getName());
+                        }
                     }
+
                     if (entry.getAshaId() != null) {
                         if (entry.getCreatedBy() == null) {
                             entry.setCreatedBy(userName);
                         }
-
                         if (entry.getUpdatedBy() == null) {
                             entry.setUpdatedBy(userName);
                         }
-
                         if (entry.getIsEligible() == null) {
                             entry.setIsEligible(true);
                         }
                     }
-
-
                 }
                 return modelMapper.map(entry, IncentiveRecordDTO.class);
             }).collect(Collectors.toList());
-            finalDtos.addAll(dtos);
 
+            finalDtos.addAll(dtos);
             page++;
 
         } while (pageResult.hasNext());
-
-
 
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         return gson.toJson(finalDtos);
     }
 
+
+    @Transactional
+    public void resetRejectedIncentivesForPreviousMonths() {
+
+        ZoneId zoneId = ZoneId.of("Asia/Kolkata");
+
+        LocalDate firstDayOfCurrentMonth =
+                LocalDate.now(zoneId).withDayOfMonth(1);
+
+        Timestamp currentMonthStart =
+                Timestamp.valueOf(firstDayOfCurrentMonth.atStartOfDay());
+
+        Timestamp now =
+                Timestamp.from(ZonedDateTime.now(zoneId).toInstant());
+
+        recordRepo.resetRejectedIncentivesForNewMonth(
+                currentMonthStart,
+                now,
+                "SYSTEM"
+        );
+    }
     // ================= GROUPED SUMMARY =================
     @Override
-    public String getAllIncentivesGroupedSummary(GetBenRequestHandler request) {
-
+    public String getAllIncentivesGroupedSummary(GetBenRequestHandler request,Integer userId) {
+       String roleName = userService.getUserDetail(userId).getRoleName();
         LocalDate start = LocalDate.of(request.getYear(), request.getMonth(), 1);
         LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
 
-        Timestamp startTs = Timestamp.valueOf(start.atStartOfDay());
-        Timestamp endTs = Timestamp.valueOf(end.atTime(23, 59, 59));
+
+        LocalDate monthStart = LocalDate.of(
+                request.getYear(),
+                request.getMonth(),
+                1
+        );
+
+        Timestamp startTs =
+                Timestamp.valueOf(monthStart.atStartOfDay());
+
+        Timestamp nextMonthTs =
+                Timestamp.valueOf(monthStart.plusMonths(1).atStartOfDay());
 
         Integer villageID = userRepo.getUserRole(request.getUserId()).get(0).getStateId();
         boolean isCG = villageID != null && villageID.intValue() == StateCode.CG.getStateCode();
-
+        logger.info("Request getAllIncentivesGroupedSummary: "+request.getApprovalStatus());
         List<IncentiveActivityRecord> records =
                 recordRepo.findRecordsByAsha(request.getUserId())
                         .stream()
-                        .filter(r -> r.getCreatedDate() != null
-                                && r.getEndDate() != null
-                                && r.getEndDate().toLocalDateTime().getMonthValue() == request.getMonth()
-                                && r.getEndDate().toLocalDateTime().getYear() == request.getYear()
-                                && r.getIsClaimed())
-                        .toList();
+                        .filter(r ->
+                                r.getCreatedDate() != null
+
+                                        // Month filter using createdDate
+                                        && r.getCreatedDate()
+                                        .toLocalDateTime()
+                                        .getMonthValue()
+                                        == request.getMonth()
+
+                                        && r.getCreatedDate()
+                                        .toLocalDateTime()
+                                        .getYear()
+                                        == request.getYear()
+
+                                        && Boolean.TRUE.equals(r.getIsClaimed())
+
+                                        && (
+                                        // Overdue: 102, 104 or 105
+                                        (
+                                                Objects.equals(
+                                                        request.getApprovalStatus(),
+                                                        104
+                                                )
+                                                        && (
+                                                        Objects.equals(
+                                                                r.getApprovalStatus(),
+                                                                102
+                                                        )
+                                                                || Objects.equals(
+                                                                r.getApprovalStatus(),
+                                                                104
+                                                        )
+                                                                || Objects.equals(
+                                                                r.getApprovalStatus(),
+                                                                105
+                                                        )
+                                                )
+                                        )
+
+                                                ||
+
+                                                // Verified: 101 or 105
+                                                (
+                                                        Objects.equals(
+                                                                request.getApprovalStatus(),
+                                                                105
+                                                        )
+                                                                && (
+                                                                Objects.equals(
+                                                                        r.getApprovalStatus(),
+                                                                        101
+                                                                )
+                                                                        || Objects.equals(
+                                                                        r.getApprovalStatus(),
+                                                                        105
+                                                                )
+                                                        )
+                                                )
+
+                                                ||
+
+                                                // Other statuses
+                                                (
+                                                        !Objects.equals(
+                                                                request.getApprovalStatus(),
+                                                                104
+                                                        )
+                                                                && !Objects.equals(
+                                                                request.getApprovalStatus(),
+                                                                105
+                                                        )
+                                                                && Objects.equals(
+                                                                r.getApprovalStatus(),
+                                                                request.getApprovalStatus()
+                                                        )
+                                                )
+                                )
+                        )
+                        .collect(Collectors.toList());
 
 
         // Bulk fetch valid activity IDs — state wise
@@ -361,9 +476,91 @@ public class IncentiveServiceImpl implements IncentiveService {
                 : incentivesRepo.findValidActivityIds(activityIds, false);
 
         // Filter records based on valid activity IDs
-        records = records.stream()
-                .filter(r -> validActivityIds.contains(r.getActivityId()))
-                .collect(Collectors.toList());
+        if(isCG){
+            if("ASHA Supervisor".equalsIgnoreCase(roleName)){
+                if(request.getApprovalStatus().equals(104)){
+                    records = records.stream()
+                            .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity() && r.getApprovalStatus().equals(102))
+                            .collect(Collectors.toList());
+                }else {
+                    records = records.stream()
+                            .filter(r -> validActivityIds.contains(r.getActivityId()) && r.getIsDefaultActivity())
+                            .collect(Collectors.toList());
+                }
+
+            }else  if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
+                if(request.getApprovalStatus().equals(102) || request.getApprovalStatus().equals(105)){
+                    records = records.stream()
+                            .filter(record ->
+                                    validActivityIds.contains(record.getActivityId())
+                            )
+                            .filter(record ->
+                                    !Boolean.TRUE.equals(
+                                            record.getIsDefaultActivity()
+                                    )
+
+                                            || Boolean.TRUE.equals(
+                                            record.getIsApproved()
+                                    )
+                            )
+                            .collect(Collectors.toList());
+                }else if(request.getApprovalStatus().equals(104)){
+                    records = records.stream()
+                            .filter(r -> validActivityIds.contains(r.getActivityId()))
+                            .filter(r -> {
+                                if (Objects.equals(request.getApprovalStatus(), 104)) {
+
+                                    boolean isDefault =
+                                            Boolean.TRUE.equals(r.getIsDefaultActivity());
+
+                                    boolean isApproved =
+                                            Boolean.TRUE.equals(r.getIsApproved());
+
+                                    // All non-default 102 records,
+                                    // and approved default 102 records
+                                    boolean status102 =
+                                            Objects.equals(r.getApprovalStatus(), 102)
+                                                    && (!isDefault || isApproved);
+
+                                    // Default 105 records, regardless of isApproved
+                                    boolean status105 =
+                                            Objects.equals(r.getApprovalStatus(), 105)
+                                                    && isDefault;
+
+                                    // Existing overdue records
+                                    boolean status104 =
+                                            Objects.equals(r.getApprovalStatus(), 104);
+
+                                    return status102 || status105 || status104;
+                                }
+
+                                return Objects.equals(
+                                        r.getApprovalStatus(),
+                                        request.getApprovalStatus()
+                                );
+                            })
+                            .collect(Collectors.toList());
+                }else {
+                    records = records.stream()
+                            .filter(r -> validActivityIds.contains(r.getActivityId()))
+                            .collect(Collectors.toList());
+                }
+
+
+
+
+                logger.info(
+                        "ANM/CHO records after default activity filter: {}",
+                        records.size()
+                );
+            }
+
+        }else {
+            records = records.stream()
+                    .filter(r -> validActivityIds.contains(r.getActivityId()))
+                    .collect(Collectors.toList());
+        }
+
 
         Map<Long, List<IncentiveActivityRecord>> grouped =
                 records.stream().collect(Collectors.groupingBy(IncentiveActivityRecord::getActivityId));
@@ -378,6 +575,20 @@ public class IncentiveServiceImpl implements IncentiveService {
             IncentiveActivity activity =
                     incentivesRepo.findById(activityId).orElse(null);
 
+            Integer approvalStatus = list.stream()
+                    .max(Comparator.comparing(IncentiveActivityRecord::getCreatedDate))
+                    .map(IncentiveActivityRecord::getApprovalStatus)
+                    .orElse(0);
+
+            boolean isApproved = list.stream()
+                    .max(Comparator.comparing(IncentiveActivityRecord::getCreatedDate))
+                    .map(IncentiveActivityRecord::getIsApproved)
+                    .orElse(false);
+            Long incentiveId = list.stream()
+                    .max(Comparator.comparing(IncentiveActivityRecord::getCreatedDate))
+                    .map(IncentiveActivityRecord::getId)
+                    .orElse(null);
+
             if (activity == null) continue;
 
             long total = list.stream()
@@ -385,19 +596,59 @@ public class IncentiveServiceImpl implements IncentiveService {
                     .sum();
 
             Map<String, Object> map = new HashMap<>();
-            map.put("activityId", activityId);
-            map.put("activityDec", activity.getDescription());
-            map.put("groupName", activity.getGroup());
-            map.put("claimCount", list.size());
-            map.put("totalAmount", total);
-            map.put("amount", activity.getRate());
+            if(isCG){
+                map.put("activityId", activityId);
+                map.put("incentiveId",incentiveId);
+                map.put("activityDec", activity.getDescription());
+                if(activity.getGroupCategoryName()!=null && !activity.getGroupCategoryName().isEmpty()){
+                    map.put("groupName", activity.getGroupCategoryName());
+
+                }else {
+                    map.put("groupName", activity.getGroup());
+
+                }
+                map.put("isDefault", activity.getIsDefaultActivity());
+                map.put("approvalStatus", approvalStatus);
+                map.put("isApproved", isApproved);
+                map.put("claimCount", list.size());
+                map.put("totalAmount", total);
+                map.put("amount", activity.getRate());
+
+            }else {
+                map.put("activityId", activityId);
+                map.put("incentiveId",incentiveId);
+                map.put("activityDec", activity.getDescription());
+                map.put("groupName", activity.getGroup());
+                map.put("claimCount", list.size());
+                map.put("totalAmount", total);
+                map.put("amount", activity.getRate());
+
+            }
 
             result.add(map);
+
+
+
         }
 
         return new Gson().toJson(result);
     }
 
+    private boolean isAfter24Hours(Timestamp claimedDate) {
+        if (claimedDate == null) {
+            return false;
+        }
+
+        long now = System.currentTimeMillis();
+        long diff = now - claimedDate.getTime();
+
+        logger.info("Now: {}", new Timestamp(now));
+        logger.info("ClaimedDate: {}", claimedDate);
+        logger.info("Diff(ms): {}", diff);
+        logger.info("Diff(hours): {}", diff / (1000 * 60 * 60.0));
+
+        return diff >= 24L * 60 * 60 * 1000;
+    }
     @Override
     public String getAllIncentivesGroupedActivity(GetBenRequestHandler request) {
         try {
@@ -411,16 +662,74 @@ public class IncentiveServiceImpl implements IncentiveService {
             List<IncentiveActivityRecord> records =
                     recordRepo.findRecordsByAsha(request.getUserId())
                             .stream()
-                            .filter(r -> r.getActivityId() != null
-                                    && r.getActivityId().equals(request.getActivityId())
-                                    && r.getCreatedDate() != null
-                                    && !r.getCreatedDate().before(startTs)
-                                    && r.getCreatedDate().before(endTs))
+                            .filter(r ->
+                                    r.getActivityId() != null
+                                            && Objects.equals(
+                                            r.getActivityId(),
+                                            request.getActivityId()
+                                    )
+                                            && r.getCreatedDate() != null
+                                            && !r.getCreatedDate().before(startTs)
+                                            && r.getCreatedDate().before(endTs)
+                            )
+                            .filter(r -> {
+
+                                Integer requestedStatus =
+                                        request.getApprovalStatus();
+
+                                Integer recordStatus =
+                                        r.getApprovalStatus();
+
+                                boolean isDefault =
+                                        Boolean.TRUE.equals(
+                                                r.getIsDefaultActivity()
+                                        );
+
+                                boolean isApproved =
+                                        Boolean.TRUE.equals(
+                                                r.getIsApproved()
+                                        );
+
+                                // Overdue
+                                if (Objects.equals(requestedStatus, 104)) {
+
+                                    // 102 non-default records OR approved default records
+                                    boolean status102 =
+                                            Objects.equals(recordStatus, 102)
+                                                    && (!isDefault || isApproved);
+
+                                    // 105 only for default activities
+                                    boolean status105 =
+                                            Objects.equals(recordStatus, 105)
+                                                    && isDefault;
+
+                                    // Existing overdue records
+                                    boolean status104 =
+                                            Objects.equals(recordStatus, 104);
+
+                                    return status102
+                                            || status105
+                                            || status104;
+                                }
+
+                                // Verified: 101 or 105
+                                if (Objects.equals(requestedStatus, 105)) {
+                                    return Objects.equals(recordStatus, 101)
+                                            || Objects.equals(recordStatus, 105);
+                                }
+
+                                // Pending, rejected or other status
+                                return Objects.equals(
+                                        recordStatus,
+                                        requestedStatus
+                                );
+                            })
                             .collect(Collectors.toList());
 
             if (records.isEmpty()) {
                 return new Gson().toJson(new ArrayList<>());
             }
+
 
             // 🔹 Get beneficiary names
             Set<Long> benIds = records.stream()
@@ -445,6 +754,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                     incentivesRepo.findById(request.getActivityId()).orElse(null);
 
             String groupName = activity != null ? activity.getGroup() : "";
+            String groupCategoryName = activity != null ? activity.getGroupCategoryName() :activity.getGroup();
             String description = activity != null ? activity.getDescription() : "";
 
             // 🔹 Map result
@@ -458,7 +768,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                     }
                 }
 
-                r.setGroupName(groupName);
+                r.setGroupName(groupCategoryName);
                 r.setActivityDec(description);
 
                 return modelMapper.map(r, IncentiveRecordDTO.class);
@@ -553,18 +863,87 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     // ================= UPDATE CLAIM =================
     @Transactional
-    public String updateClaimStatus(Integer ashaId, Integer month, Integer year, Boolean isClaimed, String token) {
+    public String updateClaimStatus(Integer ashaId, Integer month, Integer year, Boolean isClaimed, String token,String incentive) {
+        String title = null;
         try {
             LocalDate start = LocalDate.of(year, month, 1);
             LocalDate end = start.plusMonths(1);
 
-            int updated = recordRepo.updateClaimStatusByAshaAndDateRange(
-                    ashaId,
-                    isClaimed,
-                    Timestamp.valueOf(LocalDateTime.now()),
-                    Timestamp.valueOf(start.atStartOfDay()),
-                    Timestamp.valueOf(end.atStartOfDay())
-            );
+            int updated=0;
+
+            Timestamp claimedDate = Timestamp.valueOf(LocalDateTime.now());
+
+            if (incentive == null || incentive.isEmpty()) {
+
+                // No incentive IDs → all incentives for selected month/date range
+                updated = recordRepo.updateClaimStatusByAshaAndDateRange(
+                        ashaId,
+                        isClaimed,
+                        claimedDate,
+                        Timestamp.valueOf(start.atStartOfDay()),
+                        Timestamp.valueOf(end.atStartOfDay())
+                );
+
+            } else {
+
+                for (String incentiveId : incentive.split(",")) {
+
+                    Long id = Long.parseLong(incentiveId.trim());
+                    updated = recordRepo.updateClaimStatusByAshaAndIncentiveIds(
+                            ashaId,
+                            isClaimed,
+                            claimedDate,id
+                    );
+                }
+            }
+
+            if (updated > 0) {
+
+                Map<String, String> data = new HashMap<>();
+                data.put("notification_type", "INCENTIVE_APPROVAL");
+                data.put("nav_id", "INCENTIVE_HISTORY");
+                data.put("sender_user_id", String.valueOf(ashaId));
+                data.put("receiver_user_id", String.valueOf(dashboardRepo.getSupervisorUserIdByAshaId(ashaId)));
+                data.put("month", String.valueOf(month));
+                data.put("year", String.valueOf(year));
+                data.put("approval_status", String.valueOf(102));
+                data.put("priority", "HIGH");
+
+                title = "Incentive Claimed";
+
+                if (isClaimed) {
+
+                    String body = "Your incentive successfully claimed for month of "
+                            + Month.of(month).name() + " " + year;
+
+                    notificationService.sendNotification(
+                            "FLW",
+                            "NA",
+                            title,
+                            body,
+                            "INCENTIVE_CLAIMED",
+                            "INCENTIVE",
+                            dashboardRepo.getSupervisorUserIdByAshaId(ashaId)
+                    );
+
+                    String supervisorBody =
+                            userService.getUserDetail(ashaId).getName()
+                                    + " successfully claimed incentive for month of "
+                                    + Month.of(month).name()
+                                    + " "
+                                    + year;
+
+                    notificationService.sendNotification(
+                            "FLW",
+                            "NA",
+                            title,
+                            supervisorBody,
+                            "INCENTIVE_CLAIMED",
+                            "INCENTIVE",
+                            dashboardRepo.getSupervisorUserIdByAshaId(ashaId)
+                    );
+                }
+            }
 
             return updated > 0 ? "Success" : "No records";
 
@@ -691,15 +1070,15 @@ public class IncentiveServiceImpl implements IncentiveService {
             IncentiveActivity ADDITIONAL_ASHA_INCENTIVE = incentivesRepo.findIncentiveMasterByNameAndGroup("ADDITIONAL_ASHA_INCENTIVE", GroupName.ADDITIONAL_INCENTIVE.getDisplayName());
             IncentiveActivity ASHA_MONTHLY_ROUTINE = incentivesRepo.findIncentiveMasterByNameAndGroup("ASHA_MONTHLY_ROUTINE", GroupName.ASHA_MONTHLY_ROUTINE.getDisplayName());
             if (MOBILEBILLREIMB_ACTIVITY != null) {
-                addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY, ashaId, userName);
+                addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY, ashaId, userName,false);
             }
             if (ADDITIONAL_ASHA_INCENTIVE != null) {
-                addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE, ashaId, userName);
+                addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE, ashaId, userName,false);
 
             }
 
             if (ASHA_MONTHLY_ROUTINE != null) {
-                addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId, userName);
+                addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId, userName,false);
 
             }
         } catch (Exception e) {
@@ -717,15 +1096,15 @@ public class IncentiveServiceImpl implements IncentiveService {
             IncentiveActivity MITANIN_REGISTER_5_INFO_FILL = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER_5_INFO_FILL", GroupName.ACTIVITY.getDisplayName());
             IncentiveActivity MITANIN_REGISTER = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER", GroupName.ACTIVITY.getDisplayName());
             if (MONTHLY_HONORARIUM != null) {
-                addMonthlyAshaIncentiveRecord(MONTHLY_HONORARIUM, ashaId, userName);
+                addMonthlyAshaIncentiveRecord(MONTHLY_HONORARIUM, ashaId, userName,true);
             }
             if (MITANIN_REGISTER_5_INFO_FILL != null) {
-                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER_5_INFO_FILL, ashaId, userName);
+                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER_5_INFO_FILL, ashaId, userName,false);
 
             }
 
             if (MITANIN_REGISTER != null) {
-                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER, ashaId, userName);
+                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER, ashaId, userName,false);
 
             }
         } catch (Exception e) {
@@ -735,7 +1114,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
     }
 
-    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId, String userName) {
+    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId, String userName,Boolean isApproved) {
         try {
             Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
 
@@ -764,6 +1143,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                 record.setAshaId(ashaId);
                 record.setIsEligible(true);
                 record.setIsDefaultActivity(true);
+                record.setIsApproved(isApproved);
                 record.setAmount(Long.valueOf(incentiveActivity.getRate()));
                 recordRepo.save(record);
             }
