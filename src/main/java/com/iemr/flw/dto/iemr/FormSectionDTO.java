@@ -55,7 +55,7 @@ public class FormSectionDTO {
 
     private Boolean isRequired = true;
 
-    @NotNull(message = "displayOrder is required")
+    /** Omit to auto-append after existing siblings; set explicitly to insert at that position (existing siblings shift up). */
     private Integer displayOrder;
 
     private Boolean hasSubmitButton = false;
