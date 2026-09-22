@@ -76,6 +76,11 @@ public class QuestionOption {
     @Column(name = "displayOrder", nullable = false)
     private Integer displayOrder;
 
+    /** Soft-delete flag: false means removed from its question. Never hard-deleted — historical
+     *  QuestionResponse rows reference optionId as a plain Long outside JPA's cascade graph. */
+    @Column(name = "isActive", nullable = false)
+    private Boolean isActive = true;
+
     @Column(name = "created_by", length = 100)
     private String createdBy;
 

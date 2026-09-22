@@ -22,6 +22,7 @@
 package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.QuestionValidation;
+import com.iemr.flw.masterEnum.ValidationType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for question validation rules.
@@ -37,6 +39,10 @@ import java.util.List;
 public interface QuestionValidationRepo extends JpaRepository<QuestionValidation, Long> {
 
     List<QuestionValidation> findBySectionQuestion_QuestionId(Long questionId);
+
+    /** No surrogate natural key on validations — matched by the (type, param) content tuple within a question. */
+    Optional<QuestionValidation> findBySectionQuestion_QuestionIdAndValidationTypeAndValidationParam(
+            Long questionId, ValidationType validationType, String validationParam);
 
     /**
      * Loads all validations for a set of questions in one query.
