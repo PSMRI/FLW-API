@@ -254,6 +254,13 @@ public class StopTBServiceImpl implements StopTBService {
             screening.setKeyPopulationRiskFactors(toJsonString(data.get("keyPopulationRiskFactors")));
             screening.setHivStatusId(getInt(data, "hivStatusId"));
             screening.setHivStatus(getString(data, "hivStatus"));
+            screening.setChestPain(getBool(data, "chestPain"));
+            screening.setShortnessOfBreath(getBool(data, "shortnessOfBreath"));
+            screening.setFatigue(getBool(data, "fatigue"));
+            screening.setFailureToGainWeight(getBool(data, "failureToGainWeightInChildren"));
+            screening.setDecreasedActivityOrPlayfulness(getBool(data, "decreasedActivityOrPlayfulnessInChildren"));
+            screening.setOthers(getBool(data, "otherSymptoms"));
+
             String symptomaticInput = getString(data, "symptomatic");
             if ("Yes".equalsIgnoreCase(symptomaticInput)) {
                 screening.setSympotomatic(null);
@@ -349,6 +356,12 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("visitDate", s.getVisitDate());
         m.put("updateDate", s.getLastModDate());
         m.put("updatedBy", s.getModifiedBy());
+        m.put("chestPain", s.getChestPain());
+        m.put("shortnessOfBreath", s.getShortnessOfBreath());
+        m.put("fatigue", s.getFatigue());
+        m.put("failureToGainWeightInChildren", s.getFailureToGainWeight());
+        m.put("decreasedActivityOrPlayfulnessInChildren", s.getDecreasedActivityOrPlayfulness());
+        m.put("otherSymptoms", s.getOthers());
         return m;
     }
 
