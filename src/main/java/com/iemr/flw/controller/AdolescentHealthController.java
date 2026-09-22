@@ -8,10 +8,7 @@ import com.iemr.flw.utils.response.OutputResponse;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +24,7 @@ public class AdolescentHealthController {
     private AdolescentHealthService adolescentHealthService;
 
     @RequestMapping(value = "/saveAll", method = RequestMethod.POST, headers = "Authorization")
-    public ResponseEntity<Map<String,Object>>  saveAdolescentHealth(@RequestBody AdolescentHealthDTO adolescentHealthDTO) {
+    public ResponseEntity<Map<String,Object>>  saveAdolescentHealth(@RequestBody AdolescentHealthDTO adolescentHealthDTO,@RequestHeader(value = "JwtToken") String token) {
         Map<String,Object> response = new HashMap<>();
 
         try {
