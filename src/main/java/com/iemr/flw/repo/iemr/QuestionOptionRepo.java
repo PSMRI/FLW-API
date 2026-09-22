@@ -23,12 +23,14 @@ package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.QuestionOption;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for question options.
@@ -38,11 +40,24 @@ public interface QuestionOptionRepo extends JpaRepository<QuestionOption, Long> 
 
     List<QuestionOption> findBySectionQuestion_QuestionIdOrderByDisplayOrderAsc(Long questionId);
 
+    Optional<QuestionOption> findBySectionQuestion_QuestionIdAndOptionValue(Long questionId, String optionValue);
+
+    Optional<QuestionOption> findTopBySectionQuestion_QuestionIdOrderByDisplayOrderDesc(Long questionId);
+
+    /** Shifts displayOrder by delta for every option in [from, to] within a question — used to make room for/close a gap around an inserted or moved sibling. */
+    @Modifying
+    @Query("UPDATE QuestionOption o SET o.displayOrder = o.displayOrder + :delta " +
+           "WHERE o.sectionQuestion.questionId = :questionId AND o.displayOrder BETWEEN :from AND :to")
+    void shiftDisplayOrder(@Param("questionId") Long questionId, @Param("from") int from,
+                           @Param("to") int to, @Param("delta") int delta);
+
     /**
      * Loads all options for a set of questions in one query.
      * JOIN FETCH ensures sectionQuestion is hydrated so callers can group by questionId without extra queries.
+     * Excludes removed (isActive=false) options — used only by read paths; reconciliation matching
+     * uses the natural-key finder above, which must see inactive rows too.
      */
     @Query("SELECT o FROM QuestionOption o JOIN FETCH o.sectionQuestion "
-            + "WHERE o.sectionQuestion.questionId IN :questionIds ORDER BY o.displayOrder ASC")
+            + "WHERE o.sectionQuestion.questionId IN :questionIds AND o.isActive = true ORDER BY o.displayOrder ASC")
     List<QuestionOption> findByQuestionIdsOrderByDisplayOrderAsc(@Param("questionIds") Collection<Long> questionIds);
 }

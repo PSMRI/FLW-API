@@ -29,6 +29,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for option conditions.
@@ -37,6 +38,13 @@ import java.util.List;
 public interface OptionConditionRepo extends JpaRepository<OptionCondition, Long> {
 
     List<OptionCondition> findByQuestionOption_OptionId(Long optionId);
+
+    /** No surrogate natural key on conditions — matched by (actionType, target) within an option. */
+    Optional<OptionCondition> findByQuestionOption_OptionIdAndActionTypeAndTargetQuestion_QuestionUuid(
+            Long optionId, String actionType, String targetQuestionUuid);
+
+    Optional<OptionCondition> findByQuestionOption_OptionIdAndActionTypeAndTargetSection_SectionUuid(
+            Long optionId, String actionType, String targetSectionUuid);
 
     @Query("SELECT oc.targetQuestion.questionId FROM OptionCondition oc "
             + "WHERE oc.questionOption.sectionQuestion.formSection.formVersion.versionId = :versionId "

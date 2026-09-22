@@ -19,40 +19,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
-package com.iemr.flw.dto.iemr;
+package com.iemr.flw.domain.iemr;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Timestamp;
 
 /**
- * Transfer object for a selectable option on a RADIO, DROPDOWN, or MCQ question.
+ * One row per applied {@code com.iemr.flw.seeder.migration.FormStructureMigration}, keyed by its
+ * stable migrationId — lets {@code DynamicFormMigrationRunner} skip a migration it has already run.
  */
+@Entity
+@Table(name = "t_dynamic_form_migration_log", schema = "db_iemr")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class QuestionOptionDTO {
+public class DynamicFormMigrationLog {
 
-    private Long optionId;
+    @Id
+    @Column(name = "migrationId", length = 50)
+    private String migrationId;
 
-    @NotBlank(message = "optionLabel is required")
-    private String optionLabel;
-
-    private String optionLabelHindi;
-
-    @NotBlank(message = "optionValue is required")
-    private String optionValue;
-
-    private String optionValueHindi;
-
-    /** Omit to auto-append after existing siblings; set explicitly to insert at that position (existing siblings shift up). */
-    private Integer displayOrder;
-
-    @Valid
-    private List<OptionConditionDTO> conditions = new ArrayList<>();
+    @CreationTimestamp
+    @Column(name = "appliedAt", nullable = false, updatable = false)
+    private Timestamp appliedAt;
 }

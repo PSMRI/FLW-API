@@ -23,12 +23,14 @@ package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.SectionQuestion;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for section questions.
@@ -38,11 +40,27 @@ public interface SectionQuestionRepo extends JpaRepository<SectionQuestion, Long
 
     List<SectionQuestion> findByFormSection_SectionIdOrderByDisplayOrderAsc(Long sectionId);
 
+    Optional<SectionQuestion> findByFormSection_SectionIdAndQuestionUuid(Long sectionId, String questionUuid);
+
+    /** Version-scoped lookup — a condition's target question may live in a different section of the same version. */
+    Optional<SectionQuestion> findByFormSection_FormVersion_VersionIdAndQuestionUuid(Long versionId, String questionUuid);
+
+    Optional<SectionQuestion> findTopByFormSection_SectionIdOrderByDisplayOrderDesc(Long sectionId);
+
+    /** Shifts displayOrder by delta for every question in [from, to] within a section — used to make room for/close a gap around an inserted or moved sibling. */
+    @Modifying
+    @Query("UPDATE SectionQuestion q SET q.displayOrder = q.displayOrder + :delta " +
+           "WHERE q.formSection.sectionId = :sectionId AND q.displayOrder BETWEEN :from AND :to")
+    void shiftDisplayOrder(@Param("sectionId") Long sectionId, @Param("from") int from,
+                           @Param("to") int to, @Param("delta") int delta);
+
     /**
      * Loads all questions for a set of sections in one query.
      * JOIN FETCH ensures formSection is hydrated so callers can group by sectionId without extra queries.
+     * Excludes unlinked (isActive=false) questions — used only by read paths; reconciliation matching
+     * uses the natural-key finders above, which must see inactive rows too.
      */
     @Query("SELECT q FROM SectionQuestion q JOIN FETCH q.formSection "
-            + "WHERE q.formSection.sectionId IN :sectionIds ORDER BY q.displayOrder ASC")
+            + "WHERE q.formSection.sectionId IN :sectionIds AND q.isActive = true ORDER BY q.displayOrder ASC")
     List<SectionQuestion> findBySectionIdsOrderByDisplayOrderAsc(@Param("sectionIds") Collection<Long> sectionIds);
 }
