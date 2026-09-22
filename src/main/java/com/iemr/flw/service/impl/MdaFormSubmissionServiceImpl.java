@@ -6,6 +6,7 @@ import com.iemr.flw.dto.iemr.MdaFormSubmissionRequest;
 import com.iemr.flw.dto.iemr.MdaFormSubmissionResponse;
 import com.iemr.flw.repo.iemr.MdaFormSubmissionRepository;
 
+import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,9 @@ public class MdaFormSubmissionServiceImpl implements MdaFormSubmissionService {
 
     @Autowired
     private final MdaFormSubmissionRepository repository;
+
+    @Autowired
+    private UserServiceRoleRepo userServiceRoleRepo;
 
     @Override
     public String saveFormData(List<MdaFormSubmissionRequest> requests) {
@@ -45,6 +49,7 @@ public class MdaFormSubmissionServiceImpl implements MdaFormSubmissionService {
                         .mdaDistributionDate(getMdaDistributionDate)
                         .isMedicineDistributed(req.getFields().getIs_medicine_distributed())
                         .createdBy(req.getUserName())
+                        .ashaId(userServiceRoleRepo.getUserIdByName(req.getUserName()))
                         .modifiedBy(req.getUserName())
                         .build();
                 entities.add(data);
