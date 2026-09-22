@@ -24,12 +24,14 @@ package com.iemr.flw.repo.iemr;
 import com.iemr.flw.domain.iemr.FormSection;
 import com.iemr.flw.masterEnum.SectionPhase;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for form sections.
@@ -39,6 +41,17 @@ import java.util.List;
 public interface FormSectionRepo extends JpaRepository<FormSection, Long> {
 
     List<FormSection> findByFormVersion_VersionIdOrderByDisplayOrderAsc(Long versionId);
+
+    Optional<FormSection> findByFormVersion_VersionIdAndSectionUuid(Long versionId, String sectionUuid);
+
+    Optional<FormSection> findTopByFormVersion_VersionIdOrderByDisplayOrderDesc(Long versionId);
+
+    /** Shifts displayOrder by delta for every section in [from, to] within a version — used to make room for/close a gap around an inserted or moved sibling. */
+    @Modifying
+    @Query("UPDATE FormSection s SET s.displayOrder = s.displayOrder + :delta " +
+           "WHERE s.formVersion.versionId = :versionId AND s.displayOrder BETWEEN :from AND :to")
+    void shiftDisplayOrder(@Param("versionId") Long versionId, @Param("from") int from,
+                           @Param("to") int to, @Param("delta") int delta);
 
     @Query("SELECT fs.formVersion.versionId, COUNT(fs) FROM FormSection fs " +
            "WHERE fs.formVersion.versionId IN :versionIds " +
