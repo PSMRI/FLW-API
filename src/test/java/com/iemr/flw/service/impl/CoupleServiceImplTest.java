@@ -81,7 +81,7 @@ class CoupleServiceImplTest {
         when(eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(1L)).thenReturn(existingECR);
         when(incentivesRepo.findIncentiveMasterByNameAndGroup("MARRIAGE_1st_CHILD_GAP", "FAMILY PLANNING"))
                 .thenReturn(activity);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong()))
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong(), any(Integer.class)))
                 .thenReturn(null);
         when(userRepo.getUserIdByName("testUser")).thenReturn(123);
         when(eligibleCoupleRegisterRepo.saveAll(anyList())).thenReturn(Arrays.asList(existingECR));
@@ -95,7 +95,7 @@ class CoupleServiceImplTest {
         assertEquals("no of ecr details saved: 1", result);
         verify(eligibleCoupleRegisterRepo).findEligibleCoupleRegisterByBenId(1L);
         verify(incentivesRepo).findIncentiveMasterByNameAndGroup("MARRIAGE_1st_CHILD_GAP", "FAMILY PLANNING");
-        verify(recordRepo).findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong());
+        verify(recordRepo).findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong(), any(Integer.class));
         verify(userRepo).getUserIdByName("testUser");
         verify(eligibleCoupleRegisterRepo).saveAll(anyList());
         verify(recordRepo).saveAll(anyList());
@@ -125,7 +125,7 @@ class CoupleServiceImplTest {
         when(eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(1L)).thenReturn(existingECR);
         when(incentivesRepo.findIncentiveMasterByNameAndGroup("1st_2nd_CHILD_GAP", "FAMILY PLANNING"))
                 .thenReturn(activity);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong()))
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong(), any(Integer.class)))
                 .thenReturn(null);
         when(userRepo.getUserIdByName("testUser")).thenReturn(123);
         when(eligibleCoupleRegisterRepo.saveAll(anyList())).thenReturn(Arrays.asList(existingECR));
@@ -200,7 +200,7 @@ class CoupleServiceImplTest {
         when(eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(1L)).thenReturn(existingECR);
         when(incentivesRepo.findIncentiveMasterByNameAndGroup("MARRIAGE_1st_CHILD_GAP", "FAMILY PLANNING"))
                 .thenReturn(activity);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong()))
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong(), any(Integer.class)))
                 .thenReturn(existingRecord);
         when(userRepo.getUserIdByName("testUser")).thenReturn(123);
         when(eligibleCoupleRegisterRepo.saveAll(anyList())).thenReturn(Arrays.asList(existingECR));
@@ -212,7 +212,7 @@ class CoupleServiceImplTest {
         // Assert
         assertNotNull(result);
         assertEquals("no of ecr details saved: 1", result);
-        verify(recordRepo).findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong());
+        verify(recordRepo).findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong(), any(Integer.class));
         // getUserIdByName should still be called even for existing record due to service logic
         verify(userRepo).getUserIdByName("testUser");
     }
@@ -260,7 +260,7 @@ class CoupleServiceImplTest {
         when(eligibleCoupleTrackingRepo.findCouplesHadAntara(1L)).thenReturn(new ArrayList<>());
         when(incentivesRepo.findIncentiveMasterByNameAndGroup("ANTARA_PROG_1", "FAMILY PLANNING"))
                 .thenReturn(antaraActivity);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong()))
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong(), any(Integer.class)))
                 .thenReturn(null);
         when(eligibleCoupleTrackingRepo.saveAll(anyList())).thenReturn(Arrays.asList(newECT));
         when(recordRepo.saveAll(anyList())).thenReturn(new ArrayList<>());
@@ -284,7 +284,7 @@ class CoupleServiceImplTest {
         verify(userRepo).getUserIdByName("testUser");
         verify(eligibleCoupleTrackingRepo).findCouplesHadAntara(1L);
         verify(incentivesRepo).findIncentiveMasterByNameAndGroup("ANTARA_PROG_1", "FAMILY PLANNING");
-        verify(recordRepo).findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong());
+        verify(recordRepo).findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong(), any(Integer.class));
         verify(eligibleCoupleTrackingRepo).saveAll(anyList());
         verify(recordRepo).saveAll(anyList());
     }
@@ -316,7 +316,7 @@ class CoupleServiceImplTest {
         when(eligibleCoupleTrackingRepo.findCouplesHadAntara(1L)).thenReturn(antaraHistory);
         when(incentivesRepo.findIncentiveMasterByNameAndGroup("ANTARA_PROG_2", "FAMILY PLANNING"))
                 .thenReturn(antaraActivity2);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong()))
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong(), any(Integer.class)))
                 .thenReturn(null);
         when(eligibleCoupleTrackingRepo.saveAll(anyList())).thenReturn(Arrays.asList(existingECT));
         when(recordRepo.saveAll(anyList())).thenReturn(new ArrayList<>());
@@ -365,7 +365,7 @@ class CoupleServiceImplTest {
         when(eligibleCoupleTrackingRepo.findCouplesHadAntara(1L)).thenReturn(antaraHistory3);
         when(incentivesRepo.findIncentiveMasterByNameAndGroup("ANTARA_PROG_3", "FAMILY PLANNING"))
                 .thenReturn(antaraActivity3);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong()))
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong(), any(Integer.class)))
                 .thenReturn(null);
         when(eligibleCoupleTrackingRepo.saveAll(anyList())).thenReturn(new ArrayList<>());
         when(recordRepo.saveAll(anyList())).thenReturn(new ArrayList<>());
@@ -411,7 +411,7 @@ class CoupleServiceImplTest {
         when(eligibleCoupleTrackingRepo.findCouplesHadAntara(2L)).thenReturn(antaraHistory4);
         when(incentivesRepo.findIncentiveMasterByNameAndGroup("ANTARA_PROG_4", "FAMILY PLANNING"))
                 .thenReturn(antaraActivity4);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong()))
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong(), any(Integer.class)))
                 .thenReturn(null);
         when(eligibleCoupleTrackingRepo.saveAll(anyList())).thenReturn(new ArrayList<>());
         when(recordRepo.saveAll(anyList())).thenReturn(new ArrayList<>());
@@ -620,7 +620,7 @@ class CoupleServiceImplTest {
         assertNotNull(result);
         assertEquals("no of ect details saved: 1", result);
         verify(incentivesRepo).findIncentiveMasterByNameAndGroup("ANTARA_PROG_1", "FAMILY PLANNING");
-        verify(recordRepo, never()).findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong());
+        verify(recordRepo, never()).findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong(), any(Integer.class));
     }
 
     @Test
@@ -651,7 +651,7 @@ class CoupleServiceImplTest {
         assertNotNull(result);
         assertEquals("no of ecr details saved: 1", result);
         verify(incentivesRepo).findIncentiveMasterByNameAndGroup("MARRIAGE_1st_CHILD_GAP", "FAMILY PLANNING");
-        verify(recordRepo, never()).findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong());
+        verify(recordRepo, never()).findRecordByActivityIdCreatedDateBenId(anyLong(), any(Timestamp.class), anyLong(), any(Integer.class));
     }
 
     @Test

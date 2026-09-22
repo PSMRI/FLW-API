@@ -203,7 +203,7 @@ class MaternalHealthServiceImplTest {
         when(ancCareRepo.saveAll(anyList())).thenReturn(Arrays.asList(new AncCare()));
 
         // Act
-        String result = service.saveANCVisit(Arrays.asList(dto));
+        String result = service.saveANCVisit(Arrays.asList(dto), 1);
 
         // Assert
         assertEquals("no of anc details saved: 1", result);
@@ -233,7 +233,7 @@ class MaternalHealthServiceImplTest {
         when(ancCareRepo.saveAll(anyList())).thenReturn(Arrays.asList(new AncCare()));
 
         // Act
-        String result = service.saveANCVisit(Arrays.asList(dto));
+        String result = service.saveANCVisit(Arrays.asList(dto), 1);
 
         // Assert
         assertEquals("no of anc details saved: 1", result);
@@ -247,12 +247,12 @@ class MaternalHealthServiceImplTest {
         existingVisit.setId(5L);
 
         when(ancVisitRepo.findANCVisitByBenIdAndAncVisitAndIsActive(dto.getBenId(), dto.getAncVisit(), true))
-                .thenReturn(existingVisit);
+                .thenReturn(Arrays.asList(existingVisit));
         when(ancVisitRepo.saveAll(anyList())).thenReturn(Arrays.asList(existingVisit));
         when(ancCareRepo.saveAll(anyList())).thenReturn(Arrays.asList());
 
         // Act
-        String result = service.saveANCVisit(Arrays.asList(dto));
+        String result = service.saveANCVisit(Arrays.asList(dto), 1);
 
         // Assert
         assertEquals("no of anc details saved: 1", result);
@@ -289,11 +289,11 @@ class MaternalHealthServiceImplTest {
         when(incentivesRepo.findIncentiveMasterByNameAndGroup("ANC-1", "MATERNAL HEALTH"))
                 .thenReturn(anc1Activity);
         when(userRepo.getUserIdByName("testUser")).thenReturn(1);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(1L, currentTime, dto.getBenId()))
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(1L, currentTime, dto.getBenId(), 1))
                 .thenReturn(null);
 
         // Act
-        String result = service.saveANCVisit(Arrays.asList(dto));
+        String result = service.saveANCVisit(Arrays.asList(dto), 1);
 
         // Assert
         assertEquals("no of anc details saved: 1", result);
@@ -326,7 +326,7 @@ class MaternalHealthServiceImplTest {
         visit4.setCreatedDate(currentTime);
 
         when(ancVisitRepo.findANCVisitByBenIdAndAncVisitAndIsActive(dto.getBenId(), dto.getAncVisit(), true))
-                .thenReturn(existingAncVisit);
+                .thenReturn(Arrays.asList(existingAncVisit));
         when(ancVisitRepo.saveAll(anyList())).thenReturn(Arrays.asList(existingAncVisit));
         when(ancCareRepo.saveAll(anyList())).thenReturn(Arrays.asList());
         when(incentivesRepo.findIncentiveMasterByNameAndGroup("ANC-1", "MATERNAL HEALTH"))
@@ -334,19 +334,19 @@ class MaternalHealthServiceImplTest {
         when(incentivesRepo.findIncentiveMasterByNameAndGroup("ANC-FULL", "MATERNAL HEALTH"))
                 .thenReturn(ancFullActivity);
         when(userRepo.getUserIdByName("testUser")).thenReturn(1);
-        when(recordRepo.findRecordByActivityIdCreatedDateBenId(2L, currentTime, dto.getBenId()))
+        when(recordRepo.findRecordByActivityIdCreatedDateBenId(2L, currentTime, dto.getBenId(), 1))
                 .thenReturn(null);
         when(ancVisitRepo.findANCVisitByBenIdAndAncVisitAndIsActive(dto.getBenId(), 1, true))
-                .thenReturn(visit1);
+                .thenReturn(Arrays.asList(visit1));
         when(ancVisitRepo.findANCVisitByBenIdAndAncVisitAndIsActive(dto.getBenId(), 2, true))
-                .thenReturn(visit2);
+                .thenReturn(Arrays.asList(visit2));
         when(ancVisitRepo.findANCVisitByBenIdAndAncVisitAndIsActive(dto.getBenId(), 3, true))
-                .thenReturn(visit3);
+                .thenReturn(Arrays.asList(visit3));
         when(ancVisitRepo.findANCVisitByBenIdAndAncVisitAndIsActive(dto.getBenId(), 4, true))
-                .thenReturn(visit4);
+                .thenReturn(Arrays.asList(visit4));
 
         // Act
-        String result = service.saveANCVisit(Arrays.asList(dto));
+        String result = service.saveANCVisit(Arrays.asList(dto), 1);
 
         // Assert
         assertEquals("no of anc details saved: 1", result);
@@ -361,7 +361,7 @@ class MaternalHealthServiceImplTest {
                 .thenThrow(new RuntimeException("Database error"));
 
         // Act
-        String result = service.saveANCVisit(Arrays.asList(dto));
+        String result = service.saveANCVisit(Arrays.asList(dto), 1);
 
         // Assert
         assertNull(result);
@@ -468,7 +468,7 @@ class MaternalHealthServiceImplTest {
         pncVisit.setBenId(123L);
 
         when(beneficiaryRepo.getUserName(dto.getAshaId())).thenReturn(userName);
-        when(pncVisitRepo.getPNCForPW(userName, dto.getFromDate(), dto.getToDate()))
+        when(pncVisitRepo.getPNCForPW(userName))
                 .thenReturn(Arrays.asList(pncVisit));
 
         // Act
@@ -478,7 +478,7 @@ class MaternalHealthServiceImplTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         verify(beneficiaryRepo).getUserName(dto.getAshaId());
-        verify(pncVisitRepo).getPNCForPW(userName, dto.getFromDate(), dto.getToDate());
+        verify(pncVisitRepo).getPNCForPW(userName);
     }
 
     @Test

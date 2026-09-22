@@ -98,7 +98,7 @@ class MaternalHealthControllerTest {
     @Test
     void saveANCVisit_success() throws Exception {
         List<ANCVisitDTO> dtos = Collections.singletonList(new ANCVisitDTO());
-        when(maternalHealthService.saveANCVisit(any())).thenReturn("success");
+        when(maternalHealthService.saveANCVisit(any(), any())).thenReturn("success");
         mockMvc.perform(post("/maternalCare/ancVisit/saveAll")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer token")
@@ -432,7 +432,7 @@ class MaternalHealthControllerTest {
     @Test
     void saveANCVisit_exception() throws Exception {
         List<ANCVisitDTO> dtos = Collections.singletonList(new ANCVisitDTO());
-        when(maternalHealthService.saveANCVisit(any())).thenThrow(new RuntimeException("fail"));
+        when(maternalHealthService.saveANCVisit(any(), any())).thenThrow(new RuntimeException("fail"));
         mockMvc.perform(post("/maternalCare/ancVisit/saveAll")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer token")
