@@ -194,22 +194,4 @@ public class TBScreening {
 
     @Column(name = "createdDate")
     private java.sql.Timestamp createdDate;
-
-    @Column(name = "chest_pain")
-    private Boolean chestPain;
-
-    @Column(name = "shortness_of_breath")
-    private Boolean shortnessOfBreath;
-
-    @Column(name = "fatigue")
-    private Boolean fatigue;
-
-    @Column(name = "failure_to_gain_weight")
-    private Boolean failureToGainWeight;
-
-    @Column(name = "decreased_activity_or_playfulness")
-    private Boolean decreasedActivityOrPlayfulness;
-
-    @Column(name = "others")
-    private Boolean others;
 }
