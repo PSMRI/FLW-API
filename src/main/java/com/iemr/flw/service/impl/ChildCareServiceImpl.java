@@ -395,7 +395,9 @@ public class ChildCareServiceImpl implements ChildCareService {
                 List<Object[]> benIdRows = beneficiaryRepo.getBenIdsFromRegIds(regIds);
                 for (Object[] row : benIdRows) {
                     Long regId = ((Number) row[0]).longValue();
-                    BigInteger benId = (BigInteger) row[1];
+                    BigInteger benId = row[1] == null
+                            ? null
+                            : new BigInteger(row[1].toString());
                     regIdToBenIdMap.put(regId, benId);
                 }
             }
