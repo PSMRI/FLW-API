@@ -678,7 +678,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
 
     private Boolean yesNoToBoolean(String value) {
-        return "Yes".equalsIgnoreCase(value);
+        return value != null && "Yes".equalsIgnoreCase(value.trim());
     }
 
 
