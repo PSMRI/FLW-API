@@ -217,6 +217,11 @@ public class MaternalHealthController {
 
         OutputResponse response = new OutputResponse();
         try {
+            logger.debug("Delivery outcome request: {}",
+                    new com.fasterxml.jackson.databind.ObjectMapper()
+                            .findAndRegisterModules()
+                            .writeValueAsString(deliveryOutcomeDTOS));
+
             if (deliveryOutcomeDTOS.size() != 0) {
                 logger.info("Saving delivery outcomes with timestamp : " + new Timestamp(System.currentTimeMillis()));
                 String s = deliveryOutcomeService.registerDeliveryOutcome(deliveryOutcomeDTOS);
