@@ -48,7 +48,7 @@ public interface SectionQuestionRepo extends JpaRepository<SectionQuestion, Long
     Optional<SectionQuestion> findTopByFormSection_SectionIdOrderByDisplayOrderDesc(Long sectionId);
 
     /** Shifts displayOrder by delta for every question in [from, to] within a section — used to make room for/close a gap around an inserted or moved sibling. */
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE SectionQuestion q SET q.displayOrder = q.displayOrder + :delta " +
            "WHERE q.formSection.sectionId = :sectionId AND q.displayOrder BETWEEN :from AND :to")
     void shiftDisplayOrder(@Param("sectionId") Long sectionId, @Param("from") int from,
