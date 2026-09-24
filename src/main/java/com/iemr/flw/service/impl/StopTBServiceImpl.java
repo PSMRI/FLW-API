@@ -203,13 +203,10 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("cyanosis", e.getCyanosis());
         m.put("clubbingId", e.getClubbingId());
         m.put("clubbing", e.getClubbing());
-        // hivStatus*/keyPopulationRiskFactor* are sourced from TB Screening (the source of
-        // truth for these fields) rather than from this entity's own (deprecated) columns.
-        TBScreening screening = tbScreeningRepo.findByBenRegIDAndVisitCode(e.getBeneficiaryRegID(), e.getVisitCode());
-        m.put("keyPopulationRiskFactorIds", screening != null ? screening.getKeyPopulationRiskFactorIds() : null);
-        m.put("keyPopulationRiskFactors", screening != null ? screening.getKeyPopulationRiskFactors() : null);
-        m.put("hivStatusId", screening != null ? screening.getHivStatusId() : null);
-        m.put("hivStatus", screening != null ? screening.getHivStatus() : null);
+        m.put("keyPopulationRiskFactorIds", e.getKeyPopulationRiskFactorIds());
+        m.put("keyPopulationRiskFactors", e.getKeyPopulationRiskFactors());
+        m.put("hivStatusId", e.getHivStatusId());
+        m.put("hivStatus", e.getHivStatus());
         m.put("referralToHWCNeeded", e.getReferralToHWCNeeded());
         m.put("createdBy", e.getCreatedBy());
         m.put("createdDate", e.getCreatedDate());
