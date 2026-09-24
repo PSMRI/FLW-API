@@ -84,7 +84,11 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     @Query(value = " SELECT t.beneficiaryID FROM RMNCHMBeneficiaryregidmapping t  WHERE t.benRegId = :benRegID ")
     BigInteger getBenIdFromRegID(@Param("benRegID") Long benRegID);
 
-    @Query(value = " SELECT t FROM RMNCHBeneficiaryDetailsRmnch t WHERE t.BenRegId =:benRegID ")
+    // BenRegId has no unique constraint on i_beneficiarydetails_rmnch — a beneficiary can have
+    // more than one row (confirmed live: duplicates, some created well after the original with
+    // a household link the older row never got). Order by PK desc so callers picking .get(0)
+    // get the latest row, not whichever one the DB happens to return first.
+    @Query(value = " SELECT t FROM RMNCHBeneficiaryDetailsRmnch t WHERE t.BenRegId =:benRegID ORDER BY t.beneficiaryDetails_RmnchId DESC ")
     List<RMNCHBeneficiaryDetailsRmnch> getDetailsByRegID(@Param("benRegID") Long benRegID);
 
     @Query(value = " SELECT t FROM RMNCHBornBirthDetails t WHERE t.BenRegId =:benRegID ")
