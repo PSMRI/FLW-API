@@ -134,8 +134,10 @@ public class StopTBServiceImpl implements StopTBService {
             exam.setCyanosis(getString(data, "cyanosis"));
             exam.setClubbingId(getInt(data, "clubbingId"));
             exam.setClubbing(getString(data, "clubbing"));
-            // hivStatus*/keyPopulationRiskFactor* are intentionally not set here — TB Screening
-            // is the single source of truth for these fields (see examToMap).
+            exam.setKeyPopulationRiskFactorIds(toJsonString(data.get("keyPopulationRiskFactorIds")));
+            exam.setKeyPopulationRiskFactors(toJsonString(data.get("keyPopulationRiskFactors")));
+            exam.setHivStatusId(getInt(data, "hivStatusId"));
+            exam.setHivStatus(getString(data, "hivStatus"));
             exam.setCreatedBy(getString(data, "createdBy"));
             exam.setModifiedBy(getString(data, "createdBy"));
             exam.setDeleted(false);

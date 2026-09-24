@@ -280,7 +280,7 @@ public class DynamicFormDefinitionServiceImpl implements DynamicFormDefinitionSe
     private DynamicFormDTO buildFormDto(DynamicForm form, FormVersion version) {
         // Query 1: sections
         List<FormSection> sections = sectionRepo
-                .findByFormVersion_VersionIdOrderByDisplayOrderAsc(version.getVersionId());
+                .findByFormVersion_VersionIdAndIsActiveTrueOrderByDisplayOrderAsc(version.getVersionId());
         if (sections.isEmpty()) {
             DynamicFormDTO dto = mapper.toDto(form);
             dto.setVersionNumber(version.getVersionNumber());

@@ -56,7 +56,7 @@ public class SectionQuestionDTO {
 
     private Boolean isMandatory = true;
 
-    /** Omit to auto-append after existing siblings; set explicitly to insert at (or move to) that position (existing siblings shift). */
+    @NotNull(message = "displayOrder is required")
     private Integer displayOrder;
 
     private Integer maxLength;

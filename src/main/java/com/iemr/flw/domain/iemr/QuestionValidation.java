@@ -72,6 +72,10 @@ public class QuestionValidation {
     @Column(name = "errorMessage", nullable = false, length = 500)
     private String errorMessage;
 
+    /** Soft-delete flag: false means removed from its question. Never hard-deleted. */
+    @Column(name = "isActive", nullable = false)
+    private Boolean isActive = true;
+
     @Column(name = "created_by", length = 100)
     private String createdBy;
 

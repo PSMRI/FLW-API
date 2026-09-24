@@ -71,6 +71,11 @@ public class FormVersion {
     @Column(name = "isLatest", nullable = false)
     private Boolean isLatest = true;
 
+    /** Soft-delete flag: false means the version is retired. Never hard-deleted — historical
+     *  form responses reference their version. */
+    @Column(name = "isActive", nullable = false)
+    private Boolean isActive = true;
+
     @Column(name = "createdAt", nullable = false, updatable = false)
     private Timestamp createdAt;
 

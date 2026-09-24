@@ -42,6 +42,9 @@ public interface FormSectionRepo extends JpaRepository<FormSection, Long> {
 
     List<FormSection> findByFormVersion_VersionIdOrderByDisplayOrderAsc(Long versionId);
 
+    /** Read-path variant excluding removed (isActive=false) sections. */
+    List<FormSection> findByFormVersion_VersionIdAndIsActiveTrueOrderByDisplayOrderAsc(Long versionId);
+
     Optional<FormSection> findByFormVersion_VersionIdAndSectionUuid(Long versionId, String sectionUuid);
 
     Optional<FormSection> findTopByFormVersion_VersionIdOrderByDisplayOrderDesc(Long versionId);
