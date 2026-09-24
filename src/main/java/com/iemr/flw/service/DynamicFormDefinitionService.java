@@ -47,7 +47,7 @@ public interface DynamicFormDefinitionService {
     /** Returns a specific version's full definition tree (no cache). */
     DynamicFormDTO getFormDefinitionByVersion(Long formId, Integer versionNumber);
 
-    /** Returns metadata for all active forms (without full tree). */
+    /** Returns every active form's latest full definition, with each version's full definition in {@code versions}. */
     List<DynamicFormDTO> getAllForms();
 
     /** Sets the form's isActive flag to true. */
