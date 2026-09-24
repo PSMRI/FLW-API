@@ -74,6 +74,10 @@ public class OptionCondition {
     @ToString.Exclude
     private FormSection targetSection;
 
+    /** Soft-delete flag: false means removed from its option. Never hard-deleted. */
+    @Column(name = "isActive", nullable = false)
+    private Boolean isActive = true;
+
     @Column(name = "created_by", length = 100)
     private String createdBy;
 

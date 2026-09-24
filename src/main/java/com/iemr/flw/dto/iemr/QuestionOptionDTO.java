@@ -23,6 +23,7 @@ package com.iemr.flw.dto.iemr;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -50,7 +51,7 @@ public class QuestionOptionDTO {
 
     private String optionValueHindi;
 
-    /** Omit to auto-append after existing siblings; set explicitly to insert at that position (existing siblings shift up). */
+    @NotNull(message = "displayOrder is required")
     private Integer displayOrder;
 
     @Valid
