@@ -50,7 +50,7 @@ public interface FormSectionRepo extends JpaRepository<FormSection, Long> {
     Optional<FormSection> findTopByFormVersion_VersionIdOrderByDisplayOrderDesc(Long versionId);
 
     /** Shifts displayOrder by delta for every section in [from, to] within a version — used to make room for/close a gap around an inserted or moved sibling. */
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE FormSection s SET s.displayOrder = s.displayOrder + :delta " +
            "WHERE s.formVersion.versionId = :versionId AND s.displayOrder BETWEEN :from AND :to")
     void shiftDisplayOrder(@Param("versionId") Long versionId, @Param("from") int from,

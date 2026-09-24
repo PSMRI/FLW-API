@@ -45,7 +45,7 @@ public interface QuestionOptionRepo extends JpaRepository<QuestionOption, Long> 
     Optional<QuestionOption> findTopBySectionQuestion_QuestionIdOrderByDisplayOrderDesc(Long questionId);
 
     /** Shifts displayOrder by delta for every option in [from, to] within a question — used to make room for/close a gap around an inserted or moved sibling. */
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE QuestionOption o SET o.displayOrder = o.displayOrder + :delta " +
            "WHERE o.sectionQuestion.questionId = :questionId AND o.displayOrder BETWEEN :from AND :to")
     void shiftDisplayOrder(@Param("questionId") Long questionId, @Param("from") int from,
