@@ -150,7 +150,9 @@ public class DynamicFormDefinitionServiceImpl implements DynamicFormDefinitionSe
                 .stream()
                 .map(form -> {
                     try {
-                        return loadLatestFromDb(form.getFormId());
+                        DynamicFormDTO latest = loadLatestFromDb(form.getFormId());
+                        latest.setVersions(loadAllVersionsFromDb(form.getFormId()));
+                        return latest;
                     } catch (RuntimeException e) {
                         log.warn("Skipping form {} — no active version: {}", form.getFormId(), e.getMessage());
                         return null;
@@ -265,6 +267,14 @@ public class DynamicFormDefinitionServiceImpl implements DynamicFormDefinitionSe
     }
 
     // ── LOAD / READ HELPERS ───────────────────────────────────────────────────
+
+    /** Full definition of every active version of the form, oldest first. */
+    private List<DynamicFormDTO> loadAllVersionsFromDb(Long formId) {
+        return versionRepo.findByDynamicForm_FormIdOrderByVersionNumberAsc(formId).stream()
+                .filter(version -> Boolean.TRUE.equals(version.getIsActive()))
+                .map(version -> buildFormDto(version.getDynamicForm(), version))
+                .collect(Collectors.toList());
+    }
 
     private DynamicFormDTO loadLatestFromDb(Long formId) {
         FormVersion version = versionRepo.findByDynamicForm_FormIdAndIsLatest(formId, true)
