@@ -21,6 +21,7 @@
  */
 package com.iemr.flw.dto.iemr;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.iemr.flw.masterEnum.FormType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -62,4 +63,9 @@ public class DynamicFormDTO {
 
     @Valid
     private List<FormSectionDTO> sections = new ArrayList<>();
+
+    /** Every version's full definition, oldest first — populated only by getAllForms (the top-level
+     *  fields above stay the latest version); omitted from the JSON elsewhere and ignored on write. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<DynamicFormDTO> versions;
 }
