@@ -451,12 +451,12 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             List<AncCounsellingCareDTO> dtos,
             String authorization) throws IEMRException {
 
-        Integer userId = jwtUtil.extractUserId(authorization);
-        String userName = userRepo.getUserNamedByUserId(userId);
-
         if (dtos == null || dtos.isEmpty()) {
             throw new IllegalArgumentException("ANC visit data is mandatory");
         }
+
+        Integer userId = jwtUtil.extractUserId(authorization);
+        String userName = userRepo.getUserNamedByUserId(userId);
 
         DateTimeFormatter formatter = DateTimeFormatter
                 .ofPattern("dd-MM-uuuu")
@@ -467,7 +467,25 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         for (AncCounsellingCareDTO dto : dtos) {
 
             if (dto == null) {
-                throw new IllegalArgumentException("ANC visit record cannot be null");
+                throw new IllegalArgumentException(
+                        "ANC visit record cannot be null");
+            }
+
+            logger.info(
+                    "ANC counselling DTO received: id={}, visitDate={}",
+                    dto.getId(),
+                    dto.getVisitDate()
+            );
+
+            if (dto.getId() != null && dto.getId() < 0) {
+                throw new IllegalArgumentException(
+                        "id must be zero, null, or a positive existing record ID");
+            }
+
+            if (dto.getBeneficiaryId() == null
+                    || dto.getBeneficiaryId() <= 0) {
+                throw new IllegalArgumentException(
+                        "Valid beneficiaryId is mandatory");
             }
 
             if (!StringUtils.hasText(dto.getVisitDate())) {
@@ -475,71 +493,117 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             }
 
             AncCounsellingCareListDTO fields = dto.getFields();
+
             if (fields == null) {
                 throw new IllegalArgumentException("fields object is mandatory");
             }
 
             LocalDate visitDate;
             try {
-                visitDate = LocalDate.parse(dto.getVisitDate(), formatter);
+                visitDate = LocalDate.parse(
+                        dto.getVisitDate().trim(), formatter);
             } catch (DateTimeParseException e) {
                 throw new IllegalArgumentException(
-                        "Invalid visitDate, expected dd-MM-yyyy");
+                        "Invalid visitDate, expected dd-MM-yyyy", e);
             }
 
             LocalDate homeVisitDate;
             try {
                 homeVisitDate = StringUtils.hasText(fields.getHomeVisitDate())
-                        ? LocalDate.parse(fields.getHomeVisitDate(), formatter)
+                        ? LocalDate.parse(
+                        fields.getHomeVisitDate().trim(), formatter)
                         : visitDate;
             } catch (DateTimeParseException e) {
                 throw new IllegalArgumentException(
-                        "Invalid home_visit_date, expected dd-MM-yyyy");
+                        "Invalid home_visit_date, expected dd-MM-yyyy", e);
             }
 
             AncCounsellingCare entity;
 
             if (dto.getId() != null && dto.getId() > 0) {
-                // Update existing record
+
+                // Existing ID: update only. Never create if this ID is missing.
                 entity = ancCounsellingCareRepo.findById(dto.getId())
                         .orElseThrow(() -> new IllegalArgumentException(
-                                "ANC visit not found for id: " + dto.getId()));
+                                "ANC counselling record not found for id: "
+                                        + dto.getId()));
+
+                // Prevent updating a different beneficiary's record.
+                if (!dto.getBeneficiaryId().equals(entity.getBeneficiaryId())) {
+                    throw new IllegalArgumentException(
+                            "beneficiaryId does not match ANC counselling record: "
+                                    + dto.getId());
+                }
+
+                logger.info(
+                        "Updating ANC counselling record: id={}",
+                        entity.getId()
+                );
+
             } else {
-                // Create new record
+
                 entity = new AncCounsellingCare();
                 entity.setBeneficiaryId(dto.getBeneficiaryId());
                 entity.setUserId(userId);
                 entity.setCreatedBy(userName);
+
+                logger.info(
+                        "Creating ANC counselling record: requestId={}",
+                        dto.getId()
+                );
+            }
+
+            if (entity.getAncVisitId() == null) {
+                entity.setAncVisitId(0L);
             }
 
             entity.setVisitDate(visitDate);
             entity.setHomeVisitDate(homeVisitDate);
 
-            entity.setSelectAll(yesNoToBoolean(fields.getSelectAll()));
-            entity.setSwelling(yesNoToBoolean(fields.getSwelling()));
-            entity.setHighBp(yesNoToBoolean(fields.getHighBp()));
-            entity.setConvulsions(yesNoToBoolean(fields.getConvulsions()));
-            entity.setAnemia(yesNoToBoolean(fields.getAnemia()));
+            entity.setSelectAll(
+                    yesNoToBoolean(fields.getSelectAll()));
+            entity.setSwelling(
+                    yesNoToBoolean(fields.getSwelling()));
+            entity.setHighBp(
+                    yesNoToBoolean(fields.getHighBp()));
+            entity.setConvulsions(
+                    yesNoToBoolean(fields.getConvulsions()));
+            entity.setAnemia(
+                    yesNoToBoolean(fields.getAnemia()));
             entity.setReducedFetalMovement(
                     yesNoToBoolean(fields.getReducedFetalMovement()));
-            entity.setAgeRisk(yesNoToBoolean(fields.getAgeRisk()));
-            entity.setChildGap(yesNoToBoolean(fields.getChildGap()));
-            entity.setShortHeight(yesNoToBoolean(fields.getShortHeight()));
-            entity.setPrePregWeight(yesNoToBoolean(fields.getPrePregWeight()));
-            entity.setBleeding(yesNoToBoolean(fields.getBleeding()));
+            entity.setAgeRisk(
+                    yesNoToBoolean(fields.getAgeRisk()));
+            entity.setChildGap(
+                    yesNoToBoolean(fields.getChildGap()));
+            entity.setShortHeight(
+                    yesNoToBoolean(fields.getShortHeight()));
+            entity.setPrePregWeight(
+                    yesNoToBoolean(fields.getPrePregWeight()));
+            entity.setBleeding(
+                    yesNoToBoolean(fields.getBleeding()));
             entity.setMiscarriageHistory(
                     yesNoToBoolean(fields.getMiscarriageHistory()));
-            entity.setFourPlusDelivery(yesNoToBoolean(fields.getFourPlusDelivery()));
-            entity.setFirstDelivery(yesNoToBoolean(fields.getFirstDelivery()));
-            entity.setTwinPregnancy(yesNoToBoolean(fields.getTwinPregnancy()));
-            entity.setCSectionHistory(yesNoToBoolean(fields.getCSectionHistory()));
+            entity.setFourPlusDelivery(
+                    yesNoToBoolean(fields.getFourPlusDelivery()));
+            entity.setFirstDelivery(
+                    yesNoToBoolean(fields.getFirstDelivery()));
+            entity.setTwinPregnancy(
+                    yesNoToBoolean(fields.getTwinPregnancy()));
+            entity.setCSectionHistory(
+                    yesNoToBoolean(fields.getCSectionHistory()));
             entity.setPreExistingDisease(
                     yesNoToBoolean(fields.getPreExistingDisease()));
-            entity.setFeverMalaria(yesNoToBoolean(fields.getFeverMalaria()));
-            entity.setJaundice(yesNoToBoolean(fields.getJaundice()));
-            entity.setSickleCell(yesNoToBoolean(fields.getSickleCell()));
-            entity.setProlongedLabor(yesNoToBoolean(fields.getProlongedLabor()));
-            entity.setMalpresentation(yesNoToBoolean(fields.getMalpresentation()));
+            entity.setFeverMalaria(
+                    yesNoToBoolean(fields.getFeverMalaria()));
+            entity.setJaundice(
+                    yesNoToBoolean(fields.getJaundice()));
+            entity.setSickleCell(
+                    yesNoToBoolean(fields.getSickleCell()));
+            entity.setProlongedLabor(
+                    yesNoToBoolean(fields.getProlongedLabor()));
+            entity.setMalpresentation(
+                    yesNoToBoolean(fields.getMalpresentation()));
 
             entity.setUpdatedBy(userName);
             entities.add(entity);
@@ -614,7 +678,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
 
     private Boolean yesNoToBoolean(String value) {
-        return "Yes".equalsIgnoreCase(value);
+        return value != null && "Yes".equalsIgnoreCase(value.trim());
     }
 
 
