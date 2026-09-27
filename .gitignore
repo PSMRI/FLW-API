@@ -32,4 +32,3 @@ mvnw.cmd
 .mvn
 /logs/
 src/main/environment/common_local.properties
-node_modules

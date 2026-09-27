@@ -57,4 +57,7 @@ public class MdaDistributionData {
 
     @Column(name = "LastModDate")
     private Timestamp lastModDate;
+
+    @Column(name = "AshaId")
+    private Integer ashaId;
 }

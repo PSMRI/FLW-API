@@ -16,6 +16,7 @@ public interface ChildCareService {
     List<HbncVisitResponseDTO> getHBNCDetails(GetBenRequestHandler dto);
 
     String saveHBNCDetails(List<HbncRequestDTO> hbncRequestDTOs,Integer userId);
+    String saveHBNCDetails(List<HbncRequestDTO> hbncRequestDTOs);
 
     List<ChildVaccinationDTO> getChildVaccinationDetails(GetBenRequestHandler dto);
 

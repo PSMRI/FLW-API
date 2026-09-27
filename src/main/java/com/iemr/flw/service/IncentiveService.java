@@ -14,7 +14,7 @@ public interface IncentiveService {
     String getIncentiveMaster(IncentiveRequestDTO incentiveRequestDTO);
 
     String getAllIncentivesByUserId(GetBenRequestHandler requestDTO);
-    String getAllIncentivesGroupedSummary(GetBenRequestHandler requestDTO);
+    String getAllIncentivesGroupedSummary(GetBenRequestHandler requestDTO,Integer userId);
     String getAllIncentivesGroupedActivity(GetBenRequestHandler requestDTO);
 
     String updateIncentive(PendingActivityDTO pendingActivityDTO);
@@ -22,4 +22,4 @@ public interface IncentiveService {
                                     Integer month,
                                     Integer year,
                                     Boolean isClaimed,
-                                    String token);}
+                                    String token,String incentiveId);}

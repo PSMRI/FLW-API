@@ -87,4 +87,17 @@ public class IncentiveActivityRecord {
 
     @Transient
     private String groupName;
+
+    @Transient String groupCategoryName;
+
+    @Column(name = "is_approved")
+    private Boolean isApproved = false;
+
+    @PrePersist
+    @PreUpdate
+    private void applyDefaults() {
+        if (isApproved == null) {
+            isApproved = false;
+        }
+    }
 }

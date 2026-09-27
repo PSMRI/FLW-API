@@ -25,6 +25,7 @@ public class IncentiveActivityDTO implements Serializable {
 
     private String group;
     private String  groupName;
+    private String  groupCategoryName;
 
     private String fmrCode;
 

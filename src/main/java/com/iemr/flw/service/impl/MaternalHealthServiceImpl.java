@@ -216,8 +216,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     benVisitDetail.setModifiedBy(it.getUpdatedBy());
                     benVisitDetail.setLastModDate(it.getUpdatedDate());
                     benVisitDetail.setProviderServiceMapID(it.getProviderServiceMapID());
-                    if (benVisitDetail.getCreatedDate() == null)
-                        benVisitDetail.setCreatedDate(new java.sql.Timestamp(System.currentTimeMillis()));
 
                     logger.info("Saving BenVisitDetail");
 
@@ -420,8 +418,6 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     benVisitDetail.setProcessed("N");
                     benVisitDetail.setModifiedBy(it.getUpdatedBy());
                     benVisitDetail.setLastModDate(it.getUpdatedDate());
-                    if (benVisitDetail.getCreatedDate() == null)
-                        benVisitDetail.setCreatedDate(new java.sql.Timestamp(System.currentTimeMillis()));
                     benVisitDetail = benVisitDetailsRepo.save(benVisitDetail);
 
                     // Saving Data in AncCare table
@@ -443,80 +439,173 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             logger.info("PNC visit details saved");
             return "no of pnc details saved: " + pncList.size();
         } catch (Exception e) {
-            logger.info("Saving PNC visit details failed with error : " + e.getMessage());
+            logger.error("Saving PNC visit details failed", e);
+
         }
         return null;
     }
 
     @Override
     @Transactional
-    public String saveANCVisitQuestions(List<AncCounsellingCareDTO> dtos, String authorization) throws IEMRException {
+    public String saveANCVisitQuestions(
+            List<AncCounsellingCareDTO> dtos,
+            String authorization) throws IEMRException {
+
+        if (dtos == null || dtos.isEmpty()) {
+            throw new IllegalArgumentException("ANC visit data is mandatory");
+        }
+
         Integer userId = jwtUtil.extractUserId(authorization);
         String userName = userRepo.getUserNamedByUserId(userId);
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        DateTimeFormatter formatter = DateTimeFormatter
+                .ofPattern("dd-MM-uuuu")
+                .withResolverStyle(java.time.format.ResolverStyle.STRICT);
+
         List<AncCounsellingCare> entities = new ArrayList<>();
 
         for (AncCounsellingCareDTO dto : dtos) {
+
+            if (dto == null) {
+                throw new IllegalArgumentException(
+                        "ANC visit record cannot be null");
+            }
+
+            logger.info(
+                    "ANC counselling DTO received: id={}, visitDate={}",
+                    dto.getId(),
+                    dto.getVisitDate()
+            );
+
+            if (dto.getId() != null && dto.getId() < 0) {
+                throw new IllegalArgumentException(
+                        "id must be zero, null, or a positive existing record ID");
+            }
+
+            if (dto.getBeneficiaryId() == null
+                    || dto.getBeneficiaryId() <= 0) {
+                throw new IllegalArgumentException(
+                        "Valid beneficiaryId is mandatory");
+            }
 
             if (!StringUtils.hasText(dto.getVisitDate())) {
                 throw new IllegalArgumentException("visitDate is mandatory");
             }
 
             AncCounsellingCareListDTO fields = dto.getFields();
+
             if (fields == null) {
                 throw new IllegalArgumentException("fields object is mandatory");
             }
 
             LocalDate visitDate;
             try {
-                visitDate = LocalDate.parse(dto.getVisitDate(), formatter);
+                visitDate = LocalDate.parse(
+                        dto.getVisitDate().trim(), formatter);
             } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException("Invalid visitDate format, expected dd-MM-yyyy");
+                throw new IllegalArgumentException(
+                        "Invalid visitDate, expected dd-MM-yyyy", e);
             }
 
             LocalDate homeVisitDate;
             try {
                 homeVisitDate = StringUtils.hasText(fields.getHomeVisitDate())
-                        ? LocalDate.parse(fields.getHomeVisitDate(), formatter)
-                        : visitDate; // ✅ fallback
+                        ? LocalDate.parse(
+                        fields.getHomeVisitDate().trim(), formatter)
+                        : visitDate;
             } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException("Invalid home_visit_date format, expected dd-MM-yyyy");
+                throw new IllegalArgumentException(
+                        "Invalid home_visit_date, expected dd-MM-yyyy", e);
             }
 
-            AncCounsellingCare entity = new AncCounsellingCare();
-            entity.setBeneficiaryId(dto.getBeneficiaryId());
-            entity.setAncVisitId(0L);
+            AncCounsellingCare entity;
+
+            if (dto.getId() != null && dto.getId() > 0) {
+
+                // Existing ID: update only. Never create if this ID is missing.
+                entity = ancCounsellingCareRepo.findById(dto.getId())
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "ANC counselling record not found for id: "
+                                        + dto.getId()));
+
+                // Prevent updating a different beneficiary's record.
+                if (!dto.getBeneficiaryId().equals(entity.getBeneficiaryId())) {
+                    throw new IllegalArgumentException(
+                            "beneficiaryId does not match ANC counselling record: "
+                                    + dto.getId());
+                }
+
+                logger.info(
+                        "Updating ANC counselling record: id={}",
+                        entity.getId()
+                );
+
+            } else {
+
+                entity = new AncCounsellingCare();
+                entity.setBeneficiaryId(dto.getBeneficiaryId());
+                entity.setUserId(userId);
+                entity.setCreatedBy(userName);
+
+                logger.info(
+                        "Creating ANC counselling record: requestId={}",
+                        dto.getId()
+                );
+            }
+
+            if (entity.getAncVisitId() == null) {
+                entity.setAncVisitId(0L);
+            }
+
             entity.setVisitDate(visitDate);
             entity.setHomeVisitDate(homeVisitDate);
 
-            entity.setSelectAll(yesNoToBoolean(fields.getSelectAll()));
-            entity.setSwelling(yesNoToBoolean(fields.getSwelling()));
-            entity.setHighBp(yesNoToBoolean(fields.getHighBp()));
-            entity.setConvulsions(yesNoToBoolean(fields.getConvulsions()));
-            entity.setAnemia(yesNoToBoolean(fields.getAnemia()));
-            entity.setReducedFetalMovement(yesNoToBoolean(fields.getReducedFetalMovement()));
-            entity.setAgeRisk(yesNoToBoolean(fields.getAgeRisk()));
-            entity.setChildGap(yesNoToBoolean(fields.getChildGap()));
-            entity.setShortHeight(yesNoToBoolean(fields.getShortHeight()));
-            entity.setPrePregWeight(yesNoToBoolean(fields.getPrePregWeight()));
-            entity.setBleeding(yesNoToBoolean(fields.getBleeding()));
-            entity.setMiscarriageHistory(yesNoToBoolean(fields.getMiscarriageHistory()));
-            entity.setFourPlusDelivery(yesNoToBoolean(fields.getFourPlusDelivery()));
-            entity.setFirstDelivery(yesNoToBoolean(fields.getFirstDelivery()));
-            entity.setTwinPregnancy(yesNoToBoolean(fields.getTwinPregnancy()));
-            entity.setCSectionHistory(yesNoToBoolean(fields.getCSectionHistory()));
-            entity.setPreExistingDisease(yesNoToBoolean(fields.getPreExistingDisease()));
-            entity.setFeverMalaria(yesNoToBoolean(fields.getFeverMalaria()));
-            entity.setJaundice(yesNoToBoolean(fields.getJaundice()));
-            entity.setSickleCell(yesNoToBoolean(fields.getSickleCell()));
-            entity.setProlongedLabor(yesNoToBoolean(fields.getProlongedLabor()));
-            entity.setMalpresentation(yesNoToBoolean(fields.getMalpresentation()));
+            entity.setSelectAll(
+                    yesNoToBoolean(fields.getSelectAll()));
+            entity.setSwelling(
+                    yesNoToBoolean(fields.getSwelling()));
+            entity.setHighBp(
+                    yesNoToBoolean(fields.getHighBp()));
+            entity.setConvulsions(
+                    yesNoToBoolean(fields.getConvulsions()));
+            entity.setAnemia(
+                    yesNoToBoolean(fields.getAnemia()));
+            entity.setReducedFetalMovement(
+                    yesNoToBoolean(fields.getReducedFetalMovement()));
+            entity.setAgeRisk(
+                    yesNoToBoolean(fields.getAgeRisk()));
+            entity.setChildGap(
+                    yesNoToBoolean(fields.getChildGap()));
+            entity.setShortHeight(
+                    yesNoToBoolean(fields.getShortHeight()));
+            entity.setPrePregWeight(
+                    yesNoToBoolean(fields.getPrePregWeight()));
+            entity.setBleeding(
+                    yesNoToBoolean(fields.getBleeding()));
+            entity.setMiscarriageHistory(
+                    yesNoToBoolean(fields.getMiscarriageHistory()));
+            entity.setFourPlusDelivery(
+                    yesNoToBoolean(fields.getFourPlusDelivery()));
+            entity.setFirstDelivery(
+                    yesNoToBoolean(fields.getFirstDelivery()));
+            entity.setTwinPregnancy(
+                    yesNoToBoolean(fields.getTwinPregnancy()));
+            entity.setCSectionHistory(
+                    yesNoToBoolean(fields.getCSectionHistory()));
+            entity.setPreExistingDisease(
+                    yesNoToBoolean(fields.getPreExistingDisease()));
+            entity.setFeverMalaria(
+                    yesNoToBoolean(fields.getFeverMalaria()));
+            entity.setJaundice(
+                    yesNoToBoolean(fields.getJaundice()));
+            entity.setSickleCell(
+                    yesNoToBoolean(fields.getSickleCell()));
+            entity.setProlongedLabor(
+                    yesNoToBoolean(fields.getProlongedLabor()));
+            entity.setMalpresentation(
+                    yesNoToBoolean(fields.getMalpresentation()));
 
-            entity.setUserId(userId);
-            entity.setCreatedBy(userName);
             entity.setUpdatedBy(userName);
-
             entities.add(entity);
         }
 
@@ -539,6 +628,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
             AncCounsellingCareResponseDTO responseDTO = new AncCounsellingCareResponseDTO();
             responseDTO.setFormId("anc_form_001");
+            responseDTO.setId(entity.getId());
             responseDTO.setBeneficiaryId(entity.getBeneficiaryId()); // Update with actual value
             responseDTO.setVisitDate(entity.getVisitDate().format(formatter)); // Format visit.getVisitDate()
 
@@ -572,7 +662,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
             fields.put("sickle_cell", booleanToYesNo(entity.getSickleCell()));
             fields.put("prolonged_labor", booleanToYesNo(entity.getProlongedLabor()));
             fields.put("malpresentation", booleanToYesNo(entity.getMalpresentation()));
-
+            fields.put("id", entity.getId());
             responseDTO.setFields(fields);
             responseDTOList.add(responseDTO);
 
@@ -588,14 +678,13 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
 
     private Boolean yesNoToBoolean(String value) {
-        return "Yes".equalsIgnoreCase(value);
+        return value != null && "Yes".equalsIgnoreCase(value.trim());
     }
 
 
     private void checkAndAddAntaraIncentive(PNCVisit ect) {
         Integer userId = userRepo.getUserIdByName(ect.getCreatedBy());
         Integer stateId = userRepo.getUserRole(userId).get(0).getStateId();
-        logger.info("ContraceptionMethod:" + ect.getContraceptionMethod());
 
         // logic for assam
         if (stateId.equals(StateCode.AM.getStateCode())) {
@@ -664,18 +753,24 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
 
                     if (PPIUCDActivityCH != null) {
-                        if (ect.getContraceptionMethod().equals("POST PARTUM IUCD (PPIUCD)")) {
-                            addIncenticeRecord(ect, userId, PPIUCDActivityCH);
+                        if(ect.getContraceptionMethod()!=null){
+                            if (ect.getContraceptionMethod().equals("POST PARTUM IUCD (PPIUCD)")) {
+                                addIncenticeRecord(ect, userId, PPIUCDActivityCH);
 
+                            }
                         }
+
                     }
 
 
                     if (femaleSterilizationActivityCH != null) {
-                        if (ect.getContraceptionMethod().equals("FEMALE STERILIZATION")) {
-                            addIncenticeRecord(ect, userId, femaleSterilizationActivityCH);
+                        if(ect.getAnyContraceptionMethod()!=null){
+                            if (ect.getContraceptionMethod().equals("FEMALE STERILIZATION")) {
+                                addIncenticeRecord(ect, userId, femaleSterilizationActivityCH);
 
+                            }
                         }
+
                     }
 
 
@@ -712,18 +807,20 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
             }
             if (ect.getPncPeriod() == 1 || ect.getPncPeriod() == 3 || ect.getPncPeriod() == 7) {
+                  if(ect.getContraceptionMethod()!=null){
+                      if ((ect.getContraceptionMethod().equals("POST PARTUM STERILIZATION (PPS)")
+                              || ect.getContraceptionMethod().equals("MiniLap"))
+                              && ect.getSterilisationDate() != null) {
+                          IncentiveActivity ppsActivityCH =
+                                  incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPS", GroupName.ACTIVITY.getDisplayName());
+                          if (ppsActivityCH != null) {
 
-                if ((ect.getContraceptionMethod().equals("POST PARTUM STERILIZATION (PPS)")
-                        || ect.getContraceptionMethod().equals("MiniLap"))
-                        && ect.getSterilisationDate() != null) {
-                    IncentiveActivity ppsActivityCH =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_PPS", GroupName.ACTIVITY.getDisplayName());
-                    if (ppsActivityCH != null) {
+                              addIncenticeRecord(ect, userId, ppsActivityCH);
 
-                        addIncenticeRecord(ect, userId, ppsActivityCH);
+                          }
+                      }
+                  }
 
-                    }
-                }
             }
 
         }
@@ -854,7 +951,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
                 if (ancFullActivityCH != null && ancVisit.getAncVisit() != null
                         && ancVisit.getAncVisit() == 4) {
-                    recordAncRelatedIncentive(ancFullActivityCH, ancVisit);
+                    recordFullAncIncentive(ancFullActivityCH, ancVisit);
                 }
 
 
@@ -876,12 +973,12 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
         if (record == null) {
             record = new IncentiveActivityRecord();
             record.setActivityId(incentiveActivity.getId());
-            record.setCreatedDate(ancVisit.getCreatedDate());
+            record.setCreatedDate(ancVisit.getAncDate());
             record.setCreatedBy(ancVisit.getCreatedBy());
-            record.setUpdatedDate(ancVisit.getCreatedDate());
+            record.setUpdatedDate(ancVisit.getAncDate());
             record.setUpdatedBy(ancVisit.getCreatedBy());
-            record.setStartDate(ancVisit.getCreatedDate());
-            record.setEndDate(ancVisit.getCreatedDate());
+            record.setStartDate(ancVisit.getAncDate());
+            record.setEndDate(ancVisit.getAncDate());
             record.setBenId(ancVisit.getBenId());
             record.setAshaId(userId);
             record.setAmount(Long.valueOf(incentiveActivity.getRate()));

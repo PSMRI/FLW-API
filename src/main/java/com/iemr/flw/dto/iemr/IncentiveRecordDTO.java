@@ -47,6 +47,8 @@ public class IncentiveRecordDTO {
 
     private String groupName;
 
+    private String groupCategoryName;
+
     private String reason;
 
     private String otherReason;
@@ -59,6 +61,7 @@ public class IncentiveRecordDTO {
 
     private String supervisorRole;
 
+    private Boolean isApproved;
 
 
 

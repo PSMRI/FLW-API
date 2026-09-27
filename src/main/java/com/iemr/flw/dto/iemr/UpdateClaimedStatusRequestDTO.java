@@ -8,4 +8,5 @@ public class UpdateClaimedStatusRequestDTO {
     private Integer month;
     private Integer year;
     private boolean isClaimed;
+    private String incentiveId;
 }

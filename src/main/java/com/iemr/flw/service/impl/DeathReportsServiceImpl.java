@@ -81,37 +81,6 @@ public class DeathReportsServiceImpl implements DeathReportsService {
         }
     }
 
-    public String updateCDRUploadFiles(CdrDTO cdrDTOs, Long incentiveActivityId) {
-        try {
-            Optional<CDR> cdrOptional = cdrRepo.findById(cdrDTOs.getId());
-            CDR cdr = new CDR();
-            if (cdrOptional.isPresent()) {
-                cdr = cdrOptional.get();
-                if (cdrDTOs.getCdrImage() != null && !cdrDTOs.getCdrImage().isEmpty()) {
-                    cdr.setCdrImage(cdrDTOs.getCdrImage());
-                }
-
-                if (cdrDTOs.getCdrImage2() != null && !cdrDTOs.getCdrImage2().isEmpty()) {
-                    cdr.setCdrImage2(cdrDTOs.getCdrImage2());
-                }
-
-                if (cdrDTOs.getDeathCertImage1() != null && !cdrDTOs.getDeathCertImage1().isEmpty()) {
-                    cdr.setDeathCertImage1(cdrDTOs.getDeathCertImage1());
-                }
-
-                if (cdrDTOs.getDeathCertImage2() != null && !cdrDTOs.getDeathCertImage2().isEmpty()) {
-                    cdr.setDeathCertImage2(cdrDTOs.getDeathCertImage2());
-                }
-            }
-            cdrRepo.save(cdr);
-
-            pendindDocService.updateIncentive(incentiveActivityId);
-
-            return "no of cdr details update: ";
-        } catch (Exception e) {
-            return "error while saving cdr details: " + e.getMessage();
-        }
-    }
 
     @Override
     public String registerMDSR(List<MdsrDTO> mdsrDTOs) {
@@ -141,43 +110,6 @@ public class DeathReportsServiceImpl implements DeathReportsService {
         }
     }
 
-    public String updateMDSR(MdsrDTO mdsrDTO, Long incentiveActivityId) {
-        try {
-
-            Optional<MDSR> mdsrOptional = mdsrRepo.findById(mdsrDTO.getId());
-            MDSR mdsr = new MDSR();
-
-            if (mdsrOptional.isPresent()) {
-
-                mdsr = mdsrOptional.get();
-
-                if (mdsrDTO.getMdsr1File() != null && !mdsrDTO.getMdsr1File().isEmpty()) {
-                    mdsr.setMdsr1File(mdsrDTO.getMdsr1File());
-                }
-
-                if (mdsrDTO.getMdsr2File() != null && !mdsrDTO.getMdsr2File().isEmpty()) {
-                    mdsr.setMdsr2File(mdsrDTO.getMdsr2File());
-                }
-
-                if (mdsrDTO.getMdsrDeathCertFile() != null && !mdsrDTO.getMdsrDeathCertFile().isEmpty()) {
-                    mdsr.setMdsrDeathCertFile(mdsrDTO.getMdsrDeathCertFile());
-                }
-
-            } else {
-                return "MDSR record not found with id: " + mdsrDTO.getId();
-            }
-
-            mdsrRepo.save(mdsr);
-
-            // incentive update
-            pendindDocService.updateIncentive(incentiveActivityId);
-
-            return "MDSR updated successfully for id: " + mdsrDTO.getId();
-
-        } catch (Exception e) {
-            return "error while updating mdsr details: " + e.getMessage();
-        }
-    }
 
     @Override
     public List<CdrDTO> getCdrRecords(GetBenRequestHandler dto) {

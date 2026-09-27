@@ -16,6 +16,7 @@ import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.service.CoupleService;
 import com.iemr.flw.service.UserService;
+import org.joda.time.DateTime;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -75,8 +78,8 @@ public class CoupleServiceImpl implements CoupleService {
             List<EligibleCoupleRegister> ecrList = new ArrayList<>();
             if(!eligibleCoupleDTOs.isEmpty()){
                 for (EligibleCoupleDTO it : eligibleCoupleDTOs) {
-                    Integer userId = userRepo.getUserIdByName(it.getCreatedBy());
-                    Integer stateId = userService.getUserDetail(userId).getStateId();
+                 Integer userId = userRepo.getUserIdByName(it.getCreatedBy());
+                 Integer stateId = userService.getUserDetail(userId).getStateId();
                     EligibleCoupleRegister existingECR =
                             eligibleCoupleRegisterRepo.findEligibleCoupleRegisterByBenId(it.getBenId());
 
@@ -157,16 +160,16 @@ public class CoupleServiceImpl implements CoupleService {
                     if (Boolean.TRUE.equals(existingECR.getIsKitHandedOver())
                             && ((existingECR.getKitPhoto1() != null && !existingECR.getKitPhoto1().isEmpty())
                             || (existingECR.getKitPhoto2() != null && !existingECR.getKitPhoto2().isEmpty()))) {
-                        if(stateId.equals(StateCode.AM.getStateCode())){
-                            IncentiveActivity activity =
-                                    incentivesRepo.findIncentiveMasterByNameAndGroup(
-                                            "FP_NP_KIT",
-                                            GroupName.FAMILY_PLANNING.getDisplayName());
+                         if(stateId.equals(StateCode.AM.getStateCode())){
+                             IncentiveActivity activity =
+                                     incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                             "FP_NP_KIT",
+                                             GroupName.FAMILY_PLANNING.getDisplayName());
 
-                            if (activity != null) {
-                                createIncentiveRecord(existingECR, activity);
-                            }
-                        }
+                             if (activity != null) {
+                                 createIncentiveRecordForKitHandOver(existingECR, activity);
+                             }
+                         }
                         if(stateId.equals(StateCode.CG.getStateCode())){
                             IncentiveActivity activity =
                                     incentivesRepo.findIncentiveMasterByNameAndGroup(
@@ -174,7 +177,7 @@ public class CoupleServiceImpl implements CoupleService {
                                             GroupName.ACTIVITY.getDisplayName());
 
                             if (activity != null) {
-                                createIncentiveRecord(existingECR, activity);
+                                createIncentiveRecordForKitHandOver(existingECR, activity);
                             }
                         }
 
@@ -335,7 +338,7 @@ public class CoupleServiceImpl implements CoupleService {
                     IncentiveActivity handoverKitActivityAM =
                             incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.FAMILY_PLANNING.getDisplayName());
                     if (handoverKitActivityAM != null) {
-                        createIncentiveRecord(eligibleCoupleRegister, handoverKitActivityAM);
+                        createIncentiveRecordForKitHandOver(eligibleCoupleRegister, handoverKitActivityAM);
 
                     }
 
@@ -343,7 +346,7 @@ public class CoupleServiceImpl implements CoupleService {
                     IncentiveActivity handoverKitActivityCH =
                             incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.ACTIVITY.getDisplayName());
                     if (handoverKitActivityCH != null) {
-                        createIncentiveRecord(eligibleCoupleRegister, handoverKitActivityCH);
+                        createIncentiveRecordForKitHandOver(eligibleCoupleRegister, handoverKitActivityCH);
 
                     }
                 }
@@ -378,6 +381,54 @@ public class CoupleServiceImpl implements CoupleService {
                     record.setCreatedBy(eligibleCoupleDTO.getCreatedBy());
                     record.setStartDate(eligibleCoupleDTO.getCreatedDate());
                     record.setEndDate(eligibleCoupleDTO.getCreatedDate());
+                    record.setUpdatedDate(eligibleCoupleDTO.getCreatedDate());
+                    record.setUpdatedBy(eligibleCoupleDTO.getCreatedBy());
+                    record.setBenId(eligibleCoupleDTO.getBenId());
+                    record.setAshaId(userId);
+                    record.setAmount(Long.valueOf(activity.getRate()));
+                    recordRepo.save(record);
+                }
+            }
+        }
+        lockMap.remove(lockKey, lock);
+
+
+
+    }
+
+    private void createIncentiveRecordForKitHandOver(EligibleCoupleRegister eligibleCoupleDTO, IncentiveActivity activity) {
+        String lockKey = activity.getId() + "_" + eligibleCoupleDTO.getBenId() + "_" + eligibleCoupleDTO.getCreatedDate();
+
+        Object lock = lockMap.computeIfAbsent(lockKey, k -> new Object());
+        if (activity == null
+                || eligibleCoupleDTO == null
+                || eligibleCoupleDTO.getKitHandedOverDate() == null
+                || eligibleCoupleDTO.getKitHandedOverDate().trim().isEmpty()) {
+            return;
+        }
+
+        LocalDate kitHandOverDate =
+                LocalDate.parse(eligibleCoupleDTO.getKitHandedOverDate());
+
+        Timestamp kitHandOverTimestamp =
+                Timestamp.valueOf(kitHandOverDate.atStartOfDay());
+        synchronized (lock){
+            if (activity != null) {
+                if(eligibleCoupleDTO.getKitHandedOverDate()!=null && !eligibleCoupleDTO.getKitHandedOverDate().isEmpty()){
+
+                }
+                Integer userId = userRepo.getUserIdByName(eligibleCoupleDTO.getCreatedBy());
+
+                IncentiveActivityRecord record = recordRepo
+                        .findRecordByActivityIdCreatedDateBenId(activity.getId(), kitHandOverTimestamp, eligibleCoupleDTO.getBenId(),userId);
+
+                if (record == null) {
+                    record = new IncentiveActivityRecord();
+                    record.setActivityId(activity.getId());
+                    record.setCreatedDate(kitHandOverTimestamp);
+                    record.setCreatedBy(eligibleCoupleDTO.getCreatedBy());
+                    record.setStartDate(kitHandOverTimestamp);
+                    record.setEndDate(kitHandOverTimestamp);
                     record.setUpdatedDate(eligibleCoupleDTO.getCreatedDate());
                     record.setUpdatedBy(eligibleCoupleDTO.getCreatedBy());
                     record.setBenId(eligibleCoupleDTO.getBenId());
@@ -475,7 +526,7 @@ public class CoupleServiceImpl implements CoupleService {
                 }else  if (ect.getAntraDose().contains("Dose-5")) {
                     IncentiveActivity antaraActivity4 =
                             incentivesRepo.findIncentiveMasterByNameAndGroup("FP_ANC_MPA5", GroupName.FAMILY_PLANNING.getDisplayName());
-
+                    
 
                     if (antaraActivity4 != null) {
                         addIncenticeRecord(ect, userId, antaraActivity4);
@@ -489,29 +540,29 @@ public class CoupleServiceImpl implements CoupleService {
                     addIncenticeRecord(ect, userId, antaraActivity4CH);
                 }
             }
-
-
+            
+             
         } else if (ect.getMethodOfContraception() != null && ect.getMethodOfContraception().equals("MALE STERILIZATION")) {
             if(stateId.equals(StateCode.AM.getStateCode())){
                 IncentiveActivity maleSterilizationActivityAM =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("FP_MALE_STER", "FAMILY PLANNING");
-
+                
                 if (maleSterilizationActivityAM != null) {
                     addIncenticeRecord(ect, userId, maleSterilizationActivityAM);
                 }
-
+                
             }
             if(stateId.equals(StateCode.CG.getStateCode())){
-
+                
                 IncentiveActivity maleSterilizationActivityCH =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("FP_MALE_STER", GroupName.ACTIVITY.getDisplayName());
-
+                
 
                 if (maleSterilizationActivityCH != null) {
                     addIncenticeRecord(ect, userId, maleSterilizationActivityCH);
                 }
             }
-
+            
         } else if (ect.getMethodOfContraception() != null && ect.getMethodOfContraception().equals("FEMALE STERILIZATION")) {
             if(stateId.equals(StateCode.CG.getStateCode())){
                 IncentiveActivity femaleSterilizationActivityCH =
@@ -531,8 +582,8 @@ public class CoupleServiceImpl implements CoupleService {
             }
 
 
-
-
+                
+            
         } else if (ect.getMethodOfContraception() != null && ect.getMethodOfContraception().equals("MiniLap")) {
             if(stateId.equals(StateCode.AM.getStateCode())){
                 IncentiveActivity miniLapActivity =
@@ -541,7 +592,7 @@ public class CoupleServiceImpl implements CoupleService {
                     addIncenticeRecord(ect, userId, miniLapActivity);
                 }
             }
-
+           
         } else if (ect.getMethodOfContraception() != null && ect.getMethodOfContraception().equals("Condom")) {
             if(stateId.equals(StateCode.AM.getStateCode())){
                 IncentiveActivity comdomActivity =
@@ -550,7 +601,7 @@ public class CoupleServiceImpl implements CoupleService {
                     addIncenticeRecord(ect, userId, comdomActivity);
                 }
             }
-
+            
         } else if (ect.getMethodOfContraception() != null && ect.getMethodOfContraception().equals("Copper T (IUCD)")) {
             if(stateId.equals(StateCode.AM.getStateCode())){
                 IncentiveActivity copperTActivity =
@@ -559,7 +610,7 @@ public class CoupleServiceImpl implements CoupleService {
                     addIncenticeRecord(ect, userId, copperTActivity);
                 }
             }
-
+            
         }
         if (ect.getMethodOfContraception() != null && (ect.getMethodOfContraception().contains("POST PARTUM STERILIZATION (PPS WITHIN 7 DAYS OF DELIVERY)") || ect.getMethodOfContraception().contains("MiniLap") || ect.getMethodOfContraception().contains("MALE STERILIZATION") || ect.getMethodOfContraception().contains("FEMALE STERILIZATION"))) {
             if(stateId.equals(StateCode.AM.getStateCode())){
@@ -578,8 +629,8 @@ public class CoupleServiceImpl implements CoupleService {
                     addIncenticeRecord(ect, userId, limitiing2ChildActivityCH);
                 }
             }
-
-
+            
+            
         }
     }
 
