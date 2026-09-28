@@ -95,19 +95,42 @@ public class TBScreeningServiceImpl implements TBScreeningService {
     public String getByUserId(GetBenRequestHandler request) {
         try {
             List<TBScreeningDTO> dtos = new ArrayList<>();
-            List<TBScreening> tbScreeningList = tbScreeningRepo.getByUserId(request.getAshaId());
-            tbScreeningList.forEach(tbScreening -> dtos.add(modelMapper.map(tbScreening, TBScreeningDTO.class)));
-            TBScreeningRequestDTO tbScreeningRequestDTO = new TBScreeningRequestDTO();
-            tbScreeningRequestDTO.setTbScreeningList(dtos);
-            tbScreeningRequestDTO.setUserId(request.getAshaId());
+
+            List<TBScreening> tbScreeningList =
+                    tbScreeningRepo.getByUserId(request.getAshaId());
+
+            for (TBScreening tbScreening : tbScreeningList) {
+                TBScreeningDTO dto =
+                        modelMapper.map(tbScreening, TBScreeningDTO.class);
+
+                // Comma-separated String -> List<Integer>
+                dto.setKeyPopulationRiskFactorIds(
+                        fromRiskFactorIdsCsv(
+                                tbScreening.getKeyPopulationRiskFactorIds()));
+
+                // Comma-separated String -> List<String>
+                dto.setKeyPopulationRiskFactors(
+                        fromRiskFactorsCsv(
+                                tbScreening.getKeyPopulationRiskFactors()));
+
+                dtos.add(dto);
+            }
+
+            TBScreeningRequestDTO response = new TBScreeningRequestDTO();
+            response.setTbScreeningList(dtos);
+            response.setUserId(request.getAshaId());
+
             Gson gson = new GsonBuilder()
-                    .setDateFormat("MMM dd, yyyy h:mm:ss a")  // Set the desired date format
+                    .setDateFormat("MMM dd, yyyy h:mm:ss a")
                     .create();
-            return gson.toJson(tbScreeningRequestDTO);
-        }catch (Exception e){
-            logger.error("TBScreening Exception:"+e.getMessage());
+
+            return gson.toJson(response);
+
+        } catch (Exception e) {
+            logger.error("Failed to retrieve TB screening details", e);
+            throw new IllegalStateException(
+                    "Failed to retrieve TB screening details", e);
         }
-       return null;
     }
 
     @PostConstruct
