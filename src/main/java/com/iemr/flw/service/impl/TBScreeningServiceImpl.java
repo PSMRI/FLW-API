@@ -124,6 +124,13 @@ public class TBScreeningServiceImpl implements TBScreeningService {
                     .setDateFormat("MMM dd, yyyy h:mm:ss a")
                     .create();
 
+
+
+            String responseJson = gson.toJson(response);
+
+            // Print complete response
+            logger.info("TB Screening COMPLETE RESPONSE: {}", responseJson);
+
             return gson.toJson(response);
 
         } catch (Exception e) {
