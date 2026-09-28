@@ -3,6 +3,7 @@ package com.iemr.flw.dto.iemr;
 import lombok.Data;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Data
 public class TBScreeningDTO {
@@ -33,7 +34,6 @@ public class TBScreeningDTO {
 
     // Additional screening fields
     private String riskFactor;
-    private Boolean hivStatus;
     private Boolean fatigue;
     private Boolean chestPain;
     private Boolean shortBreath;
@@ -83,4 +83,9 @@ public class TBScreeningDTO {
     private Integer providerServiceMapId;
     private Integer vanID;
     private Long vanSerialNo;
+    private Integer hivStatusId;
+    private String hivStatus;
+    private List<Integer> keyPopulationRiskFactorIds;
+    private List<String> keyPopulationRiskFactors;
+
 }
