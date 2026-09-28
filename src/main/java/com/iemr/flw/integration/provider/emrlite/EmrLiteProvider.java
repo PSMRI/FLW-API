@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.iemr.flw.domain.iemr.DiagnosticOrder;
+import com.iemr.flw.integration.provider.DiagnosticCancelResult;
 import com.iemr.flw.integration.provider.DiagnosticDocumentAsset;
 import com.iemr.flw.integration.provider.DiagnosticPollResult;
 import com.iemr.flw.integration.provider.DiagnosticProvider;
@@ -59,6 +60,12 @@ public class EmrLiteProvider implements DiagnosticProvider {
 
     @Value("${diagnostic.emrlite.truenat.ping-url}")
     private String truenatPingUrl;
+
+    @Value("${diagnostic.emrlite.xray.cancel-url}")
+    private String xrayCancelUrl;
+
+    @Value("${diagnostic.emrlite.truenat.cancel-url}")
+    private String truenatCancelUrl;
 
     @Autowired
     @Qualifier("emrLiteRestTemplate")
@@ -159,6 +166,34 @@ public class EmrLiteProvider implements DiagnosticProvider {
     }
 
     @Override
+    public DiagnosticCancelResult cancelOrder(DiagnosticOrder order, String reason) throws Exception {
+        EmrLiteCancelRequest request = new EmrLiteCancelRequest(order.getExternalOrderId(), reason);
+        String cancelUrl = DiagnosticOrderType.XRAY_CHEST.name().equals(order.getOrderType())
+                ? xrayCancelUrl : truenatCancelUrl;
+        String responseBody;
+        try {
+            responseBody = doPost(cancelUrl, gson.toJson(request));
+        } catch (HttpStatusCodeException e) {
+            String body = e.getResponseBodyAsString();
+            logger.warn("Provider HTTP error on order cancel: externalOrderId={}, status={}",
+                    order.getExternalOrderId(), e.getStatusCode());
+            return new DiagnosticCancelResult(false, body, "HTTP " + e.getStatusCode());
+        }
+
+        EmrLiteProviderResponse envelope = gson.fromJson(responseBody, EmrLiteProviderResponse.class);
+        if (envelope == null || !envelope.isSuccess()) {
+            logger.warn("Provider rejected order cancel: externalOrderId={}, message={}",
+                    order.getExternalOrderId(), envelope != null ? envelope.getMessage() : null);
+            return new DiagnosticCancelResult(false, responseBody,
+                    envelope != null ? envelope.getMessage() : "empty response");
+        }
+
+        logger.info("Order cancelled on provider: externalOrderId={}, reason={}",
+                order.getExternalOrderId(), reason);
+        return new DiagnosticCancelResult(true, responseBody, null);
+    }
+
+    @Override
     public boolean checkHealth(DiagnosticOrderType orderType) {
         String pingUrl = DiagnosticOrderType.XRAY_CHEST.equals(orderType) ? xrayPingUrl : truenatPingUrl;
         if (pingUrl == null || pingUrl.isBlank()) {
@@ -236,8 +271,8 @@ public class EmrLiteProvider implements DiagnosticProvider {
         DiagnosticOrderStatus topLevelStatus = DiagnosticOrderStatus.fromString(result.getStatus());
         if (topLevelStatus == DiagnosticOrderStatus.COMPLETED || topLevelStatus == DiagnosticOrderStatus.FAILED) {
             // Components contradict a terminal top-level status — only the components map may
-            // resolve to a terminal state; treat this as still in progress.
-            return DiagnosticOrderStatus.IN_PROGRESS;
+            // resolve to a terminal state; treat this as still pending.
+            return DiagnosticOrderStatus.PENDING;
         }
         return topLevelStatus;
     }
