@@ -8,8 +8,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "tb_diagnostic_order", schema = "db_iemr",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"beneficiary_id", "visitCode", "order_type"}))
+@Table(name = "tb_diagnostic_order", schema = "db_iemr")
 @Data
 public class DiagnosticOrder {
 
@@ -53,11 +52,14 @@ public class DiagnosticOrder {
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
-    @Column(name = "reason_for_refusal", columnDefinition = "TEXT")
-    private String reasonForRefusal;
+    @Column(name = "reason_to_close", columnDefinition = "TEXT")
+    private String reasonToClose;
 
     @Column(name = "push_response_json", columnDefinition = "LONGTEXT")
     private String pushResponseJson;
+
+    @Column(name = "cancel_response_json", columnDefinition = "LONGTEXT")
+    private String cancelResponseJson;
 
     @Column(name = "patient_first_name", length = 100)
     private String patientFirstName;
@@ -81,6 +83,9 @@ public class DiagnosticOrder {
 
     @Column(name = "modified_by")
     private String modifiedBy;
+
+    @Column(name = "manually_entered_by")
+    private String manuallyEnteredBy;
 
     @UpdateTimestamp
     @Column(name = "last_mod_date")
