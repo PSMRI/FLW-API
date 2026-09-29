@@ -13,14 +13,16 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
-// Every due order (status PENDING/IN_PROGRESS) is polled on every tick from the moment it's created —
+// Every due order (status PENDING) is polled on every tick from the moment it's created —
 // there is no per-order initial delay or rolling give-up window anymore. A tick is skipped entirely
 // for an order-type family if diagnostic.provider.xray / diagnostic.provider.truenat has no active
 // vendor configured right now (checked live via DiagnosticProviderFactory, not any value stored on the
-// order row). Once a day, expireOutstandingOrders sweeps up everything still PENDING/IN_PROGRESS (for
-// order-type families that do have an active vendor) and marks it EXPIRED.
+// order row). Once a day, expireOutstandingOrders sweeps up everything still PENDING (for
+// order-type families that do have an active vendor) and marks it CLOSED.
 @Service
 public class DiagnosticPollSchedulerService {
 
@@ -67,7 +69,7 @@ public class DiagnosticPollSchedulerService {
         logger.info("Polled {} pending TrueNat diagnostic orders", candidates.size());
     }
 
-    @Scheduled(cron = "${diagnostic.poll.expiry-cron:0 0 18 * * *}")
+    @Scheduled(cron = "${diagnostic.poll.expiry-cron:0 50 23 * * *}")
     public void expireOutstandingOrders() {
         List<DiagnosticOrder> outstanding = diagnosticOrderRepo.findAllOutstandingOrders();
         int expired = 0;
@@ -79,7 +81,7 @@ public class DiagnosticPollSchedulerService {
             expired++;
         }
         if (expired > 0) {
-            logger.warn("Daily polling cutoff reached: marked {} outstanding order(s) EXPIRED", expired);
+            logger.warn("Daily polling cutoff reached: marked {} outstanding order(s) CLOSED", expired);
         }
     }
 
@@ -89,10 +91,14 @@ public class DiagnosticPollSchedulerService {
     }
 
     private void expire(DiagnosticOrder order) {
-        order.setStatus(DiagnosticOrderStatus.EXPIRED.name());
-        order.setErrorMessage("Daily polling cutoff reached without a result");
+        String reason = "Order validity expired for the day " + LocalDate.now(ZoneId.of("Asia/Kolkata"));
+        order.setStatus(DiagnosticOrderStatus.CLOSED.name());
+        order.setReasonToClose(reason);
         order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
+        order.setModifiedBy("SYSTEM");
+        order.setProcessed("N");
         diagnosticOrderRepo.save(order);
+        diagnosticOrderService.notifyProviderOrderClosed(order, reason);
     }
 
     private void pollSingle(DiagnosticOrder order) {
@@ -105,6 +111,8 @@ public class DiagnosticPollSchedulerService {
             order.setRetryCount(order.getRetryCount() + 1);
             order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
             order.setErrorMessage(e.getMessage());
+            order.setModifiedBy("SYSTEM");
+            order.setProcessed("N");
             diagnosticOrderRepo.save(order);
         }
     }

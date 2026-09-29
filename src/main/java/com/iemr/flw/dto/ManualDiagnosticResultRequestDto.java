@@ -1,6 +1,5 @@
 package com.iemr.flw.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,6 +14,7 @@ public class ManualDiagnosticResultRequestDto {
     @NotNull
     private String orderType;
 
-    @NotBlank
     private String resultSummary;
+
+    private String reasonToClose;
 }
