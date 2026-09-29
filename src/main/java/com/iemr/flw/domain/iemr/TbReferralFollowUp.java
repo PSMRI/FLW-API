@@ -33,7 +33,7 @@ public class TbReferralFollowUp {
     @Column(name = "created_date")
     private Timestamp createdDate;
 
-    @Column(name = "created_date")
+    @Column(name = "updated_date")
     private Timestamp updatedDate;
 
     @Column(name = "created_by")
