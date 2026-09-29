@@ -225,4 +225,11 @@ public class ScreeningLeprosy {
 
     @Column(name = "LastModDate")
     private Timestamp lastModDate;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

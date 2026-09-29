@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigInteger;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 
 @Entity
@@ -34,4 +35,10 @@ public class IRSRound {
     @Column(name = "user_id")
     private Integer userId;
 
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

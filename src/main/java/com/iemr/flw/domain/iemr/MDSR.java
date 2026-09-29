@@ -63,4 +63,11 @@ public class MDSR {
 
     @Column(name = "mdsr_death_cert_file")
     private String mdsrDeathCertFile;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

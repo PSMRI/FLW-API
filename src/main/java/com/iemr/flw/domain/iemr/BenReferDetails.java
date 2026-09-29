@@ -126,6 +126,7 @@ public class BenReferDetails {
 	private String syncedBy;
 
 	@Expose
+	@org.hibernate.annotations.CreationTimestamp
 	@Column(name = "SyncedDate")
 	private Timestamp syncedDate;
 

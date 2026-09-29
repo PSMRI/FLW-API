@@ -60,4 +60,11 @@ public class MdaDistributionData {
 
     @Column(name = "AshaId")
     private Integer ashaId;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

@@ -55,4 +55,11 @@ public class PregnantWomanHighRiskAssess {
 
     @Column(name = "is_high_risk")
     private Boolean isHighRisk;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }
