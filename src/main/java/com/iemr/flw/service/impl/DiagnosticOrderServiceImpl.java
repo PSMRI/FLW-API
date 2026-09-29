@@ -92,19 +92,17 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     @Override
     public DiagnosticOrder createAndPushOrderByUser(DiagnosticOrderRequestDto request, String jwtToken) throws Exception {
-        return createAndPushOrder(request, resolveActingUserFirstName(jwtToken));
+        return createAndPushOrder(request, resolveActingUserName(jwtToken));
     }
 
-    // The acting user's m_user.FirstName is what gets stored in createdBy/modifiedBy/manuallyEnteredBy.
-    // Falls back to the JWT username if the user can't be resolved, so a lookup miss never blocks the flow.
-    private String resolveActingUserFirstName(String jwtToken) {
+    private String resolveActingUserName(String jwtToken) {
         try {
             User user = employeeMasterRepo.findUserByUserID(jwtUtil.extractUserId(jwtToken));
-            if (user != null && user.getFirstName() != null && !user.getFirstName().isBlank()) {
-                return user.getFirstName();
+            if (user != null && user.getUserName() != null && !user.getUserName().isBlank()) {
+                return user.getUserName();
             }
         } catch (Exception e) {
-            logger.warn("Could not resolve acting user's first name from m_user: {}", e.getMessage());
+            logger.warn("Could not resolve acting user's username from m_user: {}", e.getMessage());
         }
         return jwtUtil.extractUsername(jwtToken);
     }
@@ -362,10 +360,6 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         return processResult(order, pollResult, false, "SYSTEM");
     }
 
-    // writeBackWhenClosed: a manually submitted invalid result closes the order but its result is
-    // still written back to tb_suspected, same as a COMPLETED one.
-    // actingUser: stored as createdBy/modifiedBy — "SYSTEM" for vendor polls, the user's first
-    // name for a manually submitted result.
     private DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult pollResult,
             boolean writeBackWhenClosed, String actingUser) throws Exception {
         Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId());
@@ -649,7 +643,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             throw new IllegalArgumentException("Exactly one of resultSummary or reasonToClose must be provided");
         }
 
-        String actingUserName = resolveActingUserFirstName(jwtToken);
+        String actingUserName = resolveActingUserName(jwtToken);
 
         if (hasReasonToClose) {
             DiagnosticOrderType orderType = DiagnosticOrderType.fromCode(request.getOrderType());
