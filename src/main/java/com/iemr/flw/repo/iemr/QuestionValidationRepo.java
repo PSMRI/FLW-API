@@ -47,8 +47,10 @@ public interface QuestionValidationRepo extends JpaRepository<QuestionValidation
     /**
      * Loads all validations for a set of questions in one query.
      * JOIN FETCH ensures sectionQuestion is hydrated so callers can group by questionId without extra queries.
+     * Excludes removed (isActive=false) validations — used only by read paths; reconciliation matching
+     * uses the natural-key finder above, which must see inactive rows too.
      */
     @Query("SELECT v FROM QuestionValidation v JOIN FETCH v.sectionQuestion "
-            + "WHERE v.sectionQuestion.questionId IN :questionIds")
+            + "WHERE v.sectionQuestion.questionId IN :questionIds AND v.isActive = true")
     List<QuestionValidation> findByQuestionIds(@Param("questionIds") Collection<Long> questionIds);
 }

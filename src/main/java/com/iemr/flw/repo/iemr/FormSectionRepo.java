@@ -42,12 +42,15 @@ public interface FormSectionRepo extends JpaRepository<FormSection, Long> {
 
     List<FormSection> findByFormVersion_VersionIdOrderByDisplayOrderAsc(Long versionId);
 
+    /** Read-path variant excluding removed (isActive=false) sections. */
+    List<FormSection> findByFormVersion_VersionIdAndIsActiveTrueOrderByDisplayOrderAsc(Long versionId);
+
     Optional<FormSection> findByFormVersion_VersionIdAndSectionUuid(Long versionId, String sectionUuid);
 
     Optional<FormSection> findTopByFormVersion_VersionIdOrderByDisplayOrderDesc(Long versionId);
 
     /** Shifts displayOrder by delta for every section in [from, to] within a version — used to make room for/close a gap around an inserted or moved sibling. */
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE FormSection s SET s.displayOrder = s.displayOrder + :delta " +
            "WHERE s.formVersion.versionId = :versionId AND s.displayOrder BETWEEN :from AND :to")
     void shiftDisplayOrder(@Param("versionId") Long versionId, @Param("from") int from,
