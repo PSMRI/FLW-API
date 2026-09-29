@@ -95,6 +95,7 @@ public class DiagnosticPollSchedulerService {
         order.setStatus(DiagnosticOrderStatus.CLOSED.name());
         order.setReasonToClose(reason);
         order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
+        order.setModifiedBy("SYSTEM");
         order.setProcessed("N");
         diagnosticOrderRepo.save(order);
         diagnosticOrderService.notifyProviderOrderClosed(order, reason);
@@ -110,6 +111,7 @@ public class DiagnosticPollSchedulerService {
             order.setRetryCount(order.getRetryCount() + 1);
             order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
             order.setErrorMessage(e.getMessage());
+            order.setModifiedBy("SYSTEM");
             order.setProcessed("N");
             diagnosticOrderRepo.save(order);
         }
