@@ -8,7 +8,7 @@ import java.lang.reflect.Type;
 import java.sql.Timestamp;
 
 @Data
-@Table(schema = "tb_referral_follow_up")
+@Table(name = "tb_referral_follow_up",schema = "db_iemr")
 public class TbReferralFollowUp {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
