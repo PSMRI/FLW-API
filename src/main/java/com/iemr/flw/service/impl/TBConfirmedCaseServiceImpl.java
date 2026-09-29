@@ -2,14 +2,13 @@ package com.iemr.flw.service.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.iemr.flw.domain.iemr.DynamicForm;
-import com.iemr.flw.domain.iemr.TBConfirmedCaseDTO;
-import com.iemr.flw.domain.iemr.TBConfirmedCase;
-import com.iemr.flw.domain.iemr.BenVisitDetail;
+import com.iemr.flw.domain.iemr.*;
+import com.iemr.flw.dto.iemr.TbReferralFollowUpDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.DynamicFormRepo;
 import com.iemr.flw.repo.iemr.FormResponseRepo;
 import com.iemr.flw.repo.iemr.TBConfirmedTreatmentRepository;
+import com.iemr.flw.repo.iemr.TbReferralFollowUpRepo;
 import com.iemr.flw.seeder.TbCounsellingV2FormSeeder;
 import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.CampConfigService;
@@ -25,12 +24,8 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,6 +51,9 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
+
+    @Autowired
+    private TbReferralFollowUpRepo tbReferralFollowUpRepo;
 
     public TBConfirmedCaseServiceImpl(TBConfirmedTreatmentRepository repository,
                                       FormResponseRepo formResponseRepo,
@@ -202,6 +200,108 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
     public String getByProviderServiceMapId(Integer providerServiceMapID, Integer villageID) throws Exception {
         List<TBConfirmedCase> list = repository.getByProviderServiceMapIdAndVillageId(providerServiceMapID, villageID);
         return buildTbConfirmedCasesResponse(null, list);
+    }
+
+    @Override
+    public String saveReferralFollowUp(TbReferralFollowUpDTO requestDTO, String token) {
+        OutputResponse response = new OutputResponse();
+
+        try {
+
+            TbReferralFollowUp tbReferralFollowUp = new TbReferralFollowUp();
+
+            if(!token.isEmpty() && token!=null && requestDTO!=null){
+                String userName = jwtUtil.extractUsername(token);
+                Integer userId = jwtUtil.extractUserId(token);
+                tbReferralFollowUp.setBenId(requestDTO.getBenId());
+                tbReferralFollowUp.setHouseHoldId(requestDTO.getHouseHoldId());
+                tbReferralFollowUp.setSyncedBy(userName);
+                tbReferralFollowUp.setCreatedBy(userName);
+                tbReferralFollowUp.setUserId(userId);
+                if(requestDTO.getFields().getReferredOnDate()!=null && !requestDTO.getFields().getFollowUpDate().isEmpty()){
+                    Timestamp referOnDate = Timestamp.valueOf(requestDTO.getFields().getReferredOnDate());
+                    tbReferralFollowUp.setFollowUpDate(referOnDate);
+
+                }
+
+                if(requestDTO.getFields().getFollowUpDate()!=null && !requestDTO.getFields().getFollowUpDate().isEmpty()){
+                    Timestamp followUpDate = Timestamp.valueOf(requestDTO.getFields().getFollowUpDate());
+                    tbReferralFollowUp.setFollowUpDate(followUpDate);
+
+                }
+                tbReferralFollowUp.setFollowUpStatus(requestDTO.getFields().getFollowUpStatus());
+            }
+
+            tbReferralFollowUpRepo.save(tbReferralFollowUp);
+            response.setResponse("TB Referral follow up saved successfully");
+
+
+
+        }catch (Exception e){
+            response.setError(500,e.getMessage());
+            return response.toString();
+        }
+
+
+        return  response.toString();
+    }
+
+    @Override
+    public String getReferralFollowUp(String token) {
+        OutputResponse response = new OutputResponse();
+
+        try {
+
+            List<TbReferralFollowUpDTO> tbReferralFollowUpDTOS = new ArrayList<>();
+
+            if (token != null && !token.isEmpty()) {
+
+                Integer userId = jwtUtil.extractUserId(token);
+
+                List<TbReferralFollowUp> tbReferralFollowUps =
+                        tbReferralFollowUpRepo.findByUserId(userId);
+
+                DateTimeFormatter formatter =
+                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                for (TbReferralFollowUp referral : tbReferralFollowUps) {
+
+                    TbReferralFollowUpDTO dto = new TbReferralFollowUpDTO();
+
+                    dto.setBenId(referral.getBenId());
+                    dto.setHouseHoldId(referral.getHouseHoldId());
+
+                    if (referral.getReferredOnDate() != null) {
+                        dto.getFields().setReferredOnDate(
+                                referral.getReferredOnDate()
+                                        .toLocalDateTime()
+                                        .format(formatter)
+                        );
+                    }
+
+                    if (referral.getFollowUpDate() != null) {
+                        dto.getFields().setFollowUpDate(
+                                referral.getFollowUpDate()
+                                        .toLocalDateTime()
+                                        .format(formatter)
+                        );
+                    }
+
+                    dto.getFields().setFollowUpStatus(referral.getFollowUpStatus());
+
+                    tbReferralFollowUpDTOS.add(dto);
+                }
+
+                response.setResponse(tbReferralFollowUpDTOS.toString());
+
+            }
+
+        } catch (Exception e) {
+            response.setError(500,e.getMessage());
+            return response.toString();
+        }
+
+        return response.toString();
     }
 
     private String buildTbConfirmedCasesResponse(Integer userId, List<TBConfirmedCase> list) {

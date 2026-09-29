@@ -1,6 +1,7 @@
 package com.iemr.flw.service;
 
 import com.iemr.flw.domain.iemr.TBConfirmedCaseDTO;
+import com.iemr.flw.dto.iemr.TbReferralFollowUpDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,4 +16,8 @@ public interface TBConfirmedCaseService {
     String getByUserId(String authorisation) throws Exception;
 
     String getByProviderServiceMapId(Integer providerServiceMapID, Integer villageID) throws Exception;
+
+    String saveReferralFollowUp(TbReferralFollowUpDTO requestDTO, String token);
+
+    String getReferralFollowUp(String token);
 }
