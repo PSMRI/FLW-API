@@ -1,9 +1,11 @@
 package com.iemr.flw.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.iemr.TbReferralFollowUpDTO;
+import com.iemr.flw.dto.iemr.TbReferralFollowUpListDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.DynamicFormRepo;
 import com.iemr.flw.repo.iemr.FormResponseRepo;
@@ -251,54 +253,64 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         OutputResponse response = new OutputResponse();
 
         try {
-
-            List<TbReferralFollowUpDTO> tbReferralFollowUpDTOS = new ArrayList<>();
-
-            if (token != null && !token.isEmpty()) {
-
-                Integer userId = jwtUtil.extractUserId(token);
-
-                List<TbReferralFollowUp> tbReferralFollowUps =
-                        tbReferralFollowUpRepo.findByUserId(userId);
-
-                DateTimeFormatter formatter =
-                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-                for (TbReferralFollowUp referral : tbReferralFollowUps) {
-
-                    TbReferralFollowUpDTO dto = new TbReferralFollowUpDTO();
-
-                    dto.setBenId(referral.getBenId());
-                    dto.setHouseHoldId(referral.getHouseHoldId());
-
-                    if (referral.getReferredOnDate() != null) {
-                        dto.getFields().setReferredOnDate(
-                                referral.getReferredOnDate()
-                                        .toLocalDateTime()
-                                        .format(formatter)
-                        );
-                    }
-
-                    if (referral.getFollowUpDate() != null) {
-                        dto.getFields().setFollowUpDate(
-                                referral.getFollowUpDate()
-                                        .toLocalDateTime()
-                                        .format(formatter)
-                        );
-                    }
-
-                    dto.getFields().setFollowUpStatus(referral.getFollowUpStatus());
-
-                    tbReferralFollowUpDTOS.add(dto);
-                }
-
-                response.setResponse(tbReferralFollowUpDTOS.toString());
-
+            if (token == null || token.trim().isEmpty()) {
+                response.setError(400, "Token is required");
+                return response.toString();
             }
 
+            Integer userId = jwtUtil.extractUserId(token);
+
+            List<TbReferralFollowUp> referrals =
+                    tbReferralFollowUpRepo.findByUserId(userId);
+
+            List<TbReferralFollowUpDTO> referralDTOs = new ArrayList<>();
+
+            DateTimeFormatter formatter =
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+            for (TbReferralFollowUp referral : referrals) {
+
+                TbReferralFollowUpDTO dto = new TbReferralFollowUpDTO();
+                dto.setBenId(referral.getBenId());
+                dto.setUserId(referral.getUserId());
+                dto.setHouseHoldId(referral.getHouseHoldId());
+
+                // Initialize nested DTO before setting fields
+                TbReferralFollowUpListDTO fields =
+                        new TbReferralFollowUpListDTO();
+
+                if (referral.getReferredOnDate() != null) {
+                    fields.setReferredOnDate(
+                            referral.getReferredOnDate()
+                                    .toLocalDateTime()
+                                    .format(formatter)
+                    );
+                }
+
+                if (referral.getFollowUpDate() != null) {
+                    fields.setFollowUpDate(
+                            referral.getFollowUpDate()
+                                    .toLocalDateTime()
+                                    .format(formatter)
+                    );
+                }
+
+                fields.setFollowUpStatus(referral.getFollowUpStatus());
+
+                dto.setFields(fields);
+                referralDTOs.add(dto);
+            }
+
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            response.setResponse(
+                    objectMapper.writeValueAsString(referralDTOs)
+            );
+
         } catch (Exception e) {
-            response.setError(500,e.getMessage());
-            return response.toString();
+            // Replace with your project's logger if available
+            e.printStackTrace();
+            response.setError(500, "Failed to fetch referral follow-up: " + e.getMessage());
         }
 
         return response.toString();

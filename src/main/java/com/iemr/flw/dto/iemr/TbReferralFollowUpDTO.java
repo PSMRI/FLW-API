@@ -8,6 +8,7 @@ import java.util.List;
 @Data
 public class TbReferralFollowUpDTO {
     private Long benId;
+    private Integer userId;
     private Long houseHoldId;
     TbReferralFollowUpListDTO fields;
 }
