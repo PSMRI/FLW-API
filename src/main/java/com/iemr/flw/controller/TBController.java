@@ -258,7 +258,7 @@ public class TBController {
 
 
 
-    @Operation(summary = "save tb referral follow up")
+    @Operation(summary = "save tb tpt follow up")
     @RequestMapping(value = { "/tptFollowUp/save" }, method = { RequestMethod.POST })
     public String savTptFollowUp(
             @RequestBody TbTptFollowUpDTO requestDTO,
@@ -284,7 +284,7 @@ public class TBController {
                 response.setError(500, "Invalid/NULL request obj");
             }
         } catch (Exception e) {
-            logger.error("Error in save tb referral follow up details : ", e);
+            logger.error("Error in save tb tpt follow up details : ", e);
             response.setError(500, "Error in save referral follow up details : " + e.getMessage());
         }
 
@@ -292,7 +292,7 @@ public class TBController {
     }
 
 
-    @Operation(summary = "save tb referral follow up")
+    @Operation(summary = "save tb tpt follow up")
     @RequestMapping(value = { "/tptFollowUp/getAll" }, method = { RequestMethod.POST })
     public String getTptFollowUp(
             @RequestHeader(value = "jwtToken") String token) {
@@ -317,7 +317,7 @@ public class TBController {
                 response.setError(500, "Invalid/NULL request obj");
             }
         } catch (Exception e) {
-            logger.error("Error in save tb referral follow up details : ", e);
+            logger.error("Error in save tb tpt follow up details : ", e);
             response.setError(500, "Error in save referral follow up details : " + e.getMessage());
         }
 
