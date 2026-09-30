@@ -57,8 +57,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             DiagnosticOrderStatus.FAILED.name(),
             DiagnosticOrderStatus.CLOSED.name());
 
+    // Invalid test outcomes: the result is still recorded (result row, tb_suspected write-back, documents)
+    // but the order is CLOSED instead of COMPLETED, so a retest can be pushed. The vendor reports an
+    // invalid MTB/MDR_RIF run as "Error-2"; a manual entry uses "Invalid/Error".
     private static final String XRAY_INVALID_RESULT = "AI Invalid Result";
-    private static final String SPUTUM_INVALID_RESULT = "Invalid/Error";
+    private static final String SPUTUM_INVALID_POLLED_RESULT = "Error-2";
+    private static final String SPUTUM_INVALID_MANUAL_RESULT = "Invalid/Error";
 
     @Autowired
     private DiagnosticOrderRepo diagnosticOrderRepo;
@@ -92,19 +96,17 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     @Override
     public DiagnosticOrder createAndPushOrderByUser(DiagnosticOrderRequestDto request, String jwtToken) throws Exception {
-        return createAndPushOrder(request, resolveActingUserFirstName(jwtToken));
+        return createAndPushOrder(request, resolveActingUserName(jwtToken));
     }
 
-    // The acting user's m_user.FirstName is what gets stored in createdBy/modifiedBy/manuallyEnteredBy.
-    // Falls back to the JWT username if the user can't be resolved, so a lookup miss never blocks the flow.
-    private String resolveActingUserFirstName(String jwtToken) {
+    private String resolveActingUserName(String jwtToken) {
         try {
             User user = employeeMasterRepo.findUserByUserID(jwtUtil.extractUserId(jwtToken));
-            if (user != null && user.getFirstName() != null && !user.getFirstName().isBlank()) {
-                return user.getFirstName();
+            if (user != null && user.getUserName() != null && !user.getUserName().isBlank()) {
+                return user.getUserName();
             }
         } catch (Exception e) {
-            logger.warn("Could not resolve acting user's first name from m_user: {}", e.getMessage());
+            logger.warn("Could not resolve acting user's username from m_user: {}", e.getMessage());
         }
         return jwtUtil.extractUsername(jwtToken);
     }
@@ -215,6 +217,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             return order;
         }
 
+        return pushToProvider(order, providerCode);
+    }
+
+    // Pushes an already-saved PENDING order to the vendor and saves the outcome — FAILED (with the
+    // error) if the push is rejected or throws. Shared by createAndPushOrder and pushRetestOrder.
+    private DiagnosticOrder pushToProvider(DiagnosticOrder order, String providerCode) {
         try {
             DiagnosticProvider provider = providerFactory.getProvider(providerCode);
             DiagnosticPushResult pushResult = provider.pushOrder(order);
@@ -362,10 +370,6 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         return processResult(order, pollResult, false, "SYSTEM");
     }
 
-    // writeBackWhenClosed: a manually submitted invalid result closes the order but its result is
-    // still written back to tb_suspected, same as a COMPLETED one.
-    // actingUser: stored as createdBy/modifiedBy — "SYSTEM" for vendor polls, the user's first
-    // name for a manually submitted result.
     private DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult pollResult,
             boolean writeBackWhenClosed, String actingUser) throws Exception {
         Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId());
@@ -494,9 +498,16 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
         DiagnosticPollResult result = provider.pollResult(order, false);
         if (DiagnosticOrderStatus.COMPLETED.equals(result.getStatus())) {
-            // Save as COMPLETED now, without assets, so a failure fetching/ingesting assets below
-            // doesn't also lose the already-confirmed completed status (see pollSingle's catch).
-            processResult(order, result);
+            // Save as COMPLETED (or CLOSED for an invalid outcome) now, without assets, so a failure
+            // fetching/ingesting assets below doesn't also lose the already-confirmed status (see
+            // pollSingle's catch).
+            boolean invalid = closeIfInvalidPolledResult(order, result);
+            processResult(order, result, invalid, "SYSTEM");
+            if (invalid) {
+                // Before the asset fetch below: if that throws, this CLOSED order is never polled
+                // again, so the retest must already exist by then.
+                pushRetestOrder(order);
+            }
             result = provider.pollResult(order, true);
             // Only ingest the documents this time — the result/order fields were already saved above
             // and this second, asset-bearing response carries the same status/summary, so re-saving
@@ -533,7 +544,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         DiagnosticOrder order = resolveOrder(beneficiaryId, orderType, visitCode);
         DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
         DiagnosticPollResult pollResult = provider.pollResult(order, true);
-        return processResult(order, pollResult);
+        boolean invalid = closeIfInvalidPolledResult(order, pollResult);
+        return processResult(order, pollResult, invalid, "SYSTEM");
     }
 
     @Override
@@ -649,7 +661,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             throw new IllegalArgumentException("Exactly one of resultSummary or reasonToClose must be provided");
         }
 
-        String actingUserName = resolveActingUserFirstName(jwtToken);
+        String actingUserName = resolveActingUserName(jwtToken);
 
         if (hasReasonToClose) {
             DiagnosticOrderType orderType = DiagnosticOrderType.fromCode(request.getOrderType());
@@ -666,7 +678,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         order.setManuallyEnteredBy(actingUserName);
         // An invalid test outcome is still recorded exactly like a normal result (result row +
         // tb_suspected write-back), but the order is CLOSED rather than COMPLETED.
-        DiagnosticOrderStatus status = isInvalidResult(order.getOrderType(), request.getResultSummary())
+        DiagnosticOrderStatus status = isInvalidResult(order.getOrderType(), request.getResultSummary(),
+                SPUTUM_INVALID_MANUAL_RESULT)
                 ? DiagnosticOrderStatus.CLOSED
                 : DiagnosticOrderStatus.COMPLETED;
         DiagnosticPollResult pollResult = new DiagnosticPollResult(
@@ -674,14 +687,64 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         return processResult(order, pollResult, true, actingUserName);
     }
 
-    private static boolean isInvalidResult(String orderTypeCode, String resultSummary) {
+    // sputumInvalidResult differs by source: SPUTUM_INVALID_POLLED_RESULT for vendor polls,
+    // SPUTUM_INVALID_MANUAL_RESULT for manual entry. The X-ray value is the same for both.
+    private static boolean isInvalidResult(String orderTypeCode, String resultSummary, String sputumInvalidResult) {
+        if (resultSummary == null) {
+            return false;
+        }
         String summary = resultSummary.trim();
         DiagnosticOrderType type = DiagnosticOrderType.fromCode(orderTypeCode);
         if (type == DiagnosticOrderType.XRAY_CHEST) {
             return XRAY_INVALID_RESULT.equalsIgnoreCase(summary);
         }
         if (type == DiagnosticOrderType.MTB || type == DiagnosticOrderType.MDR_RIF) {
-            return SPUTUM_INVALID_RESULT.equalsIgnoreCase(summary);
+            return sputumInvalidResult.equalsIgnoreCase(summary);
+        }
+        return false;
+    }
+
+    // Automatic retest after a polled invalid outcome: a brand new PENDING row copying the closed
+    // order's beneficiary, visit, vendor and patient details, with only a fresh externalOrderId,
+    // pushed to the vendor straight away. Never throws — a failure here must not undo the close.
+    private void pushRetestOrder(DiagnosticOrder closed) {
+        try {
+            DiagnosticOrder retest = new DiagnosticOrder();
+            retest.setVanID(closed.getVanID());
+            retest.setParkingPlaceID(closed.getParkingPlaceID());
+            retest.setOrderEvent(closed.getOrderEvent());
+            retest.setBeneficiaryId(closed.getBeneficiaryId());
+            retest.setVisitCode(closed.getVisitCode());
+            retest.setProviderServiceName(closed.getProviderServiceName());
+            retest.setProviderCode(closed.getProviderCode());
+            retest.setOrderType(closed.getOrderType());
+            retest.setExternalOrderId(String.format("%s-%d-%s", UUID.randomUUID(), closed.getVisitCode(),
+                    closed.getOrderType()));
+            retest.setStatus(DiagnosticOrderStatus.PENDING.name());
+            retest.setPatientFirstName(closed.getPatientFirstName());
+            retest.setPatientLastName(closed.getPatientLastName());
+            retest.setPatientDateOfBirth(closed.getPatientDateOfBirth());
+            retest.setPatientSex(closed.getPatientSex());
+            retest.setCreatedBy("SYSTEM");
+            retest.setModifiedBy("SYSTEM");
+            retest = diagnosticOrderRepo.save(retest);
+            retest = pushToProvider(retest, closed.getProviderCode());
+            logger.info("Retest order created after invalid result: closedOrderId={}, retestOrderId={}, "
+                    + "externalOrderId={}, status={}", closed.getId(), retest.getId(), retest.getExternalOrderId(),
+                    retest.getStatus());
+        } catch (Exception e) {
+            logger.error("Failed to create retest order after invalid result, closedOrderId={}: {}",
+                    closed.getId(), e.getMessage());
+        }
+    }
+
+    // A vendor poll that COMPLETED with an invalid outcome is downgraded to CLOSED in place.
+    // Returns true when that happened, so the caller still writes the result back to tb_suspected.
+    private static boolean closeIfInvalidPolledResult(DiagnosticOrder order, DiagnosticPollResult result) {
+        if (DiagnosticOrderStatus.COMPLETED.equals(result.getStatus())
+                && isInvalidResult(order.getOrderType(), result.getResultSummary(), SPUTUM_INVALID_POLLED_RESULT)) {
+            result.setStatus(DiagnosticOrderStatus.CLOSED);
+            return true;
         }
         return false;
     }
