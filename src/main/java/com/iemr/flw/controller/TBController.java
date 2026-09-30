@@ -285,7 +285,7 @@ public class TBController {
             }
         } catch (Exception e) {
             logger.error("Error in save tb tpt follow up details : ", e);
-            response.setError(500, "Error in save referral follow up details : " + e.getMessage());
+            response.setError(500, "Error in save tpt follow up details : " + e.getMessage());
         }
 
         return response.toString();
@@ -318,7 +318,7 @@ public class TBController {
             }
         } catch (Exception e) {
             logger.error("Error in save tb tpt follow up details : ", e);
-            response.setError(500, "Error in save referral follow up details : " + e.getMessage());
+            response.setError(500, "Error in save tpt follow up details : " + e.getMessage());
         }
 
         return response.toString();
