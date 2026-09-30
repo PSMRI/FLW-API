@@ -7,6 +7,7 @@ import com.iemr.flw.service.IRSRoundService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,7 +27,7 @@ public class IRSRoundServiceImpl implements IRSRoundService {
         }
         return irsRoundRepository.saveAll(
                 dtos.stream()
-                        .map(dto -> new IRSRound(null, dto.getDate(), dto.getRounds(), dto.getHouseholdId(),userName,userId))
+                        .map(dto -> new IRSRound(null, dto.getDate(), dto.getRounds(), dto.getHouseholdId(),userName,userId ,userName,getCurrentTimestamp()))
                         .collect(Collectors.toList())
         );
     }
@@ -34,5 +35,9 @@ public class IRSRoundServiceImpl implements IRSRoundService {
     @Override
     public List<IRSRound> getRounds(Long householdId) {
         return irsRoundRepository.findByHouseholdId(householdId);
+    }
+
+    private Timestamp getCurrentTimestamp() {
+        return new Timestamp(System.currentTimeMillis());
     }
 }

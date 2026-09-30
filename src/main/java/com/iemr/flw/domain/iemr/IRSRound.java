@@ -40,5 +40,5 @@ public class IRSRound {
 
     @org.hibernate.annotations.CreationTimestamp
     @Column(name = "synced_date")
-    private Timestamp syncedDate;
+    private Timestamp syncedDate = null;
 }
