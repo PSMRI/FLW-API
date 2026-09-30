@@ -2,10 +2,7 @@ package com.iemr.flw.controller;
 
 import com.iemr.flw.domain.iemr.TBConfirmedCaseDTO;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
-import com.iemr.flw.dto.iemr.TBConfirmedRequestDTO;
-import com.iemr.flw.dto.iemr.TBScreeningRequestDTO;
-import com.iemr.flw.dto.iemr.TBSuspectedRequestDTO;
-import com.iemr.flw.dto.iemr.TbReferralFollowUpDTO;
+import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.TBConfirmedCaseService;
 import com.iemr.flw.service.TBScreeningService;
 import com.iemr.flw.service.TBSuspectedService;
@@ -242,6 +239,74 @@ public class TBController {
                         + token);
 
                 String result = tbConfirmedCaseService.getReferralFollowUp(token);
+
+                if (result != null)
+                    response.setResponse(result);
+                else
+                    response.setError(500, "No record saved");
+
+            } else {
+                response.setError(500, "Invalid/NULL request obj");
+            }
+        } catch (Exception e) {
+            logger.error("Error in save tb referral follow up details : ", e);
+            response.setError(500, "Error in save referral follow up details : " + e.getMessage());
+        }
+
+        return response.toString();
+    }
+
+
+
+    @Operation(summary = "save tb referral follow up")
+    @RequestMapping(value = { "/tptFollowUp/save" }, method = { RequestMethod.POST })
+    public String savTptFollowUp(
+            @RequestBody TbTptFollowUpDTO requestDTO,
+            @RequestHeader(value = "jwtToken") String token) {
+
+        OutputResponse response = new OutputResponse();
+
+        try {
+            if (requestDTO != null) {
+
+                logger.info("request object with timestamp : "
+                        + new Timestamp(System.currentTimeMillis()) + " "
+                        + requestDTO);
+
+                String result = tbConfirmedCaseService.saveTptFollowUp(requestDTO, token);
+
+                if (result != null)
+                    response.setResponse(result);
+                else
+                    response.setError(500, "No record saved");
+
+            } else {
+                response.setError(500, "Invalid/NULL request obj");
+            }
+        } catch (Exception e) {
+            logger.error("Error in save tb referral follow up details : ", e);
+            response.setError(500, "Error in save referral follow up details : " + e.getMessage());
+        }
+
+        return response.toString();
+    }
+
+
+    @Operation(summary = "save tb referral follow up")
+    @RequestMapping(value = { "/tptFollowUp/getAll" }, method = { RequestMethod.POST })
+    public String getTptFollowUp(
+            @RequestHeader(value = "jwtToken") String token) {
+
+        OutputResponse response = new OutputResponse();
+
+        try {
+            if (token != null) {
+
+                logger.info("request object with timestamp : "
+                        + new Timestamp(System.currentTimeMillis()) + " "
+                        + token);
+
+                String result = tbConfirmedCaseService.getTptFollowUp(token);
 
                 if (result != null)
                     response.setResponse(result);

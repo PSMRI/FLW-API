@@ -6,11 +6,10 @@ import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.iemr.TbReferralFollowUpDTO;
 import com.iemr.flw.dto.iemr.TbReferralFollowUpListDTO;
+import com.iemr.flw.dto.iemr.TbTptFollowUpDTO;
+import com.iemr.flw.dto.iemr.TbTptFollowUpListDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
-import com.iemr.flw.repo.iemr.DynamicFormRepo;
-import com.iemr.flw.repo.iemr.FormResponseRepo;
-import com.iemr.flw.repo.iemr.TBConfirmedTreatmentRepository;
-import com.iemr.flw.repo.iemr.TbReferralFollowUpRepo;
+import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.seeder.TbCounsellingV2FormSeeder;
 import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.CampConfigService;
@@ -57,6 +56,8 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
     @Autowired
     private TbReferralFollowUpRepo tbReferralFollowUpRepo;
 
+    @Autowired
+    private TbTptFollowUpRepo tbTptFollowUpRepo;
     public TBConfirmedCaseServiceImpl(TBConfirmedTreatmentRepository repository,
                                       FormResponseRepo formResponseRepo,
                                       DynamicFormRepo dynamicFormRepo) {
@@ -218,6 +219,7 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                 tbReferralFollowUp.setBenId(requestDTO.getBenId());
                 tbReferralFollowUp.setHouseHoldId(requestDTO.getHouseHoldId());
                 tbReferralFollowUp.setSyncedBy(userName);
+                tbReferralFollowUp.setUpdatedBy(userName);
                 tbReferralFollowUp.setCreatedBy(userName);
                 tbReferralFollowUp.setUserId(userId);
                 if(requestDTO.getFields().getReferredOnDate()!=null && !requestDTO.getFields().getFollowUpDate().isEmpty()){
@@ -316,6 +318,261 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         return response.toString();
     }
 
+    @Override
+    public String saveTptFollowUp(TbTptFollowUpDTO requestDTO, String token) {
+
+        OutputResponse response = new OutputResponse();
+
+        try {
+
+            TbTptFollowUp tbTptFollowUp = new TbTptFollowUp();
+
+            if (token != null && !token.isEmpty() && requestDTO != null) {
+
+                String userName = jwtUtil.extractUsername(token);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                tbTptFollowUp.setBenId(requestDTO.getBenId());
+                tbTptFollowUp.setUserId(userId);
+
+                tbTptFollowUp.setCreatedBy(userName);
+                tbTptFollowUp.setUpdatedBy(userName);
+
+                if (requestDTO.getFields() != null) {
+
+                    TbTptFollowUpListDTO fields = requestDTO.getFields();
+
+                    tbTptFollowUp.setRegimenType(fields.getRegimenType());
+
+                    if (fields.getTreatmentStartDate() != null
+                            && !fields.getTreatmentStartDate().isEmpty()) {
+
+                        tbTptFollowUp.setTreatmentStartDate(
+                                Timestamp.valueOf(fields.getTreatmentStartDate())
+                        );
+                    }
+
+                    if (fields.getExpectedTreatmentCompletionDate() != null
+                            && !fields.getExpectedTreatmentCompletionDate().isEmpty()) {
+
+                        tbTptFollowUp.setExpectedTreatmentCompletionDate(
+                                Timestamp.valueOf(fields.getExpectedTreatmentCompletionDate())
+                        );
+                    }
+
+                    if (fields.getFollowUpDate() != null
+                            && !fields.getFollowUpDate().isEmpty()) {
+
+                        tbTptFollowUp.setFollowUpDate(
+                                Timestamp.valueOf(fields.getFollowUpDate())
+                        );
+                    }
+
+                    tbTptFollowUp.setFollowUpMonth(
+                            fields.getMonthlyFollowUp()
+                    );
+
+                    tbTptFollowUp.setAdherenceToMedicines(
+                            fields.getMedicineAdherence()
+                    );
+
+                    tbTptFollowUp.setAnyDiscomfort(
+                            convertBollen(fields.getAnyDiscomfort())
+                    );
+
+                    tbTptFollowUp.setTreatmentCompleted(
+                            convertBollen(fields.getTreatmentCompleted())
+                    );
+
+                    if (fields.getActualCompletionDate() != null
+                            && !fields.getActualCompletionDate().isEmpty()) {
+
+                        tbTptFollowUp.setActualTreatmentCompletionDate(
+                                Timestamp.valueOf(fields.getActualCompletionDate())
+                        );
+                    }
+
+                    tbTptFollowUp.setTptOutcome(
+                            fields.getTptOutcome()
+                    );
+
+                    if ("Death".equalsIgnoreCase(fields.getTptOutcome())) {
+
+                        if (fields.getDateOfDeath() != null
+                                && !fields.getDateOfDeath().isEmpty()) {
+
+                            tbTptFollowUp.setDateOfDeath(
+                                    Timestamp.valueOf(fields.getDateOfDeath())
+                            );
+                        }
+
+                        tbTptFollowUp.setPlaceOfDeath(
+                                fields.getPlaceOfDeath()
+                        );
+
+                        tbTptFollowUp.setReasonForDeath(
+                                fields.getReasonForDeath()
+                        );
+                    }
+                }
+
+                tbTptFollowUpRepo.save(tbTptFollowUp);
+            }
+
+            response.setResponse("TPT follow up saved successfully");
+
+        } catch (Exception e) {
+
+            response.setError(500, e.getMessage());
+            return response.toString();
+        }
+
+        return response.toString();
+    }
+
+
+    @Override
+    public String getTptFollowUp(String token) {
+
+        OutputResponse response = new OutputResponse();
+
+        try {
+
+            if (token == null || token.trim().isEmpty()) {
+                response.setError(400, "Token is required");
+                return response.toString();
+            }
+
+            Integer userId = jwtUtil.extractUserId(token);
+
+            List<TbTptFollowUp> tptFollowUps =
+                    tbTptFollowUpRepo.findByUserId(userId);
+
+            List<TbTptFollowUpDTO> tptFollowUpDTOs =
+                    new ArrayList<>();
+
+            DateTimeFormatter formatter =
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+            for (TbTptFollowUp tptFollowUp : tptFollowUps) {
+
+                TbTptFollowUpDTO dto = new TbTptFollowUpDTO();
+
+                dto.setBenId(tptFollowUp.getBenId());
+                dto.setUserId(tptFollowUp.getUserId());
+
+                TbTptFollowUpListDTO fields =
+                        new TbTptFollowUpListDTO();
+
+                // Regimen Type
+                fields.setRegimenType(
+                        tptFollowUp.getRegimenType()
+                );
+
+                // Treatment Start Date
+                if (tptFollowUp.getTreatmentStartDate() != null) {
+                    fields.setTreatmentStartDate(
+                            tptFollowUp.getTreatmentStartDate()
+                                    .toLocalDateTime()
+                                    .format(formatter)
+                    );
+                }
+
+                // Expected Treatment Completion Date
+                if (tptFollowUp.getExpectedTreatmentCompletionDate() != null) {
+                    fields.setExpectedTreatmentCompletionDate(
+                            tptFollowUp.getExpectedTreatmentCompletionDate()
+                                    .toLocalDateTime()
+                                    .format(formatter)
+                    );
+                }
+
+                // Follow Up Date
+                if (tptFollowUp.getFollowUpDate() != null) {
+                    fields.setFollowUpDate(
+                            tptFollowUp.getFollowUpDate()
+                                    .toLocalDateTime()
+                                    .format(formatter)
+                    );
+                }
+
+                // Monthly Follow Up
+                fields.setMonthlyFollowUp(
+                        tptFollowUp.getFollowUpMonth()
+                );
+
+                // Medicine Adherence
+                fields.setMedicineAdherence(
+                        tptFollowUp.getAdherenceToMedicines()
+                );
+
+                // Any Discomfort
+                fields.setAnyDiscomfort(
+                        convert(tptFollowUp.getAnyDiscomfort())
+                );
+
+                // Treatment Completed
+                fields.setTreatmentCompleted(
+                       convert(tptFollowUp.getTreatmentCompleted())
+                );
+
+                // Actual Completion Date
+                if (tptFollowUp.getActualTreatmentCompletionDate() != null) {
+                    fields.setActualCompletionDate(
+                            tptFollowUp.getActualTreatmentCompletionDate()
+                                    .toLocalDateTime()
+                                    .format(formatter)
+                    );
+                }
+
+                // TPT Outcome
+                fields.setTptOutcome(
+                        tptFollowUp.getTptOutcome()
+                );
+
+                // Date of Death
+                if (tptFollowUp.getDateOfDeath() != null) {
+                    fields.setDateOfDeath(
+                            tptFollowUp.getDateOfDeath()
+                                    .toLocalDateTime()
+                                    .format(formatter)
+                    );
+                }
+
+                // Place of Death
+                fields.setPlaceOfDeath(
+                        tptFollowUp.getPlaceOfDeath()
+                );
+
+                // Reason for Death
+                fields.setReasonForDeath(
+                        tptFollowUp.getReasonForDeath()
+                );
+
+                dto.setFields(fields);
+
+                tptFollowUpDTOs.add(dto);
+            }
+
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            response.setResponse(
+                    objectMapper.writeValueAsString(tptFollowUpDTOs)
+            );
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            response.setError(
+                    500,
+                    "Failed to fetch TPT follow-up: " + e.getMessage()
+            );
+        }
+
+        return response.toString();
+    }
+
     private String buildTbConfirmedCasesResponse(Integer userId, List<TBConfirmedCase> list) {
         List<TBConfirmedCaseDTO> dtoList = list.stream().map(this::toDTO).collect(Collectors.toList());
 
@@ -365,5 +622,18 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         dto.setUpdatedBy(entity.getModifiedBy());
 
         return dto;
+    }
+
+    private String convert(Boolean value) {
+        if (value == null) return null;
+        return value ? "Yes" : "No";
+    }
+
+    private Boolean convertBollen(String value) {
+        if (value != null && !value.isEmpty()) {
+            return value.equalsIgnoreCase("Yes");
+        } else {
+            return false;
+        }
     }
 }

@@ -2,7 +2,8 @@ package com.iemr.flw.domain.iemr;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.checkerframework.checker.units.qual.C;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
@@ -30,9 +31,11 @@ public class TbReferralFollowUp {
     @Column(name = "follow_up_status")
     private String followUpStatus;
 
+    @CreationTimestamp
     @Column(name = "created_date")
     private Timestamp createdDate;
 
+    @UpdateTimestamp
     @Column(name = "updated_date")
     private Timestamp updatedDate;
 
