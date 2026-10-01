@@ -62,6 +62,8 @@ public class IncentiveRecordDTO {
     private String supervisorRole;
 
     private Boolean isApproved;
+    private String syncedBy;
+    private Timestamp syncedDate;
 
 
 
