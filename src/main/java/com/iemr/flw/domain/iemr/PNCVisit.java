@@ -94,4 +94,11 @@ public class PNCVisit {
 
     @Column(name = "delivery_discharge_summary_image4")
     private String  deliveryDischargeSummary4;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

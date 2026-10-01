@@ -1,5 +1,6 @@
 package com.iemr.flw.domain.iemr;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 import jakarta.persistence.*;
@@ -36,4 +37,11 @@ public class IncentivePendingActivity {
     
     @Column(name = "updated_date")
     private Date updatedDate;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

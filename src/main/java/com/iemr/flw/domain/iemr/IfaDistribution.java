@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.checkerframework.checker.units.qual.C;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 
 @Entity
@@ -39,4 +40,11 @@ public class IfaDistribution {
 
     @Column(name = "ifa_bottle_count")
     private String  ifaBottleCount;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

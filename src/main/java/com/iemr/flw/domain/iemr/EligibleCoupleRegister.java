@@ -179,5 +179,12 @@ public class EligibleCoupleRegister {
 
     @Column(name = "kit_photo2", columnDefinition = "LONGTEXT")
     private String kitPhoto2;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }
 

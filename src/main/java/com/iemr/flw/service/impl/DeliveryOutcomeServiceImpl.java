@@ -170,7 +170,14 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                         if (deliveryOutcome.getDeliveryOutcome() == 1) {
                             createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityJSY1);
                             if (deliveryOutcome.getPlaceOfDelivery() != null) {
-                                createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY1);
+                                String placeOfDelivery = deliveryOutcome.getPlaceOfDelivery();
+                                if(placeOfDelivery != null &&
+                                        (!placeOfDelivery.equalsIgnoreCase("home") ||
+                                                !placeOfDelivery.equalsIgnoreCase("in transit") ||
+                                                !placeOfDelivery.equalsIgnoreCase("other private hospital"))){
+                                    createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY1);
+
+                                }
                             }
                         }
                     }
@@ -181,8 +188,15 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                         if (deliveryOutcome.getDeliveryOutcome() == 2) {
                             createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityJSY2);
                             if (deliveryOutcome.getPlaceOfDelivery() != null) {
+                                String placeOfDelivery = deliveryOutcome.getPlaceOfDelivery();
+                                if(placeOfDelivery != null &&
+                                        (!placeOfDelivery.equalsIgnoreCase("home") ||
+                                                !placeOfDelivery.equalsIgnoreCase("in transit") ||
+                                                !placeOfDelivery.equalsIgnoreCase("other private hospital"))){
+                                    createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY2);
 
-                                createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY2);
+                                }
+
                             }
                         }
                     }
@@ -192,7 +206,14 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                         if (deliveryOutcome.getDeliveryOutcome() == 3) {
                             createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityJSY3);
                             if (deliveryOutcome.getPlaceOfDelivery() != null) {
-                                createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY3);
+                                String placeOfDelivery = deliveryOutcome.getPlaceOfDelivery();
+                                if(placeOfDelivery != null &&
+                                        (!placeOfDelivery.equalsIgnoreCase("home") ||
+                                                !placeOfDelivery.equalsIgnoreCase("in transit") ||
+                                                !placeOfDelivery.equalsIgnoreCase("other private hospital"))){
+                                    createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY3);
+
+                                }
                             }
                         }
                     }
@@ -202,7 +223,14 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                         if (deliveryOutcome.getDeliveryOutcome() == 4) {
                             createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityJSY4);
                             if (deliveryOutcome.getPlaceOfDelivery() != null) {
-                                createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY4);
+                                String placeOfDelivery = deliveryOutcome.getPlaceOfDelivery();
+                                if(placeOfDelivery != null &&
+                                        (!placeOfDelivery.equalsIgnoreCase("home") ||
+                                                !placeOfDelivery.equalsIgnoreCase("in transit") ||
+                                                !placeOfDelivery.equalsIgnoreCase("other private hospital"))){
+                                    createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY4);
+
+                                }
 
                             }
                         }

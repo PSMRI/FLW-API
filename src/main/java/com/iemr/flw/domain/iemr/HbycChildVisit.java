@@ -130,5 +130,12 @@ public class HbycChildVisit {
     @Column(name = "is_complementary_feeding")
     private Boolean complementary_feeding;
 
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private java.sql.Timestamp syncedDate;
+
     // Getters and Setters
 }

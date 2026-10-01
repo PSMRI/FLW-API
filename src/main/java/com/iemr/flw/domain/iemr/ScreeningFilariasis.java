@@ -83,4 +83,11 @@ public class ScreeningFilariasis {
     @Column(name = "user_id")
     private Integer userId;
 
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "synced_date")
+    private Date syncedDate;
 }

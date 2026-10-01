@@ -112,6 +112,7 @@ public class FormResponse {
     @Column(name = "vanSerialNo")
     private Long vanSerialNo;
 
+    @org.hibernate.annotations.CreationTimestamp
     @Column(name = "SyncedDate")
     private Timestamp syncedDate;
 
@@ -120,6 +121,7 @@ public class FormResponse {
 
     @Column(name = "SyncFailureReason")
     private String syncFailureReason;
+
 
     @PrePersist
     protected void onCreate() {

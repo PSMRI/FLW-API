@@ -77,4 +77,11 @@ public class NonPregnantWomanHighRiskTrack {
 
     @Column(name = "is_deleted")
     private Boolean isDeleted;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

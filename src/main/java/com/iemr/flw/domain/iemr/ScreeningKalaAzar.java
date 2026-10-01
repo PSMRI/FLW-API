@@ -108,4 +108,12 @@ public class ScreeningKalaAzar {
 
     @Column(name = "beneficiary_status")
     private String beneficiaryStatus;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "synced_date")
+    private Date syncedDate;
 }

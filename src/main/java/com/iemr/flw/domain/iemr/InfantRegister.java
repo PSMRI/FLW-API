@@ -103,4 +103,11 @@ public class InfantRegister {
 
     @Column(name = "is_Referred_higher_facility")
     private Boolean isReferredHigherFacility;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

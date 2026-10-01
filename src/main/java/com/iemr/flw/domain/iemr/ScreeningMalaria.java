@@ -139,5 +139,11 @@ public class ScreeningMalaria {
     @Column(name = "visit_date")
     private Date visitDate;
 
+    @Column(name = "synced_by")
+    private String syncedBy;
 
+    @org.hibernate.annotations.CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "synced_date")
+    private Date syncedDate;
 }

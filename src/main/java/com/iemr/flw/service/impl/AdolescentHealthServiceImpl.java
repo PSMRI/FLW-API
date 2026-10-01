@@ -48,9 +48,11 @@ public class AdolescentHealthServiceImpl implements AdolescentHealthService {
 
             if (existingRecord.isPresent()) {
                 // If record exists, update the existing one
+                adolescentHealth.setUserId(adolescentHealthDTO.getUserId());
                 updateAdolescentHealth(existingRecord, adolescentHealth);
             } else {
                 // If the record does not exist, create a new one
+                adolescentHealth.setUserId(adolescentHealthDTO.getUserId());
                 adolescentHealthRepo.save(adolescentHealth);
                 checkAndAddIncentives(adolescentHealth);
             }

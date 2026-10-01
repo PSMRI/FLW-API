@@ -194,4 +194,23 @@ public class TBScreening {
 
     @Column(name = "createdDate")
     private java.sql.Timestamp createdDate;
+
+    @Column(name = "risk_factor", columnDefinition = "TEXT")
+    private String riskFactor;
+
+    @Column(name = "fatigue")
+    private Boolean fatigue;
+
+    @Column(name = "chest_pain")
+    private Boolean chestPain;
+
+    @Column(name = "short_breath")
+    private Boolean shortBreath;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

@@ -44,4 +44,11 @@ public class AHDForm {
 
     @Column(name = "form_type")
     private String formType;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }
