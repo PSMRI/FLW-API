@@ -170,7 +170,15 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                         if (deliveryOutcome.getDeliveryOutcome() == 1) {
                             createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityJSY1);
                             if (deliveryOutcome.getPlaceOfDelivery() != null) {
-                                createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY1);
+                                String placeOfDelivery = deliveryOutcome.getPlaceOfDelivery();
+
+                                if(placeOfDelivery != null &&
+                                        (!placeOfDelivery.equalsIgnoreCase("home") ||
+                                                !placeOfDelivery.equalsIgnoreCase("in transit") ||
+                                                !placeOfDelivery.equalsIgnoreCase("other private hospital"))){
+                                    createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY1);
+
+                                }
                             }
                         }
                     }
