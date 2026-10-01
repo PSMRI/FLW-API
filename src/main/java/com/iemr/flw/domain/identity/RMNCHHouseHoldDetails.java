@@ -353,4 +353,12 @@ public class RMNCHHouseHoldDetails {
 	@Column(name = "registeredAtCampSiteId")
 	private Integer registeredAtCampSiteId;
 
+    @Expose
+    @Column(name = "placeOfCurrentLiving")
+    private String placeOfCurrentLiving;
+
+    @Expose
+    @Column(name = "nameOfInstitution")
+    private String nameOfInstitution;
+
 }
