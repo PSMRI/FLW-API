@@ -44,6 +44,8 @@ public class FormResponseDTO {
     private Long beneficiaryId;
     private Long formId;
     private Long versionId;
+    /** Version number of the form version this response was captured against (versionId), not necessarily the latest. */
+    private Integer versionNumber;
     private Long officerId;
     private String status;
     private String createdBy;
