@@ -1,5 +1,6 @@
 package com.iemr.flw.dto.iemr;
 
+import jakarta.persistence.Column;
 import lombok.Data;
 
 import java.sql.Timestamp;
@@ -90,5 +91,7 @@ public class TBScreeningDTO {
     private String hivStatus;
     private List<Integer> keyPopulationRiskFactorIds;
     private List<String> keyPopulationRiskFactors;
+    private Boolean failureToGainWeight;
+    private Boolean decreasedActivityOrPlayfulness ;
 
 }
