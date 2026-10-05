@@ -30,6 +30,7 @@ import com.iemr.flw.domain.iemr.QuestionValidation;
 import com.iemr.flw.domain.iemr.SectionQuestion;
 import com.iemr.flw.dto.iemr.DynamicFormDTO;
 import com.iemr.flw.dto.iemr.FormSectionDTO;
+import com.iemr.flw.dto.iemr.LatestFormVersionDTO;
 import com.iemr.flw.dto.iemr.OptionConditionDTO;
 import com.iemr.flw.dto.iemr.QuestionOptionDTO;
 import com.iemr.flw.dto.iemr.QuestionValidationDTO;
@@ -213,6 +214,10 @@ public class DynamicFormDefinitionServiceImpl implements DynamicFormDefinitionSe
                     for (QuestionOptionDTO oDto : qDto.getOptions()) {
                         QuestionOption opt = mapper.toEntity(oDto);
                         opt.setSectionQuestion(savedQ);
+                        if (opt.getOptionUuid() == null || opt.getOptionUuid().isBlank()) {
+                            opt.setOptionUuid(QuestionOption.buildOptionUuid(
+                                    version.getDynamicForm().getFormType(), opt.getOptionValue()));
+                        }
                         opt.setConditions(new ArrayList<>());
                         QuestionOption savedOpt = optionRepo.save(opt);
                         if (oDto.getConditions() != null && !oDto.getConditions().isEmpty()) {
@@ -423,4 +428,9 @@ public class DynamicFormDefinitionServiceImpl implements DynamicFormDefinitionSe
                 .orElseThrow(() -> new RuntimeException("Question not found: " + questionId));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<LatestFormVersionDTO> getLatestFormVersions() {
+        return versionRepo.findLatestVersionOfActiveForms();
+    }
 }

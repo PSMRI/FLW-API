@@ -22,7 +22,9 @@
 package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.FormVersion;
+import com.iemr.flw.dto.iemr.LatestFormVersionDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -43,4 +45,10 @@ public interface FormVersionRepo extends JpaRepository<FormVersion, Long> {
     List<FormVersion> findByDynamicForm_FormIdOrderByVersionNumberAsc(Long formId);
 
     Optional<FormVersion> findByDynamicForm_FormUuidAndIsLatest(String formUuid, boolean b);
+
+    @Query("SELECT new com.iemr.flw.dto.iemr.LatestFormVersionDTO(f.formId, f.formUuid, f.formName, v.versionId, v.versionNumber) " +
+           "FROM FormVersion v JOIN v.dynamicForm f " +
+           "WHERE v.isLatest = true AND f.isActive = true " +
+           "ORDER BY f.formId ASC")
+    List<LatestFormVersionDTO> findLatestVersionOfActiveForms();
 }

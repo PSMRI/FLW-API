@@ -21,6 +21,7 @@
  */
 package com.iemr.flw.domain.iemr;
 
+import com.iemr.flw.masterEnum.FormType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -70,6 +71,10 @@ public class QuestionOption {
     @Column(name = "optionValue", nullable = false, length = 100)
     private String optionValue;
 
+    /** Stable across every version of a form (formType + optionValue), unlike optionId — see {@link #buildOptionUuid}. */
+    @Column(name = "optionUuid", length = 255)
+    private String optionUuid;
+
     @Column(name = "optionValue_hindi", length = 100)
     private String optionValueHindi;
 
@@ -111,4 +116,12 @@ public class QuestionOption {
 
     @Column(name = "SyncFailureReason")
     private String syncFailureReason;
+
+    /** e.g. (OCCUPATION_CONTACT_TRACING, "Yes") → "OCCUPATION_CONTACT_TRACING_YES". */
+    public static String buildOptionUuid(FormType formType, String optionValue) {
+        String normalized = optionValue.toUpperCase()
+                .replaceAll("[^A-Z0-9]+", "_")
+                .replaceAll("^_+|_+$", "");
+        return formType.name() + "_" + normalized;
+    }
 }

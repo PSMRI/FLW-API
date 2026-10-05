@@ -253,6 +253,11 @@ public class DynamicFormReconciliationServiceImpl implements DynamicFormReconcil
         QuestionOption option = mapper.toEntity(dto);
         option.setOptionId(null);
         option.setSectionQuestion(question);
+        if (option.getOptionUuid() == null || option.getOptionUuid().isBlank()) {
+            option.setOptionUuid(QuestionOption.buildOptionUuid(
+                    question.getFormSection().getFormVersion().getDynamicForm().getFormType(),
+                    option.getOptionValue()));
+        }
         option.setDisplayOrder(order);
         option.setConditions(new ArrayList<>());
         return optionRepo.save(option);

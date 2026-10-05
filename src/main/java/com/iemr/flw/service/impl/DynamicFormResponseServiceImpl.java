@@ -64,6 +64,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -136,7 +137,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         Timestamp now = new Timestamp(System.currentTimeMillis());
 
         List<FormResponse> existing =
-                formResponseRepo.findByBeneficiaryIdAndFormId(request.getBeneficiaryId(), formId);
+                formResponseRepo.findByBeneficiaryIdAndVersionId(request.getBeneficiaryId(), version.getVersionId());
         FormResponse formResponse = existing.isEmpty()
                 ? createFormResponse(request, version, FormResponseStatus.SUBMITTED.name(), now, vanID, parkingPlaceID)
                 : existing.get(0);
@@ -164,8 +165,21 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         List<FormResponse> responses = beneficiaryId != null
                 ? formResponseRepo.findByBeneficiaryIdAndFormId(beneficiaryId, formId)
                 : formResponseRepo.findByFormIdFiltered(formId, villageId, providerServiceMapId);
+
+        // Responses may belong to older versions than the latest one resolved above.
+        Set<Long> versionIds = responses.stream()
+                .map(FormResponse::getVersionId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, Integer> versionNumberById = formVersionRepo.findAllById(versionIds).stream()
+                .collect(Collectors.toMap(FormVersion::getVersionId, FormVersion::getVersionNumber));
+
         return responses.stream()
-                .map(r -> buildFormResponseDTO(r, loadSectionResponseDTOs(r.getResponseId())))
+                .map(r -> {
+                    FormResponseDTO dto = buildFormResponseDTO(r, loadSectionResponseDTOs(r.getResponseId()));
+                    dto.setVersionNumber(versionNumberById.get(r.getVersionId()));
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -244,8 +258,12 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         Set<Long> questionIds = allQuestions.stream()
                 .map(SectionQuestion::getQuestionId)
                 .collect(Collectors.toSet());
+        Map<Long, String> questionUuidById = allQuestions.stream()
+                .collect(Collectors.toMap(SectionQuestion::getQuestionId, SectionQuestion::getQuestionUuid));
         List<QuestionOption> allOptions =
                 questionOptionRepo.findByQuestionIdsOrderByDisplayOrderAsc(questionIds);
+        Map<Long, QuestionOption> optionById = allOptions.stream()
+                .collect(Collectors.toMap(QuestionOption::getOptionId, Function.identity()));
 
         // Map: questionId → (optionValue → QuestionOption)
         Map<Long, Map<String, QuestionOption>> optionsByQuestion = allOptions.stream()
@@ -299,7 +317,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 questionResponseRepo.updateVanSerialNo(qr.getQuestionResponseId(), qr.getQuestionResponseId());
             }
 
-            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, section, questionResponses));
+            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, section, questionResponses, questionUuidById, optionById));
         }
 
         return buildFormResponseDTO(formResponse, sectionDTOs);
@@ -461,11 +479,26 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         Map<Long, FormSection> sectionById = formSectionRepo.findAllById(sectionIds).stream()
                 .collect(Collectors.toMap(FormSection::getSectionId, Function.identity()));
 
+        // findAllById includes unlinked (isActive=false) questions, so historical answers still resolve their uuid.
+        Set<Long> questionIds = allAnswers.stream()
+                .map(QuestionResponse::getQuestionId)
+                .collect(Collectors.toSet());
+        Map<Long, String> questionUuidById = sectionQuestionRepo.findAllById(questionIds).stream()
+                .collect(Collectors.toMap(SectionQuestion::getQuestionId, SectionQuestion::getQuestionUuid));
+        Set<Long> optionIds = allAnswers.stream()
+                .map(QuestionResponse::getOptionId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, QuestionOption> optionById = questionOptionRepo.findAllById(optionIds).stream()
+                .collect(Collectors.toMap(QuestionOption::getOptionId, Function.identity()));
+
         return sections.stream()
                 .map(sr -> buildSectionResponseDTO(
                         sr,
                         sectionById.get(sr.getSectionId()),
-                        answersBySectionResponse.getOrDefault(sr.getSectionResponseId(), List.of())))
+                        answersBySectionResponse.getOrDefault(sr.getSectionResponseId(), List.of()),
+                        questionUuidById,
+                        optionById))
                 .collect(Collectors.toList());
     }
 
@@ -489,12 +522,18 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     }
 
     private SectionResponseDTO buildSectionResponseDTO(
-            SectionResponse sr, FormSection section, List<QuestionResponse> answers) {
+            SectionResponse sr, FormSection section, List<QuestionResponse> answers,
+            Map<Long, String> questionUuidById, Map<Long, QuestionOption> optionById) {
         List<QuestionResponseDTO> answerDTOs = answers.stream()
                 .map(a -> QuestionResponseDTO.builder()
                         .questionResponseId(a.getQuestionResponseId())
                         .questionId(a.getQuestionId())
+                        .questionUuid(questionUuidById.get(a.getQuestionId()))
                         .optionId(a.getOptionId())
+                        .optionValue(optionById.containsKey(a.getOptionId())
+                                ? optionById.get(a.getOptionId()).getOptionValue() : null)
+                        .optionUuid(optionById.containsKey(a.getOptionId())
+                                ? optionById.get(a.getOptionId()).getOptionUuid() : null)
                         .answerText(a.getAnswerText())
                         .build())
                 .collect(Collectors.toList());

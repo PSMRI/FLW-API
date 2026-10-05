@@ -40,8 +40,13 @@ public class QuestionResponseDTO {
 
     private Long questionResponseId;
     private Long questionId;
+    private String questionUuid;
     /** Populated for RADIO, DROPDOWN, MCQ, CHECKBOX, CHECKBOX_MULTI, and DROPDOWN_MULTI answers. */
     private Long optionId;
+    /** optionValue of the selected option; null when optionId is null. */
+    private String optionValue;
+    /** Stable across form versions; null when optionId is null. */
+    private String optionUuid;
     /** Populated for TEXT, DATE, AUTO_FILL, NUMBER_PICKER answers. */
     private String answerText;
 }

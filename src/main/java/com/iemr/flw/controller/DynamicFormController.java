@@ -22,6 +22,7 @@
 package com.iemr.flw.controller;
 
 import com.iemr.flw.dto.iemr.DynamicFormDTO;
+import com.iemr.flw.dto.iemr.LatestFormVersionDTO;
 import com.iemr.flw.service.DynamicFormDefinitionService;
 import com.iemr.flw.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,6 +35,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * REST controller for dynamic form definition management.
@@ -97,4 +100,10 @@ public class DynamicFormController {
         return ResponseEntity.ok(new ApiResponse(true, "Form deactivated", null));
     }
 
+    @Operation(summary = "Get the latest version of each active form (formId, formUuid, formName, currentVersionNumber)")
+    @RequestMapping(value = "/getLatestFormVersions", method = RequestMethod.GET)
+    public ResponseEntity<ApiResponse> getLatestFormVersions() {
+        List<LatestFormVersionDTO> result = formService.getLatestFormVersions();
+        return ResponseEntity.ok(new ApiResponse(true, "Latest form versions fetched successfully", result));
+    }
 }

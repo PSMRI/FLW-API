@@ -51,6 +51,9 @@ public class QuestionOptionDTO {
 
     private String optionValueHindi;
 
+    /** Optional on input — derived from formType + optionValue when blank. */
+    private String optionUuid;
+
     @NotNull(message = "displayOrder is required")
     private Integer displayOrder;
 
