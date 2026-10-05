@@ -142,8 +142,8 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                     String placeOfDelivery = deliveryOutcome.getPlaceOfDelivery().toLowerCase();
 
                     if (placeOfDelivery != null &&
-                            (!placeOfDelivery.equalsIgnoreCase("home") ||
-                                    !placeOfDelivery.equalsIgnoreCase("in transit") ||
+                            (!placeOfDelivery.equalsIgnoreCase("home") &&
+                                    !placeOfDelivery.equalsIgnoreCase("in transit") &&
                                     !placeOfDelivery.equalsIgnoreCase("other private hospital"))) {
 
                         // Institutional delivery (eligible case)
@@ -172,8 +172,8 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                             if (deliveryOutcome.getPlaceOfDelivery() != null) {
                                 String placeOfDelivery = deliveryOutcome.getPlaceOfDelivery().toLowerCase();
                                 if(placeOfDelivery != null &&
-                                        (!placeOfDelivery.equalsIgnoreCase("home") ||
-                                                !placeOfDelivery.equalsIgnoreCase("in transit") ||
+                                        (!placeOfDelivery.equalsIgnoreCase("home") &&
+                                                !placeOfDelivery.equalsIgnoreCase("in transit") &&
                                                 !placeOfDelivery.equalsIgnoreCase("other private hospital"))){
                                     createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY1);
 
@@ -190,8 +190,8 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                             if (deliveryOutcome.getPlaceOfDelivery() != null) {
                                 String placeOfDelivery = deliveryOutcome.getPlaceOfDelivery().toLowerCase();
                                 if(placeOfDelivery != null &&
-                                        (!placeOfDelivery.equalsIgnoreCase("home") ||
-                                                !placeOfDelivery.equalsIgnoreCase("in transit") ||
+                                        (!placeOfDelivery.equalsIgnoreCase("home") &&
+                                                !placeOfDelivery.equalsIgnoreCase("in transit") &&
                                                 !placeOfDelivery.equalsIgnoreCase("other private hospital"))){
                                     createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY2);
 
@@ -208,8 +208,8 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                             if (deliveryOutcome.getPlaceOfDelivery() != null) {
                                 String placeOfDelivery = deliveryOutcome.getPlaceOfDelivery().toLowerCase();
                                 if(placeOfDelivery != null &&
-                                        (!placeOfDelivery.equalsIgnoreCase("home") ||
-                                                !placeOfDelivery.equalsIgnoreCase("in transit") ||
+                                        (!placeOfDelivery.equalsIgnoreCase("home") &&
+                                                !placeOfDelivery.equalsIgnoreCase("in transit") &&
                                                 !placeOfDelivery.equalsIgnoreCase("other private hospital"))){
                                     createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY3);
 
@@ -225,8 +225,8 @@ public class DeliveryOutcomeServiceImpl implements DeliveryOutcomeService {
                             if (deliveryOutcome.getPlaceOfDelivery() != null) {
                                 String placeOfDelivery = deliveryOutcome.getPlaceOfDelivery().toLowerCase();
                                 if(placeOfDelivery != null &&
-                                        (!placeOfDelivery.equalsIgnoreCase("home") ||
-                                                !placeOfDelivery.equalsIgnoreCase("in transit") ||
+                                        (!placeOfDelivery.equalsIgnoreCase("home") &&
+                                                !placeOfDelivery.equalsIgnoreCase("in transit") &&
                                                 !placeOfDelivery.equalsIgnoreCase("other private hospital"))){
                                     createIncentiveRecordforJsy(deliveryOutcome, deliveryOutcome.getBenId(), incentiveActivityInstJSY4);
 
