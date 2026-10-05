@@ -463,7 +463,6 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
             return; // unknown regimen
         }
 
-        // 3. Isi cycle ke saare follow-ups
         List<TbTptFollowUp> cycleRows = tbTptFollowUpRepo
                 .findByBenIdAndRegimenTypeAndTreatmentStartDate(
                         saved.getBenId(),
