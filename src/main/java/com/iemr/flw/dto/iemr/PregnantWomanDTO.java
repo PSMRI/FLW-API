@@ -6,6 +6,9 @@ import java.sql.Timestamp;
 
 @Data
 public class PregnantWomanDTO {
+    private String syncedBy;
+    private Timestamp syncedDate;
+
 
     private Long id;
     private Long benId;

@@ -11,6 +11,9 @@ import java.util.List;
 
 @Data
 public class EligibleCoupleDTO implements Serializable {
+    private String syncedBy;
+    private Timestamp syncedDate;
+
 
     private Long id;
 
