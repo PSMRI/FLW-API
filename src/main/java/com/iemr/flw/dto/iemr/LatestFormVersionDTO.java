@@ -21,42 +21,22 @@
  */
 package com.iemr.flw.dto.iemr;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Transfer object for a selectable option on a RADIO, DROPDOWN, or MCQ question.
+ * Latest version summary of a dynamic form: identifies the form and its current version number.
+ *
+ * @author Piramal Swasthya
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class QuestionOptionDTO {
-
-    private Long optionId;
-
-    @NotBlank(message = "optionLabel is required")
-    private String optionLabel;
-
-    private String optionLabelHindi;
-
-    @NotBlank(message = "optionValue is required")
-    private String optionValue;
-
-    private String optionValueHindi;
-
-    /** Optional on input — derived from formType + optionValue when blank. */
-    private String optionUuid;
-
-    @NotNull(message = "displayOrder is required")
-    private Integer displayOrder;
-
-    @Valid
-    private List<OptionConditionDTO> conditions = new ArrayList<>();
+public class LatestFormVersionDTO {
+    private Long formId;
+    private String formUuid;
+    private String formName;
+    private Long versionId;
+    private Integer currentVersionNumber;
 }

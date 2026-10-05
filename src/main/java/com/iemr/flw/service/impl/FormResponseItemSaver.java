@@ -112,7 +112,7 @@ public class FormResponseItemSaver {
 
         // Step 2: Check for an existing response for this beneficiary+form
         List<FormResponse> existing =
-                formResponseRepo.findByBeneficiaryIdAndFormId(req.getBeneficiaryId(), formId);
+                formResponseRepo.findByBeneficiaryIdAndVersionId(req.getBeneficiaryId(), version.getVersionId());
 
         FormResponse formResponse;
         if (!existing.isEmpty()) {
@@ -221,8 +221,12 @@ public class FormResponseItemSaver {
         Set<Long> questionIds = allQuestions.stream()
                 .map(SectionQuestion::getQuestionId)
                 .collect(Collectors.toSet());
+        Map<Long, String> questionUuidById = allQuestions.stream()
+                .collect(Collectors.toMap(SectionQuestion::getQuestionId, SectionQuestion::getQuestionUuid));
         List<QuestionOption> allOptions =
                 questionOptionRepo.findByQuestionIdsOrderByDisplayOrderAsc(questionIds);
+        Map<Long, QuestionOption> optionById = allOptions.stream()
+                .collect(Collectors.toMap(QuestionOption::getOptionId, Function.identity()));
         Map<Long, Map<String, QuestionOption>> optionsByQuestion = allOptions.stream()
                 .collect(Collectors.groupingBy(
                         o -> o.getSectionQuestion().getQuestionId(),
@@ -271,7 +275,7 @@ public class FormResponseItemSaver {
             for (QuestionResponse qr : questionResponses) {
                 questionResponseRepo.updateVanSerialNo(qr.getQuestionResponseId(), qr.getQuestionResponseId());
             }
-            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, section, questionResponses));
+            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, section, questionResponses, questionUuidById, optionById));
         }
 
         return buildFormResponseDTO(formResponse, sectionDTOs);
@@ -425,12 +429,18 @@ public class FormResponseItemSaver {
     }
 
     private SectionResponseDTO buildSectionResponseDTO(
-            SectionResponse sr, FormSection section, List<QuestionResponse> answers) {
+            SectionResponse sr, FormSection section, List<QuestionResponse> answers,
+            Map<Long, String> questionUuidById, Map<Long, QuestionOption> optionById) {
         List<QuestionResponseDTO> answerDTOs = answers.stream()
                 .map(a -> QuestionResponseDTO.builder()
                         .questionResponseId(a.getQuestionResponseId())
                         .questionId(a.getQuestionId())
+                        .questionUuid(questionUuidById.get(a.getQuestionId()))
                         .optionId(a.getOptionId())
+                        .optionValue(optionById.containsKey(a.getOptionId())
+                                ? optionById.get(a.getOptionId()).getOptionValue() : null)
+                        .optionUuid(optionById.containsKey(a.getOptionId())
+                                ? optionById.get(a.getOptionId()).getOptionUuid() : null)
                         .answerText(a.getAnswerText())
                         .build())
                 .collect(Collectors.toList());

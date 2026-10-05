@@ -60,4 +60,10 @@ public interface QuestionOptionRepo extends JpaRepository<QuestionOption, Long> 
     @Query("SELECT o FROM QuestionOption o JOIN FETCH o.sectionQuestion "
             + "WHERE o.sectionQuestion.questionId IN :questionIds AND o.isActive = true ORDER BY o.displayOrder ASC")
     List<QuestionOption> findByQuestionIdsOrderByDisplayOrderAsc(@Param("questionIds") Collection<Long> questionIds);
+
+    /** All options (every form, every version, inactive included) still missing an optionUuid — used by the V009 backfill. */
+    @Query("SELECT o FROM QuestionOption o JOIN FETCH o.sectionQuestion q JOIN FETCH q.formSection s "
+            + "JOIN FETCH s.formVersion v JOIN FETCH v.dynamicForm "
+            + "WHERE o.optionUuid IS NULL OR o.optionUuid = ''")
+    List<QuestionOption> findAllMissingOptionUuid();
 }
