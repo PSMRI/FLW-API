@@ -29,6 +29,9 @@ import lombok.Data;
 
 @Data
 public class VHNDFormDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
     private String vhndDate;
     private String place;
     private Integer noOfBeneficiariesAttended;

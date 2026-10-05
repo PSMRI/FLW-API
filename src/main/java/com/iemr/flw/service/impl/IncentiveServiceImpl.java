@@ -494,15 +494,6 @@ public class IncentiveServiceImpl implements IncentiveService {
                             .filter(record ->
                                     validActivityIds.contains(record.getActivityId())
                             )
-                            .filter(record ->
-                                    !Boolean.TRUE.equals(
-                                            record.getIsDefaultActivity()
-                                    )
-
-                                            || Boolean.TRUE.equals(
-                                            record.getIsApproved()
-                                    )
-                            )
                             .collect(Collectors.toList());
                 }else if(request.getApprovalStatus().equals(104)){
                     records = records.stream()

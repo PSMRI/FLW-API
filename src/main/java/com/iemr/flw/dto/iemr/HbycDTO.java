@@ -21,6 +21,9 @@ import java.util.List;
 
 @Data
 public class HbycDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     @SerializedName("visit_day")
     private String visit_day; // 3 Months, 6 Months, etc.
