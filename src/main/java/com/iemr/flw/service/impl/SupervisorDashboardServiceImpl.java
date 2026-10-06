@@ -1256,14 +1256,16 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                      })
                                      .filter(record -> {
                                          boolean isDefault = Boolean.TRUE.equals(record.getIsDefaultActivity());
+                                         boolean isClaimed = Boolean.TRUE.equals(record.getIsClaimed());
                                          Integer status = record.getApprovalStatus();
 
                                          // non-default aur 102
                                          boolean nonDefault102 = !isDefault && Objects.equals(status, 102);
 
+                                         // 105 (peek se badle hue default approved records bhi yahin aayenge)
                                          boolean is105 = Objects.equals(status, 105);
 
-                                         return nonDefault102 || is105;
+                                         return isClaimed && (nonDefault102 || is105);
                                      })
                                      .collect(Collectors.toList());
                              totalAmount = incentiveActivityRecord.stream()
