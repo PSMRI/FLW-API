@@ -338,7 +338,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             order.setStatus(DiagnosticOrderStatus.FAILED.name());
             order.setErrorMessage("No push response recorded for this order — cannot poll");
             order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
-            diagnosticOrderRepo.save(order);
+            order = diagnosticOrderRepo.save(order);
+            // The scheduler's copy may predate createAndPushOrder's updateVanSerialNo(); fill it if still missing.
+            if (order.getVanSerialNo() == null) diagnosticOrderRepo.updateVanSerialNo(order.getId());
             return null;
         }
         DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());

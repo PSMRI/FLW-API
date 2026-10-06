@@ -101,6 +101,6 @@ public class DiagnosticOrder {
     @Column(name = "processed")
     private String processed = "N";
 
-    @Column(name = "vanSerialNo")
+    @Column(name = "vanSerialNo", updatable = false)
     private Long vanSerialNo;
 }
