@@ -1265,9 +1265,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                                      })
 
 
-                                     .filter(record ->
-                                             Objects.equals(record.getApprovalStatus(), 102)
-                                                     || Objects.equals(
+                                     .filter(record -> Objects.equals(
                                                      record.getApprovalStatus(), 105
                                              )
                                      )
@@ -1842,7 +1840,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             period.setEnd(first.withDayOfMonth(first.lengthOfMonth()).toString()); // 2026-01-31
 
             VerifiedBy verifiedBy = new VerifiedBy();
-            verifiedBy.setEmployeeId(String.valueOf(supervisorUserId));
+            verifiedBy.setEmployeeId("NRHM-"+supervisorUserId);
             verifiedBy.setName(supervisor.getUserName());
 
             // activity wise group: count + total amount
