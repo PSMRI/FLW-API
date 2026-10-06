@@ -204,6 +204,7 @@ public class IncentiveServiceImpl implements IncentiveService {
     }
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
+
         int page = 0;
         int size = 200; // bumped from 20 — fewer round trips for large histories
         Page<IncentiveActivityRecord> pageResult;
