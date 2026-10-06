@@ -136,6 +136,11 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             }
             throw dive;
         }
+        // Stamp the sync key before the (possibly slow) vendor push, so a crash/restart mid-push can't leave it NULL.
+        if (order.getVanSerialNo() == null) {
+            diagnosticOrderRepo.updateVanSerialNo(order.getId());
+            order.setVanSerialNo(order.getId());
+        }
 
         if (providerCode == null || providerCode.isBlank()) {
             logger.info("No active vendor configured for orderType={}, beneficiaryId={} — order saved for manual entry",
