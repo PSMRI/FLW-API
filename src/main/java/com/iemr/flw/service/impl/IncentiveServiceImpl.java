@@ -204,7 +204,6 @@ public class IncentiveServiceImpl implements IncentiveService {
     }
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
-
         int page = 0;
         int size = 200; // bumped from 20 — fewer round trips for large histories
         Page<IncentiveActivityRecord> pageResult;
@@ -517,10 +516,14 @@ public class IncentiveServiceImpl implements IncentiveService {
                                 boolean isClaimed = Boolean.TRUE.equals(record.getIsClaimed());
                                 Integer recStatus = record.getApprovalStatus();
 
-                                boolean nonDefault102 = !isDefault && Objects.equals(recStatus, 102);
+                                // non-default, 102 aur claimed
+                                boolean nonDefault102Claimed =
+                                        !isDefault && Objects.equals(recStatus, 102) && isClaimed;
+
+                                // koi bhi 105 (default ho ya non-default, claimed ho ya na ho)
                                 boolean is105 = Objects.equals(recStatus, 105);
 
-                                return isClaimed && (nonDefault102 || is105);
+                                return nonDefault102Claimed || is105;
                             })
                             .collect(Collectors.toList());
                 }else if(request.getApprovalStatus().equals(104)){
