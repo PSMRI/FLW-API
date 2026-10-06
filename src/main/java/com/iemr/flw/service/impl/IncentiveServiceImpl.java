@@ -404,7 +404,14 @@ public class IncentiveServiceImpl implements IncentiveService {
                                     && Boolean.TRUE.equals(r.getIsDefaultActivity())
                                     && Objects.equals(r.getApprovalStatus(), 102))
                             .collect(Collectors.toList());
-                } else {
+                } else if (Integer.valueOf(102).equals(reqStatus)) {
+                    records = records.stream()
+                            .filter(r -> validIds.contains(r.getActivityId())
+                                    && Boolean.TRUE.equals(r.getIsDefaultActivity())
+                                    && Objects.equals(r.getApprovalStatus(), 102))
+                            .collect(Collectors.toList());
+
+                }else {
                     records = records.stream()
                             .filter(r -> validIds.contains(r.getActivityId())
                                     && Boolean.TRUE.equals(r.getIsDefaultActivity()))
@@ -552,12 +559,10 @@ public class IncentiveServiceImpl implements IncentiveService {
         }
 
         if (Integer.valueOf(102).equals(reqStatus)) {
-            // Pending tab: 102, aur 105 (default approved records bhi yahin dikhte hain)
             return Objects.equals(recStatus, 102)
                     || Objects.equals(recStatus, 105);
         }
 
-        // Baaki tabs (103 waghera): exact match
         return Objects.equals(recStatus, reqStatus);
     }
 
