@@ -1464,7 +1464,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
 
 
-            // totalAmount skip wale block aur "pending == 0 && ... continue" ke baad
             if (verified > 0) overallVerified++;
             if (rejected > 0) overallRejected++;
             if (pending > 0) {
@@ -1825,6 +1824,12 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
     public void triggerPayment(Integer ashaId, Integer month, Integer year,
                                List<IncentiveActivityRecord> approvedRecords,
                                UserServiceRoleDTO supervisor, Integer supervisorUserId) {
+
+        logger.info("========================================");
+
+        logger.info("SSD Request Send to portal");
+
+        logger.info("========================================");
         try {
             if (approvedRecords == null || approvedRecords.isEmpty()) {
                 logger.info("No approved records, payment not triggered for asha {}", ashaId);
@@ -1876,7 +1881,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             paymentService.sendPaymentRequest(paymentRequest);
 
         } catch (Exception e) {
-            // payment fail hone par approval rollback nahi hona chahiye
             logger.error("Payment request failed for asha {}: {}", ashaId, e.getMessage(), e);
         }
     }
