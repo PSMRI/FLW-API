@@ -52,6 +52,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
     private UserService userService;
 
     @Autowired
+    EmployeeMasterRepo employeeMasterRepo;
+
+    @Autowired
     private NotificationService notificationService;
 
     @Autowired
@@ -1862,19 +1865,26 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             String timestamp = OffsetDateTime.now(ZoneId.of("Asia/Kolkata"))
                     .truncatedTo(ChronoUnit.SECONDS)
                     .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);   // 2026-02-01T02:00:00+05:30
+             if(employeeMasterRepo.findUserByUserID(ashaId)!=null){
+                 String empId = employeeMasterRepo.findUserByUserID(ashaId).getEmployeeID();
+                 if(empId!=null){
+                     PaymentRequest paymentRequest = new PaymentRequest(
+                             UUID.randomUUID().toString(),
+                             "AMRIT",
+                             period,
+                             String.valueOf(empId),
+                             timestamp,
+                             verifiedBy,
+                             items
+                     );
+                     logger.info("PAYMENT REQUEST Payload: {}", new Gson().toJson(paymentRequest));
+                     paymentService.sendPaymentRequest(paymentRequest);
+                 }
 
-            PaymentRequest paymentRequest = new PaymentRequest(
-                    UUID.randomUUID().toString(),
-                    "AMRIT",
-                    period,
-                    String.valueOf(ashaId),
-                    timestamp,
-                    verifiedBy,
-                    items
-            );
+             }
 
-            logger.info("PAYMENT REQUEST Payload: {}", new Gson().toJson(paymentRequest));
-            paymentService.sendPaymentRequest(paymentRequest);
+
+
 
         } catch (Exception e) {
             logger.error("Payment request failed for asha {}: {}", ashaId, e.getMessage(), e);

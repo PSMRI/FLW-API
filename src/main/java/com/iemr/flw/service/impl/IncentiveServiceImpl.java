@@ -497,7 +497,6 @@ public class IncentiveServiceImpl implements IncentiveService {
                     records = records.stream()
                             .filter(record -> validActivityIds.contains(record.getActivityId()))
 
-                            // 2. default + approved + 102 -> 105
                             .peek(record -> {
                                 if (Objects.equals(record.getApprovalStatus(), 102)
                                         && Boolean.TRUE.equals(record.getIsDefaultActivity())
@@ -514,16 +513,14 @@ public class IncentiveServiceImpl implements IncentiveService {
                             .filter(record -> {
                                 boolean isDefault = Boolean.TRUE.equals(record.getIsDefaultActivity());
                                 boolean isClaimed = Boolean.TRUE.equals(record.getIsClaimed());
-                                Integer recStatus = record.getApprovalStatus();
+                                boolean default105 = isDefault && Objects.equals(status, 105);
 
-                                // non-default, 102 aur claimed
-                                boolean nonDefault102Claimed =
-                                        !isDefault && Objects.equals(recStatus, 102) && isClaimed;
 
-                                // koi bhi 105 (default ho ya non-default, claimed ho ya na ho)
-                                boolean is105 = Objects.equals(recStatus, 105);
+                                boolean nonDefault102Claimed = !isDefault && Objects.equals(status, 102) && isClaimed;
 
-                                return nonDefault102Claimed || is105;
+                                boolean other105 = !isDefault && Objects.equals(status, 105);
+
+                                return nonDefault102Claimed || default105 || other105;
                             })
                             .collect(Collectors.toList());
                 }else if(request.getApprovalStatus().equals(104)){
