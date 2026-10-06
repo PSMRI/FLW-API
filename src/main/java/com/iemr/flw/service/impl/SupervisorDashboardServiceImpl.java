@@ -886,15 +886,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             long unclaimedCount = 0;
             long overDue = 0;
 
-            if (verified > 0) overallVerified++;
-            if (rejected > 0) overallRejected++;
-
-            if (pending > 0) {
-                overallPending++;
-            }
-
-            if (unclaimedCount > 0) overallUnclaimed++;
-            if (overDue > 0) overallOverDue++;
 
             Map<String, Object> asha = new HashMap<>();
 
