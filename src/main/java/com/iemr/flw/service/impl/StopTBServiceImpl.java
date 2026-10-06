@@ -575,33 +575,10 @@ public class StopTBServiceImpl implements StopTBService {
         return Collections.emptyMap();
     }
 
-    // Latest non-null height/weight/bmi/temperatureValue for the beneficiary. Identity-API's
-    // syncDataToAmrit writes these to t_phy_anthropometry / t_phy_vitals at registration;
-    // otherFields is only a fallback for beneficiaries registered before that.
-    private Map<String, Object> getLatestAnthropometry(Long beneficiaryRegID) {
-        Map<String, Object> values = new HashMap<>();
-        for (BenAnthropometryDetail a : benAnthropometryRepo.findByBeneficiaryRegIDOrderByCreatedDateDesc(beneficiaryRegID)) {
-            if (a.getHeightCm() != null) values.putIfAbsent("height", a.getHeightCm());
-            if (a.getWeightKg() != null) values.putIfAbsent("weight", a.getWeightKg());
-            if (a.getBmi() != null) values.putIfAbsent("bmi", a.getBmi());
-        }
-        for (BenPhysicalVitalDetail v : benPhysicalVitalRepo.findByBeneficiaryRegIDOrderByCreatedDateDesc(beneficiaryRegID)) {
-            if (v.getTemperature() != null) {
-                values.put("temperatureValue", v.getTemperature());
-                break;
-            }
-        }
-        Map<String, Object> extras = getRegistrationExtras(beneficiaryRegID);
-        for (String key : List.of("height", "weight", "bmi", "temperatureValue")) {
-            if (extras.get(key) instanceof Number) values.putIfAbsent(key, extras.get(key));
-        }
-        return values;
-    }
-
     private void dualWriteExamToStandardTables(StopTBGeneralExamination exam, Long beneficiaryRegID,
             BenVisitDetail visit, String createdBy, Integer vanID, Integer parkingPlaceID) {
         try {
-            Map<String, Object> extras = getLatestAnthropometry(beneficiaryRegID);
+            Map<String, Object> extras = getRegistrationExtras(beneficiaryRegID);
             writeAnthropometry(extras, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
             writeVitals(exam, extras, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
             writePhyGeneralExam(exam, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
@@ -615,9 +592,6 @@ public class StopTBServiceImpl implements StopTBService {
 
     private void writeAnthropometry(Map<String, Object> extras, Long beneficiaryRegID,
             BenVisitDetail visit, String createdBy, Integer vanID, Integer parkingPlaceID) {
-        // An all-null row would become the latest one and hide the registration values
-        if (!(extras.get("height") instanceof Number) && !(extras.get("weight") instanceof Number)
-                && !(extras.get("bmi") instanceof Number)) return;
         try {
             BenAnthropometryDetail a = new BenAnthropometryDetail();
             a.setBeneficiaryRegID(beneficiaryRegID);
