@@ -864,7 +864,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         }
         logger.info("Other:" + rows);
-            long pending = 0, verified = 0, rejected = 0 , unclaimedCount = 0 , overDue = 0 ;
 
 
             long overallVerified = 0, overallRejected = 0, overallPending = 0 , overallUnclaimed=0 ,overallOverDue =0;
@@ -880,6 +879,22 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         }
 
         for (Object[] row : rows) {
+
+            long pending = 0;
+            long verified = 0;
+            long rejected = 0;
+            long unclaimedCount = 0;
+            long overDue = 0;
+
+            if (verified > 0) overallVerified++;
+            if (rejected > 0) overallRejected++;
+
+            if (pending > 0) {
+                overallPending++;
+            }
+
+            if (unclaimedCount > 0) overallUnclaimed++;
+            if (overDue > 0) overallOverDue++;
 
             Map<String, Object> asha = new HashMap<>();
 
