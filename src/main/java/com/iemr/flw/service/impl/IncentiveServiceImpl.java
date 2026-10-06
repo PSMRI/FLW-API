@@ -489,11 +489,38 @@ public class IncentiveServiceImpl implements IncentiveService {
                 }
 
             }else  if ("ANM".equalsIgnoreCase(roleName) || "CHO".equalsIgnoreCase(roleName)) {
-                if(request.getApprovalStatus().equals(102) || request.getApprovalStatus().equals(105)){
+                Integer status = request.getApprovalStatus();
+
+                if (Integer.valueOf(102).equals(status)
+                        || Integer.valueOf(105).equals(status)) {
+
                     records = records.stream()
-                            .filter(record ->
-                                    validActivityIds.contains(record.getActivityId())
-                            )
+                            .filter(record -> validActivityIds.contains(record.getActivityId()))
+
+                            // 2. default + approved + 102 -> 105
+                            .peek(record -> {
+                                if (Objects.equals(record.getApprovalStatus(), 102)
+                                        && Boolean.TRUE.equals(record.getIsDefaultActivity())
+                                        && Boolean.TRUE.equals(record.getIsApproved())) {
+
+                                    logger.info("Changing record status 102 to 105: id={}, activityId={}",
+                                            record.getId(), record.getActivityId());
+
+                                    record.setApprovalStatus(105);
+                                }
+                            })
+
+                            // 3. final visibility
+                            .filter(record -> {
+                                boolean isDefault = Boolean.TRUE.equals(record.getIsDefaultActivity());
+                                boolean isClaimed = Boolean.TRUE.equals(record.getIsClaimed());
+                                Integer recStatus = record.getApprovalStatus();
+
+                                boolean nonDefault102 = !isDefault && Objects.equals(recStatus, 102);
+                                boolean is105 = Objects.equals(recStatus, 105);
+
+                                return isClaimed && (nonDefault102 || is105);
+                            })
                             .collect(Collectors.toList());
                 }else if(request.getApprovalStatus().equals(104)){
                     records = records.stream()
