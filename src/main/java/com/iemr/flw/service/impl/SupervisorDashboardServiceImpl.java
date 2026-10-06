@@ -1243,34 +1243,29 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          if (Objects.equals(approvalStatusID, 102)) {
 
                              incentiveActivityRecord = dbRecords.stream()
-
                                      .peek(record -> {
                                          if (Objects.equals(record.getApprovalStatus(), 102)
-                                                 && Boolean.TRUE.equals(
-                                                 record.getIsDefaultActivity()
-                                         )
-                                                 && Boolean.TRUE.equals(
-                                                 record.getIsApproved()
-                                         )) {
+                                                 && Boolean.TRUE.equals(record.getIsDefaultActivity())
+                                                 && Boolean.TRUE.equals(record.getIsApproved())) {
 
-                                             logger.info(
-                                                     "Changing record status 102 to 105: " +
-                                                             "id={}, activityId={}",
-                                                     record.getId(),
-                                                     record.getActivityId()
-                                             );
+                                             logger.info("Changing record status 102 to 105: id={}, activityId={}",
+                                                     record.getId(), record.getActivityId());
 
                                              record.setApprovalStatus(105);
                                          }
                                      })
+                                     .filter(record -> {
+                                         boolean isDefault = Boolean.TRUE.equals(record.getIsDefaultActivity());
+                                         Integer status = record.getApprovalStatus();
 
+                                         // non-default aur 102
+                                         boolean nonDefault102 = !isDefault && Objects.equals(status, 102);
 
-                                     .filter(record -> Objects.equals(
-                                                     record.getApprovalStatus(), 105
-                                             )
-                                     )
+                                         boolean is105 = Objects.equals(status, 105);
+
+                                         return nonDefault102 || is105;
+                                     })
                                      .collect(Collectors.toList());
-
                              totalAmount = incentiveActivityRecord.stream()
                                      .map(IncentiveActivityRecord::getAmount)
                                      .filter(Objects::nonNull)
