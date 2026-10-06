@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
+import com.iemr.flw.domain.iemr.IncentiveActivity;
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.dto.iemr.Period;
@@ -44,6 +45,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
     @Autowired
     private IncentiveRecordRepo incentiveRecordRepo;
+
+    @Autowired
+    private IncentivesRepo incentivesRepo;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -1844,7 +1848,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
             verifiedBy.setEmployeeId("NRHM-"+supervisorUserId);
             verifiedBy.setName(supervisor.getUserName());
 
-            // activity wise group: count + total amount
             Map<Long, List<IncentiveActivityRecord>> byActivity = approvedRecords.stream()
                     .collect(Collectors.groupingBy(IncentiveActivityRecord::getActivityId));
 
@@ -1856,8 +1859,12 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         .sum();
 
                 PaymentItem item = new PaymentItem();
-                item.setActivityCode(String.valueOf(activityId));   // ya activity ka code field
-                item.setCount(String.valueOf(count));
+                item.setActivityCode(
+                        incentivesRepo.findById(activityId)
+                                .map(activity -> String.valueOf(activity.getStateActivityCode()))
+                                .orElse(null)
+                );                item.setCount(String.valueOf(count));
+
                 item.setIncentiveAmount(String.valueOf(total));
                 items.add(item);
             });
@@ -1872,7 +1879,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                              UUID.randomUUID().toString(),
                              "AMRIT",
                              period,
-                             String.valueOf(empId),
+                             String.valueOf(1857708),
                              timestamp,
                              verifiedBy,
                              items
