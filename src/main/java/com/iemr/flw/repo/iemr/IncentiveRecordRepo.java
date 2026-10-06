@@ -588,4 +588,17 @@ AND iar.isClaimed = true
             @Param("updatedDate") Timestamp updatedDate,
             @Param("updatedBy") String updatedBy
     );
-}
+
+    @Query("SELECT r FROM IncentiveActivityRecord r " +
+            "WHERE r.ashaId = :ashaId " +
+            "AND r.approvalStatus = :status " +
+            "AND r.startDate >= :start AND r.startDate < :end " +
+            "AND (r.isEligible = true OR r.isEligible IS NULL) " +
+            "AND (r.isClaimed = false OR r.isClaimed IS NULL)")
+    List<IncentiveActivityRecord> findApprovedForMonth(
+            @Param("ashaId") Integer ashaId,
+            @Param("status") Integer status,
+            @Param("start") Timestamp start,
+            @Param("end") Timestamp end);}
+
+

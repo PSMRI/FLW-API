@@ -2,16 +2,16 @@ package com.iemr.flw.service.impl;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.Month;
-import java.time.ZoneId;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import com.iemr.flw.domain.iemr.IncentiveActivityRecord;
-import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
+import com.iemr.flw.dto.iemr.*;
+import com.iemr.flw.dto.iemr.Period;
 import com.iemr.flw.masterEnum.IncentiveApprovalStatus;
 import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.iemr.*;
@@ -53,6 +53,9 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private UtpreronaPaymentIntegrationImpl paymentService;
 
     @Override
     public String getSupervisorDashboard(Integer supervisorUserID, Integer month, Integer year,Integer facilityId) {
@@ -1461,15 +1464,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
 
 
-            if (verified > 0) overallVerified += 1;
-            if (rejected > 0) overallRejected += 1;
+            // totalAmount skip wale block aur "pending == 0 && ... continue" ke baad
+            if (verified > 0) overallVerified++;
+            if (rejected > 0) overallRejected++;
             if (pending > 0) {
-                if (isOverDue) {
-                    overallOverDue++;
-                } else {
-                    overallPending++;
-                }
+                if (isOverDue) overallOverDue++; else overallPending++;
             }
+            if (unclaimedCount > 0) overallUnclaimed++;
 
             if (unclaimedCount > 0) overallUnclaimed += 1;
 
@@ -1525,6 +1526,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         approvalStatus.put("pending", overallPending);
         approvalStatus.put("rejected", overallRejected);
         approvalStatus.put("unClaimed", overallUnclaimed);
+        approvalStatus.put("overDue", overallOverDue);
 
         response.put("approvalStatus", approvalStatus);
         response.put("data", ashaList);
@@ -1716,6 +1718,33 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                         ashaSupervisorUserId,
                         ashaSupervisorDetails
                 );
+
+                boolean isApproved = !approvalStatus.equals(IncentiveApprovalStatus.REJECTED.getCode());
+
+                // Final approval: AM mein supervisor/CHO, CG mein sirf ANM
+                // (CG mein ASHA Supervisor ka status 105 intermediate hai, uspar payment nahi)
+                boolean isFinalApprover =
+                        ashaSupervisorDetails.getStateId().equals(StateCode.AM.getStateCode())
+                                || (ashaSupervisorDetails.getStateId().equals(StateCode.CG.getStateCode())
+                                && "ANM".equalsIgnoreCase(ashaSupervisorDetails.getRoleName()));
+
+                if (isApproved && isFinalApprover) {
+                    List<IncentiveActivityRecord> approvedRecords;
+
+                    if (incentiveIds == null || incentiveIds.trim().isEmpty()) {
+                        approvedRecords = incentiveRecordRepo
+                                .findApprovedForMonth(
+                                        ashaId, approvalStatus, startDate, endDate);
+                    } else {
+                        List<Long> ids = Arrays.stream(incentiveIds.split(","))
+                                .map(String::trim).filter(v -> !v.isEmpty())
+                                .map(Long::valueOf).collect(Collectors.toList());
+                        approvedRecords = incentiveRecordRepo.findAllById(ids);
+                    }
+
+                    triggerPayment(ashaId, month, year, approvedRecords,
+                            ashaSupervisorDetails, ashaSupervisorUserId);
+                }
             }
 
             return updatedCount;
@@ -1793,6 +1822,64 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         }
     }
 
+    public void triggerPayment(Integer ashaId, Integer month, Integer year,
+                               List<IncentiveActivityRecord> approvedRecords,
+                               UserServiceRoleDTO supervisor, Integer supervisorUserId) {
+        try {
+            if (approvedRecords == null || approvedRecords.isEmpty()) {
+                logger.info("No approved records, payment not triggered for asha {}", ashaId);
+                return;
+            }
+
+            LocalDate first = LocalDate.of(year, month, 1);
+            Period period = new Period();
+            period.setStart(first.toString());                          // 2026-01-01
+            period.setEnd(first.withDayOfMonth(first.lengthOfMonth()).toString()); // 2026-01-31
+
+            VerifiedBy verifiedBy = new VerifiedBy();
+            verifiedBy.setEmployeeId(String.valueOf(supervisorUserId));
+            verifiedBy.setName(supervisor.getUserName());
+
+            // activity wise group: count + total amount
+            Map<Long, List<IncentiveActivityRecord>> byActivity = approvedRecords.stream()
+                    .collect(Collectors.groupingBy(IncentiveActivityRecord::getActivityId));
+
+            List<PaymentItem> items = new ArrayList<>();
+            byActivity.forEach((activityId, recs) -> {
+                long count = recs.size();
+                long total = recs.stream()
+                        .mapToLong(r -> r.getAmount() == null ? 0L : r.getAmount())
+                        .sum();
+
+                PaymentItem item = new PaymentItem();
+                item.setActivityCode(String.valueOf(activityId));   // ya activity ka code field
+                item.setCount(String.valueOf(count));
+                item.setIncentiveAmount(String.valueOf(total));
+                items.add(item);
+            });
+
+            String timestamp = OffsetDateTime.now(ZoneId.of("Asia/Kolkata"))
+                    .truncatedTo(ChronoUnit.SECONDS)
+                    .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);   // 2026-02-01T02:00:00+05:30
+
+            PaymentRequest paymentRequest = new PaymentRequest(
+                    UUID.randomUUID().toString(),
+                    "AMRIT",
+                    period,
+                    String.valueOf(ashaId),
+                    timestamp,
+                    verifiedBy,
+                    items
+            );
+
+            logger.info("PAYMENT REQUEST Payload: {}", new Gson().toJson(paymentRequest));
+            paymentService.sendPaymentRequest(paymentRequest);
+
+        } catch (Exception e) {
+            // payment fail hone par approval rollback nahi hona chahiye
+            logger.error("Payment request failed for asha {}: {}", ashaId, e.getMessage(), e);
+        }
+    }
     private JSONObject buildEmptyIncentiveSummary() {
         JSONObject summary = new JSONObject();
         summary.put("verified", 0);
