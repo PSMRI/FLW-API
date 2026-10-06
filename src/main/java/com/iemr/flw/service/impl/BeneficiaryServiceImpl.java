@@ -535,10 +535,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         if (benDetailsOBJ != null && benDetailsOBJ.getOccupation() != null)
                             benDetailsRMNCH_OBJ.setOccupation(benDetailsOBJ.getOccupation());
 
-                        // anthropometry from t_phy_anthropometry, vitals from t_phy_vitals — latest non-null
-                        // value per field, so a later row with some columns empty doesn't hide older values.
-                        // otherFields fills whatever is still missing (beneficiaries registered before
-                        // Identity-API started writing these tables).
+                        // anthropometry from t_phy_anthropometry, vitals from t_phy_vitals
+                        // fallback to otherFields if exam not yet saved for this beneficiary
                         Long benRegIdLong = m.getBenRegId() != null ? m.getBenRegId().longValue() : null;
                         if (benRegIdLong != null) {
                             List<BenAnthropometryDetail> anthroList =
@@ -547,27 +545,29 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                                     benPhysicalVitalRepo.findByBeneficiaryRegIDOrderByCreatedDateDesc(benRegIdLong);
 
                             Map<String, Object> anthropometry = new HashMap<>();
-                            for (BenAnthropometryDetail anthro : anthroList) {
-                                if (anthro.getHeightCm() != null) anthropometry.putIfAbsent("height", anthro.getHeightCm());
-                                if (anthro.getWeightKg() != null) anthropometry.putIfAbsent("weight", anthro.getWeightKg());
-                                if (anthro.getBmi()      != null) anthropometry.putIfAbsent("bmi",    anthro.getBmi());
+                            if (!anthroList.isEmpty()) {
+                                BenAnthropometryDetail anthro = anthroList.get(0);
+                                if (anthro.getHeightCm() != null) anthropometry.put("height", anthro.getHeightCm());
+                                if (anthro.getWeightKg() != null) anthropometry.put("weight", anthro.getWeightKg());
+                                if (anthro.getBmi()      != null) anthropometry.put("bmi",    anthro.getBmi());
                             }
-                            for (BenPhysicalVitalDetail vital : vitalList) {
-                                if (vital.getTemperature()        != null) anthropometry.putIfAbsent("temperatureValue",    vital.getTemperature());
-                                if (vital.getPulseRate()          != null) anthropometry.putIfAbsent("pulseRate",           vital.getPulseRate());
-                                if (vital.getSystolicBP()         != null) anthropometry.putIfAbsent("systolicBP",          vital.getSystolicBP());
-                                if (vital.getDiastolicBP()        != null) anthropometry.putIfAbsent("diastolicBP",         vital.getDiastolicBP());
-                                if (vital.getBloodGlucoseRandom() != null) anthropometry.putIfAbsent("bloodGlucoseRandom",  vital.getBloodGlucoseRandom());
+                            if (!vitalList.isEmpty()) {
+                                BenPhysicalVitalDetail vital = vitalList.get(0);
+                                if (vital.getTemperature()        != null) anthropometry.put("temperatureValue",    vital.getTemperature());
+                                if (vital.getPulseRate()          != null) anthropometry.put("pulseRate",           vital.getPulseRate());
+                                if (vital.getSystolicBP()         != null) anthropometry.put("systolicBP",          vital.getSystolicBP());
+                                if (vital.getDiastolicBP()        != null) anthropometry.put("diastolicBP",         vital.getDiastolicBP());
+                                if (vital.getBloodGlucoseRandom() != null) anthropometry.put("bloodGlucoseRandom",  vital.getBloodGlucoseRandom());
                             }
 
-                            // fallback per field: registration otherFields
-                            if (benDetailsOBJ != null && benDetailsOBJ.getOtherFields() != null) {
+                            // fallback: if no exam saved yet, read from registration otherFields
+                            if (anthropometry.isEmpty() && benDetailsOBJ != null && benDetailsOBJ.getOtherFields() != null) {
                                 try {
                                     Map<?, ?> extraFields = new Gson().fromJson(benDetailsOBJ.getOtherFields(), Map.class);
-                                    if (extraFields.get("weight") != null) anthropometry.putIfAbsent("weight", extraFields.get("weight"));
-                                    if (extraFields.get("height") != null) anthropometry.putIfAbsent("height", extraFields.get("height"));
-                                    if (extraFields.get("bmi")    != null) anthropometry.putIfAbsent("bmi",    extraFields.get("bmi"));
-                                    if (extraFields.get("temperatureValue") != null) anthropometry.putIfAbsent("temperatureValue", extraFields.get("temperatureValue"));
+                                    if (extraFields.containsKey("weight")) anthropometry.put("weight", extraFields.get("weight"));
+                                    if (extraFields.containsKey("height")) anthropometry.put("height", extraFields.get("height"));
+                                    if (extraFields.containsKey("bmi"))    anthropometry.put("bmi",    extraFields.get("bmi"));
+                                    if (extraFields.containsKey("temperatureValue")) anthropometry.put("temperatureValue", extraFields.get("temperatureValue"));
                                 } catch (Exception ex) {
                                     logger.warn("Could not parse otherFields for fallback anthropometry: " + benDetailsOBJ.getBeneficiaryDetailsId());
                                 }
