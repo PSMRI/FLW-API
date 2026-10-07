@@ -107,9 +107,6 @@ public class TBScreening {
     @Column(name = "tobacco_user")
     private Boolean tobaccoUser;
 
-    @Column(name = "bmi")
-    private Boolean bmi;
-
     @Column(name = "contact_with_tb_patient")
     private Boolean contactWithTBPatient;
 
