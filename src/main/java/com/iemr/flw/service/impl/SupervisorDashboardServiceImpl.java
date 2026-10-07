@@ -1736,7 +1736,7 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                     if (incentiveIds == null || incentiveIds.trim().isEmpty()) {
                         approvedRecords = incentiveRecordRepo
                                 .findApprovedForMonth(
-                                        ashaId, approvalStatus, startDate, endDate);
+                                        ashaId, approvalStatus);
                     } else {
                         List<Long> ids = Arrays.stream(incentiveIds.split(","))
                                 .map(String::trim).filter(v -> !v.isEmpty())
