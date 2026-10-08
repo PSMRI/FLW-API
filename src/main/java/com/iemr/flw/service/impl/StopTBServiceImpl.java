@@ -388,6 +388,8 @@ public class StopTBServiceImpl implements StopTBService {
             // New payload (chiefComplaints[] / prescription.drugs[]): AMRIT standard tables only, with dispensing.
             // tb_stoptb_general_opd is not written; getAll and the Nikshay export read the standard tables.
             if (data.get("chiefComplaints") instanceof List || data.get("prescription") instanceof Map) {
+                if (providerServiceMapID == null) throw new Exception("providerServiceMapID is required");
+                if (createdBy == null || createdBy.isBlank()) throw new Exception("createdBy is required");
                 String submissionId = getString(data, "submissionId");
                 Map<String, Object> previous = stopTBPrescriptionService.findPreviousSubmission(beneficiaryRegID, submissionId);
                 if (previous != null) {
