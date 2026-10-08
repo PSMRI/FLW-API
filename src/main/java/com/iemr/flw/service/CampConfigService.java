@@ -57,16 +57,13 @@ public class CampConfigService {
     }
 
     /**
-     * The configured van is the source of truth. A vanID sent by the app is only checked against it:
-     * missing -> configured van; same -> OK; different -> rejected, so data and stock never land on
-     * another camp's van/store.
+     * The configured van (stoptb.van.id) is always used. A vanID sent by the app is ignored, so data and
+     * stock never land on another camp's van/store; a different value is only logged.
      */
     public Integer resolveVanID(Integer requestedVanID) {
         Integer configured = getVanID();
-        if (requestedVanID != null && requestedVanID > 0 && configured != null
-                && !requestedVanID.equals(configured)) {
-            throw new IllegalArgumentException("vanID " + requestedVanID
-                    + " does not match this camp's van " + configured);
+        if (requestedVanID != null && requestedVanID > 0 && !requestedVanID.equals(configured)) {
+            logger.warn("Ignoring vanID " + requestedVanID + " from request; using stoptb.van.id " + configured);
         }
         return configured;
     }
