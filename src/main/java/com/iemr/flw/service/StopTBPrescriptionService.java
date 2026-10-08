@@ -175,11 +175,11 @@ public class StopTBPrescriptionService {
             if (!items.containsKey(drugID)) items.put(drugID, getStoreItem(facilityID, drugID));
             Integer qty = toInt(d.get("qtyPrescribed"));
             if (qty == null || qty <= 0) {
-                // Same as MMU's prescription screen: no quantity is entered for tablets/capsules, so work it out.
+                // No quantity from the app: tablets/capsules = doses per day x days, other forms = 1.
                 qty = calculateQuantity(d, items.get(drugID));
                 if (qty == null) {
                     throw new IllegalArgumentException("qtyPrescribed is required for drugID " + drugID
-                            + " (quantity can be calculated only for tablets/capsules with frequency and duration)");
+                            + " (tablet/capsule quantity needs frequency and duration; not possible for SOS)");
                 }
                 d.put("qtyPrescribed", qty); // saved in t_prescribeddrug.QtyPrescribed
             }
@@ -456,13 +456,13 @@ public class StopTBPrescriptionService {
     }
 
     /**
-     * Units to give when the app sends no quantity: doses per day x days, for tablets/capsules only
-     * (MMU's prescription screen asks quantity only for other forms). Null when it cannot be worked out
-     * (other forms, SOS, missing frequency or duration).
+     * Units to give when the app sends no quantity. Tablets/capsules: doses per day x days. Other forms
+     * (syrup, cream, injection, drops...): 1 bottle/tube/vial. Null when a tablet/capsule quantity cannot be
+     * worked out (SOS, missing frequency or duration).
      */
     private Integer calculateQuantity(Map<String, Object> drug, Object[] item) {
         Integer formID = item[7] != null ? ((Number) item[7]).intValue() : null;
-        if (formID == null || (formID != 1 && formID != 2)) return null; // 1 = Tablet, 2 = Capsule
+        if (formID == null || (formID != 1 && formID != 2)) return 1; // 1 = Tablet, 2 = Capsule
         String frequency = Optional.ofNullable(toStr(drug.get("frequency"))).orElse("").toUpperCase();
         if (frequency.contains("SINGLE DOSE") || frequency.contains("STAT")) return 1;
 
