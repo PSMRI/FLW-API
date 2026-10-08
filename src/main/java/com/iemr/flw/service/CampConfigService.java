@@ -1,7 +1,13 @@
 package com.iemr.flw.service;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * Camp/van identity for this deployment.
@@ -17,11 +23,13 @@ import org.springframework.stereotype.Service;
  * No inline default — every properties file must set stoptb.van.id explicitly, so a forgotten
  * config fails loudly at startup instead of silently running unconfigured.
  *
- * Scope: vanID (and the VanSerialNo stamping that depends on it) only. parkingPlaceID is out of
- * scope for this change.
+ * The van's parking place and store (facility) come from m_van, the same source MMU uses
+ * (MasterVanRepo.getFacilityID), and are read once and cached since the van never changes.
  */
 @Service
 public class CampConfigService {
+
+    private final Logger logger = LoggerFactory.getLogger(CampConfigService.class);
 
     @Value("${stoptb.van.id}")
     private int vanID;
@@ -30,6 +38,12 @@ public class CampConfigService {
     // storing vanID=NULL. No inline default — every properties file must set this explicitly.
     @Value("${stoptb.enforce.vanid}")
     private boolean enforceVanID;
+
+    @PersistenceContext(unitName = "db_iemr")
+    private EntityManager entityManager;
+
+    private volatile Integer parkingPlaceID;
+    private volatile Integer facilityID;
 
     public Integer getVanID() {
         if (vanID <= 0) {
@@ -42,13 +56,54 @@ public class CampConfigService {
         return vanID;
     }
 
+    /**
+     * The configured van is the source of truth. A vanID sent by the app is only checked against it:
+     * missing -> configured van; same -> OK; different -> rejected, so data and stock never land on
+     * another camp's van/store.
+     */
+    public Integer resolveVanID(Integer requestedVanID) {
+        Integer configured = getVanID();
+        if (requestedVanID != null && requestedVanID > 0 && configured != null
+                && !requestedVanID.equals(configured)) {
+            throw new IllegalArgumentException("vanID " + requestedVanID
+                    + " does not match this camp's van " + configured);
+        }
+        return configured;
+    }
+
     public boolean isCampConfigured() {
         return vanID > 0;
     }
 
-    // Not sourced from Redis anymore (out of scope for this change) — kept only because
-    // callers across StopTBServiceImpl/DiagnosticOrderServiceImpl/etc. still call it.
+    // Parking place of the configured van (m_van.ParkingPlaceID); 0 when the camp is not configured
+    // or the van is not found, which is what callers received before this lookup existed.
     public Integer getParkingPlaceID() {
-        return 0;
+        if (parkingPlaceID == null) loadVanDetails();
+        return parkingPlaceID != null ? parkingPlaceID : 0;
+    }
+
+    // Store mapped to the configured van (m_van.FacilityID); null when no store is mapped.
+    public Integer getFacilityID() {
+        if (facilityID == null) loadVanDetails();
+        return facilityID;
+    }
+
+    private synchronized void loadVanDetails() {
+        if (!isCampConfigured() || (parkingPlaceID != null && facilityID != null)) return;
+        try {
+            List<?> rows = entityManager.createNativeQuery(
+                    "SELECT ParkingPlaceID, FacilityID FROM db_iemr.m_van WHERE VanID = :vanID AND Deleted = false")
+                    .setParameter("vanID", vanID)
+                    .getResultList();
+            if (rows.isEmpty()) {
+                logger.warn("stoptb.van.id " + vanID + " not found in m_van");
+                return;
+            }
+            Object[] row = (Object[]) rows.get(0);
+            parkingPlaceID = row[0] != null ? ((Number) row[0]).intValue() : null;
+            facilityID = row[1] != null ? ((Number) row[1]).intValue() : null;
+        } catch (Exception e) {
+            logger.error("Cannot read m_van details for vanID " + vanID, e);
+        }
     }
 }
