@@ -1,14 +1,22 @@
 package com.iemr.flw.service;
 
+import com.iemr.flw.domain.identity.RMNCHMBeneficiarydetail;
+import com.iemr.flw.domain.identity.RMNCHMBeneficiarymapping;
 import com.iemr.flw.domain.iemr.BenVisitDetail;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.*;
 
 /**
@@ -36,6 +44,11 @@ public class StopTBPrescriptionService {
 
     @Autowired
     private CampConfigService campConfigService;
+
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
+
+    private final Logger logger = LoggerFactory.getLogger(StopTBPrescriptionService.class);
 
     public static class InsufficientStockException extends RuntimeException {
         public InsufficientStockException(String message) {
@@ -93,7 +106,8 @@ public class StopTBPrescriptionService {
     public void saveChiefComplaints(List<Map<String, Object>> complaints, Long beneficiaryRegID, BenVisitDetail visit,
             String createdBy, Integer vanID, Integer parkingPlaceID) {
         if (complaints == null) return;
-        em.createNativeQuery("UPDATE db_iemr.t_benchiefcomplaint SET Deleted = true, ModifiedBy = :user "
+        // Processed='N' so the removal is uploaded to central again (central updates rows it already has).
+        em.createNativeQuery("UPDATE db_iemr.t_benchiefcomplaint SET Deleted = true, Processed = 'N', ModifiedBy = :user "
                         + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false")
                 .setParameter("user", createdBy)
                 .setParameter("ben", beneficiaryRegID)
@@ -218,11 +232,16 @@ public class StopTBPrescriptionService {
         }
 
         // 3. Patient issue header (same shape as Inventory-API issuePatientDrugs, IssueType 'System').
+        Object[] patient = getPatientDetails(beneficiaryRegID);
         em.createNativeQuery("INSERT INTO db_iemr.t_patientissue (BeneficiaryRegID, BenVisitID, VisitCode, FacilityID, "
-                        + "PrescriptionID, Reference, IssueType, IssuedBy, ProviderServiceMapID, Deleted, Processed, CreatedBy, "
-                        + "SyncFacilityID, VanID, ParkingPlaceID) VALUES (:ben, :visitID, :visitCode, :facilityID, "
-                        + ":prescriptionID, :ref, 'System', :user, :psm, false, 'N', :user, :facilityID, :van, :pp)")
+                        + "PatientName, Age, Gender, PrescriptionID, Reference, IssueType, IssuedBy, ProviderServiceMapID, "
+                        + "Deleted, Processed, CreatedBy, SyncFacilityID, VanID, ParkingPlaceID) VALUES (:ben, :visitID, "
+                        + ":visitCode, :facilityID, :name, :age, :gender, :prescriptionID, :ref, 'System', :user, :psm, false, "
+                        + "'N', :user, :facilityID, :van, :pp)")
                 .setParameter("ben", beneficiaryRegID)
+                .setParameter("name", patient[0])
+                .setParameter("age", patient[1])
+                .setParameter("gender", patient[2])
                 .setParameter("visitID", visit.getBenVisitId())
                 .setParameter("visitCode", visit.getVisitCode())
                 .setParameter("facilityID", facilityID)
@@ -258,9 +277,10 @@ public class StopTBPrescriptionService {
                         .setParameter("pp", parkingPlaceID)
                         .executeUpdate();
                 stampVanSerialNo("t_itemstockexit", "ItemStockExitID", lastInsertId());
-                // Same update as Inventory-API ItemStockEntryRepo.updateStock
-                em.createNativeQuery("UPDATE db_iemr.t_itemstockentry SET QuantityInHand = QuantityInHand - :qty "
-                                + "WHERE VanSerialNo = :batch AND FacilityID = :facilityID")
+                // Same update as Inventory-API ItemStockEntryRepo.updateStock, plus Processed='N' so the new
+                // quantity of an already-synced batch is uploaded again; central updates the existing row.
+                em.createNativeQuery("UPDATE db_iemr.t_itemstockentry SET QuantityInHand = QuantityInHand - :qty, "
+                                + "Processed = 'N' WHERE VanSerialNo = :batch AND FacilityID = :facilityID")
                         .setParameter("qty", take)
                         .setParameter("batch", batchSerialNo)
                         .setParameter("facilityID", facilityID)
@@ -280,12 +300,38 @@ public class StopTBPrescriptionService {
         return result;
     }
 
-    // ItemID, ItemName, strength+UOM, form, route, isEDL, IssueType — only if the drug is mapped to the store.
+    // Name, age (years), gender for the issue row shown on the Inventory dispense screen. Missing details
+    // never block dispensing, same as Inventory-API.
+    private Object[] getPatientDetails(Long beneficiaryRegID) {
+        try {
+            RMNCHMBeneficiarymapping mapping = beneficiaryRepo.getById(BigInteger.valueOf(beneficiaryRegID));
+            RMNCHMBeneficiarydetail detail = (mapping != null && mapping.getBenDetailsId() != null)
+                    ? beneficiaryRepo.getDetailsById(mapping.getBenDetailsId())
+                    : null;
+            if (detail == null) return new Object[3];
+            StringJoiner name = new StringJoiner(" ");
+            for (String part : new String[] { detail.getFirstName(), detail.getMiddleName(), detail.getLastName() }) {
+                if (part != null && !part.isBlank()) name.add(part.trim());
+            }
+            Integer age = detail.getDob() != null
+                    ? Period.between(detail.getDob().toLocalDateTime().toLocalDate(), LocalDate.now()).getYears()
+                    : null;
+            String fullName = name.length() > 150 ? name.toString().substring(0, 150) : name.toString();
+            return new Object[] { fullName.isEmpty() ? null : fullName, age, detail.getGender() };
+        } catch (Exception e) {
+            logger.warn("Cannot read patient details for benRegID " + beneficiaryRegID + ": " + e.getMessage());
+            return new Object[3];
+        }
+    }
+
+    // ItemID, ItemName, strength+UOM, form, route, isEDL, IssueType — only if the drug is mapped to the store
+    // on its own service line (same join as v_drugforprescription, so the save accepts what the list shows).
     private Object[] getStoreItem(Integer facilityID, Integer drugID) {
         List<?> rows = em.createNativeQuery("SELECT i.ItemID, i.ItemName, CONCAT_WS(' ', i.Strength, u.UOMName), "
                         + "f.ItemFormName, r.RouteName, i.isEDL, c.IssueType "
                         + "FROM db_iemr.m_item i "
-                        + "JOIN db_iemr.m_itemfacilitymapping m ON m.ItemID = i.ItemID AND m.FacilityID = :facilityID AND m.Deleted = false "
+                        + "JOIN db_iemr.m_itemfacilitymapping m ON m.ItemID = i.ItemID AND m.FacilityID = :facilityID "
+                        + "AND m.ProviderServiceMapID = i.ProviderServiceMapID AND m.Deleted = false "
                         + "LEFT JOIN db_iemr.m_uom u ON u.UOMID = i.UOMID "
                         + "LEFT JOIN db_iemr.m_itemform f ON f.ItemFormID = i.ItemFormID "
                         + "LEFT JOIN db_iemr.m_routeofadmin r ON r.RouteID = i.RouteID "
@@ -300,16 +346,19 @@ public class StopTBPrescriptionService {
         return (Object[]) rows.get(0);
     }
 
+    // A batch is usable if it has no expiry date (counted by v_drugforprescription too) or lasts the course.
+    private static final String USABLE_BATCH = "AND (ExpiryDate IS NULL OR ExpiryDate > DATE_ADD(CURDATE(), INTERVAL :days DAY)) ";
+
     // Usable batches (VanSerialNo, QuantityInHand), locked for this transaction, in the category's issue order.
     @SuppressWarnings("unchecked")
     private List<Object[]> lockBatches(Integer facilityID, Integer drugID, String issueType, int durationDays) {
         String order;
         if ("Last In First Out".equalsIgnoreCase(issueType)) order = "CreatedDate DESC, ItemStockEntryID DESC";
         else if ("First In First Out".equalsIgnoreCase(issueType)) order = "CreatedDate ASC, ItemStockEntryID ASC";
-        else order = "ExpiryDate ASC, ItemStockEntryID ASC"; // First Expiry First Out (default)
+        else order = "ExpiryDate IS NULL, ExpiryDate ASC, ItemStockEntryID ASC"; // First Expiry First Out (default)
         Query q = em.createNativeQuery("SELECT VanSerialNo, QuantityInHand FROM db_iemr.t_itemstockentry "
                         + "WHERE FacilityID = :facilityID AND ItemID = :drugID AND Deleted = false AND QuantityInHand > 0 "
-                        + "AND ExpiryDate > DATE_ADD(CURDATE(), INTERVAL :days DAY) ORDER BY " + order + " FOR UPDATE")
+                        + USABLE_BATCH + "ORDER BY " + order + " FOR UPDATE")
                 .setParameter("facilityID", facilityID)
                 .setParameter("drugID", drugID)
                 .setParameter("days", durationDays);
@@ -319,7 +368,7 @@ public class StopTBPrescriptionService {
     private int availableQuantity(Integer facilityID, Integer drugID, int durationDays) {
         Object v = em.createNativeQuery("SELECT COALESCE(SUM(QuantityInHand), 0) FROM db_iemr.t_itemstockentry "
                         + "WHERE FacilityID = :facilityID AND ItemID = :drugID AND Deleted = false AND QuantityInHand > 0 "
-                        + "AND ExpiryDate > DATE_ADD(CURDATE(), INTERVAL :days DAY)")
+                        + USABLE_BATCH)
                 .setParameter("facilityID", facilityID)
                 .setParameter("drugID", drugID)
                 .setParameter("days", durationDays)
