@@ -159,10 +159,18 @@ public class StopTBPrescriptionService {
         Map<Integer, Object[]> items = new HashMap<>();
         for (Map<String, Object> d : drugs) {
             Integer drugID = toInt(d.get("drugID"));
-            Integer qty = toInt(d.get("qtyPrescribed"));
             if (drugID == null) throw new IllegalArgumentException("drugID is required for every drug");
-            if (qty == null || qty <= 0) throw new IllegalArgumentException("qtyPrescribed must be more than 0 for drugID " + drugID);
             if (!items.containsKey(drugID)) items.put(drugID, getStoreItem(facilityID, drugID));
+            Integer qty = toInt(d.get("qtyPrescribed"));
+            if (qty == null || qty <= 0) {
+                // Same as MMU's prescription screen: no quantity is entered for tablets/capsules, so work it out.
+                qty = calculateQuantity(d, items.get(drugID));
+                if (qty == null) {
+                    throw new IllegalArgumentException("qtyPrescribed is required for drugID " + drugID
+                            + " (quantity can be calculated only for tablets/capsules with frequency and duration)");
+                }
+                d.put("qtyPrescribed", qty); // saved in t_prescribeddrug.QtyPrescribed
+            }
             requested.merge(drugID, qty, Integer::sum);
         }
         List<String> shortages = new ArrayList<>();
@@ -427,11 +435,38 @@ public class StopTBPrescriptionService {
         }
     }
 
-    // ItemID, ItemName, strength+UOM, form, route, isEDL, IssueType — only if the drug is mapped to the store
-    // on its own service line (same join as v_drugforprescription, so the save accepts what the list shows).
+    /**
+     * Units to give when the app sends no quantity: doses per day x days, for tablets/capsules only
+     * (MMU's prescription screen asks quantity only for other forms). Null when it cannot be worked out
+     * (other forms, SOS, missing frequency or duration).
+     */
+    private Integer calculateQuantity(Map<String, Object> drug, Object[] item) {
+        Integer formID = item[7] != null ? ((Number) item[7]).intValue() : null;
+        if (formID == null || (formID != 1 && formID != 2)) return null; // 1 = Tablet, 2 = Capsule
+        String frequency = Optional.ofNullable(toStr(drug.get("frequency"))).orElse("").toUpperCase();
+        if (frequency.contains("SINGLE DOSE") || frequency.contains("STAT")) return 1;
+
+        Integer duration = toInt(drug.get("duration"));
+        if (duration == null || duration <= 0) return null;
+        String unit = Optional.ofNullable(toStr(drug.get("durationUnit"))).orElse("Day").toLowerCase();
+        int days = unit.startsWith("week") ? duration * 7 : unit.startsWith("month") ? duration * 30
+                : unit.startsWith("year") ? duration * 365 : duration;
+
+        if (frequency.contains("WEEK")) return (days + 6) / 7; // Once in a Week
+        int perDay;
+        if (frequency.contains("QID") || frequency.contains("FOUR")) perDay = 4;
+        else if (frequency.contains("TID") || frequency.contains("THRICE")) perDay = 3;
+        else if (frequency.contains("BD") || frequency.contains("TWICE")) perDay = 2;
+        else if (frequency.contains("OD") || frequency.contains("ONCE DAILY")) perDay = 1;
+        else return null; // SOS or unknown
+        return perDay * days;
+    }
+
+    // ItemID, ItemName, strength+UOM, form, route, isEDL, IssueType, ItemFormID — only if the drug is mapped to
+    // the store on its own service line (same join as v_drugforprescription, so the save accepts what the list shows).
     private Object[] getStoreItem(Integer facilityID, Integer drugID) {
         List<?> rows = em.createNativeQuery("SELECT i.ItemID, i.ItemName, CONCAT_WS(' ', i.Strength, u.UOMName), "
-                        + "f.ItemFormName, r.RouteName, i.isEDL, c.IssueType "
+                        + "f.ItemFormName, r.RouteName, i.isEDL, c.IssueType, i.ItemFormID "
                         + "FROM db_iemr.m_item i "
                         + "JOIN db_iemr.m_itemfacilitymapping m ON m.ItemID = i.ItemID AND m.FacilityID = :facilityID "
                         + "AND m.ProviderServiceMapID = i.ProviderServiceMapID AND m.Deleted = false "
