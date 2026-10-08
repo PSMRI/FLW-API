@@ -300,6 +300,109 @@ public class StopTBPrescriptionService {
         return result;
     }
 
+    /**
+     * OPD records for getAll from the standard tables, one per visit that was saved with the new payload
+     * (complaint with ChiefComplaintID or drug with DrugID). Older visits have only the free-text copy in
+     * tb_stoptb_general_opd and are added by the caller. Field names and formats match that table's response:
+     * chiefComplaint = JSON list of names, medication/dosage/frequency/duration = comma separated.
+     */
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> getStandardOpdRecords(Integer providerServiceMapID, Integer villageID) {
+        String villageFilter = villageID != null
+                ? "AND v.BeneficiaryRegID IN (SELECT f.beneficiary_reg_id FROM db_iemr.i_ben_flow_outreach f "
+                        + "WHERE f.providerServiceMapID = :psm AND f.villageID = :villageID) "
+                : "";
+        Query visitQuery = em.createNativeQuery("SELECT v.BenVisitID, v.BeneficiaryRegID, v.VisitCode, v.CreatedBy, "
+                        + "v.CreatedDate, v.LastModDate FROM db_iemr.t_benvisitdetail v "
+                        + "WHERE v.ProviderServiceMapID = :psm AND v.Deleted = false "
+                        + "AND (EXISTS (SELECT 1 FROM db_iemr.t_benchiefcomplaint c WHERE c.BeneficiaryRegID = v.BeneficiaryRegID "
+                        + "  AND c.VisitCode = v.VisitCode AND c.ChiefComplaintID IS NOT NULL AND c.Deleted = false) "
+                        + " OR EXISTS (SELECT 1 FROM db_iemr.t_prescribeddrug d WHERE d.BeneficiaryRegID = v.BeneficiaryRegID "
+                        + "  AND d.VisitCode = v.VisitCode AND d.DrugID IS NOT NULL AND d.Deleted = false)) "
+                        + villageFilter + "ORDER BY v.CreatedDate DESC")
+                .setParameter("psm", providerServiceMapID);
+        if (villageID != null) visitQuery.setParameter("villageID", villageID);
+        List<Object[]> visits = visitQuery.getResultList();
+
+        Map<Long, Map<String, Object>> byVisit = new LinkedHashMap<>();
+        for (Object[] v : visits) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", ((Number) v[0]).longValue());
+            m.put("beneficiaryRegID", ((Number) v[1]).longValue());
+            m.put("visitCode", ((Number) v[2]).longValue());
+            m.put("providerServiceMapID", providerServiceMapID);
+            m.put("chiefComplaint", new ArrayList<String>());
+            m.put("medication", new StringJoiner(", "));
+            m.put("dosage", new StringJoiner(", "));
+            m.put("frequency", new StringJoiner(", "));
+            m.put("duration", new StringJoiner(", "));
+            m.put("notes", null);
+            m.put("createdBy", v[3]);
+            m.put("createdDate", v[4]);
+            m.put("updateDate", v[5]);
+            m.put("updatedBy", null);
+            byVisit.put(((Number) v[2]).longValue(), m);
+        }
+        if (byVisit.isEmpty()) return new ArrayList<>();
+
+        List<Long> visitCodes = new ArrayList<>(byVisit.keySet());
+        for (int i = 0; i < visitCodes.size(); i += 500) {
+            List<Long> chunk = visitCodes.subList(i, Math.min(i + 500, visitCodes.size()));
+
+            for (Object o : em.createNativeQuery("SELECT VisitCode, ChiefComplaint, LastModDate FROM db_iemr.t_benchiefcomplaint "
+                            + "WHERE VisitCode IN (:codes) AND ChiefComplaintID IS NOT NULL AND Deleted = false ORDER BY ID")
+                    .setParameter("codes", chunk).getResultList()) {
+                Object[] r = (Object[]) o;
+                Map<String, Object> m = byVisit.get(((Number) r[0]).longValue());
+                if (r[1] != null) ((List<String>) m.get("chiefComplaint")).add(r[1].toString());
+                latest(m, r[2]);
+            }
+
+            for (Object o : em.createNativeQuery("SELECT VisitCode, GenericDrugName, Dose, Frequency, Duration, DuartionUnit, "
+                            + "LastModDate FROM db_iemr.t_prescribeddrug WHERE VisitCode IN (:codes) AND DrugID IS NOT NULL "
+                            + "AND Deleted = false ORDER BY PrescribedDrugID")
+                    .setParameter("codes", chunk).getResultList()) {
+                Object[] r = (Object[]) o;
+                Map<String, Object> m = byVisit.get(((Number) r[0]).longValue());
+                ((StringJoiner) m.get("medication")).add(r[1] != null ? r[1].toString() : "");
+                ((StringJoiner) m.get("dosage")).add(r[2] != null ? r[2].toString() : "");
+                ((StringJoiner) m.get("frequency")).add(r[3] != null ? r[3].toString() : "");
+                ((StringJoiner) m.get("duration")).add(r[4] == null ? "" : r[5] == null ? r[4].toString() : r[4] + " " + r[5]);
+                latest(m, r[6]);
+            }
+
+            // Latest prescription instruction per visit is the visit's note.
+            for (Object o : em.createNativeQuery("SELECT VisitCode, Instruction, LastModDate FROM db_iemr.t_prescription "
+                            + "WHERE VisitCode IN (:codes) AND Deleted = false ORDER BY PrescriptionID")
+                    .setParameter("codes", chunk).getResultList()) {
+                Object[] r = (Object[]) o;
+                Map<String, Object> m = byVisit.get(((Number) r[0]).longValue());
+                if (r[1] != null && !r[1].toString().isBlank()) m.put("notes", r[1].toString());
+                latest(m, r[2]);
+            }
+        }
+
+        com.google.gson.Gson gson = new com.google.gson.Gson();
+        List<Map<String, Object>> records = new ArrayList<>();
+        for (Map<String, Object> m : byVisit.values()) {
+            List<String> complaints = (List<String>) m.get("chiefComplaint");
+            m.put("chiefComplaint", complaints.isEmpty() ? null : gson.toJson(complaints));
+            for (String key : new String[] { "medication", "dosage", "frequency", "duration" }) {
+                String joined = m.get(key).toString();
+                m.put(key, joined.replace(",", "").isBlank() ? null : joined);
+            }
+            records.add(m);
+        }
+        return records;
+    }
+
+    // updateDate = latest change on the visit, so the app picks up a later save on the same day.
+    private void latest(Map<String, Object> m, Object modDate) {
+        if (modDate instanceof Date && (m.get("updateDate") == null || ((Date) modDate).after((Date) m.get("updateDate")))) {
+            m.put("updateDate", modDate);
+        }
+    }
+
     // Name, age (years), gender for the issue row shown on the Inventory dispense screen. Missing details
     // never block dispensing, same as Inventory-API.
     private Object[] getPatientDetails(Long beneficiaryRegID) {
