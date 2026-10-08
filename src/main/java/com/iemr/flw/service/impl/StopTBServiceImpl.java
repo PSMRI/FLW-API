@@ -491,6 +491,7 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("dosage", o.getDosage());
         m.put("frequency", o.getFrequency());
         m.put("duration", o.getDuration());
+        m.put("drugs", Collections.emptyList()); // old free-text records have no per-drug details
         m.put("notes", o.getNotes());
         m.put("createdBy", o.getCreatedBy());
         m.put("createdDate", o.getCreatedDate());

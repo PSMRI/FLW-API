@@ -179,7 +179,7 @@ public class StopTBPrescriptionService {
                 qty = calculateQuantity(d, items.get(drugID));
                 if (qty == null) {
                     throw new IllegalArgumentException("qtyPrescribed is required for drugID " + drugID
-                            + " (tablet/capsule quantity needs frequency and duration; not possible for SOS)");
+                            + " (tablet/capsule quantity needs frequency and duration)");
                 }
                 d.put("qtyPrescribed", qty); // saved in t_prescribeddrug.QtyPrescribed
             }
@@ -344,6 +344,7 @@ public class StopTBPrescriptionService {
             m.put("dosage", new StringJoiner(", "));
             m.put("frequency", new StringJoiner(", "));
             m.put("duration", new StringJoiner(", "));
+            m.put("drugs", new ArrayList<Map<String, Object>>());
             m.put("notes", null);
             m.put("createdBy", v[3]);
             m.put("createdDate", v[4]);
@@ -366,9 +367,12 @@ public class StopTBPrescriptionService {
                 latest(m, r[2]);
             }
 
-            for (Object o : em.createNativeQuery("SELECT VisitCode, GenericDrugName, Dose, Frequency, Duration, DuartionUnit, "
-                            + "LastModDate FROM db_iemr.t_prescribeddrug WHERE VisitCode IN (:codes) AND DrugID IS NOT NULL "
-                            + "AND Deleted = false ORDER BY PrescribedDrugID")
+            for (Object o : em.createNativeQuery("SELECT d.VisitCode, d.GenericDrugName, d.Dose, d.Frequency, d.Duration, "
+                            + "d.DuartionUnit, d.LastModDate, d.DrugID, i.ItemFormID, d.DrugForm, d.QtyPrescribed, "
+                            + "d.SpecialInstruction FROM db_iemr.t_prescribeddrug d "
+                            + "LEFT JOIN db_iemr.m_item i ON i.ItemID = d.DrugID "
+                            + "WHERE d.VisitCode IN (:codes) AND d.DrugID IS NOT NULL AND d.Deleted = false "
+                            + "ORDER BY d.PrescribedDrugID")
                     .setParameter("codes", chunk).getResultList()) {
                 Object[] r = (Object[]) o;
                 Map<String, Object> m = byVisit.get(((Number) r[0]).longValue());
@@ -377,6 +381,20 @@ public class StopTBPrescriptionService {
                 ((StringJoiner) m.get("frequency")).add(r[3] != null ? r[3].toString() : "");
                 ((StringJoiner) m.get("duration")).add(r[4] == null ? "" : r[5] == null ? r[4].toString() : r[4] + " " + r[5]);
                 latest(m, r[6]);
+
+                // Full prescription per drug, so a saved record can show form, quantity and instructions.
+                Map<String, Object> drug = new LinkedHashMap<>();
+                drug.put("drugID", ((Number) r[7]).intValue());
+                drug.put("drugName", r[1]);
+                drug.put("itemFormID", r[8] != null ? ((Number) r[8]).intValue() : null);
+                drug.put("drugForm", r[9]);
+                drug.put("dose", r[2]);
+                drug.put("frequency", r[3]);
+                drug.put("duration", r[4] != null ? toInt(r[4]) : null);
+                drug.put("durationUnit", r[5]);
+                drug.put("qtyPrescribed", r[10] != null ? ((Number) r[10]).intValue() : null);
+                drug.put("instructions", r[11]);
+                ((List<Map<String, Object>>) m.get("drugs")).add(drug);
             }
 
             // Latest prescription instruction per visit is the visit's note.
@@ -456,9 +474,9 @@ public class StopTBPrescriptionService {
     }
 
     /**
-     * Units to give when the app sends no quantity. Tablets/capsules: doses per day x days. Other forms
-     * (syrup, cream, injection, drops...): 1 bottle/tube/vial. Null when a tablet/capsule quantity cannot be
-     * worked out (SOS, missing frequency or duration).
+     * Units to give when the app sends no quantity. Tablets/capsules: doses per day x days (SOS = 1 per day,
+     * or 1 when no duration). Other forms (syrup, cream, injection, drops...): 1 bottle/tube/vial. Null when a
+     * tablet/capsule quantity cannot be worked out (missing/unknown frequency or missing duration).
      */
     private Integer calculateQuantity(Map<String, Object> drug, Object[] item) {
         Integer formID = item[7] != null ? ((Number) item[7]).intValue() : null;
@@ -467,7 +485,8 @@ public class StopTBPrescriptionService {
         if (frequency.contains("SINGLE DOSE") || frequency.contains("STAT")) return 1;
 
         Integer duration = toInt(drug.get("duration"));
-        if (duration == null || duration <= 0) return null;
+        boolean sos = frequency.contains("SOS");
+        if (duration == null || duration <= 0) return sos ? 1 : null;
         String unit = Optional.ofNullable(toStr(drug.get("durationUnit"))).orElse("Day").toLowerCase();
         int days = unit.startsWith("week") ? duration * 7 : unit.startsWith("month") ? duration * 30
                 : unit.startsWith("year") ? duration * 365 : duration;
@@ -477,8 +496,8 @@ public class StopTBPrescriptionService {
         if (frequency.contains("QID") || frequency.contains("FOUR")) perDay = 4;
         else if (frequency.contains("TID") || frequency.contains("THRICE")) perDay = 3;
         else if (frequency.contains("BD") || frequency.contains("TWICE")) perDay = 2;
-        else if (frequency.contains("OD") || frequency.contains("ONCE DAILY")) perDay = 1;
-        else return null; // SOS or unknown
+        else if (frequency.contains("OD") || frequency.contains("ONCE DAILY") || sos) perDay = 1; // SOS: up to 1 a day
+        else return null; // unknown frequency
         return perDay * days;
     }
 
