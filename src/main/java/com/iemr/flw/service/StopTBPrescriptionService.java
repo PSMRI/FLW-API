@@ -116,7 +116,11 @@ public class StopTBPrescriptionService {
         for (Map<String, Object> c : complaints) {
             Integer complaintID = toInt(c.get("chiefComplaintID"));
             String complaint = toStr(c.get("chiefComplaint"));
-            if (complaintID == null && (complaint == null || complaint.isBlank())) continue;
+            // ID from the chief complaint master is required: getAll and reports identify new records by it.
+            if (complaintID == null) {
+                throw new IllegalArgumentException("chiefComplaintID is required for every chief complaint"
+                        + (complaint != null ? " (" + complaint + ")" : ""));
+            }
             em.createNativeQuery("INSERT INTO db_iemr.t_benchiefcomplaint (BeneficiaryRegID, BenVisitID, ProviderServiceMapID, "
                             + "VisitCode, ChiefComplaintID, ChiefComplaint, Duration, UnitOfDuration, Description, Deleted, "
                             + "Processed, CreatedBy, VanID, ParkingPlaceID) VALUES (:ben, :visitID, :psm, :visitCode, :cid, "
@@ -147,7 +151,15 @@ public class StopTBPrescriptionService {
             BenVisitDetail visit, String submissionId, String createdBy, Integer vanID, Integer parkingPlaceID) {
         List<Map<String, Object>> drugs = toList(prescription.get("drugs"));
         Map<String, Object> result = new LinkedHashMap<>();
-        if (drugs.isEmpty()) return result;
+        if (drugs.isEmpty()) {
+            // Remarks without medicine are still kept, as MMU saves the visit instruction without drugs.
+            String instruction = toStr(prescription.get("instruction"));
+            if (instruction != null && !instruction.isBlank()) {
+                result.put("prescriptionID", insertPrescription(beneficiaryRegID, visit, instruction, createdBy, vanID,
+                        parkingPlaceID));
+            }
+            return result;
+        }
 
         Integer facilityID = campConfigService.getFacilityID();
         if (facilityID == null) {
@@ -191,20 +203,8 @@ public class StopTBPrescriptionService {
 
         // 2. Prescription + prescribed drugs (Stop TB service line, same as the visit).
         Integer storePsm = getStorePsm(facilityID);
-        em.createNativeQuery("INSERT INTO db_iemr.t_prescription (BeneficiaryRegID, BenVisitID, ProviderServiceMapID, VisitCode, "
-                        + "Instruction, Deleted, Processed, CreatedBy, VanID, ParkingPlaceID) "
-                        + "VALUES (:ben, :visitID, :psm, :visitCode, :instruction, false, 'N', :user, :van, :pp)")
-                .setParameter("ben", beneficiaryRegID)
-                .setParameter("visitID", visit.getBenVisitId())
-                .setParameter("psm", visit.getProviderServiceMapID())
-                .setParameter("visitCode", visit.getVisitCode())
-                .setParameter("instruction", toStr(prescription.get("instruction")))
-                .setParameter("user", createdBy)
-                .setParameter("van", vanID)
-                .setParameter("pp", parkingPlaceID)
-                .executeUpdate();
-        long prescriptionID = lastInsertId();
-        stampVanSerialNo("t_prescription", "PrescriptionID", prescriptionID);
+        long prescriptionID = insertPrescription(beneficiaryRegID, visit, toStr(prescription.get("instruction")),
+                createdBy, vanID, parkingPlaceID);
 
         for (Map<String, Object> d : drugs) {
             Integer drugID = toInt(d.get("drugID"));
@@ -433,6 +433,26 @@ public class StopTBPrescriptionService {
             logger.warn("Cannot read patient details for benRegID " + beneficiaryRegID + ": " + e.getMessage());
             return new Object[3];
         }
+    }
+
+    // t_prescription row for the visit (Stop TB service line, same as the visit).
+    private long insertPrescription(Long beneficiaryRegID, BenVisitDetail visit, String instruction, String createdBy,
+            Integer vanID, Integer parkingPlaceID) {
+        em.createNativeQuery("INSERT INTO db_iemr.t_prescription (BeneficiaryRegID, BenVisitID, ProviderServiceMapID, VisitCode, "
+                        + "Instruction, Deleted, Processed, CreatedBy, VanID, ParkingPlaceID) "
+                        + "VALUES (:ben, :visitID, :psm, :visitCode, :instruction, false, 'N', :user, :van, :pp)")
+                .setParameter("ben", beneficiaryRegID)
+                .setParameter("visitID", visit.getBenVisitId())
+                .setParameter("psm", visit.getProviderServiceMapID())
+                .setParameter("visitCode", visit.getVisitCode())
+                .setParameter("instruction", instruction)
+                .setParameter("user", createdBy)
+                .setParameter("van", vanID)
+                .setParameter("pp", parkingPlaceID)
+                .executeUpdate();
+        long prescriptionID = lastInsertId();
+        stampVanSerialNo("t_prescription", "PrescriptionID", prescriptionID);
+        return prescriptionID;
     }
 
     /**
