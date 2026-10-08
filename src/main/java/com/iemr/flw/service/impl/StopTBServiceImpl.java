@@ -382,20 +382,35 @@ public class StopTBServiceImpl implements StopTBService {
             if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
             Integer vanID = campConfigService.resolveVanID(getInt(data, "vanID"));
 
-            // New payload (chiefComplaints[] / prescription.drugs[]) goes to the standard tables with dispensing;
-            // the old payload keeps the old behaviour.
-            boolean standardPayload = data.get("chiefComplaints") instanceof List || data.get("prescription") instanceof Map;
-            String submissionId = getString(data, "submissionId");
-            if (standardPayload) {
+            Integer providerServiceMapID = getInt(data, "providerServiceMapID");
+            String createdBy = getString(data, "createdBy");
+
+            // New payload (chiefComplaints[] / prescription.drugs[]): AMRIT standard tables only, with dispensing.
+            // tb_stoptb_general_opd is not written; getAll and the Nikshay export read the standard tables.
+            if (data.get("chiefComplaints") instanceof List || data.get("prescription") instanceof Map) {
+                String submissionId = getString(data, "submissionId");
                 Map<String, Object> previous = stopTBPrescriptionService.findPreviousSubmission(beneficiaryRegID, submissionId);
                 if (previous != null) {
                     results.add(previous);
                     continue;
                 }
+                BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
+                        createdBy, vanID, parkingPlaceID);
+                Map<String, Object> result = new LinkedHashMap<>();
+                result.put("beneficiaryRegID", beneficiaryRegID);
+                result.put("visitCode", visit.getVisitCode());
+                stopTBPrescriptionService.saveChiefComplaints(toMapList(data.get("chiefComplaints")), beneficiaryRegID,
+                        visit, createdBy, vanID, parkingPlaceID);
+                if (data.get("prescription") instanceof Map) {
+                    result.putAll(stopTBPrescriptionService.prescribeAndDispense(
+                            (Map<String, Object>) data.get("prescription"), beneficiaryRegID, visit, submissionId,
+                            createdBy, vanID, parkingPlaceID));
+                }
+                results.add(result);
+                continue;
             }
 
-            Integer providerServiceMapID = getInt(data, "providerServiceMapID");
-            String createdBy = getString(data, "createdBy");
+            // Old app payload (free-text chiefComplaint / medication): unchanged behaviour.
             BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
                     createdBy, vanID, parkingPlaceID);
 
@@ -407,10 +422,8 @@ public class StopTBServiceImpl implements StopTBService {
             opd.setVisitCode(visit.getVisitCode());
             opd.setBenVisitID(visit.getBenVisitId());
             opd.setProviderServiceMapID(providerServiceMapID);
-            opd.setChiefComplaint(toJsonString(data.get(standardPayload && data.get("chiefComplaint") == null
-                    ? "chiefComplaints" : "chiefComplaint")));
-            opd.setMedication(standardPayload && data.get("medication") == null
-                    ? drugNames(data.get("prescription")) : getString(data, "medication"));
+            opd.setChiefComplaint(toJsonString(data.get("chiefComplaint")));
+            opd.setMedication(getString(data, "medication"));
             opd.setDosage(getString(data, "dosage"));
             opd.setFrequency(getString(data, "frequency"));
             opd.setDuration(getString(data, "duration"));
@@ -422,22 +435,14 @@ public class StopTBServiceImpl implements StopTBService {
             opd.setProcessed("N");
 
             generalOpdRepo.save(opd);
-            if (isNew) generalOpdRepo.updateVanSerialNo(opd.getId());
+            if (isNew) {
+                generalOpdRepo.updateVanSerialNo(opd.getId());
+                dualWriteOpdToStandardTables(opd, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
+            }
 
             Map<String, Object> result = new HashMap<>();
             result.put("beneficiaryRegID", beneficiaryRegID);
             result.put("visitCode", visit.getVisitCode());
-            if (standardPayload) {
-                stopTBPrescriptionService.saveChiefComplaints(toMapList(data.get("chiefComplaints")), beneficiaryRegID,
-                        visit, createdBy, vanID, parkingPlaceID);
-                if (data.get("prescription") instanceof Map) {
-                    result.putAll(stopTBPrescriptionService.prescribeAndDispense(
-                            (Map<String, Object>) data.get("prescription"), beneficiaryRegID, visit, submissionId,
-                            createdBy, vanID, parkingPlaceID));
-                }
-            } else if (isNew) {
-                dualWriteOpdToStandardTables(opd, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
-            }
             results.add(result);
         }
         return results;
@@ -448,27 +453,25 @@ public class StopTBServiceImpl implements StopTBService {
         return v instanceof List ? (List<Map<String, Object>>) v : null;
     }
 
-    // Readable drug list kept in the archive row so getAll / Nikshay export still show the medication.
-    @SuppressWarnings("unchecked")
-    private String drugNames(Object prescription) {
-        if (!(prescription instanceof Map)) return null;
-        List<Map<String, Object>> drugs = toMapList(((Map<String, Object>) prescription).get("drugs"));
-        if (drugs == null || drugs.isEmpty()) return null;
-        StringJoiner names = new StringJoiner(", ");
-        for (Map<String, Object> d : drugs) {
-            Object name = d.get("drugName") != null ? d.get("drugName") : "drugID " + d.get("drugID");
-            names.add(name + " x" + d.get("qtyPrescribed"));
-        }
-        return names.toString();
-    }
-
+    // Standard tables first (visits saved with the new payload); for older visits, which exist only in
+    // tb_stoptb_general_opd, fall back to that table. Same response fields either way.
     @Override
     public Map<String, Object> getAllGeneralOpd(Integer providerServiceMapID, Integer villageID) throws Exception {
+        List<Map<String, Object>> items = stopTBPrescriptionService.getStandardOpdRecords(providerServiceMapID, villageID);
+        Set<Long> standardVisitCodes = new HashSet<>();
+        for (Map<String, Object> item : items) standardVisitCodes.add((Long) item.get("visitCode"));
+
         List<StopTBGeneralOpd> list = (villageID != null)
                 ? generalOpdRepo.findAllByProviderServiceMapIDAndVillageID(providerServiceMapID, villageID)
                 : generalOpdRepo.findAllByProviderServiceMapID(providerServiceMapID);
-        List<Map<String, Object>> items = new ArrayList<>();
-        for (StopTBGeneralOpd o : list) items.add(opdToMap(o));
+        for (StopTBGeneralOpd o : list) {
+            if (o.getVisitCode() == null || !standardVisitCodes.contains(o.getVisitCode())) items.add(opdToMap(o));
+        }
+        items.sort((a, b) -> {
+            Date da = (Date) a.get("createdDate"), db = (Date) b.get("createdDate");
+            if (da == null || db == null) return da == null ? (db == null ? 0 : 1) : -1;
+            return db.compareTo(da);
+        });
         Map<String, Object> result = new HashMap<>();
         result.put("data", items);
         result.put("count", items.size());
