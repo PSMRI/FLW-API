@@ -418,7 +418,7 @@ public class ChildCareServiceImpl implements ChildCareService {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
             List<ChildVaccination> vaccinationDetails =
-                    childVaccinationRepo.getChildVaccinationDetails(user, dto.getFromDate(), dto.getToDate());
+                    childVaccinationRepo.getChildVaccinationDetails(user);
 
             if (vaccinationDetails.isEmpty()) {
                 return new ArrayList<>();
