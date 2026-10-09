@@ -8,6 +8,9 @@ import java.sql.Timestamp;
 
 @Data
 public class IncentiveActivityDTO implements Serializable {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private Long id;
 

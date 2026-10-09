@@ -14,6 +14,9 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class IRSRoundDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
     private Long id;
     @NotNull(message = "Date cannot be null")
     private LocalDate date;

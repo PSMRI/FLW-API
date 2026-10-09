@@ -8,6 +8,9 @@ import lombok.Data;
 import java.util.List;
 @Data
 public class AdolescentHealthDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
     @NotNull(message = "User ID cannot be null")
     Integer userId;
     @NotNull(message = "Adolescent health records cannot be null")

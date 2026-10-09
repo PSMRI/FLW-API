@@ -39,6 +39,9 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class FormResponseDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private Long responseId;
     private Long beneficiaryId;

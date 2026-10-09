@@ -1,5 +1,6 @@
 package com.iemr.flw.dto.iemr;
 
+import jakarta.persistence.Column;
 import lombok.Data;
 
 import java.sql.Timestamp;
@@ -7,6 +8,9 @@ import java.util.List;
 
 @Data
 public class TBScreeningDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private Long id;
     private Long benId;
@@ -87,5 +91,7 @@ public class TBScreeningDTO {
     private String hivStatus;
     private List<Integer> keyPopulationRiskFactorIds;
     private List<String> keyPopulationRiskFactors;
+    private Boolean failureToGainWeight;
+    private Boolean decreasedActivityOrPlayfulness ;
 
 }

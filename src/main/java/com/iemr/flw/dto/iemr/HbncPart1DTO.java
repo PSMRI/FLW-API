@@ -6,6 +6,9 @@ import java.sql.Timestamp;
 
 @Data
 public class HbncPart1DTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private Long id;
     private Long benId;

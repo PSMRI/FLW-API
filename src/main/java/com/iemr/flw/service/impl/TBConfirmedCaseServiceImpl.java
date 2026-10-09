@@ -57,6 +57,9 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
     private TbReferralFollowUpRepo tbReferralFollowUpRepo;
 
     @Autowired
+    private IncentiveLogicImpl incentiveLogic;
+
+    @Autowired
     private TbTptFollowUpRepo tbTptFollowUpRepo;
     public TBConfirmedCaseServiceImpl(TBConfirmedTreatmentRepository repository,
                                       FormResponseRepo formResponseRepo,
@@ -417,6 +420,8 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                 }
 
                 tbTptFollowUpRepo.save(tbTptFollowUp);
+
+                createTptIncentiveIfEligible(tbTptFollowUp);
             }
 
             response.setResponse("TPT follow up saved successfully");
@@ -430,6 +435,58 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         return response.toString();
     }
 
+
+    private static final Map<String, Integer> MIN_FOLLOW_UPS = Map.of(
+            "1HP", 1,
+            "3HP", 3,
+            "3RH", 3,
+            "4R", 4,
+            "6H", 6,
+            "6LFX", 6
+    );
+
+
+    private void createTptIncentiveIfEligible(TbTptFollowUp saved) {
+
+        // 1. Basic conditions
+        if (!Boolean.TRUE.equals(saved.getTreatmentCompleted())
+                || saved.getActualTreatmentCompletionDate() == null
+                || saved.getRegimenType() == null
+                || saved.getTreatmentStartDate() == null
+                || saved.getBenId() == null) {
+            return;
+        }
+
+        // 2. Regimen ka minimum follow-up count
+        Integer minRequired = MIN_FOLLOW_UPS.get(saved.getRegimenType().trim().toUpperCase());
+        if (minRequired == null) {
+            return; // unknown regimen
+        }
+
+        List<TbTptFollowUp> cycleRows = tbTptFollowUpRepo
+                .findByBenIdAndRegimenTypeAndTreatmentStartDate(
+                        saved.getBenId(),
+                        saved.getRegimenType(),
+                        saved.getTreatmentStartDate());
+
+        long completedMonths = cycleRows.stream()
+                .map(TbTptFollowUp::getFollowUpMonth)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .distinct()
+                .count();
+
+        if (completedMonths < minRequired) {
+            return;
+        }
+        Timestamp completionDate = saved.getActualTreatmentCompletionDate();
+
+        incentiveLogic.incentiveForTbPreventiveFollowUp(
+                saved.getBenId(),
+                completionDate,
+                completionDate,
+                saved.getUserId());
+    }
 
     @Override
     public String getTptFollowUp(String token) {

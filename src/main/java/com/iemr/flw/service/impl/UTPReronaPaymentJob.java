@@ -49,7 +49,7 @@ public class UTPReronaPaymentJob implements CommandLineRunner {
         log.info("FLW application started successfully and is now running.");
 
         log.info("========================================");
-        triggerStaticPayment();
+       // triggerStaticPayment();
 
     }
     // ✅ Separate method — call this for immediate testing

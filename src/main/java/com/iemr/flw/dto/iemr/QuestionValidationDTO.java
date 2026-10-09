@@ -36,6 +36,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuestionValidationDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private Long validationId;
 

@@ -213,4 +213,10 @@ public class TBScreening {
     @org.hibernate.annotations.CreationTimestamp
     @Column(name = "synced_date")
     private Timestamp syncedDate;
+
+    @Column(name = "failure_to_gainWeight")
+    private Boolean failureToGainWeight;
+
+    @Column(name = "decreased_activity_playfulness ")
+    private Boolean decreasedActivityOrPlayfulness ;
 }
