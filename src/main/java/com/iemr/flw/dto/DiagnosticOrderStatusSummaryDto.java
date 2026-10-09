@@ -12,8 +12,7 @@ import java.util.List;
 public class DiagnosticOrderStatusSummaryDto {
     private List<Long> awaitingProviderResult;
     private List<Long> completed;
-    private List<Long> pollingTimedOut;
     private List<Long> failed;
-    private List<Long> refused;
+    private List<Long> closed;
     private List<Long> awaitingManualEntry;
 }

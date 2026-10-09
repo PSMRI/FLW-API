@@ -37,10 +37,11 @@ public class DiagnosticOrderController {
 
     @PostMapping("/order/push")
     @Operation(summary = "Push a diagnostic order to the configured provider")
-    public String pushOrder(@RequestBody @Valid DiagnosticOrderRequestDto request) {
+    public String pushOrder(@RequestBody @Valid DiagnosticOrderRequestDto request,
+            @RequestHeader("JwtToken") String jwtToken) {
         OutputResponse response = new OutputResponse();
         try {
-            DiagnosticOrder order = diagnosticOrderService.createAndPushOrder(request);
+            DiagnosticOrder order = diagnosticOrderService.createAndPushOrderByUser(request, jwtToken);
             response.setResponse(new Gson().toJson(order));
         } catch (Exception e) {
             logger.error("Error in pushOrder: {}", e.getMessage());
@@ -128,14 +129,17 @@ public class DiagnosticOrderController {
     }
 
     @PostMapping("/order/manualResult")
-    @Operation(summary = "Manually submit a diagnostic result for a beneficiary's latest order of the given "
-            + "type, for use when no vendor device is integrated. Stored as-is; tbPresence, tbConfidence, and "
-            + "drugResistancePresence are left null since nothing derives them. Rejected if that order is "
-            + "already COMPLETED.")
-    public String submitManualResult(@RequestBody @Valid ManualDiagnosticResultRequestDto request) {
+    @Operation(summary = "Exactly one of resultSummary/reasonToClose is required. resultSummary: manually submit "
+            + "a diagnostic result for a beneficiary's latest order of the given type, for use when no vendor "
+            + "device is integrated. Stored as-is; tbPresence, tbConfidence, and drugResistancePresence are left "
+            + "null since nothing derives them. Rejected if that order is already COMPLETED. reasonToClose: close "
+            + "the order instead (same behavior as reasonToClose on /order/push), sourcing patient/orderEvent "
+            + "from the beneficiary's existing order for this type.")
+    public String submitManualResult(@RequestBody @Valid ManualDiagnosticResultRequestDto request,
+            @RequestHeader("JwtToken") String jwtToken) {
         OutputResponse response = new OutputResponse();
         try {
-            DiagnosticOrderResultDto result = diagnosticOrderService.submitManualResult(request);
+            DiagnosticOrderResultDto result = diagnosticOrderService.submitManualResult(request, jwtToken);
             response.setResponse(new GsonBuilder().serializeNulls().create().toJson(result));
         } catch (Exception e) {
             logger.error("Error in submitManualResult: {}", e.getMessage());

@@ -22,6 +22,7 @@
 package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.QuestionValidation;
+import com.iemr.flw.masterEnum.ValidationType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for question validation rules.
@@ -38,11 +40,17 @@ public interface QuestionValidationRepo extends JpaRepository<QuestionValidation
 
     List<QuestionValidation> findBySectionQuestion_QuestionId(Long questionId);
 
+    /** No surrogate natural key on validations — matched by the (type, param) content tuple within a question. */
+    Optional<QuestionValidation> findBySectionQuestion_QuestionIdAndValidationTypeAndValidationParam(
+            Long questionId, ValidationType validationType, String validationParam);
+
     /**
      * Loads all validations for a set of questions in one query.
      * JOIN FETCH ensures sectionQuestion is hydrated so callers can group by questionId without extra queries.
+     * Excludes removed (isActive=false) validations — used only by read paths; reconciliation matching
+     * uses the natural-key finder above, which must see inactive rows too.
      */
     @Query("SELECT v FROM QuestionValidation v JOIN FETCH v.sectionQuestion "
-            + "WHERE v.sectionQuestion.questionId IN :questionIds")
+            + "WHERE v.sectionQuestion.questionId IN :questionIds AND v.isActive = true")
     List<QuestionValidation> findByQuestionIds(@Param("questionIds") Collection<Long> questionIds);
 }

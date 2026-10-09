@@ -23,6 +23,7 @@ package com.iemr.flw.service;
 
 import com.iemr.flw.dto.iemr.DynamicFormDTO;
 import com.iemr.flw.dto.iemr.FormSectionDTO;
+import com.iemr.flw.dto.iemr.LatestFormVersionDTO;
 import com.iemr.flw.dto.iemr.OptionConditionDTO;
 import com.iemr.flw.dto.iemr.QuestionOptionDTO;
 import com.iemr.flw.dto.iemr.QuestionValidationDTO;
@@ -47,7 +48,7 @@ public interface DynamicFormDefinitionService {
     /** Returns a specific version's full definition tree (no cache). */
     DynamicFormDTO getFormDefinitionByVersion(Long formId, Integer versionNumber);
 
-    /** Returns metadata for all active forms (without full tree). */
+    /** Returns every active form's latest full definition, with each version's full definition in {@code versions}. */
     List<DynamicFormDTO> getAllForms();
 
     /** Sets the form's isActive flag to true. */
@@ -56,4 +57,6 @@ public interface DynamicFormDefinitionService {
     /** Sets the form's isActive flag to false and invalidates cache. */
     void deactivateForm(Long formId);
 
+    /** Latest version of every active form: formId, formUuid, formName and current version number. */
+    List<LatestFormVersionDTO> getLatestFormVersions();
 }
