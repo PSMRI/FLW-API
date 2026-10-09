@@ -864,7 +864,6 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
         }
         logger.info("Other:" + rows);
-            long pending = 0, verified = 0, rejected = 0 , unclaimedCount = 0 , overDue = 0 ;
 
 
             long overallVerified = 0, overallRejected = 0, overallPending = 0 , overallUnclaimed=0 ,overallOverDue =0;
@@ -880,6 +879,13 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
         }
 
         for (Object[] row : rows) {
+
+            long pending = 0;
+            long verified = 0;
+            long rejected = 0;
+            long unclaimedCount = 0;
+            long overDue = 0;
+
 
             Map<String, Object> asha = new HashMap<>();
 
@@ -1234,45 +1240,32 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
                          if (Objects.equals(approvalStatusID, 102)) {
 
                              incentiveActivityRecord = dbRecords.stream()
-
-                                     .filter(record ->
-                                             Objects.equals(record.getApprovalStatus(), 102)
-                                                     || Objects.equals(
-                                                     record.getApprovalStatus(), 105
-                                             )
-                                     )
-
                                      .peek(record -> {
                                          if (Objects.equals(record.getApprovalStatus(), 102)
-                                                 && Boolean.TRUE.equals(
-                                                 record.getIsDefaultActivity()
-                                         )
-                                                 && Boolean.TRUE.equals(
-                                                 record.getIsApproved()
-                                         )) {
+                                                 && Boolean.TRUE.equals(record.getIsDefaultActivity())
+                                                 && Boolean.TRUE.equals(record.getIsApproved())) {
 
-                                             logger.info(
-                                                     "Changing record status 102 to 105: " +
-                                                             "id={}, activityId={}",
-                                                     record.getId(),
-                                                     record.getActivityId()
-                                             );
+                                             logger.info("Changing record status 102 to 105: id={}, activityId={}",
+                                                     record.getId(), record.getActivityId());
 
                                              record.setApprovalStatus(105);
                                          }
                                      })
+                                     .filter(record -> {
+                                         boolean isDefault = Boolean.TRUE.equals(record.getIsDefaultActivity());
+                                         boolean isClaimed = Boolean.TRUE.equals(record.getIsClaimed());
+                                         Integer status = record.getApprovalStatus();
+                                         boolean default105 = isDefault && Objects.equals(status, 105);
 
 
-                                     .filter(record ->
-                                             !Boolean.TRUE.equals(
-                                                     record.getIsDefaultActivity()
-                                             )
-                                                     || Boolean.TRUE.equals(
-                                                     record.getIsApproved()
-                                             )
-                                     )
+                                         boolean nonDefault102Claimed = !isDefault && Objects.equals(status, 102) && isClaimed;
+
+                                         boolean other105 = !isDefault && Objects.equals(status, 105);
+
+                                         return nonDefault102Claimed || default105 || other105;
+
+                                     })
                                      .collect(Collectors.toList());
-
                              totalAmount = incentiveActivityRecord.stream()
                                      .map(IncentiveActivityRecord::getAmount)
                                      .filter(Objects::nonNull)
@@ -1464,15 +1457,12 @@ public class SupervisorDashboardServiceImpl implements SupervisorDashboardServic
 
 
 
-            if (verified > 0) overallVerified += 1;
-            if (rejected > 0) overallRejected += 1;
+            if (verified > 0) overallVerified++;
+            if (rejected > 0) overallRejected++;
             if (pending > 0) {
-                if (isOverDue) {
-                    overallOverDue++;
-                } else {
-                    overallPending++;
-                }
+                if (isOverDue) overallOverDue++; else overallPending++;
             }
+            if (unclaimedCount > 0) overallUnclaimed++;
 
             if (unclaimedCount > 0) overallUnclaimed += 1;
 
