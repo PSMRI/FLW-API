@@ -30,6 +30,7 @@ import com.iemr.flw.service.DiagnosticDocumentService;
 import com.iemr.flw.service.DiagnosticOrderService;
 import com.iemr.flw.service.TBStopVisitService;
 import com.iemr.flw.utils.JwtUtil;
+import com.google.common.util.concurrent.Striped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +43,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Lock;
 
 @Service
 public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
@@ -124,15 +124,18 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     // visit for today) and send the same patient to the vendor twice — shown as duplicate names on the
     // TrueNat machine. Keyed by beneficiary, not orderType, because the visit is shared across order types.
     // In-memory, so it only serialises within this JVM: correct while orders are created only by the
-    // single van server that can reach the vendor. Reentrant, so nested calls (e.g. push → closeOrder)
-    // don't deadlock.
-    private final ConcurrentHashMap<Long, ReentrantLock> beneficiaryOrderLocks = new ConcurrentHashMap<>();
+    // single van server that can reach the vendor. Striped keeps the lock registry a fixed size for the
+    // JVM's lifetime: the same beneficiary always maps to the same stripe, while unrelated beneficiaries
+    // that happen to share a stripe merely wait on each other briefly. Stripes are reentrant, and no path
+    // ever holds two beneficiaries' locks at once, so sharing a stripe can't deadlock.
+    private static final int BENEFICIARY_LOCK_STRIPES = 1024;
+    private final Striped<Lock> beneficiaryOrderLocks = Striped.lock(BENEFICIARY_LOCK_STRIPES);
 
     private <T> T withBeneficiaryLock(Long beneficiaryId, Callable<T> action) throws Exception {
         if (beneficiaryId == null) {
             throw new IllegalArgumentException("beneficiaryId is required");
         }
-        ReentrantLock lock = beneficiaryOrderLocks.computeIfAbsent(beneficiaryId, id -> new ReentrantLock());
+        Lock lock = beneficiaryOrderLocks.get(beneficiaryId);
         lock.lock();
         try {
             return action.call();
