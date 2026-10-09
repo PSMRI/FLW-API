@@ -207,6 +207,11 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             }
             throw dive;
         }
+        // Stamp the sync key before the (possibly slow) vendor push, so a crash/restart mid-push can't leave it NULL.
+        if (order.getVanSerialNo() == null) {
+            diagnosticOrderRepo.updateVanSerialNo(order.getId());
+            order.setVanSerialNo(order.getId());
+        }
 
         if (noVendor) {
             logger.info("No active vendor configured for orderType={}, beneficiaryId={} — order saved for manual entry",
@@ -492,7 +497,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
             order.setModifiedBy("SYSTEM");
             order.setProcessed("N");
-            diagnosticOrderRepo.save(order);
+            order = diagnosticOrderRepo.save(order);
+            // The scheduler's copy may predate createAndPushOrder's updateVanSerialNo(); fill it if still missing.
+            if (order.getVanSerialNo() == null) diagnosticOrderRepo.updateVanSerialNo(order.getId());
             return null;
         }
         DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
