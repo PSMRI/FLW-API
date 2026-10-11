@@ -583,6 +583,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 samVisit.setVisitLabel(samDTO.getFields().getVisit_label());
                 samVisit.setWeightForHeightStatus(samDTO.getFields().getWeight_for_height_status());
                 samVisit.setIsChildReferredNrc(samDTO.getFields().getIs_child_referred_nrc());
+                samVisit.setIsChildAdmittedNrc(samDTO.getFields().getIs_child_admitted_nrc());
                 samVisit.setNrcAdmissionDate(samDTO.getFields().getNrc_admission_date());
                 samVisit.setIsChildDischargedNrc(samDTO.getFields().getIs_child_discharged_nrc());
                 samVisit.setNrcDischargeDate(samDTO.getFields().getNrc_discharge_date());
