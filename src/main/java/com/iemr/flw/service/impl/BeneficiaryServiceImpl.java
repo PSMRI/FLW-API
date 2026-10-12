@@ -363,12 +363,6 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         if (benAddressOBJ.getPermPinCode() != null)
                             benDetailsRMNCH_OBJ.setPinCode(benAddressOBJ.getPermPinCode());
 
-                        // Map GPS double fields to the exposed latitude/longitude BigDecimal fields for response
-                        if (benDetailsRMNCH_OBJ.getGpsLatitude() != null)
-                            benDetailsRMNCH_OBJ.setLatitude(BigDecimal.valueOf(benDetailsRMNCH_OBJ.getGpsLatitude()));
-                        if (benDetailsRMNCH_OBJ.getGpsLongitude() != null)
-                            benDetailsRMNCH_OBJ.setLongitude(BigDecimal.valueOf(benDetailsRMNCH_OBJ.getGpsLongitude()));
-
                         // -----------------------------------------------------------------------------
 
                         // related benids

@@ -30,6 +30,7 @@ import com.iemr.flw.service.DiagnosticDocumentService;
 import com.iemr.flw.service.DiagnosticOrderService;
 import com.iemr.flw.service.TBStopVisitService;
 import com.iemr.flw.utils.JwtUtil;
+import com.google.common.util.concurrent.Striped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.locks.Lock;
 
 @Service
 public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
@@ -116,7 +119,36 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         return createAndPushOrder(request, "SYSTEM");
     }
 
+    // One lock per beneficiary, held across visit lookup → dedup check → insert → vendor push. Without it,
+    // two simultaneous pushes for the same beneficiary could both pass the dedup check (or both create a
+    // visit for today) and send the same patient to the vendor twice — shown as duplicate names on the
+    // TrueNat machine. Keyed by beneficiary, not orderType, because the visit is shared across order types.
+    // In-memory, so it only serialises within this JVM: correct while orders are created only by the
+    // single van server that can reach the vendor. Striped keeps the lock registry a fixed size for the
+    // JVM's lifetime: the same beneficiary always maps to the same stripe, while unrelated beneficiaries
+    // that happen to share a stripe merely wait on each other briefly. Stripes are reentrant, and no path
+    // ever holds two beneficiaries' locks at once, so sharing a stripe can't deadlock.
+    private static final int BENEFICIARY_LOCK_STRIPES = 1024;
+    private final Striped<Lock> beneficiaryOrderLocks = Striped.lock(BENEFICIARY_LOCK_STRIPES);
+
+    private <T> T withBeneficiaryLock(Long beneficiaryId, Callable<T> action) throws Exception {
+        if (beneficiaryId == null) {
+            throw new IllegalArgumentException("beneficiaryId is required");
+        }
+        Lock lock = beneficiaryOrderLocks.get(beneficiaryId);
+        lock.lock();
+        try {
+            return action.call();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     private DiagnosticOrder createAndPushOrder(DiagnosticOrderRequestDto request, String createdBy) throws Exception {
+        return withBeneficiaryLock(request.getBeneficiaryId(), () -> createAndPushOrderLocked(request, createdBy));
+    }
+
+    private DiagnosticOrder createAndPushOrderLocked(DiagnosticOrderRequestDto request, String createdBy) throws Exception {
         Long beneficiaryId            = request.getBeneficiaryId();
         DiagnosticOrderType orderType = DiagnosticOrderType.fromCode(request.getOrderType());
         String orderEvent            = request.getOrderEvent();
@@ -169,7 +201,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 && !visitCode.equals(latestForType.get().getVisitCode())) {
             DiagnosticOrder blocker = latestForType.get();
             logger.info("Duplicate order push suppressed for beneficiaryId={}, orderType={}: unresolved order id={} "
-                    + "(visitCode={}, status={}) already exists — returning it instead of pushing a new order for visitCode={}",
+                            + "(visitCode={}, status={}) already exists — returning it instead of pushing a new order for visitCode={}",
                     beneficiaryId, orderType, blocker.getId(), blocker.getVisitCode(), blocker.getStatus(), visitCode);
             return blocker;
         }
@@ -252,8 +284,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     // with reasonToClose) — resolves the same visit/provider/externalOrderId a normal push would, then
     // closes the order via saveRefusedOrder. Identical outcome regardless of which endpoint triggered it.
     private DiagnosticOrder closeOrder(Long beneficiaryId, DiagnosticOrderType orderType, String orderEvent,
-            String patientFirstName, String patientLastName, String patientDateOfBirth, String patientSex,
-            String reasonToClose, String actingUserId) throws Exception {
+                                       String patientFirstName, String patientLastName, String patientDateOfBirth, String patientSex,
+                                       String reasonToClose, String actingUserId) throws Exception {
         Integer vanID = campConfigService.getVanID();
         Integer parkingPlaceID = campConfigService.getParkingPlaceID();
 
@@ -275,14 +307,16 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     // from the beneficiary's own most recent order for this orderType (whatever its status), since that
     // information already exists there. No prior order at all means there's nothing to source it from.
     private DiagnosticOrder closeOrderManually(Long beneficiaryId, DiagnosticOrderType orderType,
-            String reasonToClose, String actingUserId) throws Exception {
-        DiagnosticOrder source = diagnosticOrderRepo
-                .findFirstByBeneficiaryIdAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, orderType.name())
-                .orElseThrow(() -> new Exception("No diagnostic order found for beneficiaryId=" + beneficiaryId
-                        + ", orderType=" + orderType.name() + " — cannot close a record that was never created"));
-        return closeOrder(beneficiaryId, orderType, source.getOrderEvent(), source.getPatientFirstName(),
-                source.getPatientLastName(), source.getPatientDateOfBirth(), source.getPatientSex(), reasonToClose,
-                actingUserId);
+                                               String reasonToClose, String actingUserId) throws Exception {
+        return withBeneficiaryLock(beneficiaryId, () -> {
+            DiagnosticOrder source = diagnosticOrderRepo
+                    .findFirstByBeneficiaryIdAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, orderType.name())
+                    .orElseThrow(() -> new Exception("No diagnostic order found for beneficiaryId=" + beneficiaryId
+                            + ", orderType=" + orderType.name() + " — cannot close a record that was never created"));
+            return closeOrder(beneficiaryId, orderType, source.getOrderEvent(), source.getPatientFirstName(),
+                    source.getPatientLastName(), source.getPatientDateOfBirth(), source.getPatientSex(), reasonToClose,
+                    actingUserId);
+        });
     }
 
     // Refusals are keyed to the latest order for this beneficiary+orderType (not the exact visitCode
@@ -291,9 +325,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     // and a new CLOSED row is created instead, so its history (e.g. a FAILED row's errorMessage) survives.
     // Refused orders are saved as-is and never pushed to the vendor.
     private DiagnosticOrder saveRefusedOrder(Long beneficiaryId, Long visitCode, DiagnosticOrderType orderType,
-            String orderEvent, String providerCode, String externalOrderId, String patientFirstName,
-            String patientLastName, String patientDateOfBirth, String patientSex, String reasonToClose,
-            String actingUserId) {
+                                             String orderEvent, String providerCode, String externalOrderId, String patientFirstName,
+                                             String patientLastName, String patientDateOfBirth, String patientSex, String reasonToClose,
+                                             String actingUserId) {
         Optional<DiagnosticOrder> latest = diagnosticOrderRepo
                 .findFirstByBeneficiaryIdAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, orderType.name());
         if (latest.isPresent() && NON_REUSABLE_ON_CLOSE_STATUSES.contains(latest.get().getStatus())) {
@@ -371,7 +405,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     }
 
     private DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult pollResult,
-            boolean writeBackWhenClosed, String actingUser) throws Exception {
+                                                   boolean writeBackWhenClosed, String actingUser) throws Exception {
         Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId());
         DiagnosticResult result = existingResult.orElseGet(DiagnosticResult::new);
         result.setExternalOrderId(order.getExternalOrderId());
@@ -620,7 +654,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     @Override
     public DiagnosticOrderStatusSummaryDto getOrderStatusSummary(String orderType, Integer villageId,
-            Integer providerServiceMapId) {
+                                                                 Integer providerServiceMapId) {
         DiagnosticOrderType type = DiagnosticOrderType.fromCode(orderType);
         List<Long> awaitingProviderResult = diagnosticOrderRepo
                 .findBeneficiaryIdsAwaitingProviderResult(type.name(), villageId, providerServiceMapId);
@@ -709,6 +743,29 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     // pushed to the vendor straight away. Never throws — a failure here must not undo the close.
     private void pushRetestOrder(DiagnosticOrder closed) {
         try {
+            withBeneficiaryLock(closed.getBeneficiaryId(), () -> {
+                pushRetestOrderLocked(closed);
+                return null;
+            });
+        } catch (Exception e) {
+            logger.error("Failed to create retest order after invalid result, closedOrderId={}: {}",
+                    closed.getId(), e.getMessage());
+        }
+    }
+
+    private void pushRetestOrderLocked(DiagnosticOrder closed) {
+        // A user push may have created a fresh order for this beneficiary+orderType after this one was
+        // closed — the retest would then put the same patient on the vendor twice, so skip it.
+        Optional<DiagnosticOrder> latest = diagnosticOrderRepo
+                .findFirstByBeneficiaryIdAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(
+                        closed.getBeneficiaryId(), closed.getOrderType());
+        if (latest.isPresent() && !latest.get().getId().equals(closed.getId())
+                && BLOCKING_STATUSES.contains(latest.get().getStatus())) {
+            logger.info("Retest skipped for closedOrderId={}: newer order id={} (status={}) already exists",
+                    closed.getId(), latest.get().getId(), latest.get().getStatus());
+            return;
+        }
+        try {
             DiagnosticOrder retest = new DiagnosticOrder();
             retest.setVanID(closed.getVanID());
             retest.setParkingPlaceID(closed.getParkingPlaceID());
@@ -730,7 +787,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             retest = diagnosticOrderRepo.save(retest);
             retest = pushToProvider(retest, closed.getProviderCode());
             logger.info("Retest order created after invalid result: closedOrderId={}, retestOrderId={}, "
-                    + "externalOrderId={}, status={}", closed.getId(), retest.getId(), retest.getExternalOrderId(),
+                            + "externalOrderId={}, status={}", closed.getId(), retest.getId(), retest.getExternalOrderId(),
                     retest.getStatus());
         } catch (Exception e) {
             logger.error("Failed to create retest order after invalid result, closedOrderId={}: {}",
