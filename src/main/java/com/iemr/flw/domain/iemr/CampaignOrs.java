@@ -55,5 +55,4 @@ public class CampaignOrs {
         this.updatedDate = LocalDateTime.now();
     }
 
-
 }
