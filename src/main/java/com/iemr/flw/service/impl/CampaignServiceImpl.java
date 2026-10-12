@@ -473,7 +473,6 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     private void addAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId,LocalDate startDate,LocalDate endDate) {
-        Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
 
         Timestamp startOfMonth = Timestamp.valueOf(startDate.atStartOfDay());
         Timestamp endOfMonth = Timestamp.valueOf(endDate.atStartOfDay());
@@ -490,11 +489,11 @@ public class CampaignServiceImpl implements CampaignService {
         if (record == null) {
             record = new IncentiveActivityRecord();
             record.setActivityId(incentiveActivity.getId());
-            record.setCreatedDate(timestamp);
+            record.setCreatedDate(endOfMonth);
             record.setCreatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId));
-            record.setStartDate(timestamp);
-            record.setEndDate(timestamp);
-            record.setUpdatedDate(timestamp);
+            record.setStartDate(endOfMonth);
+            record.setEndDate(endOfMonth);
+            record.setUpdatedDate(endOfMonth);
             record.setUpdatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId));
             record.setBenId(0L);
             record.setAshaId(ashaId);
