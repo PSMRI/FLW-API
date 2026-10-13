@@ -21,6 +21,9 @@ import com.iemr.flw.repo.iemr.TBSuspectedRepo;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.DiagnosticDocumentService;
 import com.iemr.flw.service.DiagnosticOrderService;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +34,10 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
@@ -62,8 +69,36 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     @Autowired
     private CampConfigService campConfigService;
 
+    private record OrderLockKey(Long beneficiaryId, String orderType) {}
+    private final LoadingCache<OrderLockKey, Lock> orderLocks = CacheBuilder.newBuilder()
+            .weakValues()
+            .build(CacheLoader.from(key -> new ReentrantLock()));
+
+    private static final long LOCK_WAIT_SECONDS = 30;
+
+    private <T> T withOrderLock(Long beneficiaryId, String orderType, Callable<T> action) throws Exception {
+        if (beneficiaryId == null || orderType == null) {
+            throw new IllegalArgumentException("beneficiaryId and orderType are required");
+        }
+        Lock lock = orderLocks.getUnchecked(new OrderLockKey(beneficiaryId, orderType));
+        if (!lock.tryLock(LOCK_WAIT_SECONDS, TimeUnit.SECONDS)) {
+            throw new IllegalStateException("Another diagnostic order operation is still in progress for beneficiaryId="
+                    + beneficiaryId + ", orderType=" + orderType + " — please retry shortly");
+        }
+        try {
+            return action.call();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     @Override
     public DiagnosticOrder createAndPushOrder(DiagnosticOrderRequestDto request) throws Exception {
+        DiagnosticOrderType orderType = DiagnosticOrderType.fromCode(request.getOrderType());
+        return withOrderLock(request.getBeneficiaryId(), orderType.name(), () -> createAndPushOrderLocked(request));
+    }
+
+    private DiagnosticOrder createAndPushOrderLocked(DiagnosticOrderRequestDto request) throws Exception {
         Long beneficiaryId            = request.getBeneficiaryId();
         Long visitCode               = request.getVisitCode();
         DiagnosticOrderType orderType = DiagnosticOrderType.fromCode(request.getOrderType());
