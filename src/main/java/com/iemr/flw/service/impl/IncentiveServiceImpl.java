@@ -267,16 +267,64 @@ public class IncentiveServiceImpl implements IncentiveService {
                     .collect(Collectors.toList());
 
             Map<Long, String> benIdToNameMap = new HashMap<>();
+
             if (!benIdsToFetch.isEmpty()) {
-                List<Object[]> benDetails = beneficiaryRepo.findBenNamesByBenIds(benIdsToFetch);
+
+                // Step 1: Fetch names using BeneficiaryId
+                List<Object[]> benDetails =
+                        beneficiaryRepo.findBenNamesByBenIds(benIdsToFetch);
+
+                Set<Long> foundBenIds = new HashSet<>();
+
                 for (Object[] row : benDetails) {
                     Long benId = ((Number) row[0]).longValue();
+
                     String first = row[1] != null ? (String) row[1] : "";
                     String last = row[2] != null ? (String) row[2] : "";
+
                     benIdToNameMap.put(benId, (first + " " + last).trim());
+                    foundBenIds.add(benId);
+                }
+
+                // Step 2: Identify IDs for which names were not found
+                List<Long> unresolvedIds = benIdsToFetch.stream()
+                        .filter(id -> !foundBenIds.contains(id))
+                        .distinct()
+                        .toList();
+
+                if (!unresolvedIds.isEmpty()) {
+
+                    // Step 3: Resolve unresolved IDs as BenRegId
+                    List<Object[]> mappings =
+                            beneficiaryRepo.getBenIdsFromRegIds(unresolvedIds);
+
+                    Set<Long> resolvedBenIds = new HashSet<>();
+
+                    for (Object[] row : mappings) {
+                        if (row[1] != null) {
+                            resolvedBenIds.add(((Number) row[1]).longValue());
+                        }
+                    }
+
+                    // Step 4: Fetch names using resolved BeneficiaryIds
+                    if (!resolvedBenIds.isEmpty()) {
+
+                        List<Object[]> resolvedDetails =
+                                beneficiaryRepo.findBenNamesByBenIds(
+                                        new ArrayList<>(resolvedBenIds));
+
+                        for (Object[] row : resolvedDetails) {
+                            Long benId = ((Number) row[0]).longValue();
+
+                            String first = row[1] != null ? (String) row[1] : "";
+                            String last = row[2] != null ? (String) row[2] : "";
+
+                            benIdToNameMap.put(
+                                    benId, (first + " " + last).trim());
+                        }
+                    }
                 }
             }
-
             // NEW: Bulk fetch verifier (supervisor) roles — replaces N+1 userRepo.getUserRole() calls
             // Bulk fetch verifier (supervisor) roles — replaces N+1 userRepo.getUserRole() calls
             List<Integer> verifierIds = entities.stream()
