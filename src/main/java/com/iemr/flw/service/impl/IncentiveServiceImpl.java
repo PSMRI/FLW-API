@@ -267,16 +267,66 @@ public class IncentiveServiceImpl implements IncentiveService {
                     .collect(Collectors.toList());
 
             Map<Long, String> benIdToNameMap = new HashMap<>();
-            if (!benIdsToFetch.isEmpty()) {
-                List<Object[]> benDetails = beneficiaryRepo.findBenNamesByBenIds(benIdsToFetch);
+            Map<Long, Long> regIdToBenIdMap = new HashMap<>();
+
+            if (benIdsToFetch != null && !benIdsToFetch.isEmpty()) {
+
+                // First, fetch names using BeneficiaryId
+                List<Object[]> benDetails =
+                        beneficiaryRepo.findBenNamesByBenIds(benIdsToFetch);
+
+                Set<Long> foundBenIds = new HashSet<>();
+
                 for (Object[] row : benDetails) {
                     Long benId = ((Number) row[0]).longValue();
-                    String first = row[1] != null ? (String) row[1] : "";
-                    String last = row[2] != null ? (String) row[2] : "";
+
+                    String first = row[1] != null ? row[1].toString() : "";
+                    String last = row[2] != null ? row[2].toString() : "";
+
                     benIdToNameMap.put(benId, (first + " " + last).trim());
+                    foundBenIds.add(benId);
+                }
+
+                // IDs not found as BeneficiaryId
+                List<Long> unresolvedIds = benIdsToFetch.stream()
+                        .filter(Objects::nonNull)
+                        .filter(id -> !foundBenIds.contains(id))
+                        .distinct()
+                        .toList();
+
+                if (!unresolvedIds.isEmpty()) {
+
+                    // Resolve BenRegId -> BeneficiaryId
+                    List<Object[]> mappings =
+                            beneficiaryRepo.getBenIdsFromRegIds(unresolvedIds);
+
+                    Set<Long> resolvedBenIds = new HashSet<>();
+
+                    for (Object[] row : mappings) {
+                        Long regId = ((Number) row[0]).longValue();
+                        Long benId = ((Number) row[1]).longValue();
+
+                        regIdToBenIdMap.put(regId, benId);
+                        resolvedBenIds.add(benId);
+                    }
+
+                    // Fetch names for resolved BeneficiaryIds
+                    if (!resolvedBenIds.isEmpty()) {
+                        List<Object[]> resolvedDetails =
+                                beneficiaryRepo.findBenNamesByBenIds(
+                                        new ArrayList<>(resolvedBenIds));
+
+                        for (Object[] row : resolvedDetails) {
+                            Long benId = ((Number) row[0]).longValue();
+
+                            String first = row[1] != null ? row[1].toString() : "";
+                            String last = row[2] != null ? row[2].toString() : "";
+
+                            benIdToNameMap.put(benId, (first + " " + last).trim());
+                        }
+                    }
                 }
             }
-
             // NEW: Bulk fetch verifier (supervisor) roles — replaces N+1 userRepo.getUserRole() calls
             // Bulk fetch verifier (supervisor) roles — replaces N+1 userRepo.getUserRole() calls
             List<Integer> verifierIds = entities.stream()
@@ -296,12 +346,22 @@ public class IncentiveServiceImpl implements IncentiveService {
             // Map entities to DTOs
             List<IncentiveRecordDTO> dtos = entities.stream().map(entry -> {
                 if (entry.getName() == null) {
-                    if (entry.getBenId() != null && entry.getBenId() > 0) {
-                        String name = benIdToNameMap.getOrDefault(entry.getBenId(), "");
+                    Long originalId = entry.getBenId();
+
+                    if (originalId != null && originalId > 0) {
+
+                        Long actualBenId = regIdToBenIdMap.getOrDefault(
+                                originalId, originalId);
+
+                        String name = benIdToNameMap.getOrDefault(actualBenId, "");
+
+                        entry.setBenId(actualBenId);
                         entry.setName(name);
+
                         if (isCG) {
                             entry.setIsEligible(true);
                         }
+
                     } else {
                         entry.setName("");
                     }
