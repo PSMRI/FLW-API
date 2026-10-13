@@ -14,10 +14,16 @@ import org.springframework.web.client.RestTemplate;
 public class EmrLiteRestTemplateConfig {
 
     private static final int VENDOR_CALL_TIMEOUT_MS = 20000;
+    // Result responses carry document assets inline as base64, so reads get more headroom than connects.
+    private static final int VENDOR_READ_TIMEOUT_MS = 60000;
 
+    // Timeouts are required, not optional: order pushes run while holding the per-beneficiary+orderType
+    // order lock (see DiagnosticOrderServiceImpl), so a hung vendor call without them would hold that lock forever.
     @Bean
     public RestTemplate emrLiteRestTemplate(EmrLiteTokenManager emrLiteTokenManager) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(VENDOR_CALL_TIMEOUT_MS);
+        factory.setReadTimeout(VENDOR_READ_TIMEOUT_MS);
         RestTemplate restTemplate = new RestTemplate(factory);
         restTemplate.getInterceptors().add(new EmrLiteAuthInterceptor(emrLiteTokenManager));
         return restTemplate;
