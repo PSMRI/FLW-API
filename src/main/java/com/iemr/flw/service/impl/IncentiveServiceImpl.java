@@ -267,10 +267,11 @@ public class IncentiveServiceImpl implements IncentiveService {
                     .collect(Collectors.toList());
 
             Map<Long, String> benIdToNameMap = new HashMap<>();
+            Map<Long, Long> regIdToBenIdMap = new HashMap<>();
 
-            if (!benIdsToFetch.isEmpty()) {
+            if (benIdsToFetch != null && !benIdsToFetch.isEmpty()) {
 
-                // Step 1: Fetch names using BeneficiaryId
+                // First, fetch names using BeneficiaryId
                 List<Object[]> benDetails =
                         beneficiaryRepo.findBenNamesByBenIds(benIdsToFetch);
 
@@ -279,36 +280,38 @@ public class IncentiveServiceImpl implements IncentiveService {
                 for (Object[] row : benDetails) {
                     Long benId = ((Number) row[0]).longValue();
 
-                    String first = row[1] != null ? (String) row[1] : "";
-                    String last = row[2] != null ? (String) row[2] : "";
+                    String first = row[1] != null ? row[1].toString() : "";
+                    String last = row[2] != null ? row[2].toString() : "";
 
                     benIdToNameMap.put(benId, (first + " " + last).trim());
                     foundBenIds.add(benId);
                 }
 
-                // Step 2: Identify IDs for which names were not found
+                // IDs not found as BeneficiaryId
                 List<Long> unresolvedIds = benIdsToFetch.stream()
+                        .filter(Objects::nonNull)
                         .filter(id -> !foundBenIds.contains(id))
                         .distinct()
                         .toList();
 
                 if (!unresolvedIds.isEmpty()) {
 
-                    // Step 3: Resolve unresolved IDs as BenRegId
+                    // Resolve BenRegId -> BeneficiaryId
                     List<Object[]> mappings =
                             beneficiaryRepo.getBenIdsFromRegIds(unresolvedIds);
 
                     Set<Long> resolvedBenIds = new HashSet<>();
 
                     for (Object[] row : mappings) {
-                        if (row[1] != null) {
-                            resolvedBenIds.add(((Number) row[1]).longValue());
-                        }
+                        Long regId = ((Number) row[0]).longValue();
+                        Long benId = ((Number) row[1]).longValue();
+
+                        regIdToBenIdMap.put(regId, benId);
+                        resolvedBenIds.add(benId);
                     }
 
-                    // Step 4: Fetch names using resolved BeneficiaryIds
+                    // Fetch names for resolved BeneficiaryIds
                     if (!resolvedBenIds.isEmpty()) {
-
                         List<Object[]> resolvedDetails =
                                 beneficiaryRepo.findBenNamesByBenIds(
                                         new ArrayList<>(resolvedBenIds));
@@ -316,11 +319,10 @@ public class IncentiveServiceImpl implements IncentiveService {
                         for (Object[] row : resolvedDetails) {
                             Long benId = ((Number) row[0]).longValue();
 
-                            String first = row[1] != null ? (String) row[1] : "";
-                            String last = row[2] != null ? (String) row[2] : "";
+                            String first = row[1] != null ? row[1].toString() : "";
+                            String last = row[2] != null ? row[2].toString() : "";
 
-                            benIdToNameMap.put(
-                                    benId, (first + " " + last).trim());
+                            benIdToNameMap.put(benId, (first + " " + last).trim());
                         }
                     }
                 }
