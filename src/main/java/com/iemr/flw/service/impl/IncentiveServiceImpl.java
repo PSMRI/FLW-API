@@ -346,12 +346,22 @@ public class IncentiveServiceImpl implements IncentiveService {
             // Map entities to DTOs
             List<IncentiveRecordDTO> dtos = entities.stream().map(entry -> {
                 if (entry.getName() == null) {
-                    if (entry.getBenId() != null && entry.getBenId() > 0) {
-                        String name = benIdToNameMap.getOrDefault(entry.getBenId(), "");
+                    Long originalId = entry.getBenId();
+
+                    if (originalId != null && originalId > 0) {
+
+                        Long actualBenId = regIdToBenIdMap.getOrDefault(
+                                originalId, originalId);
+
+                        String name = benIdToNameMap.getOrDefault(actualBenId, "");
+
+                        entry.setBenId(actualBenId);
                         entry.setName(name);
+
                         if (isCG) {
                             entry.setIsEligible(true);
                         }
+
                     } else {
                         entry.setName("");
                     }
