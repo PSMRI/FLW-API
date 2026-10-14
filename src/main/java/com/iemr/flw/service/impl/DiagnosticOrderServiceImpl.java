@@ -203,7 +203,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             order.setPatientSex(patientSex);
         }
         order.setStatus(DiagnosticOrderStatus.REFUSED.name());
-        order.setReasonForRefusal(reasonForRefusal);
+        order.setReasonToClose(reasonForRefusal);
         order.setErrorMessage(null);
 
         try {
@@ -273,7 +273,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         dto.setOrderType(order.getOrderType());
         dto.setStatus(order.getStatus());
         dto.setErrorMessage(order.getErrorMessage());
-        dto.setReasonForRefusal(order.getReasonForRefusal());
+        dto.setReasonForRefusal(order.getReasonToClose());
         dto.setProviderStatus(result.getProviderStatus());
         dto.setResultSummary(result.getResultSummary());
         dto.setTbPresence(result.getTbPresence());
@@ -434,7 +434,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         dto.setExternalOrderId(order.getExternalOrderId());
         dto.setStatus(order.getStatus());
         dto.setErrorMessage(order.getErrorMessage());
-        dto.setReasonForRefusal(order.getReasonForRefusal());
+        dto.setReasonForRefusal(order.getReasonToClose());
 
         diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId()).ifPresent(result -> {
             dto.setProviderStatus(result.getProviderStatus());
