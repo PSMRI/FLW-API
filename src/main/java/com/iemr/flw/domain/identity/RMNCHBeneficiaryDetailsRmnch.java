@@ -102,12 +102,6 @@ public class RMNCHBeneficiaryDetailsRmnch {
 	@Column(name = "longitude")
 	private BigDecimal longitude;
 
-	@Column(name = "gpsLatitude")
-	private Double gpsLatitude;
-
-	@Column(name = "gpsLongitude")
-	private Double gpsLongitude;
-
 	@Expose
 	@Column(name = "digipin")
 	private String digipin;
