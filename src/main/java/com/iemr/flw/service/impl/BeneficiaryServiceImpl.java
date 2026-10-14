@@ -363,6 +363,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         if (benAddressOBJ.getPermPinCode() != null)
                             benDetailsRMNCH_OBJ.setPinCode(benAddressOBJ.getPermPinCode());
 
+
                         // -----------------------------------------------------------------------------
 
                         // related benids
