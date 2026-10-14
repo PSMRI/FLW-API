@@ -212,4 +212,7 @@ public class TBScreening {
 
     @Column(name = "others")
     private Boolean others;
+
+    @Column(name = "OtherSymptomsDetails", length = 200)
+    private String otherSymptomsDetails;
 }
