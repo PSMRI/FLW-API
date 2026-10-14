@@ -107,9 +107,6 @@ public class RMNCHBeneficiaryDetailsRmnch {
 	@Column(name = "digipin")
 	private String digipin;
 
-	@Expose
-	@Column(name = "gpsTimestamp")
-	private Timestamp gpsTimestamp;
 
 	@Expose
 	@Column(name = "isGpsUnavailable", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
