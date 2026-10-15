@@ -493,6 +493,12 @@ public class StopTBServiceImpl implements StopTBService {
             diag.setReasonForDenialSputum(getString(data, "reasonForDenialSputum"));
             diag.setReasonForDenialSputumOther(getString(data, "reasonForDenialSputumOther"));
             diag.setSputumSubmittedAt(getString(data, "sputumSubmittedAt"));
+            // The today/yesterday window is enforced in the app: records can sync days after entry.
+            if (Boolean.FALSE.equals(getBool(data, "isSputumCollected"))) {
+                diag.setSputumCollectionDate(null);
+            } else if (data.containsKey("sputumCollectionDate")) {
+                diag.setSputumCollectionDate(getTimestamp(data, "sputumCollectionDate"));
+            }
 
             diag.setIsTruenatConducted(getBool(data, "isTruenatConducted"));
             diag.setReasonNotConductedNaat(getString(data, "reasonNotConductedNaat"));
@@ -551,6 +557,7 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("reasonForDenialSputum", d.getReasonForDenialSputum());
         m.put("reasonForDenialSputumOther", d.getReasonForDenialSputumOther());
         m.put("sputumSubmittedAt", d.getSputumSubmittedAt());
+        m.put("sputumCollectionDate", d.getSputumCollectionDate());
         m.put("isTruenatConducted", d.getIsTruenatConducted());
         m.put("reasonNotConductedNaat", d.getReasonNotConductedNaat());
         m.put("reasonNotConductedNaatOther", d.getReasonNotConductedNaatOther());
