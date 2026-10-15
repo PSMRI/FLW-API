@@ -795,7 +795,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                 }
 
             }
-            if (ect.getPncPeriod() == 42) {
+            if (ect.getPncPeriod() == 42 && !ect.getMotherDeath()) {
                 IncentiveActivity highRiskPostpartumHealthCareActivityCH =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_HEALTH_CHECK", GroupName.ACTIVITY.getDisplayName());
 
