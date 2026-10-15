@@ -30,5 +30,6 @@ public class TBConfirmedCaseDTO {
     private String reasonForDeath ;
     private String reasonForNotCompleting;
     private Boolean counselled;
+    private String sideEffects;
 
 }

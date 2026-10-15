@@ -102,6 +102,7 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     entity.setPlaceOfDeath(dto.getPlaceOfDeath());
                     entity.setReasonForDeath(dto.getReasonForDeath());
                     entity.setReasonForNotCompleting(dto.getReasonForNotCompleting());
+                    if (dto.getSideEffects() != null) entity.setSideEffects(dto.getSideEffects());
                     // Stop TB / Nikshay reporting — same gap as tb_suspected: benRegID is computed
                     // above for the visit lookup but was never persisted onto the entity.
                     entity.setBenRegID(beneficiaryRegID);
@@ -251,6 +252,7 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         dto.setReasonForNotCompleting(entity.getReasonForNotCompleting());
         dto.setUpdateDate(entity.getLastModDate());
         dto.setUpdatedBy(entity.getModifiedBy());
+        dto.setSideEffects(entity.getSideEffects());
 
         return dto;
     }
