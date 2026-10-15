@@ -1,13 +1,11 @@
 package com.iemr.flw.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.masterEnum.GroupName;
-import com.iemr.flw.masterEnum.IncentiveApprovalStatus;
 import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.*;
@@ -16,7 +14,6 @@ import com.iemr.flw.service.MaaMeetingService;
 import com.iemr.flw.service.NotificationService;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -227,7 +224,7 @@ public class IncentiveServiceImpl implements IncentiveService {
 
         try {
             addIncentiveForIronTablets(request.getAshaId());
-            incentiveOfNcdReferal(request.getAshaId(), request.getVillageID());
+            incentiveOfNcdReferal(request.getAshaId(), request.getVillageID(),request);
         } catch (Exception e) {
             logger.error("Error in incentiveOfNcdReferal: ", e);
         }
@@ -945,7 +942,7 @@ public class IncentiveServiceImpl implements IncentiveService {
         }
     }
 
-    private void incentiveOfNcdReferal(Integer ashaId, Integer stateId) {
+    private void incentiveOfNcdReferal(Integer ashaId, Integer stateId, GetBenRequestHandler request) {
         try {
             String userName = userRepo.getUserNamedByUserId(ashaId);
             String groupName = resolveGroupName(stateId);
@@ -980,21 +977,23 @@ public class IncentiveServiceImpl implements IncentiveService {
             }
 
             if (hwcReferralEnumeration != null) {
-                logger.info("hwcReferralEnumeration :" + hwcReferralEnumeration.getDescription());
+                logger.info("hwcReferralEnumeration: {}", hwcReferralEnumeration.getDescription());
                 logger.info("userName={}", userName);
 
-                LocalDate now = LocalDate.now();
+                LocalDate requestDate = request.getFromDate()
+                        .toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate();
 
                 Long referralCount = benReferDetailsRepo.countMonthlyReferrals(
                         userName,
-                        now.getMonthValue(),
-                        now.getYear());
+                        requestDate.getMonthValue(),
+                        requestDate.getYear()
+                );
 
-                logger.info("referralCount :" + referralCount);
-
+                logger.info("referralCount: {}", referralCount);
 
                 if (referralCount >= 10) {
-
                     addHwcReferalAshaIncentiveRecord(
                             hwcReferralEnumeration,
                             ashaId,
