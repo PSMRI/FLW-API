@@ -25,6 +25,8 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -102,7 +104,7 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     entity.setPlaceOfDeath(dto.getPlaceOfDeath());
                     entity.setReasonForDeath(dto.getReasonForDeath());
                     entity.setReasonForNotCompleting(dto.getReasonForNotCompleting());
-                    if (dto.getSideEffects() != null) entity.setSideEffects(dto.getSideEffects());
+                    if (dto.getSideEffects() != null) entity.setSideEffects(joinSideEffects(dto.getSideEffects()));
                     // Stop TB / Nikshay reporting — same gap as tb_suspected: benRegID is computed
                     // above for the visit lookup but was never persisted onto the entity.
                     entity.setBenRegID(beneficiaryRegID);
@@ -252,8 +254,23 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         dto.setReasonForNotCompleting(entity.getReasonForNotCompleting());
         dto.setUpdateDate(entity.getLastModDate());
         dto.setUpdatedBy(entity.getModifiedBy());
-        dto.setSideEffects(entity.getSideEffects());
+        dto.setSideEffects(splitSideEffects(entity.getSideEffects()));
 
         return dto;
+    }
+
+    private String joinSideEffects(List<String> sideEffects) {
+        return sideEffects.stream()
+                .filter(s -> s != null && !s.isBlank())
+                .map(String::trim)
+                .collect(Collectors.joining(","));
+    }
+
+    private List<String> splitSideEffects(String sideEffects) {
+        if (sideEffects == null) return new ArrayList<>();
+        return Arrays.stream(sideEffects.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
     }
 }
