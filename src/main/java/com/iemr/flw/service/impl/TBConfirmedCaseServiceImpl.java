@@ -161,7 +161,7 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     }
 
                 }else  if("Longer Regimen (18–24 Months)".equalsIgnoreCase(regimen)){
-                    if(isEligibleForIncentive(entity.getTreatmentStartDate(),entity.getExpectedTreatmentCompletionDate(),9)) {
+                    if(isEligibleForIncentive(entity.getTreatmentStartDate(),entity.getExpectedTreatmentCompletionDate(),18)) {
 
                         incentiveLogicService.incentiveForTbFollowUpIsDrTb(
                                 entity.getBenId(),
