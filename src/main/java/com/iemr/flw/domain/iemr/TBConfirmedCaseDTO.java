@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 public class TBConfirmedCaseDTO {
@@ -30,5 +31,6 @@ public class TBConfirmedCaseDTO {
     private String reasonForDeath ;
     private String reasonForNotCompleting;
     private Boolean counselled;
+    private List<String> sideEffects;
 
 }
