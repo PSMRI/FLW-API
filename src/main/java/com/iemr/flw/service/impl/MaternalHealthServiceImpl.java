@@ -786,14 +786,16 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
             if (ect.getMotherDangerSign() != null
                     && !ect.getMotherDangerSign().isEmpty()
-                    && ect.getPncPeriod() == 42) {
+                    && ect.getPncPeriod() != null
+                    && ect.getPncPeriod() >= 1
+                    && ect.getPncPeriod() <= 42) {
+
                 IncentiveActivity highRiskPostpartumCareActivityCH =
                         incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
+
                 if (highRiskPostpartumCareActivityCH != null) {
                     addIncenticeRecord(ect, userId, highRiskPostpartumCareActivityCH);
-
                 }
-
             }
             if (ect.getPncPeriod() == 42
                     && !ect.getMotherDeath()
@@ -836,6 +838,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
 
     }
+
 
 
     @Transactional
