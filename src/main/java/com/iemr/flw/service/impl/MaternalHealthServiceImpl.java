@@ -799,17 +799,21 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
                     && !ect.getMotherDeath()
                     && ancVisitRepo.findByBenId(ect.getBenId())
                     .stream()
-                    .filter(ancVisit -> Integer.valueOf(7).equals(ancVisit.getAncVisit()))
-                    .anyMatch(ancVisit -> Boolean.TRUE.equals(ancVisit.getIsHrpConfirmed()))) {
+                    .filter(ancVisit -> ancVisit.getAncVisit() != null
+                            && ancVisit.getAncVisit() >= 1
+                            && ancVisit.getAncVisit() <= 7)
+                    .anyMatch(ancVisit ->
+                            Boolean.TRUE.equals(ancVisit.getIsHrpConfirmed()))) {
+
                 IncentiveActivity highRiskPostpartumHealthCareActivityCH =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_HEALTH_CHECK", GroupName.ACTIVITY.getDisplayName());
+                        incentivesRepo.findIncentiveMasterByNameAndGroup(
+                                "HIGH_RISK_POSTPARTUM_HEALTH_CHECK",
+                                GroupName.ACTIVITY.getDisplayName());
 
                 if (highRiskPostpartumHealthCareActivityCH != null) {
-                    addIncenticeRecord(ect, userId, highRiskPostpartumHealthCareActivityCH);
-
+                    addIncenticeRecord(ect, userId,
+                            highRiskPostpartumHealthCareActivityCH);
                 }
-
-
             }
             if (ect.getPncPeriod() == 1 || ect.getPncPeriod() == 3 || ect.getPncPeriod() == 7) {
                   if(ect.getContraceptionMethod()!=null){
