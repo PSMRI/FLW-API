@@ -290,8 +290,15 @@ public class ChildCareServiceImpl implements ChildCareService {
                     responseDTO.setFields(fields);
                     result.add(responseDTO);
 
+
                 }
                 page++;
+
+                try {
+                    checkAndAddHbncIncentives(hbncVisits, dto.getAshaId());
+                } catch (Exception e) {
+                    logger.error("HBNC incentive check failed for ashaId {}: ", dto.getAshaId(), e);
+                }
 
             }while (visitPage.hasNext());
 
