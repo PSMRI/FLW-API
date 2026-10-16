@@ -48,6 +48,7 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -352,41 +353,51 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         entity.setLastModDate(
                 data.getLastModDate() != null ? data.getLastModDate() : new Timestamp(System.currentTimeMillis()));
          if(!leprosyFollowUpRepository.findByBenId(entity.getBenId()).isEmpty()){
-             if(leprosyFollowUpRepository.findByBenId(entity.getBenId()).size()>=6 && leprosyFollowUpRepository.findByBenId(entity.getBenId()).size()<=12){
-                 Integer userId = userRepo.getUserIdByName(entity.getCreatedBy());
-                 IncentiveActivityRecord incentiveActivityRecord =
-                         incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
-                                 entity.getBenId(),
-                                 entity.getTreatmentEndDate(),
-                                 entity.getTreatmentEndDate(),
-                                 userId);
+             if(entity.getTypeOfLeprosy().equals("PB (Paucibacillary)")){
+                 if(leprosyFollowUpRepository.findByBenId(entity.getBenId()).size()>=6 && leprosyFollowUpRepository.findByBenId(entity.getBenId()).size()<=12){
+                     Integer userId = userRepo.getUserIdByName(entity.getCreatedBy());
+                     IncentiveActivityRecord incentiveActivityRecord =
+                             incentiveLogicService.incentiveForLeprosyPaucibacillaryConfirmed(
+                                     entity.getBenId(),
+                                     entity.getTreatmentEndDate(),
+                                     entity.getTreatmentEndDate(),
+                                     userId);
 
-                 if (incentiveActivityRecord != null) {
-                     logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                             incentiveActivityRecord.getId());
-                 } else {
-                     logger.info("Incentive not created");
+                     if (incentiveActivityRecord != null) {
+                         logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                 incentiveActivityRecord.getId());
+                     } else {
+                         logger.info("Incentive not created");
+                     }
                  }
              }
+
          }
 
         if(!leprosyFollowUpRepository.findByBenId(entity.getBenId()).isEmpty()){
-            if(leprosyFollowUpRepository.findByBenId(entity.getBenId()).size()>=12){
-                Integer userId = userRepo.getUserIdByName(entity.getCreatedBy());
-                IncentiveActivityRecord incentiveActivityRecord =
-                        incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
-                                entity.getBenId(),
-                                entity.getTreatmentEndDate(),
-                                entity.getTreatmentEndDate(),
-                                userId);
+            if(entity.getTypeOfLeprosy().equals("MB (Multibacillary)")) {
+                if (entity.getTreatmentStartDate() != null && entity.getTreatmentEndDate() != null) {
+                    if (isEligibleForIncentive(entity.getTreatmentStartDate(), entity.getTreatmentEndDate())) {
+                        Integer userId = userRepo.getUserIdByName(entity.getCreatedBy());
+                        IncentiveActivityRecord incentiveActivityRecord =
+                                incentiveLogicService.incentiveForLeprosyMultibacillaryConfirmed(
+                                        entity.getBenId(),
+                                        entity.getTreatmentEndDate(),
+                                        entity.getTreatmentEndDate(),
+                                        userId);
 
-                if (incentiveActivityRecord != null) {
-                    logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
-                            incentiveActivityRecord.getId());
-                } else {
-                    logger.info("Incentive not created");
+                        if (incentiveActivityRecord != null) {
+                            logger.info("Incentive processed for Screening Leprosy  successfully. RecordId={}",
+                                    incentiveActivityRecord.getId());
+                        } else {
+                            logger.info("Incentive not created");
+                        }
+                    }
                 }
             }
+
+
+
         }
         return entity;
     }
@@ -399,6 +410,24 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         leprosyFollowUpRepository.save(entity);
         return "Follow-up data added successfully";
 
+    }
+
+    public boolean isEligibleForIncentive(Date treatmentStartDate, Date endDate) {
+
+        if (treatmentStartDate == null || endDate == null) {
+            return false;
+        }
+
+        LocalDate start = treatmentStartDate.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+
+        LocalDate end = endDate.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+
+        return end.isAfter(start.plusMonths(12))
+                || end.isEqual(start.plusMonths(12));
     }
 
     @Override

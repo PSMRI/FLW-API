@@ -784,28 +784,39 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
             }
 
-            if (ect.getMotherDangerSign() != null
-                    && !ect.getMotherDangerSign().isEmpty()
-                    && ect.getPncPeriod() == 42) {
-                IncentiveActivity highRiskPostpartumCareActivityCH =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
-                if (highRiskPostpartumCareActivityCH != null) {
-                    addIncenticeRecord(ect, userId, highRiskPostpartumCareActivityCH);
-
-                }
-
-            }
-            if (ect.getPncPeriod() == 42) {
-                IncentiveActivity highRiskPostpartumHealthCareActivityCH =
-                        incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_HEALTH_CHECK", GroupName.ACTIVITY.getDisplayName());
-
-                if (highRiskPostpartumHealthCareActivityCH != null) {
-                    addIncenticeRecord(ect, userId, highRiskPostpartumHealthCareActivityCH);
-
-                }
-
-
-            }
+//            if (ect.getMotherDangerSign() != null
+//                    && !ect.getMotherDangerSign().isEmpty()
+//                    && ect.getPncPeriod() != null
+//                    && ect.getPncPeriod() >= 1
+//                    && ect.getPncPeriod() <= 42) {
+//                IncentiveActivity highRiskPostpartumCareActivityCH =
+//                        incentivesRepo.findIncentiveMasterByNameAndGroup("HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
+//
+//                if (highRiskPostpartumCareActivityCH != null ) {
+//                    addIncenticeRecord(ect, userId, highRiskPostpartumCareActivityCH);
+//                }
+//
+//            }
+//            if (ect.getPncPeriod() == 42
+//                    && !ect.getMotherDeath()
+//                    && ancVisitRepo.findByBenId(ect.getBenId())
+//                    .stream()
+//                    .filter(ancVisit -> ancVisit.getAncVisit() != null
+//                            && ancVisit.getAncVisit() >= 1
+//                            && ancVisit.getAncVisit() <= 7)
+//                    .anyMatch(ancVisit ->
+//                            Boolean.TRUE.equals(ancVisit.getIsHrpConfirmed()))) {
+//
+//                IncentiveActivity highRiskPostpartumHealthCareActivityCH =
+//                        incentivesRepo.findIncentiveMasterByNameAndGroup(
+//                                "HIGH_RISK_POSTPARTUM_HEALTH_CHECK",
+//                                GroupName.ACTIVITY.getDisplayName());
+//
+//                if (highRiskPostpartumHealthCareActivityCH != null) {
+//                    addIncenticeRecord(ect, userId,
+//                            highRiskPostpartumHealthCareActivityCH);
+//                }
+//            }
             if (ect.getPncPeriod() == 1 || ect.getPncPeriod() == 3 || ect.getPncPeriod() == 7) {
                   if(ect.getContraceptionMethod()!=null){
                       if ((ect.getContraceptionMethod().equals("POST PARTUM STERILIZATION (PPS)")
@@ -827,6 +838,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
 
     }
+
 
 
     @Transactional
