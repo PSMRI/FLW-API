@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.iemr.flw.domain.identity.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
@@ -16,6 +17,7 @@ import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.aspectj.weaver.ast.Or;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -36,6 +38,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -98,6 +101,7 @@ public class ChildCareServiceImpl implements ChildCareService {
     @Autowired
     private PNCVisitRepo pncVisitRepo;
 
+    private final ConcurrentHashMap<String, Object> lockMap = new ConcurrentHashMap<>();
 
     @Override
     public String registerHBYC(List<HbycRequestDTO> hbycDTOs) {
@@ -1004,18 +1008,112 @@ public class ChildCareServiceImpl implements ChildCareService {
             }
 
             if (stateCode.equals(StateCode.CG.getStateCode())) {
-                if (hbncVisit.getVisit_day().equals("42nd Day")) {
-                    IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.ACTIVITY.getDisplayName());
+                if ("42nd Day".equals(hbncVisit.getVisit_day())) {
+                    IncentiveActivity visitActivityCH = incentivesRepo
+                            .findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.ACTIVITY.getDisplayName());
                     createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HBNC_0_42_DAYS");
 
+                    // 1. Child ka record
+                    List<RMNCHBeneficiaryDetailsRmnch> childList =
+                            beneficiaryRepo.findByBenficieryid(hbncVisit.getBeneficiaryId());
 
+                    if (childList != null && !childList.isEmpty()) {
+                        RMNCHBeneficiaryDetailsRmnch child = childList.get(childList.size() - 1);
+
+                        // 2. Same household se mother
+                        RMNCHBeneficiaryDetailsRmnch mother = beneficiaryRepo
+                                .findByHouseoldId(child.getHouseoldId()).stream()
+                                .filter(b -> !"NewBorn".equalsIgnoreCase(b.getRegistrationType())
+                                        && "Postnatal Mother".equalsIgnoreCase(b.getReproductiveStatus()))
+                                .findFirst()
+                                .orElse(null);
+
+                        if (mother != null) {
+                            generateHighRiskPostpartumIncentives(mother.getBenficieryid(), true, userId);
+                        }
+                    }
                 }
+
             }
 
 
         });
 
 
+    }
+
+
+    private void generateHighRiskPostpartumIncentives(Long motherBenId, boolean childHbnc42Done, Integer userId) {
+
+        if (!childHbnc42Done) return;
+
+        List<PNCVisit> motherPnc = pncVisitRepo.findByBenId(motherBenId);
+
+        PNCVisit visit42 = motherPnc.stream()
+                .filter(v -> Integer.valueOf(42).equals(v.getPncPeriod()))
+                .findFirst()
+                .orElse(null);
+
+        if (visit42 == null) return;   // mother ka PNC 42 abhi nahi hua
+
+        boolean hasDangerSign = motherPnc.stream()
+                .anyMatch(v -> v.getMotherDangerSign() != null
+                        && !v.getMotherDangerSign().isEmpty()
+                        && v.getPncPeriod() != null
+                        && v.getPncPeriod() >= 1
+                        && v.getPncPeriod() <= 42);
+
+        if (hasDangerSign) {
+            IncentiveActivity act1 = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
+            if (act1 != null) {
+                addIncenticeRecord(visit42, userId, act1);   // date 42 wale visit ki
+            }
+        }
+
+        boolean motherAlive = !Boolean.TRUE.equals(visit42.getMotherDeath());
+
+        boolean hrpConfirmed = ancVisitRepo.findByBenId(motherBenId).stream()
+                .filter(a -> a.getAncVisit() != null && a.getAncVisit() >= 1 && a.getAncVisit() <= 7)
+                .anyMatch(a -> Boolean.TRUE.equals(a.getIsHrpConfirmed()));
+
+        if (motherAlive && hrpConfirmed) {
+            IncentiveActivity act2 = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "HIGH_RISK_POSTPARTUM_HEALTH_CHECK", GroupName.ACTIVITY.getDisplayName());
+            if (act2 != null) {
+                addIncenticeRecord(visit42, userId, act2);
+            }
+        }
+    }
+
+    @Transactional
+    private void addIncenticeRecord(PNCVisit ect, Integer userId, IncentiveActivity antaraActivity) {
+
+        String lockKey = antaraActivity.getId() + "_" + ect.getBenId() + "_" + ect.getPncDate();
+
+        Object lock = lockMap.computeIfAbsent(lockKey, k -> new Object());
+
+        synchronized (lock) {
+            IncentiveActivityRecord record = recordRepo
+                    .findRecordByActivityIdCreatedDateBenId(antaraActivity.getId(), ect.getPncDate(), ect.getBenId(),userId);
+
+            if (record == null) {
+                record = new IncentiveActivityRecord();
+                record.setActivityId(antaraActivity.getId());
+                record.setCreatedDate(ect.getPncDate());
+                record.setCreatedBy(ect.getCreatedBy());
+                record.setStartDate(ect.getPncDate());
+                record.setEndDate(ect.getPncDate());
+                record.setUpdatedDate(ect.getPncDate());
+                record.setUpdatedBy(ect.getCreatedBy());
+                record.setBenId(ect.getBenId());
+                record.setAshaId(userId);
+                record.setAmount(Long.valueOf(antaraActivity.getRate()));
+                recordRepo.save(record);
+            }
+        }
+
+        lockMap.remove(lockKey, lock);
     }
 
 
