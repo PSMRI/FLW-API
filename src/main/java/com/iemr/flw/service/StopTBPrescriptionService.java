@@ -285,10 +285,11 @@ public class StopTBPrescriptionService {
                         .setParameter("pp", parkingPlaceID)
                         .executeUpdate();
                 stampVanSerialNo("t_itemstockexit", "ItemStockExitID", lastInsertId());
-                // Same update as Inventory-API ItemStockEntryRepo.updateStock, plus Processed='N' so the new
-                // quantity of an already-synced batch is uploaded again; central updates the existing row.
-                em.createNativeQuery("UPDATE db_iemr.t_itemstockentry SET QuantityInHand = QuantityInHand - :qty, "
-                                + "Processed = 'N' WHERE VanSerialNo = :batch AND FacilityID = :facilityID")
+                // Same update as Inventory-API ItemStockEntryRepo.updateStock. The batch is not marked for
+                // upload again (standard MMU): central gets the stock-out rows; re-sending a batch can insert a
+                // duplicate batch on central.
+                em.createNativeQuery("UPDATE db_iemr.t_itemstockentry SET QuantityInHand = QuantityInHand - :qty "
+                                + "WHERE VanSerialNo = :batch AND FacilityID = :facilityID")
                         .setParameter("qty", take)
                         .setParameter("batch", batchSerialNo)
                         .setParameter("facilityID", facilityID)
@@ -474,31 +475,45 @@ public class StopTBPrescriptionService {
     }
 
     /**
-     * Units to give when the app sends no quantity. Tablets/capsules: doses per day x days (SOS = 1 per day,
-     * or 1 when no duration). Other forms (syrup, cream, injection, drops...): 1 bottle/tube/vial. Null when a
-     * tablet/capsule quantity cannot be worked out (missing/unknown frequency or missing duration).
+     * Units to give when the app sends no quantity – MMU's rule (CommonNurseServiceImpl.calculateQtyPrescribed).
+     * Tablets/capsules: tablets per intake x intakes per day x days, rounded up. Tablets per intake come from the
+     * dose (Half Tab 0.5, One Tab 1, One & Half Tab 1.5, Two Tabs 2); no dose sent = one tablet (capsule always 1).
+     * Single/Stat dose = one intake. SOS = up to one intake a day (one intake when no duration). Once in a week =
+     * one intake per 7 days. Other forms (syrup, cream, injection, drops...): 1 bottle/tube/vial. Null when a
+     * tablet/capsule quantity cannot be worked out (unknown frequency or missing duration).
      */
     private Integer calculateQuantity(Map<String, Object> drug, Object[] item) {
         Integer formID = item[7] != null ? ((Number) item[7]).intValue() : null;
         if (formID == null || (formID != 1 && formID != 2)) return 1; // 1 = Tablet, 2 = Capsule
+        double perIntake = formID == 2 ? 1 : tabletsPerIntake(toStr(drug.get("dose")));
         String frequency = Optional.ofNullable(toStr(drug.get("frequency"))).orElse("").toUpperCase();
-        if (frequency.contains("SINGLE DOSE") || frequency.contains("STAT")) return 1;
+        if (frequency.contains("SINGLE DOSE") || frequency.contains("STAT")) return (int) Math.ceil(perIntake);
 
         Integer duration = toInt(drug.get("duration"));
         boolean sos = frequency.contains("SOS");
-        if (duration == null || duration <= 0) return sos ? 1 : null;
+        if (duration == null || duration <= 0) return sos ? (int) Math.ceil(perIntake) : null;
         String unit = Optional.ofNullable(toStr(drug.get("durationUnit"))).orElse("Day").toLowerCase();
         int days = unit.startsWith("week") ? duration * 7 : unit.startsWith("month") ? duration * 30
                 : unit.startsWith("year") ? duration * 365 : duration;
 
-        if (frequency.contains("WEEK")) return (days + 6) / 7; // Once in a Week
+        if (frequency.contains("WEEK")) return (int) Math.ceil(perIntake * ((days + 6) / 7)); // Once in a Week
         int perDay;
         if (frequency.contains("QID") || frequency.contains("FOUR")) perDay = 4;
         else if (frequency.contains("TID") || frequency.contains("THRICE")) perDay = 3;
         else if (frequency.contains("BD") || frequency.contains("TWICE")) perDay = 2;
         else if (frequency.contains("OD") || frequency.contains("ONCE DAILY") || sos) perDay = 1; // SOS: up to 1 a day
         else return null; // unknown frequency
-        return perDay * days;
+        return (int) Math.ceil(perIntake * perDay * days);
+    }
+
+    // MMU dose names (m_drugdose); anything else or no dose = one tablet
+    private static double tabletsPerIntake(String dose) {
+        if (dose == null) return 1;
+        String d = dose.trim().toLowerCase();
+        if (d.startsWith("half")) return 0.5;
+        if (d.startsWith("one & half") || d.startsWith("one and half") || d.startsWith("1.5")) return 1.5;
+        if (d.startsWith("two")) return 2;
+        return 1;
     }
 
     // ItemID, ItemName, strength+UOM, form, route, isEDL, IssueType, ItemFormID — only if the drug is mapped to
