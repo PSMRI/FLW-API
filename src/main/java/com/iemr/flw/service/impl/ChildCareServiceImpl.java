@@ -294,12 +294,6 @@ public class ChildCareServiceImpl implements ChildCareService {
                 }
                 page++;
 
-                try {
-                    checkAndAddHbncIncentives(hbncVisits, dto.getAshaId());
-                } catch (Exception e) {
-                    logger.error("HBNC incentive check failed for ashaId {}: ", dto.getAshaId(), e);
-                }
-
             }while (visitPage.hasNext());
 
         } catch (Exception e) {
@@ -1061,7 +1055,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 .findFirst()
                 .orElse(null);
 
-        if (visit42 == null) return;   // mother ka PNC 42 abhi nahi hua
+        if (visit42 == null) return;
 
         boolean hasDangerSign = motherPnc.stream()
                 .anyMatch(v -> v.getMotherDangerSign() != null
