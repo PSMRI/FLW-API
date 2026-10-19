@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -149,12 +150,28 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
 
             if (isDrTb) {
-                incentiveLogicService.incentiveForTbFollowUpIsDrTb(
-                        entity.getBenId(),
-                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
-                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
-                        entity.getUserId()
-                );
+                if("Shorter Regimen (9–12 Months)".equalsIgnoreCase(regimen)){
+                    if(isEligibleForIncentive(entity.getTreatmentStartDate(),entity.getExpectedTreatmentCompletionDate(),9)){
+                        incentiveLogicService.incentiveForTbFollowUpIsDrTb(
+                                entity.getBenId(),
+                                Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                                Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                                entity.getUserId()
+                        );
+                    }
+
+                }else  if("Longer Regimen (18–24 Months)".equalsIgnoreCase(regimen)){
+                    if(isEligibleForIncentive(entity.getTreatmentStartDate(),entity.getExpectedTreatmentCompletionDate(),18)) {
+
+                        incentiveLogicService.incentiveForTbFollowUpIsDrTb(
+                                entity.getBenId(),
+                                Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                                Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                                entity.getUserId()
+                        );
+                    }
+                }
+
             } else {
                 incentiveLogicService.incentiveForTbFollowUp(
                         entity.getBenId(),
@@ -166,6 +183,24 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
             }
 
         }
+    }
+
+    public boolean isEligibleForIncentive(LocalDate treatmentStartDate, LocalDate endDate,Integer minMonth) {
+
+        if (treatmentStartDate == null || endDate == null) {
+            return false;
+        }
+
+        LocalDate start = treatmentStartDate.atStartOfDay()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+
+        LocalDate end = endDate.atStartOfDay()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+
+        return end.isAfter(start.plusMonths(minMonth))
+                || end.isEqual(start.plusMonths(minMonth));
     }
 
     @Override

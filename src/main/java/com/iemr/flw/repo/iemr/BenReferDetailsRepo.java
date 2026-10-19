@@ -51,8 +51,8 @@ public interface BenReferDetailsRepo extends JpaRepository<BenReferDetails, Long
         SELECT COUNT(*)
         FROM db_iemr.t_benreferdetails
         WHERE CreatedBy = :userName
-        AND MONTH(CreatedDate) = :month
-        AND YEAR(CreatedDate) = :year
+        AND MONTH(revisitDate) = :month
+        AND YEAR(revisitDate) = :year
         """, nativeQuery = true)
 	Long countMonthlyReferrals(
 			@Param("userName") String userName,
