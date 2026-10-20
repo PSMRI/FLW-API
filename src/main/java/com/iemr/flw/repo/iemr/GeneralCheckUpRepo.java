@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface GeneralCheckUpRepo extends JpaRepository<GeneralCheckUp,Long> {
-    List<GeneralCheckUp> findByCreatedByOrderByIdDesc(String userName);
+    List<GeneralCheckUp> findByCreatedBy(String userName);
 }
