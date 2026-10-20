@@ -1651,18 +1651,17 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         logger.info("===== getGeneralCheckUp() called =====");
         logger.info("Received token: {}", token);
 
-        String userName = null;
+        Integer userName = null;
         try {
-            userName = jwtUtil.extractUsername(token);
+            userName = jwtUtil.extractUserId(token);
             logger.info("Extracted username from token: {}", userName);
         } catch (Exception e) {
             logger.error("Error while extracting username from token", e);
-            throw e;
         }
 
         List<GeneralCheckUp> rows = null;
         try {
-            rows = generalCheckUpRepo.findByCreatedBy(userName);
+            rows = generalCheckUpRepo.findByCreatedBy(userRepo.getUserNamedByUserId(userName));
             logger.info("Records fetched from DB for user [{}]: {}", userName, rows != null ? rows.size() : 0);
         } catch (Exception e) {
             logger.error("Error while fetching GeneralCheckUp records for user: {}", userName, e);
