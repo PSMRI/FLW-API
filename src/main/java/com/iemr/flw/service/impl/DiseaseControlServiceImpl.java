@@ -1685,7 +1685,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             f.setCheck_up_date(visitDate);                       // "22-10-2026"
             f.setProblemType(e.getProblemType());              // "g6"
             f.setOtherText(e.getOtherText());
-            f.setCheckupId(e.getCheckupId());
+            f.setCheckupId(e.getId().toString());
             f.setAshaId(e.getAshaId());
             f.setCheckupDate(e.getCheckupDate() != null ? e.getCheckupDate().toString() : null); // "2026-10-22"
             f.setProblemTypeId(e.getProblemType());
