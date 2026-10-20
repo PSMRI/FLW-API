@@ -28,7 +28,7 @@ public class GeneralCheckUp {
     private Long householdId;
 
     @Column(name = "asha_id", nullable = false)
-    private Long ashaId;
+    private Integer ashaId;
 
     @Column(name = "checkup_date", nullable = false)
     private LocalDate checkupDate;
@@ -38,6 +38,19 @@ public class GeneralCheckUp {
 
     @Column(name = "problems", columnDefinition = "json")
     private String problems;
+
+    @Column(name = "checkup_id", length = 50, unique = true)
+    private String checkupId;
+
+    @Column(name = "problem_type_label", length = 200)
+    private String problemTypeLabel;
+
+    @Column(name = "other_text", length = 500)
+    private String otherText;
+
+    @Column(name = "priority", length = 20)
+    private String priority;
+
 
 
     @Column(name = "referral_reason", length = 500)

@@ -24,6 +24,8 @@
 */
 package com.iemr.flw.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.identity.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.flw.domain.iemr.*;
@@ -93,6 +95,15 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    private static final DateTimeFormatter VISIT_DATE_FMT = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+    @Autowired
+    private GeneralCheckUpRepo generalCheckUpRepo;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
 
     @Autowired
     private IncentiveLogicService incentiveLogicService;
@@ -1582,13 +1593,106 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     }
 
     @Override
-    public List<GeneralCheckUpDto> saveGeneralCheckUp(List<GeneralCheckUpDto> generalCheckUpRequest, String token) {
+    @Transactional
+    public List<GeneralCheckUpDto> saveGeneralCheckUp(List<GeneralCheckUpDto> generalCheckUpRequest, String token) throws IEMRException {
 
-        return null;
+
+        if (generalCheckUpRequest == null || generalCheckUpRequest.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<GeneralCheckUp> entities = new ArrayList<>();
+
+        for (GeneralCheckUpDto dto : generalCheckUpRequest) {
+            GeneralCheckUpListDto fields = dto.getFields();
+            if (fields == null) {
+                throw new IllegalArgumentException("fields missing for beneficiary " + dto.getBeneficiaryId());
+            }
+
+            GeneralCheckUp entity = new GeneralCheckUp();
+            entity.setBenId(dto.getBeneficiaryId());
+            entity.setHouseholdId(dto.getHouseHoldId());
+            entity.setAshaId(jwtUtil.extractUserId(token));
+            entity.setCheckupDate(LocalDate.parse(dto.getVisitDate(), VISIT_DATE_FMT));
+            entity.setProblemType(fields.getProblemTypeId());
+
+            try {
+                entity.setProblems(fields.getProblems() != null
+                        ? objectMapper.writeValueAsString(fields.getProblems())
+                        : null);
+            } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException("Invalid problems payload for checkup "
+                        + fields.getCheckupId(), e);
+            }
+
+            entity.setReferralReason(fields.getReferralReason());
+            entity.setReferralDate(fields.getReferralDate() != null
+                    ? LocalDate.parse(fields.getReferralDate())
+                    : null);
+            entity.setCreatedBy(fields.getCreatedBy());
+            entity.setSyncedDate(new Timestamp(System.currentTimeMillis()));
+
+            entities.add(entity);
+        }
+
+        List<GeneralCheckUp> saved = generalCheckUpRepo.saveAll(entities);
+
+        for (int i = 0; i < saved.size(); i++) {
+            generalCheckUpRequest.get(i).setId(saved.get(i).getId());
+        }
+
+        return generalCheckUpRequest;
     }
+
 
     @Override
     public List<GeneralCheckUpDto> getGeneralCheckUp(String token) {
-        return null;
+
+        String userName = jwtUtil.extractUsername(token);
+
+        List<GeneralCheckUp> rows = generalCheckUpRepo.findByCreatedByOrderByIdDesc(userName);
+        List<GeneralCheckUpDto> result = new ArrayList<>();
+
+        for (GeneralCheckUp e : rows) {
+            String visitDate = e.getCheckupDate() != null
+                    ? e.getCheckupDate().format(VISIT_DATE_FMT) : null;
+
+            GeneralCheckUpListDto f = new GeneralCheckUpListDto();
+            f.setCheckUpDate(visitDate);                       // "22-10-2026"
+            f.setProblemType(e.getProblemType());              // "g6"
+            f.setOtherText(e.getOtherText());
+            f.setCheckupId(e.getCheckupId());
+            f.setAshaId(e.getAshaId());
+            f.setCheckupDate(e.getCheckupDate() != null ? e.getCheckupDate().toString() : null); // "2026-10-22"
+            f.setProblemTypeId(e.getProblemType());
+            f.setProblemTypeLabel(e.getProblemTypeLabel());
+            f.setOtherText(e.getOtherText());
+            f.setPriority(e.getPriority());
+            f.setReferralReason(e.getReferralReason());
+            f.setReferralDate(e.getReferralDate() != null ? e.getReferralDate().toString() : null);
+            f.setCreatedBy(e.getCreatedBy());
+            f.setCreatedDate(e.getCreatedDate() != null ? e.getCreatedDate().getTime() : null);
+            f.setUpdatedDate(e.getUpdatedDate() != null ? e.getUpdatedDate().getTime() : null);
+
+            // json string -> List<ProblemDto>
+            try {
+                if (e.getProblems() != null) {
+                    f.setProblems(objectMapper.readValue(
+                            e.getProblems(), new TypeReference<List<ProblemDto>>() {}));
+                }
+            } catch (JsonProcessingException ex) {
+                throw new IllegalStateException("Invalid problems json for id " + e.getId(), ex);
+            }
+
+            GeneralCheckUpDto dto = new GeneralCheckUpDto();
+            dto.setId(e.getId());
+            dto.setBeneficiaryId(e.getBenId());
+            dto.setHouseHoldId(e.getHouseholdId());
+            dto.setVisitDate(visitDate);
+            dto.setFields(f);
+
+            result.add(dto);
+        }
+        return result;
     }
 }

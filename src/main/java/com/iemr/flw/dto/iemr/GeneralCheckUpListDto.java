@@ -21,7 +21,7 @@ public class GeneralCheckUpListDto {
 
     private String checkupId;
 
-    private Long ashaId;
+    private Integer ashaId;
 
     private String checkupDate;
 

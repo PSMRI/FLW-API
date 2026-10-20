@@ -50,6 +50,6 @@ public interface DiseaseControlService {
 
     List<ChronicDiseaseVisitDTO> getCdtfVisits(GetBenRequestHandler getBenRequestHandler);
 
-    List<GeneralCheckUpDto> saveGeneralCheckUp(List<GeneralCheckUpDto> generalCheckUpRequest,String token);
+    List<GeneralCheckUpDto> saveGeneralCheckUp(List<GeneralCheckUpDto> generalCheckUpRequest,String token) throws IEMRException;
     List<GeneralCheckUpDto> getGeneralCheckUp(String token);
 }
