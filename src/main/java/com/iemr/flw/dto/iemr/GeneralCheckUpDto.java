@@ -1,5 +1,8 @@
 package com.iemr.flw.dto.iemr;
 
+import lombok.Data;
+
+@Data
 public class GeneralCheckUpDto {
     private Long id;
     private Long beneficiaryId;
