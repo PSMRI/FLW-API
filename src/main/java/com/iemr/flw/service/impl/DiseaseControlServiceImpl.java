@@ -1658,7 +1658,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     ? e.getCheckupDate().format(VISIT_DATE_FMT) : null;
 
             GeneralCheckUpListDto f = new GeneralCheckUpListDto();
-            f.setCheckUpDate(visitDate);                       // "22-10-2026"
+            f.setCheck_up_date(visitDate);                       // "22-10-2026"
             f.setProblemType(e.getProblemType());              // "g6"
             f.setOtherText(e.getOtherText());
             f.setCheckupId(e.getCheckupId());

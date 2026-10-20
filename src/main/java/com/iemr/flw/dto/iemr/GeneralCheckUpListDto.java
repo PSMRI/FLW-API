@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 public class GeneralCheckUpListDto {
     @JsonProperty("check_up_date")
-    private String checkUpDate;
+    private String check_up_date;
 
     @JsonProperty("problem_type")
     private String problemType;
