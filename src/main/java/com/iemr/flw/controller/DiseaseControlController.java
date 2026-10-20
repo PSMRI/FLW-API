@@ -49,6 +49,9 @@ public class DiseaseControlController {
     @Autowired
     private DiseaseControlService diseaseControlService;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
 
     @RequestMapping(value = "malaria/saveAll", method = RequestMethod.POST, consumes = "application/json", produces = "application/json",headers = "Authorization")
     public ResponseEntity<Map<String, Object>> saveMalaria(@RequestBody MalariaDTO malariaDTO) {
@@ -410,7 +413,13 @@ public class DiseaseControlController {
 
         Map<String, Object> response = new LinkedHashMap<>();
         logger.info("####################################################");
-        logger.info("General checkup Disease Visit Save Request: {}", requestList);
+        try {
+            logger.info("General Checkup Save Request: {}",
+                    objectMapper.writerWithDefaultPrettyPrinter()
+                            .writeValueAsString(requestList));
+        } catch (Exception e) {
+            logger.error("Failed to convert request to JSON", e);
+        }
         logger.info("####################################################");
 
         try {
