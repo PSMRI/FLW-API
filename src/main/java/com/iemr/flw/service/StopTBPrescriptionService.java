@@ -285,11 +285,10 @@ public class StopTBPrescriptionService {
                         .setParameter("pp", parkingPlaceID)
                         .executeUpdate();
                 stampVanSerialNo("t_itemstockexit", "ItemStockExitID", lastInsertId());
-                // Same update as Inventory-API ItemStockEntryRepo.updateStock. The batch is not marked for
-                // upload again (standard MMU): central gets the stock-out rows; re-sending a batch can insert a
-                // duplicate batch on central.
-                em.createNativeQuery("UPDATE db_iemr.t_itemstockentry SET QuantityInHand = QuantityInHand - :qty "
-                                + "WHERE VanSerialNo = :batch AND FacilityID = :facilityID")
+                // Same update as Inventory-API ItemStockEntryRepo.updateStock. Processed='N' sends the batch's
+                // new stock to central on the next upload; central updates its copy by VanSerialNo + store.
+                em.createNativeQuery("UPDATE db_iemr.t_itemstockentry SET QuantityInHand = QuantityInHand - :qty, "
+                                + "Processed = 'N' WHERE VanSerialNo = :batch AND FacilityID = :facilityID")
                         .setParameter("qty", take)
                         .setParameter("batch", batchSerialNo)
                         .setParameter("facilityID", facilityID)
