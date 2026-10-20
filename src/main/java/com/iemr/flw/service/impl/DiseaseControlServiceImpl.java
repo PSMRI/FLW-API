@@ -1615,6 +1615,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             entity.setAshaId(jwtUtil.extractUserId(token));
             entity.setCheckupDate(LocalDate.parse(dto.getVisitDate(), VISIT_DATE_FMT));
             entity.setProblemType(fields.getProblemTypeId());
+            entity.setProblemTypeLabel(fields.getProblemTypeLabel());
+            entity.setPriority(fields.getPriority());
+            entity.setOtherText(fields.getOtherText());
 
             try {
                 entity.setProblems(fields.getProblems() != null
@@ -1682,8 +1685,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     ? e.getCheckupDate().format(VISIT_DATE_FMT) : null;
 
             GeneralCheckUpListDto f = new GeneralCheckUpListDto();
-            f.setCheck_up_date(visitDate);                       // "22-10-2026"
-            f.setProblemType(e.getProblemType());              // "g6"
+            f.setCheck_up_date(visitDate);
+            f.setProblemType(e.getProblemType());
             f.setOtherText(e.getOtherText());
             f.setCheckupId(e.getId().toString());
             f.setAshaId(e.getAshaId());
