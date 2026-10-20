@@ -49,4 +49,7 @@ public interface DiseaseControlService {
     List<ChronicDiseaseVisitDTO> saveChronicDiseaseVisit(List<ChronicDiseaseVisitDTO> requestList,String token) throws IEMRException;
 
     List<ChronicDiseaseVisitDTO> getCdtfVisits(GetBenRequestHandler getBenRequestHandler);
+
+    List<GeneralCheckUpDto> saveGeneralCheckUp(List<GeneralCheckUpDto> generalCheckUpRequest,String token);
+    List<GeneralCheckUpDto> getGeneralCheckUp(String token);
 }

@@ -377,13 +377,13 @@ public class DiseaseControlController {
 
     @RequestMapping(value = "generalCheckUp/getAll", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> getGeneralCheckUp(
-            @RequestBody GetBenRequestHandler getBenRequestHandler) {
+           @RequestHeader(value = "JwtToken") String token) {
 
         Map<String, Object> response = new LinkedHashMap<>();
 
         try {
-            List<ChronicDiseaseVisitDTO> result =
-                    diseaseControlService.getCdtfVisits(getBenRequestHandler);
+            List<GeneralCheckUpDto> result =
+                    diseaseControlService.getGeneralCheckUp(token);
 
             if (result != null && !result.isEmpty()) {
                 response.put("statusCode", HttpStatus.OK.value());
@@ -406,14 +406,16 @@ public class DiseaseControlController {
 
     @RequestMapping(value = "generalCheckUp/saveAll", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> savGeneralCheckUp(
-            @RequestBody List<ChronicDiseaseVisitDTO> requestList,@RequestHeader(value = "JwtToken") String token) {
+            @RequestBody List<GeneralCheckUpDto> requestList,@RequestHeader(value = "JwtToken") String token) {
 
         Map<String, Object> response = new LinkedHashMap<>();
-        logger.info("Chronic Disease Visit Save Request: {}", requestList);
+        logger.info("####################################################");
+        logger.info("General checkup Disease Visit Save Request: {}", requestList);
+        logger.info("####################################################");
 
         try {
-            List<ChronicDiseaseVisitDTO> savedList =
-                    diseaseControlService.saveChronicDiseaseVisit(requestList,token);
+            List<GeneralCheckUpDto> savedList =
+                    diseaseControlService.saveGeneralCheckUp(requestList,token);
 
             if (savedList != null && !savedList.isEmpty()) {
                 response.put("statusCode", HttpStatus.OK.value());

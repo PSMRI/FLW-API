@@ -1581,4 +1581,14 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         return dtoList;
     }
 
+    @Override
+    public List<GeneralCheckUpDto> saveGeneralCheckUp(List<GeneralCheckUpDto> generalCheckUpRequest, String token) {
+
+        return null;
+    }
+
+    @Override
+    public List<GeneralCheckUpDto> getGeneralCheckUp(String token) {
+        return null;
+    }
 }

@@ -39,11 +39,6 @@ public class GeneralCheckUp {
     @Column(name = "problems", columnDefinition = "json")
     private String problems;
 
-    @Column(name = "other_text", length = 250)
-    private String otherText;
-
-    @Column(name = "priority", length = 20)
-    private String priority;
 
     @Column(name = "referral_reason", length = 500)
     private String referralReason;
