@@ -1648,36 +1648,36 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     @Override
     public List<GeneralCheckUpDto> getGeneralCheckUp(String token) {
 
-        log.info("===== getGeneralCheckUp() called =====");
-        log.info("Received token: {}", token);
+        logger.info("===== getGeneralCheckUp() called =====");
+        logger.info("Received token: {}", token);
 
         String userName = null;
         try {
             userName = jwtUtil.extractUsername(token);
-            log.info("Extracted username from token: {}", userName);
+            logger.info("Extracted username from token: {}", userName);
         } catch (Exception e) {
-            log.error("Error while extracting username from token", e);
-            throw e; // ya apna custom exception throw kar sakte ho
+            logger.error("Error while extracting username from token", e);
+            throw e;
         }
 
         List<GeneralCheckUp> rows = null;
         try {
             rows = generalCheckUpRepo.findByCreatedBy(userName);
-            log.info("Records fetched from DB for user [{}]: {}", userName, rows != null ? rows.size() : 0);
+            logger.info("Records fetched from DB for user [{}]: {}", userName, rows != null ? rows.size() : 0);
         } catch (Exception e) {
-            log.error("Error while fetching GeneralCheckUp records for user: {}", userName, e);
+            logger.error("Error while fetching GeneralCheckUp records for user: {}", userName, e);
             throw e;
         }
 
         List<GeneralCheckUpDto> result = new ArrayList<>();
 
         if (rows == null || rows.isEmpty()) {
-            log.warn("No GeneralCheckUp records found for user: {}", userName);
+            logger.warn("No GeneralCheckUp records found for user: {}", userName);
             return result;
         }
 
         for (GeneralCheckUp e : rows) {
-            log.debug("Processing GeneralCheckUp id: {}, checkupId: {}", e.getId(), e.getCheckupId());
+            logger.debug("Processing GeneralCheckUp id: {}, checkupId: {}", e.getId(), e.getCheckupId());
 
             String visitDate = e.getCheckupDate() != null
                     ? e.getCheckupDate().format(VISIT_DATE_FMT) : null;
@@ -1704,12 +1704,12 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 if (e.getProblems() != null) {
                     f.setProblems(objectMapper.readValue(
                             e.getProblems(), new TypeReference<List<ProblemDto>>() {}));
-                    log.debug("Successfully parsed problems JSON for id: {}", e.getId());
+                    logger.debug("Successfully parsed problems JSON for id: {}", e.getId());
                 } else {
-                    log.debug("Problems field is null for id: {}", e.getId());
+                    logger.debug("Problems field is null for id: {}", e.getId());
                 }
             } catch (JsonProcessingException ex) {
-                log.error("Invalid problems JSON for id: {}. JSON: {}", e.getId(), e.getProblems(), ex);
+                logger.error("Invalid problems JSON for id: {}. JSON: {}", e.getId(), e.getProblems(), ex);
                 throw new IllegalStateException("Invalid problems json for id " + e.getId(), ex);
             }
 
@@ -1723,9 +1723,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             result.add(dto);
         }
 
-        log.info("===== getGeneralCheckUp() completed successfully. Total records returned: {} =====", result.size());
-        // Optional: full response dekhna ho to (production mein mat rakho)
-        // log.debug("Final response: {}", result);
+        logger.info("===== getGeneralCheckUp() completed successfully. Total records returned: {} =====", result.size());
+
 
         return result;
     }
