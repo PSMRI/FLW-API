@@ -2,6 +2,7 @@ package com.iemr.flw.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.iemr.flw.service.StopTBPrescriptionService;
 import com.iemr.flw.service.StopTBService;
 import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -101,6 +102,10 @@ public class StopTBController {
         try {
             List<Map<String, Object>> result = stopTBService.saveGeneralOpd(dataList);
             response.setResponse(gson.toJson(result));
+        } catch (StopTBPrescriptionService.InsufficientStockException e) {
+            // Nothing was saved; the app shows this and lets the nurse lower the quantity.
+            logger.warn("saveGeneralOpd rejected: " + e.getMessage());
+            response.setError(5000, e.getMessage());
         } catch (Exception e) {
             logger.error("Error in saveGeneralOpd: " + e);
             response.setError(5000, "Error saving general OPD: " + e.getMessage());

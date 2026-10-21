@@ -30,6 +30,7 @@ import com.iemr.flw.repo.iemr.StopTBGeneralExaminationRepo;
 import com.iemr.flw.repo.iemr.StopTBGeneralOpdRepo;
 import com.iemr.flw.repo.iemr.TBScreeningRepo;
 import com.iemr.flw.service.CampConfigService;
+import com.iemr.flw.service.StopTBPrescriptionService;
 import com.iemr.flw.service.StopTBService;
 import com.iemr.flw.service.TBStopVisitService;
 import org.slf4j.Logger;
@@ -50,6 +51,9 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Autowired
     private CampConfigService campConfigService;
+
+    @Autowired
+    private StopTBPrescriptionService stopTBPrescriptionService;
 
     @Autowired
     private BenFlowStatusRepo benFlowStatusRepo;
@@ -367,18 +371,48 @@ public class StopTBServiceImpl implements StopTBService {
 
     // ── Nurse: General OPD ────────────────────────────────────────────────────
 
+    // Whole list is one transaction: any failure (incl. insufficient stock) rolls back every record.
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public List<Map<String, Object>> saveGeneralOpd(List<Map<String, Object>> dataList) throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
-        Integer vanID = campConfigService.getVanID();
         Integer parkingPlaceID = campConfigService.getParkingPlaceID();
         for (Map<String, Object> data : dataList) {
             Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
             if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
+            Integer vanID = campConfigService.resolveVanID(getInt(data, "vanID"));
 
             Integer providerServiceMapID = getInt(data, "providerServiceMapID");
             String createdBy = getString(data, "createdBy");
+
+            // New payload (chiefComplaints[] / prescription.drugs[]): AMRIT standard tables only, with dispensing.
+            // tb_stoptb_general_opd is not written; getAll and the Nikshay export read the standard tables.
+            if (data.get("chiefComplaints") instanceof List || data.get("prescription") instanceof Map) {
+                if (providerServiceMapID == null) throw new Exception("providerServiceMapID is required");
+                if (createdBy == null || createdBy.isBlank()) throw new Exception("createdBy is required");
+                String submissionId = getString(data, "submissionId");
+                Map<String, Object> previous = stopTBPrescriptionService.findPreviousSubmission(beneficiaryRegID, submissionId);
+                if (previous != null) {
+                    results.add(previous);
+                    continue;
+                }
+                BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
+                        createdBy, vanID, parkingPlaceID);
+                Map<String, Object> result = new LinkedHashMap<>();
+                result.put("beneficiaryRegID", beneficiaryRegID);
+                result.put("visitCode", visit.getVisitCode());
+                stopTBPrescriptionService.saveChiefComplaints(toMapList(data.get("chiefComplaints")), beneficiaryRegID,
+                        visit, createdBy, vanID, parkingPlaceID);
+                if (data.get("prescription") instanceof Map) {
+                    result.putAll(stopTBPrescriptionService.prescribeAndDispense(
+                            (Map<String, Object>) data.get("prescription"), beneficiaryRegID, visit, submissionId,
+                            createdBy, vanID, parkingPlaceID));
+                }
+                results.add(result);
+                continue;
+            }
+
+            // Old app payload (free-text chiefComplaint / medication): unchanged behaviour.
             BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
                     createdBy, vanID, parkingPlaceID);
 
@@ -416,13 +450,30 @@ public class StopTBServiceImpl implements StopTBService {
         return results;
     }
 
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> toMapList(Object v) {
+        return v instanceof List ? (List<Map<String, Object>>) v : null;
+    }
+
+    // Standard tables first (visits saved with the new payload); for older visits, which exist only in
+    // tb_stoptb_general_opd, fall back to that table. Same response fields either way.
     @Override
     public Map<String, Object> getAllGeneralOpd(Integer providerServiceMapID, Integer villageID) throws Exception {
+        List<Map<String, Object>> items = stopTBPrescriptionService.getStandardOpdRecords(providerServiceMapID, villageID);
+        Set<Long> standardVisitCodes = new HashSet<>();
+        for (Map<String, Object> item : items) standardVisitCodes.add((Long) item.get("visitCode"));
+
         List<StopTBGeneralOpd> list = (villageID != null)
                 ? generalOpdRepo.findAllByProviderServiceMapIDAndVillageID(providerServiceMapID, villageID)
                 : generalOpdRepo.findAllByProviderServiceMapID(providerServiceMapID);
-        List<Map<String, Object>> items = new ArrayList<>();
-        for (StopTBGeneralOpd o : list) items.add(opdToMap(o));
+        for (StopTBGeneralOpd o : list) {
+            if (o.getVisitCode() == null || !standardVisitCodes.contains(o.getVisitCode())) items.add(opdToMap(o));
+        }
+        items.sort((a, b) -> {
+            Date da = (Date) a.get("createdDate"), db = (Date) b.get("createdDate");
+            if (da == null || db == null) return da == null ? (db == null ? 0 : 1) : -1;
+            return db.compareTo(da);
+        });
         Map<String, Object> result = new HashMap<>();
         result.put("data", items);
         result.put("count", items.size());
@@ -440,6 +491,7 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("dosage", o.getDosage());
         m.put("frequency", o.getFrequency());
         m.put("duration", o.getDuration());
+        m.put("drugs", Collections.emptyList()); // old free-text records have no per-drug details
         m.put("notes", o.getNotes());
         m.put("createdBy", o.getCreatedBy());
         m.put("createdDate", o.getCreatedDate());
