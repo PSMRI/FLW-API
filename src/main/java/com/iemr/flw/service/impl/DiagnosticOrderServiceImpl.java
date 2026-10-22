@@ -18,19 +18,19 @@ import com.iemr.flw.integration.provider.DiagnosticProviderFactory;
 import com.iemr.flw.integration.provider.DiagnosticPushResult;
 import com.iemr.flw.masterEnum.DiagnosticOrderStatus;
 import com.iemr.flw.masterEnum.DiagnosticOrderType;
-import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.DiagnosticOrderRepo;
 import com.iemr.flw.repo.iemr.DiagnosticResultRepo;
 import com.iemr.flw.repo.iemr.EmployeeMasterRepo;
 import com.iemr.flw.repo.iemr.TBSuspectedRepo;
-import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.DiagnosticDocumentService;
 import com.iemr.flw.service.DiagnosticOrderService;
 import com.iemr.flw.service.TBStopVisitService;
 import com.iemr.flw.utils.JwtUtil;
-import com.google.common.util.concurrent.Striped;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +43,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
@@ -123,25 +125,49 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     // two simultaneous pushes for the same beneficiary could both pass the dedup check (or both create a
     // visit for today) and send the same patient to the vendor twice — shown as duplicate names on the
     // TrueNat machine. Keyed by beneficiary, not orderType, because the visit is shared across order types.
+    // (release-3.9.3 keys its lock by beneficiary+orderType because there the client supplies the
+    // visitCode; here the server creates the visit, so the key must be the beneficiary alone.)
     // In-memory, so it only serialises within this JVM: correct while orders are created only by the
-    // single van server that can reach the vendor. Striped keeps the lock registry a fixed size for the
-    // JVM's lifetime: the same beneficiary always maps to the same stripe, while unrelated beneficiaries
-    // that happen to share a stripe merely wait on each other briefly. Stripes are reentrant, and no path
-    // ever holds two beneficiaries' locks at once, so sharing a stripe can't deadlock.
-    private static final int BENEFICIARY_LOCK_STRIPES = 1024;
-    private final Striped<Lock> beneficiaryOrderLocks = Striped.lock(BENEFICIARY_LOCK_STRIPES);
+    // single van server that can reach the vendor. Same mechanism as release-3.9.3: one ReentrantLock per
+    // beneficiary, held weakly so an idle beneficiary's lock is garbage-collected — any thread waiting on
+    // or holding it keeps a strong reference, so concurrent callers always share the same instance.
+    // User requests wait at most LOCK_WAIT_SECONDS and then fail with a retry message, instead of piling
+    // up behind a slow vendor push (bounded by the EmrLiteRestTemplateConfig timeouts).
+    private final LoadingCache<Long, Lock> beneficiaryOrderLocks = CacheBuilder.newBuilder()
+            .weakValues()
+            .build(CacheLoader.from(beneficiaryId -> new ReentrantLock()));
+
+    private static final long LOCK_WAIT_SECONDS = 30;
 
     private <T> T withBeneficiaryLock(Long beneficiaryId, Callable<T> action) throws Exception {
-        if (beneficiaryId == null) {
-            throw new IllegalArgumentException("beneficiaryId is required");
+        Lock lock = beneficiaryLock(beneficiaryId);
+        if (!lock.tryLock(LOCK_WAIT_SECONDS, TimeUnit.SECONDS)) {
+            throw new IllegalStateException("Another diagnostic order operation is still in progress for beneficiaryId="
+                    + beneficiaryId + " — please retry shortly");
         }
-        Lock lock = beneficiaryOrderLocks.get(beneficiaryId);
+        try {
+            return action.call();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // For background work with no caller to retry it (the automatic retest): waits as long as it takes.
+    private <T> T withBeneficiaryLockBlocking(Long beneficiaryId, Callable<T> action) throws Exception {
+        Lock lock = beneficiaryLock(beneficiaryId);
         lock.lock();
         try {
             return action.call();
         } finally {
             lock.unlock();
         }
+    }
+
+    private Lock beneficiaryLock(Long beneficiaryId) {
+        if (beneficiaryId == null) {
+            throw new IllegalArgumentException("beneficiaryId is required");
+        }
+        return beneficiaryOrderLocks.getUnchecked(beneficiaryId);
     }
 
     private DiagnosticOrder createAndPushOrder(DiagnosticOrderRequestDto request, String createdBy) throws Exception {
@@ -238,11 +264,6 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 return winner.get();
             }
             throw dive;
-        }
-        // Stamp the sync key before the (possibly slow) vendor push, so a crash/restart mid-push can't leave it NULL.
-        if (order.getVanSerialNo() == null) {
-            diagnosticOrderRepo.updateVanSerialNo(order.getId());
-            order.setVanSerialNo(order.getId());
         }
 
         if (noVendor) {
@@ -531,9 +552,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
             order.setModifiedBy("SYSTEM");
             order.setProcessed("N");
-            order = diagnosticOrderRepo.save(order);
-            // The scheduler's copy may predate createAndPushOrder's updateVanSerialNo(); fill it if still missing.
-            if (order.getVanSerialNo() == null) diagnosticOrderRepo.updateVanSerialNo(order.getId());
+            diagnosticOrderRepo.save(order);
             return null;
         }
         DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
@@ -750,7 +769,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     // pushed to the vendor straight away. Never throws — a failure here must not undo the close.
     private void pushRetestOrder(DiagnosticOrder closed) {
         try {
-            withBeneficiaryLock(closed.getBeneficiaryId(), () -> {
+            withBeneficiaryLockBlocking(closed.getBeneficiaryId(), () -> {
                 pushRetestOrderLocked(closed);
                 return null;
             });
