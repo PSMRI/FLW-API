@@ -146,27 +146,27 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                         || "Longer Regimen (18–24 Months)".equalsIgnoreCase(regimen);
 
         if (Boolean.TRUE.equals(entity.getTreatmentCompleted())
-                && entity.getExpectedTreatmentCompletionDate() != null) {
+                && entity.getFollowUpDate() != null) {
 
 
             if (isDrTb) {
                 if("Shorter Regimen (9–12 Months)".equalsIgnoreCase(regimen)){
-                    if(isEligibleForIncentive(entity.getTreatmentStartDate(),entity.getExpectedTreatmentCompletionDate(),9)){
+                    if ("cured".equalsIgnoreCase(entity.getTreatmentOutcome())) {
                         incentiveLogicService.incentiveForTbFollowUpIsDrTb(
                                 entity.getBenId(),
-                                Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
-                                Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                                Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
+                                Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
                                 entity.getUserId()
                         );
                     }
 
                 }else  if("Longer Regimen (18–24 Months)".equalsIgnoreCase(regimen)){
-                    if(isEligibleForIncentive(entity.getTreatmentStartDate(),entity.getExpectedTreatmentCompletionDate(),18)) {
+                    if ("cured".equalsIgnoreCase(entity.getTreatmentOutcome())) {
 
                         incentiveLogicService.incentiveForTbFollowUpIsDrTb(
                                 entity.getBenId(),
-                                Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
-                                Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                                Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
+                                Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
                                 entity.getUserId()
                         );
                     }
@@ -175,8 +175,8 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
             } else {
                 incentiveLogicService.incentiveForTbFollowUp(
                         entity.getBenId(),
-                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
-                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                        Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
+                        Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
                         entity.getUserId()
                 );
 

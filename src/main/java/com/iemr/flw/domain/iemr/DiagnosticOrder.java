@@ -53,7 +53,7 @@ public class DiagnosticOrder {
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
-    @Column(name = "reason_to_close", columnDefinition = "TEXT")
+    @Column(name = "reason_for_refusal", columnDefinition = "TEXT")
     private String reasonToClose;
 
     @Column(name = "push_response_json", columnDefinition = "LONGTEXT")
