@@ -102,4 +102,7 @@ public class TBConfirmedCase {
 
     @Column(name = "visitCode")
     private Long visitCode;
+
+    @Column(name = "side_effects")
+    private String sideEffects;
 }
