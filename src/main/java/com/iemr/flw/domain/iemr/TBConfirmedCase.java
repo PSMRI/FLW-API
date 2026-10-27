@@ -65,6 +65,9 @@ public class TBConfirmedCase {
     @Column(name = "reason_for_not_completing")
     private String reasonForNotCompleting;
 
+    @Column(name = "remarks")
+    private String remarks;
+
     @Column(name = "created_at")
     private LocalDate createdAt = LocalDate.now();
 

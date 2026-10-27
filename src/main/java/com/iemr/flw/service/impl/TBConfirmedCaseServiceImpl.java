@@ -102,6 +102,10 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     entity.setPlaceOfDeath(dto.getPlaceOfDeath());
                     entity.setReasonForDeath(dto.getReasonForDeath());
                     entity.setReasonForNotCompleting(dto.getReasonForNotCompleting());
+                    // older app builds don't send remarks — keep the saved value instead of clearing it
+                    if (dto.getRemarks() != null) {
+                        entity.setRemarks(dto.getRemarks());
+                    }
                     // Stop TB / Nikshay reporting — same gap as tb_suspected: benRegID is computed
                     // above for the visit lookup but was never persisted onto the entity.
                     entity.setBenRegID(beneficiaryRegID);
@@ -249,6 +253,7 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         dto.setPlaceOfDeath(entity.getPlaceOfDeath());
         dto.setReasonForDeath(entity.getReasonForDeath());
         dto.setReasonForNotCompleting(entity.getReasonForNotCompleting());
+        dto.setRemarks(entity.getRemarks());
         dto.setUpdateDate(entity.getLastModDate());
         dto.setUpdatedBy(entity.getModifiedBy());
 
