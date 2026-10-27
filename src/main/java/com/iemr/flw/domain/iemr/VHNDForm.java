@@ -77,5 +77,11 @@ public class VHNDForm {
     @Column(name = "created_date", updatable = false)
     private Timestamp createdDate;
 
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 
 }

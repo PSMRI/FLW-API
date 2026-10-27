@@ -1,6 +1,7 @@
 package com.iemr.flw.dto.iemr;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.Column;
 import lombok.Data;
 
 import java.sql.Timestamp;
@@ -30,4 +31,6 @@ public class DeliveryOutcomeDTO {
     private String createdBy;
     private Timestamp updatedDate;
     private String updatedBy;
+    private String syncedBy;
+    private Timestamp syncedDate;
 }

@@ -68,6 +68,7 @@ public class BenChiefComplaint {
     @Column(name = "SyncedBy")
     private String syncedBy;
 
+    @org.hibernate.annotations.CreationTimestamp
     @Column(name = "SyncedDate")
     private Timestamp syncedDate;
 }

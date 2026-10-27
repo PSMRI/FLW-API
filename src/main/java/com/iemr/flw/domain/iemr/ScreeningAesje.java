@@ -101,5 +101,13 @@ public class ScreeningAesje {
     @Column(name = "beneficiary_status_id")
     private Integer beneficiaryStatusId;
 
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "synced_date")
+    private Date syncedDate;
+
     // Getters and Setters
 }

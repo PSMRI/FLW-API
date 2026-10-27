@@ -1,5 +1,6 @@
 package com.iemr.flw.controller;
 
+import com.google.gson.Gson;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
 import com.iemr.flw.service.IncentiveService;
@@ -30,6 +31,9 @@ public class IncentiveController {
 
     @Autowired
     IncentiveService incentiveService;
+
+    private static final Gson gson = new Gson();
+
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -91,8 +95,10 @@ public class IncentiveController {
         try {
 
             if (requestDTO != null) {
-                logger.info("request object with timestamp : " + new Timestamp(System.currentTimeMillis()) + " "
-                        + requestDTO);
+
+                logger.info("Request object with timestamp: {} | Request JSON: {}",
+                        new Timestamp(System.currentTimeMillis()),
+                        gson.toJson(requestDTO));
                 String s = incentiveService.getAllIncentivesByUserId(requestDTO);
                 //logger.info("User Incentive:" + s);
                 if (s != null)

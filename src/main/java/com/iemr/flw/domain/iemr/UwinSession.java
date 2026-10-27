@@ -39,5 +39,12 @@ public class UwinSession {
     @Column(name = "created_by")
     private String createdBy;
 
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
+
 
 }

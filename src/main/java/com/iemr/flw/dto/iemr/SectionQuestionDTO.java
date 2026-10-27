@@ -40,6 +40,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SectionQuestionDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private Long questionId;
 

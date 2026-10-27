@@ -459,7 +459,7 @@ public class CampaignServiceImpl implements CampaignService {
     private void checkMonthlyFilariasisIncentive(Integer ashaId,LocalDate startDate,LocalDate endDate) {
         IncentiveActivity FILARIASIS_MEDICINE_DISTRIBUTION = incentivesRepo.findIncentiveMasterByNameAndGroup("FILARIASIS_MEDICINE_DISTRIBUTION", GroupName.ACTIVITY.getDisplayName());
         if (FILARIASIS_MEDICINE_DISTRIBUTION != null) {
-            addAshaIncentiveRecord(FILARIASIS_MEDICINE_DISTRIBUTION, ashaId,startDate,endDate);
+            addAshaIncentiveRecordMda(FILARIASIS_MEDICINE_DISTRIBUTION, ashaId,startDate,endDate);
         }
 
     }
@@ -473,7 +473,6 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     private void addAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId,LocalDate startDate,LocalDate endDate) {
-        Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
 
         Timestamp startOfMonth = Timestamp.valueOf(startDate.atStartOfDay());
         Timestamp endOfMonth = Timestamp.valueOf(endDate.atStartOfDay());
@@ -490,11 +489,41 @@ public class CampaignServiceImpl implements CampaignService {
         if (record == null) {
             record = new IncentiveActivityRecord();
             record.setActivityId(incentiveActivity.getId());
-            record.setCreatedDate(timestamp);
+            record.setCreatedDate(endOfMonth);
             record.setCreatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId));
-            record.setStartDate(timestamp);
-            record.setEndDate(timestamp);
-            record.setUpdatedDate(timestamp);
+            record.setStartDate(endOfMonth);
+            record.setEndDate(endOfMonth);
+            record.setUpdatedDate(endOfMonth);
+            record.setUpdatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId));
+            record.setBenId(0L);
+            record.setAshaId(ashaId);
+            record.setAmount(Long.valueOf(incentiveActivity.getRate()));
+            recordRepo.save(record);
+        }
+    }
+
+
+    private void addAshaIncentiveRecordMda(IncentiveActivity incentiveActivity, Integer ashaId,LocalDate startDate,LocalDate endDate) {
+
+        Timestamp startOfMonth = Timestamp.valueOf(startDate.atStartOfDay());
+        Timestamp endOfMonth = Timestamp.valueOf(endDate.atStartOfDay());
+
+        IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                incentiveActivity.getId(),
+                endOfMonth,
+                0L,ashaId
+
+        );
+
+
+        if (record == null) {
+            record = new IncentiveActivityRecord();
+            record.setActivityId(incentiveActivity.getId());
+            record.setCreatedDate(endOfMonth);
+            record.setCreatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId));
+            record.setStartDate(endOfMonth);
+            record.setEndDate(endOfMonth);
+            record.setUpdatedDate(endOfMonth);
             record.setUpdatedBy(userServiceRoleRepo.getUserNamedByUserId(ashaId));
             record.setBenId(0L);
             record.setAshaId(ashaId);

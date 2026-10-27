@@ -100,18 +100,18 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
             @Param("endDate") Timestamp endDate);
 
     @Query("""
-SELECT
-    SUM(CASE WHEN record.approvalStatus = 101 THEN 1 ELSE 0 END),
-    SUM(CASE WHEN record.approvalStatus = 102 THEN 1 ELSE 0 END),
-    SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END),
-    SUM(CASE WHEN record.approvalStatus IN (101,105) THEN 1 ELSE 0 END)
-FROM IncentiveActivityRecord record
-WHERE record.ashaId = :ashaId
-AND record.isClaimed = true
-AND record.isDefaultActivity = true
-AND record.createdDate >= :startDate
-AND record.createdDate < :endDate
-""")
+            SELECT
+                SUM(CASE WHEN record.approvalStatus = 101 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN record.approvalStatus = 102 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN record.approvalStatus IN (101,105) THEN 1 ELSE 0 END)
+            FROM IncentiveActivityRecord record
+            WHERE record.ashaId = :ashaId
+            AND record.isClaimed = true
+            AND record.isDefaultActivity = true
+            AND record.createdDate >= :startDate
+            AND record.createdDate < :endDate
+            """)
     List<Object[]> getStatusCountByAshaIdOfDefaultActivity(
             @Param("ashaId") Integer ashaId,
             @Param("startDate") Timestamp startDate,
@@ -119,22 +119,21 @@ AND record.createdDate < :endDate
 
 
     @Query("""
-SELECT
-    SUM(CASE WHEN record.approvalStatus = 101 THEN 1 ELSE 0 END),
-    SUM(CASE WHEN record.approvalStatus = 102 THEN 1 ELSE 0 END),
-    SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END),
-    SUM(CASE WHEN record.approvalStatus IN (101,105) THEN 1 ELSE 0 END)
-FROM IncentiveActivityRecord record
-WHERE record.ashaId = :ashaId
-AND record.isClaimed = false
-AND record.createdDate >= :startDate
-AND record.createdDate < :endDate
-""")
+            SELECT
+                SUM(CASE WHEN record.approvalStatus = 101 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN record.approvalStatus = 102 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN record.approvalStatus = 103 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN record.approvalStatus IN (101,105) THEN 1 ELSE 0 END)
+            FROM IncentiveActivityRecord record
+            WHERE record.ashaId = :ashaId
+            AND record.isClaimed = false
+            AND record.createdDate >= :startDate
+            AND record.createdDate < :endDate
+            """)
     List<Object[]> getStatusUnclaimedCountByAshaId(
             @Param("ashaId") Integer ashaId,
             @Param("startDate") Timestamp startDate,
             @Param("endDate") Timestamp endDate);
-
 
 
     @Query("SELECT COALESCE(SUM(record.amount), 0) " +
@@ -155,26 +154,26 @@ AND record.createdDate < :endDate
 
 
     @Query("""
-    SELECT COALESCE(SUM(record.amount), 0)
-    FROM IncentiveActivityRecord record
-    JOIN IncentiveActivity master ON record.activityId = master.id
-    WHERE record.ashaId = :ashaId
-      AND master.state = :stateCode
-      AND record.isClaimed = true
-      AND record.startDate >= :fromDate
-      AND record.endDate <= :toDate
-      AND (
-            :approvalStatus = 0
-            OR (
-                :approvalStatus = 102
-                AND record.approvalStatus IN (102, 105)
-            )
-            OR (
-                :approvalStatus <> 102
-                AND record.approvalStatus = :approvalStatus
-            )
-      )
-""")
+                SELECT COALESCE(SUM(record.amount), 0)
+                FROM IncentiveActivityRecord record
+                JOIN IncentiveActivity master ON record.activityId = master.id
+                WHERE record.ashaId = :ashaId
+                  AND master.state = :stateCode
+                  AND record.isClaimed = true
+                  AND record.startDate >= :fromDate
+                  AND record.endDate <= :toDate
+                  AND (
+                        :approvalStatus = 0
+                        OR (
+                            :approvalStatus = 102
+                            AND record.approvalStatus IN (102, 105)
+                        )
+                        OR (
+                            :approvalStatus <> 102
+                            AND record.approvalStatus = :approvalStatus
+                        )
+                  )
+            """)
     Long getTotalAmountByAshaANM(
             @Param("ashaId") Integer ashaId,
             @Param("fromDate") Timestamp fromDate,
@@ -184,27 +183,27 @@ AND record.createdDate < :endDate
     );
 
     @Query("""
-    SELECT COALESCE(SUM(record.amount), 0)
-    FROM IncentiveActivityRecord record
-    JOIN IncentiveActivity master ON record.activityId = master.id
-    WHERE record.ashaId = :ashaId
-      AND master.state = :stateCode
-      AND record.isClaimed = true
-      AND record.isDefaultActivity = false
-      AND record.startDate >= :fromDate
-      AND record.endDate <= :toDate
-      AND (
-            :approvalStatus = 0
-            OR (
-                :approvalStatus = 102
-                AND record.approvalStatus IN (102, 105)
-            )
-            OR (
-                :approvalStatus <> 102
-                AND record.approvalStatus = :approvalStatus
-            )
-      )
-""")
+                SELECT COALESCE(SUM(record.amount), 0)
+                FROM IncentiveActivityRecord record
+                JOIN IncentiveActivity master ON record.activityId = master.id
+                WHERE record.ashaId = :ashaId
+                  AND master.state = :stateCode
+                  AND record.isClaimed = true
+                  AND record.isDefaultActivity = false
+                  AND record.startDate >= :fromDate
+                  AND record.endDate <= :toDate
+                  AND (
+                        :approvalStatus = 0
+                        OR (
+                            :approvalStatus = 102
+                            AND record.approvalStatus IN (102, 105)
+                        )
+                        OR (
+                            :approvalStatus <> 102
+                            AND record.approvalStatus = :approvalStatus
+                        )
+                  )
+            """)
     Long getTotalAmountByAshaANMbeforeClaimedHour(
             @Param("ashaId") Integer ashaId,
             @Param("fromDate") Timestamp fromDate,
@@ -304,17 +303,17 @@ AND record.createdDate < :endDate
     @Modifying
     @Transactional
     @Query("""
-    UPDATE IncentiveActivityRecord iar
-    SET iar.approvalStatus = :approvalStatus,
-        iar.verifiedByUserId = :ashaSupervisorUserId,
-        iar.reason = NULL,
-        iar.otherReason = NULL,
-        iar.approvalDate = :approvalDate,
-        iar.verifiedByUserName = :ashaSupervisorUserName
-    WHERE iar.id IN :incentiveIds
-      AND iar.ashaId = :ashaId
-      AND iar.isClaimed = true
-    """)
+            UPDATE IncentiveActivityRecord iar
+            SET iar.approvalStatus = :approvalStatus,
+                iar.verifiedByUserId = :ashaSupervisorUserId,
+                iar.reason = NULL,
+                iar.otherReason = NULL,
+                iar.approvalDate = :approvalDate,
+                iar.verifiedByUserName = :ashaSupervisorUserName
+            WHERE iar.id IN :incentiveIds
+              AND iar.ashaId = :ashaId
+              AND iar.isClaimed = true
+            """)
     int updateApprovalStatusByIncentiveIds(
             @Param("incentiveIds") List<Long> incentiveIds,
             @Param("ashaId") Integer ashaId,
@@ -328,19 +327,19 @@ AND record.createdDate < :endDate
     @Modifying
     @Transactional
     @Query("""
-UPDATE IncentiveActivityRecord iar
-SET
-    iar.approvalStatus = :approvalStatus,
-    iar.verifiedByUserId = :ashaSupervisorUserId,
-    iar.verifiedByUserName = :ashaSupervisorUserName,
-    iar.approvalDate = :approvalDate,
-    iar.reason = NULL,
-    iar.otherReason = NULL
-WHERE iar.ashaId = :ashaId
-AND iar.isClaimed = true
-AND iar.createdDate >= :startDate
-AND iar.createdDate < :endDate
-""")
+            UPDATE IncentiveActivityRecord iar
+            SET
+                iar.approvalStatus = :approvalStatus,
+                iar.verifiedByUserId = :ashaSupervisorUserId,
+                iar.verifiedByUserName = :ashaSupervisorUserName,
+                iar.approvalDate = :approvalDate,
+                iar.reason = NULL,
+                iar.otherReason = NULL
+            WHERE iar.ashaId = :ashaId
+            AND iar.isClaimed = true
+            AND iar.createdDate >= :startDate
+            AND iar.createdDate < :endDate
+            """)
     int updateApprovalStatusByAshaAndDateRangeForDefaultActivity(
             @Param("ashaId") Integer ashaId,
             @Param("approvalStatus") Integer approvalStatus,
@@ -354,18 +353,18 @@ AND iar.createdDate < :endDate
     @Modifying
     @Transactional
     @Query("""
-UPDATE IncentiveActivityRecord iar
-SET
-    iar.approvalStatus = :approvalStatus,
-    iar.verifiedByUserId = :ashaSupervisorUserId,
-    iar.verifiedByUserName = :ashaSupervisorUserName,
-    iar.approvalDate = :approvalDate,
-    iar.reason = NULL,
-    iar.otherReason = NULL
-WHERE iar.id = :incentiveId
-AND iar.ashaId = :ashaId
-AND iar.isClaimed = true
-""")
+            UPDATE IncentiveActivityRecord iar
+            SET
+                iar.approvalStatus = :approvalStatus,
+                iar.verifiedByUserId = :ashaSupervisorUserId,
+                iar.verifiedByUserName = :ashaSupervisorUserName,
+                iar.approvalDate = :approvalDate,
+                iar.reason = NULL,
+                iar.otherReason = NULL
+            WHERE iar.id = :incentiveId
+            AND iar.ashaId = :ashaId
+            AND iar.isClaimed = true
+            """)
     int updateApprovalStatusByIncentiveIdForDefaultActivity(
             @Param("incentiveId") Long incentiveId,
             @Param("ashaId") Integer ashaId,
@@ -378,18 +377,18 @@ AND iar.isClaimed = true
     @Modifying
     @Transactional
     @Query("""
-    UPDATE IncentiveActivityRecord iar
-    SET iar.approvalStatus = :approvalStatus,
-        iar.verifiedByUserId = :ashaSupervisorUserId,
-        iar.verifiedByUserName = :ashaSupervisorUserName,
-        iar.approvalDate = :approvalDate,
-        iar.reason = NULL,
-        iar.otherReason = NULL
-    WHERE iar.id IN :incentiveIds
-      AND iar.ashaId = :ashaId
-      AND iar.isClaimed = true
-      AND iar.isDefaultActivity = true
-    """)
+            UPDATE IncentiveActivityRecord iar
+            SET iar.approvalStatus = :approvalStatus,
+                iar.verifiedByUserId = :ashaSupervisorUserId,
+                iar.verifiedByUserName = :ashaSupervisorUserName,
+                iar.approvalDate = :approvalDate,
+                iar.reason = NULL,
+                iar.otherReason = NULL
+            WHERE iar.id IN :incentiveIds
+              AND iar.ashaId = :ashaId
+              AND iar.isClaimed = true
+              AND iar.isDefaultActivity = true
+            """)
     int updateApprovalStatusByIncentiveIdsForDefaultActivity(
             @Param("incentiveIds") List<Long> incentiveIds,
             @Param("ashaId") Integer ashaId,
@@ -403,17 +402,17 @@ AND iar.isClaimed = true
     @Modifying
     @Transactional
     @Query("""
-    UPDATE IncentiveActivityRecord iar
-    SET iar.approvalStatus = :approvalStatus,
-        iar.verifiedByUserId = :ashaSupervisorUserId,
-        iar.verifiedByUserName = :ashaSupervisorUserName,
-        iar.approvalDate = :approvalDate,
-        iar.reason = NULL,
-        iar.otherReason = NULL
-    WHERE iar.id IN :incentiveIds
-      AND iar.ashaId = :ashaId
-      AND iar.isClaimed = true
-    """)
+            UPDATE IncentiveActivityRecord iar
+            SET iar.approvalStatus = :approvalStatus,
+                iar.verifiedByUserId = :ashaSupervisorUserId,
+                iar.verifiedByUserName = :ashaSupervisorUserName,
+                iar.approvalDate = :approvalDate,
+                iar.reason = NULL,
+                iar.otherReason = NULL
+            WHERE iar.id IN :incentiveIds
+              AND iar.ashaId = :ashaId
+              AND iar.isClaimed = true
+            """)
     int updateApprovalStatusByIncentiveIdsForDefaultActivityForAnm(
             @Param("incentiveIds") List<Long> incentiveIds,
             @Param("ashaId") Integer ashaId,
@@ -422,6 +421,7 @@ AND iar.isClaimed = true
             @Param("ashaSupervisorUserId") Integer ashaSupervisorUserId,
             @Param("ashaSupervisorUserName") String ashaSupervisorUserName
     );
+
     @Modifying
     @Transactional
     @Query("UPDATE IncentiveActivityRecord iar "
@@ -470,17 +470,17 @@ AND iar.isClaimed = true
     @Modifying
     @Transactional
     @Query("""
-    UPDATE IncentiveActivityRecord iar
-    SET iar.approvalStatus = :status,
-        iar.verifiedByUserId = :ashaSupervisorUserId,
-        iar.verifiedByUserName = :ashaSupervisorUserName,
-        iar.reason = :reason,
-        iar.otherReason = :otherReason,
-        iar.approvalDate = :approvalDate
-    WHERE iar.id IN :incentiveIds
-      AND iar.ashaId = :ashaId
-      AND iar.isClaimed = true
-    """)
+            UPDATE IncentiveActivityRecord iar
+            SET iar.approvalStatus = :status,
+                iar.verifiedByUserId = :ashaSupervisorUserId,
+                iar.verifiedByUserName = :ashaSupervisorUserName,
+                iar.reason = :reason,
+                iar.otherReason = :otherReason,
+                iar.approvalDate = :approvalDate
+            WHERE iar.id IN :incentiveIds
+              AND iar.ashaId = :ashaId
+              AND iar.isClaimed = true
+            """)
     int updateApprovalStatusByIdsAndIncentiveIds(
             @Param("status") Integer status,
             @Param("ashaId") Integer ashaId,
@@ -550,6 +550,7 @@ AND iar.isClaimed = true
             @Param("startDate") Timestamp startDate,
             @Param("endDate") Timestamp endDate,
             @Param("approvalStatus") Integer approvalStatus);
+
     @Modifying
     @Transactional
     @Query("UPDATE IncentiveActivityRecord iar "
@@ -568,24 +569,33 @@ AND iar.isClaimed = true
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
     @Query("""
-    UPDATE IncentiveActivityRecord iar
-    SET iar.approvalStatus = 102,
-        iar.isClaimed = false,
-        iar.calimedDate = NULL,
-        iar.approvalDate = NULL,
-        iar.reason = NULL,
-        iar.otherReason = NULL,
-        iar.verifiedByUserId = NULL,
-        iar.verifiedByUserName = NULL,
-        iar.updatedDate = :updatedDate,
-        iar.updatedBy = :updatedBy
-    WHERE iar.approvalStatus = 103
-      AND iar.isClaimed = true
-      AND iar.endDate < :currentMonthStart
-""")
+                UPDATE IncentiveActivityRecord iar
+                SET iar.approvalStatus = 102,
+                    iar.isClaimed = false,
+                    iar.calimedDate = NULL,
+                    iar.approvalDate = NULL,
+                    iar.reason = NULL,
+                    iar.otherReason = NULL,
+                    iar.verifiedByUserId = NULL,
+                    iar.verifiedByUserName = NULL,
+                    iar.updatedDate = :updatedDate,
+                    iar.updatedBy = :updatedBy
+                WHERE iar.approvalStatus = 103
+                  AND iar.isClaimed = true
+                  AND iar.endDate < :currentMonthStart
+            """)
     int resetRejectedIncentivesForNewMonth(
             @Param("currentMonthStart") Timestamp currentMonthStart,
             @Param("updatedDate") Timestamp updatedDate,
             @Param("updatedBy") String updatedBy
     );
+
+    @Query("SELECT r FROM IncentiveActivityRecord r " +
+            "WHERE r.ashaId = :ashaId " +
+            "AND r.approvalStatus = :status")
+    List<IncentiveActivityRecord> findApprovedForMonth(
+            @Param("ashaId") Integer ashaId,
+            @Param("status") Integer status);
 }
+
+

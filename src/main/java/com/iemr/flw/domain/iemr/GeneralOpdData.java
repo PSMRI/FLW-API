@@ -220,5 +220,11 @@ public class GeneralOpdData {
 	@Column(name = "village")
 	private String  village;
 
+	@Column(name = "synced_by")
+	private String syncedBy;
+
+	@org.hibernate.annotations.CreationTimestamp
+	@Column(name = "synced_date")
+	private Timestamp syncedDate;
 
 }

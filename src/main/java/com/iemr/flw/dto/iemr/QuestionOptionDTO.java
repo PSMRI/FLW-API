@@ -38,6 +38,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuestionOptionDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private Long optionId;
 

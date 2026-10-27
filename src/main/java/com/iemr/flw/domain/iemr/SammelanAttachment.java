@@ -1,5 +1,6 @@
 package com.iemr.flw.domain.iemr;
 
+import java.sql.Timestamp;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,4 +26,11 @@ public class SammelanAttachment {
     private String fileType;
     @Lob
     private byte[] fileData;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

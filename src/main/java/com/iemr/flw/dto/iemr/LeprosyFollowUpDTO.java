@@ -6,6 +6,9 @@ import java.util.Date;
 
 @Data
 public class LeprosyFollowUpDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private Long id;
     private Long benId;

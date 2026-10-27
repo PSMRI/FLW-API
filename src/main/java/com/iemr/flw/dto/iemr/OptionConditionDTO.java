@@ -38,6 +38,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OptionConditionDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private Long conditionId;
 

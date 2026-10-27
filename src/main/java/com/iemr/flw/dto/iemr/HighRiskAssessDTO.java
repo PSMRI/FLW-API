@@ -6,6 +6,9 @@ import java.sql.Timestamp;
 
 @Data
 public class HighRiskAssessDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
     private Long id;
 
     private Integer userId;

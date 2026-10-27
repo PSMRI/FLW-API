@@ -7,6 +7,9 @@ import java.io.Serializable;
 import java.util.List;
 @Data
 public class MicroBirthPlanDTO implements Serializable {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
     Integer  userId;
     List<MicroBirthPlan> entries;
 

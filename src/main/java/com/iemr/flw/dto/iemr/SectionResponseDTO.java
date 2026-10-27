@@ -39,6 +39,9 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class SectionResponseDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private Long sectionResponseId;
     private Long sectionId;

@@ -9,6 +9,9 @@ import java.util.List;
 
  @Data
  public class HbncVisitDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
  @SerializedName("id")
  private Integer id;
 

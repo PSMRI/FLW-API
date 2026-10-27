@@ -70,4 +70,11 @@ public class SamVisit {
 
     @Column(name = "updated_date")
     private LocalDateTime updatedDate = LocalDateTime.now();
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private java.sql.Timestamp syncedDate;
 }

@@ -82,4 +82,11 @@ public class HbncPart2 {
 
     @Column(name = "updated_by")
     private String updatedBy;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

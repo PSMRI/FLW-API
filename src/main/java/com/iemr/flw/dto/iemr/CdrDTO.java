@@ -9,6 +9,9 @@ import java.util.List;
 
 @Data
 public class CdrDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
     private Long id;
 
     private Long benId;

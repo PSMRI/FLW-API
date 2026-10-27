@@ -9,6 +9,8 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
+
 @Entity
 @Table(name = "asha_supervisor_mapping")
 @Data
@@ -31,4 +33,11 @@ public class AshaSupervisorMapping {
 
 	@Column(name = "deleted", insertable = false, updatable = true)
 	private Boolean deleted;
+
+	@Column(name = "synced_by")
+	private String syncedBy;
+
+	@org.hibernate.annotations.CreationTimestamp
+	@Column(name = "synced_date")
+	private Timestamp syncedDate;
 }

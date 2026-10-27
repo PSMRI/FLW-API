@@ -173,7 +173,12 @@ public class ANCVisit {
     @Column(name = "place_of_ancId")
     private Integer placeOfAncId;
 
+    @Column(name = "synced_by")
+    private String syncedBy;
 
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 
 
 

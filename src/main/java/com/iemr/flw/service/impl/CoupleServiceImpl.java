@@ -335,20 +335,25 @@ public class CoupleServiceImpl implements CoupleService {
                 }
 
                 if (eligibleCoupleRegister.getIsKitHandedOver()!=null && eligibleCoupleRegister.getIsKitHandedOver()) {
-                    IncentiveActivity handoverKitActivityAM =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.FAMILY_PLANNING.getDisplayName());
-                    if (handoverKitActivityAM != null) {
-                        createIncentiveRecordForKitHandOver(eligibleCoupleRegister, handoverKitActivityAM);
+                    if(stateId.equals(StateCode.AM.getStateCode())){
+                        IncentiveActivity handoverKitActivityAM =
+                                incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.FAMILY_PLANNING.getDisplayName());
+                        if (handoverKitActivityAM != null) {
+                            createIncentiveRecordForKitHandOver(eligibleCoupleRegister, handoverKitActivityAM);
 
+                        }
+                    }
+
+                    if(stateId.equals(StateCode.CG.getStateCode())) {
+                        IncentiveActivity handoverKitActivityCH =
+                                incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.ACTIVITY.getDisplayName());
+                        if (handoverKitActivityCH != null) {
+                            createIncentiveRecordForKitHandOver(eligibleCoupleRegister, handoverKitActivityCH);
+
+                        }
                     }
 
 
-                    IncentiveActivity handoverKitActivityCH =
-                            incentivesRepo.findIncentiveMasterByNameAndGroup("FP_NP_KIT", GroupName.ACTIVITY.getDisplayName());
-                    if (handoverKitActivityCH != null) {
-                        createIncentiveRecordForKitHandOver(eligibleCoupleRegister, handoverKitActivityCH);
-
-                    }
                 }
 
 

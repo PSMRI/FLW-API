@@ -72,4 +72,11 @@ public class EligibleCoupleTracking {
 
     @Column(name = "discharge_summary2")
     private String dischargeSummary2;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

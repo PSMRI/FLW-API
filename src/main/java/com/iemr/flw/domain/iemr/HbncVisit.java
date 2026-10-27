@@ -110,4 +110,11 @@ public class HbncVisit {
     @Column(name = "is_admitted_in_sncu")
     private Boolean is_admitted_in_sncu;
 
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 };
