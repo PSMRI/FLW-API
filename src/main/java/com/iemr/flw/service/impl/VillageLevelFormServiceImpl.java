@@ -233,8 +233,8 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         VHNDForm vhndForm = new VHNDForm();
         vhndForm.setUserId(userID);
         vhndForm.setVhndDate(vhndFormDTO.getVhndDate());
-        vhndForm.setImage2(vhndFormDTO.getImage2() != null ? vhndFormDTO.getImage2() : "");
-        vhndForm.setImage1(vhndFormDTO.getImage1() != null ? vhndFormDTO.getImage1() : "");
+        vhndForm.setImage2(vhndFormDTO.getImage2() != null ? vhndFormDTO.getImage2() : null);
+        vhndForm.setImage1(vhndFormDTO.getImage1() != null ? vhndFormDTO.getImage1() : null);
         vhndForm.setPlace(vhndFormDTO.getPlace() != null ? vhndFormDTO.getPlace() : "");
 
         vhndForm.setNoOfBeneficiariesAttended(

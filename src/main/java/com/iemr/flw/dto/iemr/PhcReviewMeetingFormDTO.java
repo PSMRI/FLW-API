@@ -13,8 +13,8 @@ public class PhcReviewMeetingFormDTO {
     private String mitaninHistory;
     private String mitaninActivityCheckList;
     private Integer placeId;
-    private String image1;
-    private String image2;
+    private byte[] image1;
+    private byte[] image2;
 
 
 

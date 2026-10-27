@@ -29,11 +29,13 @@ public class DewormingForm {
     @Column(name = "age_group")
     private Integer ageGroup;
 
+    @Lob
     @Column(name = "image1")
-    private String image1;
+    private byte[] image1;
 
+    @Lob
     @Column(name = "image2")
-    private String image2;
+    private byte[] image2;
 
     @Column(name = "user_id")
     private Long userId;
