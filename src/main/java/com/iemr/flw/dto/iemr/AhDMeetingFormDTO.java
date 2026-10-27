@@ -8,6 +8,6 @@ public class AhDMeetingFormDTO {
     private String mobilizedForAHD;
     private String ahdPlace;
     private String ahdDate;
-    private String image1;
-    private String image2;
+    private byte[] image1;
+    private byte[] image2;
 }
