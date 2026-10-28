@@ -1758,45 +1758,51 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional()
     public List<GeneralCheckUpFollowUpDto> getGeneralCheckUpFollowUp(
             String token) {
+      try {
+          Integer userId = jwtUtil.extractUserId(token);
 
-        Integer userId = getUserIdFromToken(token);
+          List<GeneralCheckUpFollowUp> entities =
+                  generalCheckUpFollowUpRepository.findByAshaId(userId);
 
-        List<GeneralCheckUpFollowUp> entities =
-                generalCheckUpFollowUpRepository.findByAshaId(userId);
+          return entities.stream()
+                  .map(entity -> {
+                      GeneralCheckUpFollowUpDto dto =
+                              new GeneralCheckUpFollowUpDto();
 
-        return entities.stream()
-                .map(entity -> {
-                    GeneralCheckUpFollowUpDto dto =
-                            new GeneralCheckUpFollowUpDto();
+                      dto.setId(entity.getId());
+                      dto.setBeneficiaryId(entity.getBenId());
+                      dto.setHouseHoldId(entity.getHouseholdId());
 
-                    dto.setId(entity.getId());
-                    dto.setBeneficiaryId(entity.getBenId());
-                    dto.setHouseHoldId(entity.getHouseholdId());
+                      GeneralCheckUpFollowUpListDto fields =
+                              new GeneralCheckUpFollowUpListDto();
 
-                    GeneralCheckUpFollowUpListDto fields =
-                            new GeneralCheckUpFollowUpListDto();
+                      fields.setFollowUpDate(
+                              entity.getFollowUpDate() != null
+                                      ? entity.getFollowUpDate().toString()
+                                      : null);
 
-                    fields.setFollowUpDate(
-                            entity.getFollowUpDate() != null
-                                    ? entity.getFollowUpDate().toString()
-                                    : null);
+                      fields.setFollowupStatus(entity.getFollowupStatus());
+                      fields.setReferredTo(entity.getReferredTo());
 
-                    fields.setFollowupStatus(entity.getFollowupStatus());
-                    fields.setReferredTo(entity.getReferredTo());
+                      dto.setFields(fields);
 
-                    dto.setFields(fields);
+                      dto.setVisitDate(
+                              entity.getFollowUpDate() != null
+                                      ? entity.getFollowUpDate().toString()
+                                      : null);
 
-                    dto.setVisitDate(
-                            entity.getFollowUpDate() != null
-                                    ? entity.getFollowUpDate().toString()
-                                    : null);
+                      return dto;
+                  })
+                  .collect(Collectors.toList());
+      } catch (Exception e) {
+        // Replace with your project's standard IEMRException constructor.
+        throw new RuntimeException(
+                "Error saving General Check-up follow-up", e);
+    }
 
-                    return dto;
-                })
-                .collect(Collectors.toList());
     }
 
     @Override

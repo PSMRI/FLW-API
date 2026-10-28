@@ -445,7 +445,7 @@ public class DiseaseControlController {
     }
 
 
-    @RequestMapping(value = "generalCheckUpFollowUp/getAll", method = RequestMethod.POST)
+        @RequestMapping(value = "generalCheckUpFollowUp/getAll", method = RequestMethod.POST)
     public ResponseEntity<Map<String, Object>> getGeneralCheckUpFollowUp(@RequestBody GetBenRequestHandler getBenRequestHandler,@RequestHeader(value = "JwtToken") String token) {
 
         Map<String, Object> response = new LinkedHashMap<>();
