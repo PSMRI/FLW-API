@@ -14,6 +14,7 @@ import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.TBStopVisitService;
 import com.iemr.flw.service.TBSuspectedService;
 import com.iemr.flw.service.UserService;
+import com.iemr.flw.masterEnum.StateCode;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,36 +149,25 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
     @Override
     public String getByUserId(GetBenRequestHandler request) {
         List<TBSuspectedDTO> dtos = new ArrayList<>();
-        List<TBSuspected> tbSuspectedList = request.getProviderServiceMapID() != null
+        boolean stopTbVillage = request.getProviderServiceMapID() != null;
+        List<TBSuspected> tbSuspectedList = stopTbVillage
                 ? tbSuspectedRepo.getByProviderServiceMapIdAndVillageId(request.getProviderServiceMapID(), request.getVillageID())
                 : tbSuspectedRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
-        // The incentive check needs the user's state; look it up once per user instead of loading the
-        // full user detail (role + facility queries) for every confirmed row.
-        Map<Integer, Integer> stateByUser = new HashMap<>();
-        Set<Integer> usersWithoutDetail = new HashSet<>();
-        for (TBSuspected tbSuspected : tbSuspectedList) {
-            TBSuspectedDTO dto = toDto(tbSuspected);
-            dto.setUpdateDate(tbSuspected.getLastModDate());
-            dto.setUpdatedBy(tbSuspected.getModifiedBy());
-            dtos.add(dto);
+        if (stopTbVillage) {
+            dtos = stopTbVillageDtos(tbSuspectedList);
+        } else {
+            for (TBSuspected tbSuspected : tbSuspectedList) {
+                TBSuspectedDTO dto = modelMapper.map(tbSuspected, TBSuspectedDTO.class);
+                dto.setUpdateDate(tbSuspected.getLastModDate());
+                dto.setUpdatedBy(tbSuspected.getModifiedBy());
+                dtos.add(dto);
 
-            if (tbSuspected != null && Boolean.TRUE.equals(tbSuspected.getIsConfirmed())) {
-                Integer userId = tbSuspected.getUserId();
-                if (!stateByUser.containsKey(userId) && !usersWithoutDetail.contains(userId)) {
-                    try {
-                        stateByUser.put(userId, userService.getUserDetail(userId).getStateId());
-                    } catch (Exception e) {
-                        logger.error("Check Tb Suspected Incentive Exception: ", e);
-                        usersWithoutDetail.add(userId);
-                    }
-                }
-                if (stateByUser.containsKey(userId)) {
+                if (tbSuspected != null && Boolean.TRUE.equals(tbSuspected.getIsConfirmed())) {
                     incentiveLogicService.incentiveForTbSuspected(
                             tbSuspected.getBenId(),
                             tbSuspected.getVisitDate(),
                             tbSuspected.getVisitDate(),
-                            userId,
-                            stateByUser.get(userId)
+                            tbSuspected.getUserId()
                     );
                 }
             }
@@ -187,6 +177,44 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
         tbSuspectedRequestDTO.setUserId(request.getAshaId());
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         return gson.toJson(tbSuspectedRequestDTO);
+    }
+
+    // Stop TB village list (psm + village). Same DTOs and incentive calls as the per-user path, but the
+    // user's state is read once per user: IncentiveLogicImpl.incentiveForTbSuspected loads the full user
+    // detail on every call only to check for CG, and does nothing for any other state, so for other
+    // states the call is skipped and for CG users it is made exactly as before.
+    private List<TBSuspectedDTO> stopTbVillageDtos(List<TBSuspected> tbSuspectedList) {
+        List<TBSuspectedDTO> dtos = new ArrayList<>();
+        Map<Integer, Integer> stateByUser = new HashMap<>();
+        Set<Integer> usersWithoutDetail = new HashSet<>();
+        for (TBSuspected tbSuspected : tbSuspectedList) {
+            TBSuspectedDTO dto = toDto(tbSuspected);
+            dto.setUpdateDate(tbSuspected.getLastModDate());
+            dto.setUpdatedBy(tbSuspected.getModifiedBy());
+            dtos.add(dto);
+
+            if (Boolean.TRUE.equals(tbSuspected.getIsConfirmed())) {
+                Integer userId = tbSuspected.getUserId();
+                if (!stateByUser.containsKey(userId) && !usersWithoutDetail.contains(userId)) {
+                    try {
+                        stateByUser.put(userId, userService.getUserDetail(userId).getStateId());
+                    } catch (Exception e) {
+                        logger.error("Check Tb Suspected Incentive Exception: ", e);
+                        usersWithoutDetail.add(userId);
+                    }
+                }
+                Integer stateCode = stateByUser.get(userId);
+                if (stateCode != null && stateCode == StateCode.CG.getStateCode()) {
+                    incentiveLogicService.incentiveForTbSuspected(
+                            tbSuspected.getBenId(),
+                            tbSuspected.getVisitDate(),
+                            tbSuspected.getVisitDate(),
+                            userId
+                    );
+                }
+            }
+        }
+        return dtos;
     }
 
     // Field-by-field copy of the same-named fields ModelMapper copied (updateDate/updatedBy are set by

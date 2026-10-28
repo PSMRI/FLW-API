@@ -32,7 +32,4 @@ public interface IncentiveLogicService {
     IncentiveActivityRecord incentiveForGiveingIFA(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
 
     IncentiveActivityRecord incentiveForTbSuspected(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId);
-
-    // Same as above with the user's state already looked up, for callers handling many rows of one user.
-    IncentiveActivityRecord incentiveForTbSuspected(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId, Integer stateCode);
 }
