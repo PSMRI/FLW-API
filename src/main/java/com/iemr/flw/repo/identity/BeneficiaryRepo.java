@@ -152,13 +152,24 @@ List<Object[]> getBenIdsFromRegIDs(@Param("regIds") List<Long> regIds);
     // replacing the old approach of loading every flow row for the whole village into
     // memory and slicing it in Java. Cost is now O(pageSize) instead of O(village size)
     // on every page request, including page 0. See BeneficiaryServiceImpl.getBenData().
+    // Deferred join: the OFFSET skip runs on idx_flow_psm_village_reg alone (index-only, no row or
+    // mapping lookups for skipped rows), then only this page's flow rows are joined to the mapping.
+    // Rows sharing a registrationDate are ordered newest ben_flow_id first; the old query left their
+    // order to the plan (filesort), so a tie could move across a page boundary and be skipped or sent
+    // twice. A flow row with no mapping row still takes its slot, so such a page can come back short,
+    // never shifted.
     @Query(value = """
         SELECT bm.BenAddressId
-        FROM db_iemr.i_ben_flow_outreach bfs
+        FROM (
+            SELECT ben_flow_id, registrationDate
+            FROM db_iemr.i_ben_flow_outreach
+            WHERE providerServiceMapID = :psmId AND villageID = :villageId AND deleted = 0
+            ORDER BY registrationDate DESC, ben_flow_id DESC
+            LIMIT :pageSize OFFSET :offset
+        ) p
+        JOIN db_iemr.i_ben_flow_outreach bfs ON bfs.ben_flow_id = p.ben_flow_id
         JOIN db_identity.i_beneficiarymapping bm ON bm.BenRegId = bfs.beneficiary_reg_id
-        WHERE bfs.providerServiceMapID = :psmId AND bfs.villageID = :villageId AND bfs.deleted = 0
-        ORDER BY bfs.registrationDate DESC
-        LIMIT :pageSize OFFSET :offset
+        ORDER BY p.registrationDate DESC, p.ben_flow_id DESC
         """, nativeQuery = true)
     List<BigInteger> getVillageWorklistAddressIds(
             @Param("psmId") Integer psmId,
@@ -166,11 +177,12 @@ List<Object[]> getBenIdsFromRegIDs(@Param("regIds") List<Long> regIds);
             @Param("pageSize") int pageSize,
             @Param("offset") int offset);
 
+    // Counts flow rows (index-only), the same rows getVillageWorklistAddressIds pages over, so
+    // totalPage always covers every flow row.
     @Query(value = """
         SELECT COUNT(*)
-        FROM db_iemr.i_ben_flow_outreach bfs
-        JOIN db_identity.i_beneficiarymapping bm ON bm.BenRegId = bfs.beneficiary_reg_id
-        WHERE bfs.providerServiceMapID = :psmId AND bfs.villageID = :villageId AND bfs.deleted = 0
+        FROM db_iemr.i_ben_flow_outreach
+        WHERE providerServiceMapID = :psmId AND villageID = :villageId AND deleted = 0
         """, nativeQuery = true)
     long countVillageWorklist(@Param("psmId") Integer psmId, @Param("villageId") Integer villageId);
 

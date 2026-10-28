@@ -159,7 +159,11 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                     request.getProviderServiceMapID(), request.getVillageID(), pageSize, offset);
             long tIds = System.currentTimeMillis();
 
-            if (addressIds.isEmpty()) return null;
+            // In range but every flow row on this page lacks a mapping: return an empty page, not
+            // "No record found", so the app keeps paging to totalPage.
+            if (addressIds.isEmpty()) {
+                return getMappingsForAddressIDs(new ArrayList<>(), totalPage, authorisation, null, tStart);
+            }
 
             // Was findAddressesByIds() - a single "IN :ids" JPQL query. Hit a reproducible
             // Hibernate 6.4.1 bug there: "Binding is multi-valued; illegal call to
