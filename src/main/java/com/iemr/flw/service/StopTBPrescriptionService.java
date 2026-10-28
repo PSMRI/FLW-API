@@ -316,18 +316,21 @@ public class StopTBPrescriptionService {
      */
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getStandardOpdRecords(Integer providerServiceMapID, Integer villageID) {
-        String villageFilter = villageID != null
-                ? "AND v.BeneficiaryRegID IN (SELECT f.beneficiary_reg_id FROM db_iemr.i_ben_flow_outreach f "
-                        + "WHERE f.providerServiceMapID = :psm AND f.villageID = :villageID) "
-                : "";
+        // With a village, start from the village's beneficiaries (bounded by village size) instead of
+        // every visit of the PSM; the same visits match either way.
+        String visitSource = villageID != null
+                ? "(SELECT /*+ INDEX(f idx_flow_psm_village_reg) */ DISTINCT f.beneficiary_reg_id "
+                        + "FROM db_iemr.i_ben_flow_outreach f WHERE f.providerServiceMapID = :psm AND f.villageID = :villageID) fv "
+                        + "JOIN db_iemr.t_benvisitdetail v ON v.BeneficiaryRegID = fv.beneficiary_reg_id "
+                : "db_iemr.t_benvisitdetail v ";
         Query visitQuery = em.createNativeQuery("SELECT v.BenVisitID, v.BeneficiaryRegID, v.VisitCode, v.CreatedBy, "
-                        + "v.CreatedDate, v.LastModDate FROM db_iemr.t_benvisitdetail v "
+                        + "v.CreatedDate, v.LastModDate FROM " + visitSource
                         + "WHERE v.ProviderServiceMapID = :psm AND v.Deleted = false "
                         + "AND (EXISTS (SELECT 1 FROM db_iemr.t_benchiefcomplaint c WHERE c.BeneficiaryRegID = v.BeneficiaryRegID "
                         + "  AND c.VisitCode = v.VisitCode AND c.ChiefComplaintID IS NOT NULL AND c.Deleted = false) "
                         + " OR EXISTS (SELECT 1 FROM db_iemr.t_prescribeddrug d WHERE d.BeneficiaryRegID = v.BeneficiaryRegID "
                         + "  AND d.VisitCode = v.VisitCode AND d.DrugID IS NOT NULL AND d.Deleted = false)) "
-                        + villageFilter + "ORDER BY v.CreatedDate DESC")
+                        + "ORDER BY v.CreatedDate DESC")
                 .setParameter("psm", providerServiceMapID);
         if (villageID != null) visitQuery.setParameter("villageID", villageID);
         List<Object[]> visits = visitQuery.getResultList();

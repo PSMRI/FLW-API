@@ -156,7 +156,7 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
         Map<Integer, Integer> stateByUser = new HashMap<>();
         Set<Integer> usersWithoutDetail = new HashSet<>();
         for (TBSuspected tbSuspected : tbSuspectedList) {
-            TBSuspectedDTO dto = modelMapper.map(tbSuspected, TBSuspectedDTO.class);
+            TBSuspectedDTO dto = toDto(tbSuspected);
             dto.setUpdateDate(tbSuspected.getLastModDate());
             dto.setUpdatedBy(tbSuspected.getModifiedBy());
             dtos.add(dto);
@@ -187,6 +187,36 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
         tbSuspectedRequestDTO.setUserId(request.getAshaId());
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         return gson.toJson(tbSuspectedRequestDTO);
+    }
+
+    // Field-by-field copy of the same-named fields ModelMapper copied (updateDate/updatedBy are set by
+    // the caller); ModelMapper's reflection per row was most of this list's time at village scale.
+    private static TBSuspectedDTO toDto(TBSuspected s) {
+        TBSuspectedDTO dto = new TBSuspectedDTO();
+        dto.setId(s.getId());
+        dto.setBenId(s.getBenId());
+        dto.setVisitLabel(s.getVisitLabel());
+        dto.setVisitDate(s.getVisitDate());
+        dto.setTypeOfTBCase(s.getTypeOfTBCase());
+        dto.setReasonForSuspicion(s.getReasonForSuspicion());
+        dto.setIsSputumCollected(s.getIsSputumCollected());
+        dto.setSputumSubmittedAt(s.getSputumSubmittedAt());
+        dto.setNikshayId(s.getNikshayId());
+        dto.setSputumTestResult(s.getSputumTestResult());
+        dto.setIsChestXRayDone(s.getIsChestXRayDone());
+        dto.setChestXRayResult(s.getChestXRayResult());
+        dto.setReasonForRefusalXray(s.getReasonForRefusalXray());
+        dto.setReasonForRefusalMTB(s.getReasonForRefusalMTB());
+        dto.setReasonForRefusalMDRRIF(s.getReasonForRefusalMDRRIF());
+        dto.setReasonForRefusalSputum(s.getReasonForRefusalSputum());
+        dto.setMdrRifResult(s.getMdrRifResult());
+        dto.setReferralFacility(s.getReferralFacility());
+        dto.setIsTBConfirmed(s.getIsTBConfirmed());
+        dto.setIsConfirmed(s.getIsConfirmed());
+        dto.setIsDRTBConfirmed(s.getIsDRTBConfirmed());
+        dto.setReferred(s.getReferred());
+        dto.setFollowUps(s.getFollowUps());
+        return dto;
     }
 
 }
