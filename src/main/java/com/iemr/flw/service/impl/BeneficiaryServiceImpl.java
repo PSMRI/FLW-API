@@ -144,8 +144,10 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         // O(village size), on every page including page 0. See BeneficiaryRepo for the
         // underlying query.
         if (request.getProviderServiceMapID() != null && request.getVillageID() != null) {
+            long tStart = System.currentTimeMillis();
             long totalCount = beneficiaryRepo.countVillageWorklist(
                     request.getProviderServiceMapID(), request.getVillageID());
+            long tCount = System.currentTimeMillis();
 
             if (totalCount == 0) return null;
 
@@ -155,6 +157,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
             List<BigInteger> addressIds = beneficiaryRepo.getVillageWorklistAddressIds(
                     request.getProviderServiceMapID(), request.getVillageID(), pageSize, offset);
+            long tIds = System.currentTimeMillis();
 
             if (addressIds.isEmpty()) return null;
 
@@ -177,8 +180,13 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
             }
 
             if (pageAddresses.isEmpty()) return null;
+            long tAddr = System.currentTimeMillis();
 
-            return getMappingsForAddressIDs(pageAddresses, totalPage, authorisation);
+            String timingLabel = "[WORKLIST-TIMING] psm=" + request.getProviderServiceMapID()
+                    + " village=" + request.getVillageID() + " page=" + request.getPageNo() + "/" + totalPage
+                    + " pageSize=" + pageSize + " villageTotal=" + totalCount
+                    + " | countMs=" + (tCount - tStart) + " idsMs=" + (tIds - tCount) + " addressMs=" + (tAddr - tIds);
+            return getMappingsForAddressIDs(pageAddresses, totalPage, authorisation, timingLabel, tStart);
         }
 
         // Normal FLW/ASHA path
@@ -222,13 +230,18 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         return getMappingsForAddressIDs(
                 pageResult.getContent(),
                 pageResult.getTotalPages(),
-                authorisation
+                authorisation,
+                null,
+                0L
         );
     }
 
 
+    // timingLabel != null logs one [WORKLIST-TIMING] line per page (Stop TB village path) so camp-laptop
+    // logs show where each page's time goes.
     private String getMappingsForAddressIDs(List<RMNCHMBeneficiaryaddress> addressList, int totalPage,
-                                            String authorisation) {
+                                            String authorisation, String timingLabel, long tStart) {
+        long tPrefetchStart = System.currentTimeMillis();
         RMNCHHouseHoldDetails benHouseHoldRMNCH_ROBJ;
         RMNCHBeneficiaryDetailsRmnch benDetailsRMNCH_OBJ;
         RMNCHBornBirthDetails benBotnBirthRMNCH_ROBJ;
@@ -250,6 +263,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         } catch (Exception e) {
             logger.warn("Worklist page prefetch failed, using per-beneficiary queries: " + e.getMessage());
         }
+        long tPrefetch = System.currentTimeMillis();
+        int failedRows = 0;
 
         for (RMNCHMBeneficiaryaddress a : addressList) {
             // exception by-passing
@@ -657,18 +672,29 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                 }
 
             } catch (Exception e) {
+                failedRows++;
                 logger.info("Error for ben :"+e.getMessage());
                 logger.info("Error for ben :"+e);
                 logger.error("error for addressID :" + e.getMessage() + a.getId() + " and vanID : " + a.getVanID());
             }
         }
+        long tBuild = System.currentTimeMillis();
 
         Map<String, Object> response = new HashMap<>();
         response.put("data", resultList);
         response.put("pageSize", Integer.parseInt(door_to_door_page_size));
         response.put("totalPage", totalPage);
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
-        return gson.toJson(response);
+        String json = gson.toJson(response);
+
+        if (timingLabel != null) {
+            long tEnd = System.currentTimeMillis();
+            logger.info(timingLabel + " prefetchMs=" + (tPrefetch - tPrefetchStart) + " buildMs=" + (tBuild - tPrefetch)
+                    + " jsonMs=" + (tEnd - tBuild) + " totalMs=" + (tEnd - tStart)
+                    + " rows=" + resultList.size() + "/" + addressList.size() + " failedRows=" + failedRows
+                    + " batch=" + (pf != null) + " bytes=" + json.length());
+        }
+        return json;
     }
 
 
