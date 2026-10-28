@@ -26,21 +26,19 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
     @Query("SELECT o FROM DiagnosticOrder o WHERE o.beneficiaryId = :beneficiaryId AND o.deleted = false ORDER BY o.createdDate DESC")
     List<DiagnosticOrder> findByBeneficiaryId(@Param("beneficiaryId") Long beneficiaryId);
 
-    // Polling and the daily close only touch orders created within [dayStart, dayEnd) — i.e. today's.
     @Query("SELECT o FROM DiagnosticOrder o WHERE o.orderType = 'XRAY_CHEST' " +
             "AND o.status IN ('PENDING', 'IN_PROGRESS') " +
             "AND o.deleted = false " +
-            "AND o.createdDate >= :dayStart AND o.createdDate < :dayEnd " +
             "ORDER BY o.lastPolledAt ASC NULLS FIRST")
-    List<DiagnosticOrder> findXrayDueForPoll(@Param("dayStart") Timestamp dayStart, @Param("dayEnd") Timestamp dayEnd);
+    List<DiagnosticOrder> findXrayDueForPoll();
 
     @Query("SELECT o FROM DiagnosticOrder o WHERE o.orderType IN ('MTB', 'MTB_PLUS', 'MDR_RIF') " +
             "AND o.status IN ('PENDING', 'IN_PROGRESS') " +
             "AND o.deleted = false " +
-            "AND o.createdDate >= :dayStart AND o.createdDate < :dayEnd " +
             "ORDER BY o.lastPolledAt ASC NULLS FIRST")
-    List<DiagnosticOrder> findTrueNatDueForPoll(@Param("dayStart") Timestamp dayStart, @Param("dayEnd") Timestamp dayEnd);
+    List<DiagnosticOrder> findTrueNatDueForPoll();
 
+    // The (disabled) daily close only touches orders created within [dayStart, dayEnd) — i.e. today's.
     @Query("SELECT o FROM DiagnosticOrder o WHERE o.status IN ('PENDING', 'IN_PROGRESS') AND o.deleted = false " +
             "AND o.createdDate >= :dayStart AND o.createdDate < :dayEnd")
     List<DiagnosticOrder> findAllOutstandingOrders(@Param("dayStart") Timestamp dayStart, @Param("dayEnd") Timestamp dayEnd);

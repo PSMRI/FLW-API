@@ -23,7 +23,17 @@ public interface DiagnosticOrderService {
 
     DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult result) throws Exception;
 
+    /**
+     * Polls the vendor once for this order. The order is re-read first and skipped (returns null) if it
+     * is no longer PENDING/IN_PROGRESS, e.g. a manual result landed after the scheduler loaded it.
+     */
     DiagnosticPollResult pollOnce(DiagnosticOrder order) throws Exception;
+
+    /**
+     * Daily cutoff: marks this order CLOSED with the given reason and notifies the vendor, unless it was
+     * resolved (e.g. by a manual result) after the scheduler loaded it.
+     */
+    void expireOrder(DiagnosticOrder order, String reason) throws Exception;
 
     DiagnosticOrderResultDto triggerManualPoll(Long beneficiaryId, String orderType, Long visitCode) throws Exception;
 
