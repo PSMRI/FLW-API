@@ -107,6 +107,13 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     @Query(nativeQuery = true, value = " SELECT HealthID,HealthIdNumber,isNewAbha FROM db_iemr.t_healthid WHERE HealthIdNumber = :healthIdNumber ")
     ArrayList<Object[]> getBenHealthDetails(@Param("healthIdNumber") String healthIdNumber);
 
+    // Same rows FHIR-API getBenhealthID reads, so the worklist can fill healthId/healthIdNumber without an HTTP call
+    @Query(nativeQuery = true, value = " SELECT HealthID, HealthIdNumber FROM db_iemr.m_benhealthidmapping WHERE BeneficiaryRegID = :benRegId ")
+    List<Object[]> getHealthIdMappingRows(@Param("benRegId") Long benRegId);
+
+    @Query(nativeQuery = true, value = " SELECT HealthId FROM db_iemr.t_healthid WHERE HealthIdNumber = :healthIdNumber ")
+    List<String> getHealthIdByNumber(@Param("healthIdNumber") String healthIdNumber);
+
     // benRegId has no unique constraint on i_beneficiarymapping — a beneficiary can have
     // more than one mapping row, so this must return a list, not assume a single result.
     @Query("SELECT b FROM RMNCHMBeneficiarymapping b WHERE b.benRegId = :benRegId ORDER BY b.benMapId DESC")

@@ -119,6 +119,9 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     @Autowired
     private BenPhysicalVitalRepo benPhysicalVitalRepo;
 
+    @Autowired
+    private WorklistPagePrefetch worklistPagePrefetch;
+
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
 
@@ -159,13 +162,19 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
             // Hibernate 6.4.1 bug there: "Binding is multi-valued; illegal call to
             // #getBindValue" even with a well-formed, non-empty id list (confirmed live
             // against 192.168.45.40 - the 10 rows returned have no NULLs/type issues, so
-            // this isn't a data problem). Looping getAddressById() per id sidesteps
-            // Hibernate's collection-parameter binding entirely - only ever pageSize (10)
-            // calls per page, same order-preservation as before.
-            List<RMNCHMBeneficiaryaddress> pageAddresses = addressIds.stream()
-                    .map(beneficiaryRepo::getAddressById)
-                    .filter(java.util.Objects::nonNull)
-                    .collect(Collectors.toList());
+            // this isn't a data problem). WorklistPagePrefetch reads them in one native query
+            // with the ids as numeric literals (no collection binding), keeping page order;
+            // the per-id loop stays as the fallback.
+            List<RMNCHMBeneficiaryaddress> pageAddresses;
+            try {
+                pageAddresses = worklistPagePrefetch.addressesInOrder(addressIds);
+            } catch (Exception e) {
+                logger.warn("Worklist address batch failed, reading one by one: " + e.getMessage());
+                pageAddresses = addressIds.stream()
+                        .map(beneficiaryRepo::getAddressById)
+                        .filter(java.util.Objects::nonNull)
+                        .collect(Collectors.toList());
+            }
 
             if (pageAddresses.isEmpty()) return null;
 
@@ -233,10 +242,20 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         Map<String, Object> resultMap;
         ArrayList<Map<String, Object>> resultList = new ArrayList<>();
 
+        // One query per table for the whole page; if it fails, every lookup below falls back to its
+        // original per-beneficiary query.
+        WorklistPagePrefetch.Page pf = null;
+        try {
+            pf = worklistPagePrefetch.load(addressList);
+        } catch (Exception e) {
+            logger.warn("Worklist page prefetch failed, using per-beneficiary queries: " + e.getMessage());
+        }
+
         for (RMNCHMBeneficiaryaddress a : addressList) {
             // exception by-passing
             try {
-                List<RMNCHMBeneficiarymapping> mappingsForAddress = beneficiaryRepo.getByAddressID(a.getId());
+                List<RMNCHMBeneficiarymapping> mappingsForAddress = pf != null ? pf.mappings(a.getId())
+                        : beneficiaryRepo.getByAddressID(a.getId());
                 if(!mappingsForAddress.isEmpty()){
                     RMNCHMBeneficiarymapping m = mappingsForAddress.get(0);
                     if (m != null) {
@@ -249,38 +268,53 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         benImageOBJ = new RMNCHMBeneficiaryImage();
                         benAddressOBJ = new RMNCHMBeneficiaryaddress();
                         benContactOBJ = new RMNCHMBeneficiarycontact();
-                        Map<String, Object> healthDetails = getBenHealthDetails(m.getBenRegId());
+                        Long regIdLong = m.getBenRegId() != null ? m.getBenRegId().longValue() : null;
+                        // no m_benhealthidmapping row -> the original lookup returns an empty map too
+                        Map<String, Object> healthDetails = (pf != null && regIdLong != null && !pf.hasHealthId(regIdLong))
+                                ? new HashMap<>() : getBenHealthDetails(m.getBenRegId());
                         if (m.getBenDetailsId() != null) {
-                            benDetailsOBJ = beneficiaryRepo.getDetailsById(m.getBenDetailsId());
+                            benDetailsOBJ = pf != null ? pf.detail(m.getBenDetailsId())
+                                    : beneficiaryRepo.getDetailsById(m.getBenDetailsId());
                         }
                         if (m.getBenAccountID() != null) {
-                            benAccountOBJ = beneficiaryRepo.getAccountById(m.getBenAccountID());
+                            benAccountOBJ = pf != null ? pf.account(m.getBenAccountID())
+                                    : beneficiaryRepo.getAccountById(m.getBenAccountID());
                         }
                         if (m.getBenImageId() != null) {
-                            benImageOBJ = beneficiaryRepo.getImageById(m.getBenImageId().longValue());
+                            benImageOBJ = pf != null ? pf.image(m.getBenImageId())
+                                    : beneficiaryRepo.getImageById(m.getBenImageId().longValue());
                         }
                         if (m.getBenAddressId() != null) {
-                            benAddressOBJ = beneficiaryRepo.getAddressById(m.getBenAddressId());
+                            benAddressOBJ = pf != null ? pf.address(m.getBenAddressId())
+                                    : beneficiaryRepo.getAddressById(m.getBenAddressId());
                         }
                         if (m.getBenContactsId() != null) {
-                            benContactOBJ = beneficiaryRepo.getContactById(m.getBenContactsId());
+                            benContactOBJ = pf != null ? pf.contact(m.getBenContactsId())
+                                    : beneficiaryRepo.getContactById(m.getBenContactsId());
                         }
 
                         BigInteger benID = null;
-                        if (m.getBenRegId() != null)
-                            benID = beneficiaryRepo.getBenIdFromRegID(m.getBenRegId().longValue());
+                        if (regIdLong != null) {
+                            // more than one row: let the original single-result query decide, as before
+                            benID = (pf != null && pf.benIds(regIdLong).size() <= 1)
+                                    ? pf.benIds(regIdLong).stream().findFirst().orElse(null)
+                                    : beneficiaryRepo.getBenIdFromRegID(regIdLong);
+                        }
 
-                        if (m.getBenRegId() != null) {
-                            List<RMNCHBeneficiaryDetailsRmnch> detailsByRegID = beneficiaryRepo
-                                    .getDetailsByRegID((m.getBenRegId()).longValue());
+                        if (regIdLong != null) {
+                            List<RMNCHBeneficiaryDetailsRmnch> detailsByRegID = pf != null ? pf.rmnch(regIdLong)
+                                    : beneficiaryRepo.getDetailsByRegID(regIdLong);
                             if(!detailsByRegID.isEmpty()){
                                 benDetailsRMNCH_OBJ = detailsByRegID.get(0);
                             }
-                            benBotnBirthRMNCH_ROBJ = beneficiaryRepo.getBornBirthByRegID((m.getBenRegId()).longValue());
+                            benBotnBirthRMNCH_ROBJ = (pf != null && pf.bornBirth(regIdLong).size() <= 1)
+                                    ? pf.bornBirth(regIdLong).stream().findFirst().orElse(null)
+                                    : beneficiaryRepo.getBornBirthByRegID(regIdLong);
 
                             if (benDetailsRMNCH_OBJ != null && benDetailsRMNCH_OBJ.getHouseoldId() != null) {
-                                List<RMNCHHouseHoldDetails> householdsById = houseHoldRepo
-                                        .getByHouseHoldID(benDetailsRMNCH_OBJ.getHouseoldId());
+                                List<RMNCHHouseHoldDetails> householdsById = pf != null
+                                        ? pf.households(benDetailsRMNCH_OBJ.getHouseoldId())
+                                        : houseHoldRepo.getByHouseHoldID(benDetailsRMNCH_OBJ.getHouseoldId());
                                 if(!householdsById.isEmpty()){
                                     benHouseHoldRMNCH_ROBJ = householdsById.get(0);
                                 }
@@ -392,7 +426,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         } else {
                             // i_beneficiarydetails.dob is null for Stop TB mobile registrations
                             // (Identity-API mapper commented out) — fall back to i_ben_flow_outreach.ben_dob
-                            List<BenFlowStatus> flows = benFlowStatusRepo.findByBeneficiaryRegID(m.getBenRegId().longValue());
+                            List<BenFlowStatus> flows = pf != null ? pf.flows(regIdLong)
+                                    : benFlowStatusRepo.findByBeneficiaryRegID(m.getBenRegId().longValue());
                             if (!flows.isEmpty() && flows.get(0).getDob() != null)
                                 benDetailsRMNCH_OBJ.setDob(flows.get(0).getDob());
                         }
@@ -535,10 +570,10 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                         // Identity-API started writing these tables).
                         Long benRegIdLong = m.getBenRegId() != null ? m.getBenRegId().longValue() : null;
                         if (benRegIdLong != null) {
-                            List<BenAnthropometryDetail> anthroList =
-                                    benAnthropometryRepo.findByBeneficiaryRegIDOrderByCreatedDateDesc(benRegIdLong);
-                            List<BenPhysicalVitalDetail> vitalList =
-                                    benPhysicalVitalRepo.findByBeneficiaryRegIDOrderByCreatedDateDesc(benRegIdLong);
+                            List<BenAnthropometryDetail> anthroList = pf != null ? pf.anthropometry(benRegIdLong)
+                                    : benAnthropometryRepo.findByBeneficiaryRegIDOrderByCreatedDateDesc(benRegIdLong);
+                            List<BenPhysicalVitalDetail> vitalList = pf != null ? pf.vitals(benRegIdLong)
+                                    : benPhysicalVitalRepo.findByBeneficiaryRegIDOrderByCreatedDateDesc(benRegIdLong);
 
                             Map<String, Object> anthropometry = new HashMap<>();
                             for (BenAnthropometryDetail anthro : anthroList) {
@@ -594,13 +629,24 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
                         // adding asha id / created by - user id
                         if (benAddressOBJ.getCreatedBy() != null) {
-                            Integer userID = beneficiaryRepo.getUserIDByUserName(benAddressOBJ.getCreatedBy());
+                            String createdBy = benAddressOBJ.getCreatedBy();
+                            Integer userID;
+                            if (pf != null && pf.userIdCache().containsKey(createdBy)) {
+                                userID = pf.userIdCache().get(createdBy);
+                            } else {
+                                userID = beneficiaryRepo.getUserIDByUserName(createdBy);
+                                if (pf != null) pf.userIdCache().put(createdBy, userID);
+                            }
                             if (userID != null && userID > 0)
                                 resultMap.put("ashaId", userID);
                         }
-                        // get HealthID of ben
-                        if (m.getBenRegId() != null) {
-                            fetchHealthIdByBenRegID(m.getBenRegId().longValue(), authorisation, resultMap);
+                        // get HealthID of ben: read locally (same table FHIR-API reads), only when a mapping exists
+                        if (regIdLong != null) {
+                            if (pf != null) {
+                                if (pf.hasHealthId(regIdLong)) putLocalHealthId(regIdLong, resultMap);
+                            } else {
+                                fetchHealthIdByBenRegID(regIdLong, authorisation, resultMap);
+                            }
                         }
 
                         resultList.add(resultMap);
@@ -668,6 +714,22 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
             }
         }
         return healthDetails;
+    }
+
+    // Mirrors FHIR-API HealthIDServiceImpl.getBenHealthID: every m_benhealthidmapping row, with healthId
+    // replaced by t_healthid.HealthId when that is filled; the last row wins, as in fetchHealthIdByBenRegID.
+    private void putLocalHealthId(Long benRegID, Map<String, Object> resultMap) {
+        for (Object[] row : beneficiaryRepo.getHealthIdMappingRows(benRegID)) {
+            String healthId = row[0] != null ? row[0].toString() : null;
+            String healthIdNumber = row[1] != null ? row[1].toString() : null;
+            if (healthIdNumber != null) {
+                List<String> fromHealthIdTable = beneficiaryRepo.getHealthIdByNumber(healthIdNumber);
+                if (!fromHealthIdTable.isEmpty() && fromHealthIdTable.get(0) != null && !fromHealthIdTable.get(0).isEmpty())
+                    healthId = fromHealthIdTable.get(0);
+            }
+            if (healthId != null) resultMap.put("healthId", healthId);
+            if (healthIdNumber != null) resultMap.put("healthIdNumber", healthIdNumber);
+        }
     }
 
     public void fetchHealthIdByBenRegID(Long benRegID, String authorization, Map<String, Object> resultMap) {
