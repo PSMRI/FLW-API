@@ -199,197 +199,198 @@ public class IncentiveServiceImpl implements IncentiveService {
         }
         return null;
     }
+
     @Override
     public String getAllIncentivesByUserId(GetBenRequestHandler request) {
-        int page = 0;
-        int size = 200; // bumped from 20 — fewer round trips for large histories
-        Page<IncentiveActivityRecord> pageResult;
-        List<IncentiveRecordDTO> finalDtos = new ArrayList<>();
+        Integer ashaId = request.getAshaId();
 
-        // Fetch user detail ONCE instead of twice
-        UserServiceRoleDTO userDetail = userService.getUserDetail(request.getAshaId());
-        Integer stateCode = userDetail.getStateId();
-        String userName = userDetail.getUserName();
+        // Fetch user stateId and userName in ONE lightweight query instead of heavy getUserDetail() (which builds facilityData)
+        List<UserServiceRoleDTO> userRoles = userRepo.getUserRole(ashaId);
+        UserServiceRoleDTO userDetail = (userRoles != null && !userRoles.isEmpty())
+                ? userRoles.get(0)
+                : userService.getUserDetail(ashaId);
+        Integer stateCode = userDetail != null ? userDetail.getStateId() : null;
+        String userName = userDetail != null ? userDetail.getUserName() : null;
 
         try {
-            if (stateCode.equals(StateCode.AM.getStateCode())) {
-                checkMonthlyAshaIncentive(request.getAshaId());
-            }
-            if (stateCode.equals(StateCode.CG.getStateCode())) {
-                checkMonthlyAshaIncentiveForCg(request.getAshaId());
+            if (stateCode != null && stateCode.equals(StateCode.AM.getStateCode())) {
+                checkMonthlyAshaIncentive(ashaId, userName);
+            } else if (stateCode != null && stateCode.equals(StateCode.CG.getStateCode())) {
+                checkMonthlyAshaIncentiveForCg(ashaId, userName);
             }
         } catch (Exception e) {
             logger.error("Error in checkMonthlyAshaIncentive: ", e);
         }
 
         try {
-            addIncentiveForIronTablets(request.getAshaId());
-            incentiveOfNcdReferal(request.getAshaId(), request.getVillageID(),request);
+            addIncentiveForIronTablets(ashaId, userName, stateCode);
+            Integer effectiveStateId = request.getVillageID() != null ? request.getVillageID() : stateCode;
+            incentiveOfNcdReferal(ashaId, effectiveStateId, request, userName);
         } catch (Exception e) {
             logger.error("Error in incentiveOfNcdReferal: ", e);
         }
 
         boolean isCG = stateCode != null && stateCode.equals(StateCode.CG.getStateCode());
 
-        do {
-            Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        // Fetch all records for this ASHA in a single query ordered by id DESC (avoids Page COUNT(DISTINCT) + multi-page round trips)
+        List<IncentiveActivityRecord> entities = recordRepo.findRecordsByAshaOrderByIdDesc(ashaId);
 
-            pageResult = recordRepo.findRecordsByAsha(request.getAshaId(), pageable);
+        if (entities.isEmpty()) {
+            return new Gson().toJson(Collections.emptyList());
+        }
 
-            List<IncentiveActivityRecord> entities = pageResult.getContent();
+        // Bulk fetch valid activity ids
+        List<Long> activityIds = entities.stream()
+                .map(IncentiveActivityRecord::getActivityId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
 
-            if (entities.isEmpty()) {
-                return new Gson().toJson(Collections.emptyList());
+        if (activityIds.isEmpty()) {
+            return new Gson().toJson(Collections.emptyList());
+        }
+
+        Set<Long> validActivityIds = isCG
+                ? incentivesRepo.findValidActivityIds(activityIds, true)
+                : incentivesRepo.findValidActivityIds(activityIds, false);
+
+        entities = entities.stream()
+                .filter(e -> validActivityIds.contains(e.getActivityId()))
+                .collect(Collectors.toList());
+
+        if (entities.isEmpty()) {
+            return new Gson().toJson(Collections.emptyList());
+        }
+
+        // Bulk fetch beneficiary names
+        List<Long> benIdsToFetch = entities.stream()
+                .filter(e -> e.getName() == null && e.getBenId() != null && e.getBenId() > 0)
+                .map(IncentiveActivityRecord::getBenId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, String> benIdToNameMap = new HashMap<>();
+        Map<Long, Long> regIdToBenIdMap = new HashMap<>();
+
+        if (!benIdsToFetch.isEmpty()) {
+
+            // First, fetch names using BeneficiaryId
+            List<Object[]> benDetails =
+                    beneficiaryRepo.findBenNamesByBenIds(benIdsToFetch);
+
+            Set<Long> foundBenIds = new HashSet<>();
+
+            for (Object[] row : benDetails) {
+                Long benId = ((Number) row[0]).longValue();
+
+                String first = row[1] != null ? row[1].toString() : "";
+                String last = row[2] != null ? row[2].toString() : "";
+
+                benIdToNameMap.put(benId, (first + " " + last).trim());
+                foundBenIds.add(benId);
             }
 
-            // Bulk fetch valid activity ids
-            List<Long> activityIds = entities.stream()
-                    .map(IncentiveActivityRecord::getActivityId)
+            // IDs not found as BeneficiaryId
+            List<Long> unresolvedIds = benIdsToFetch.stream()
+                    .filter(Objects::nonNull)
+                    .filter(id -> !foundBenIds.contains(id))
                     .distinct()
-                    .collect(Collectors.toList());
+                    .toList();
 
-            Set<Long> validActivityIds = isCG
-                    ? incentivesRepo.findValidActivityIds(activityIds, true)
-                    : incentivesRepo.findValidActivityIds(activityIds, false);
+            if (!unresolvedIds.isEmpty()) {
 
-            entities = entities.stream()
-                    .filter(e -> validActivityIds.contains(e.getActivityId()))
-                    .collect(Collectors.toList());
+                // Resolve BenRegId -> BeneficiaryId
+                List<Object[]> mappings =
+                        beneficiaryRepo.getBenIdsFromRegIds(unresolvedIds);
 
-            // Bulk fetch beneficiary names
-            List<Long> benIdsToFetch = entities.stream()
-                    .filter(e -> e.getName() == null && e.getBenId() != null && e.getBenId() > 0)
-                    .map(IncentiveActivityRecord::getBenId)
-                    .distinct()
-                    .collect(Collectors.toList());
+                Set<Long> resolvedBenIds = new HashSet<>();
 
-            Map<Long, String> benIdToNameMap = new HashMap<>();
-            Map<Long, Long> regIdToBenIdMap = new HashMap<>();
+                for (Object[] row : mappings) {
+                    Long regId = ((Number) row[0]).longValue();
+                    Long benId = ((Number) row[1]).longValue();
 
-            if (benIdsToFetch != null && !benIdsToFetch.isEmpty()) {
-
-                // First, fetch names using BeneficiaryId
-                List<Object[]> benDetails =
-                        beneficiaryRepo.findBenNamesByBenIds(benIdsToFetch);
-
-                Set<Long> foundBenIds = new HashSet<>();
-
-                for (Object[] row : benDetails) {
-                    Long benId = ((Number) row[0]).longValue();
-
-                    String first = row[1] != null ? row[1].toString() : "";
-                    String last = row[2] != null ? row[2].toString() : "";
-
-                    benIdToNameMap.put(benId, (first + " " + last).trim());
-                    foundBenIds.add(benId);
+                    regIdToBenIdMap.put(regId, benId);
+                    resolvedBenIds.add(benId);
                 }
 
-                // IDs not found as BeneficiaryId
-                List<Long> unresolvedIds = benIdsToFetch.stream()
-                        .filter(Objects::nonNull)
-                        .filter(id -> !foundBenIds.contains(id))
-                        .distinct()
-                        .toList();
+                // Fetch names for resolved BeneficiaryIds
+                if (!resolvedBenIds.isEmpty()) {
+                    List<Object[]> resolvedDetails =
+                            beneficiaryRepo.findBenNamesByBenIds(
+                                    new ArrayList<>(resolvedBenIds));
 
-                if (!unresolvedIds.isEmpty()) {
+                    for (Object[] row : resolvedDetails) {
+                        Long benId = ((Number) row[0]).longValue();
 
-                    // Resolve BenRegId -> BeneficiaryId
-                    List<Object[]> mappings =
-                            beneficiaryRepo.getBenIdsFromRegIds(unresolvedIds);
+                        String first = row[1] != null ? row[1].toString() : "";
+                        String last = row[2] != null ? row[2].toString() : "";
 
-                    Set<Long> resolvedBenIds = new HashSet<>();
-
-                    for (Object[] row : mappings) {
-                        Long regId = ((Number) row[0]).longValue();
-                        Long benId = ((Number) row[1]).longValue();
-
-                        regIdToBenIdMap.put(regId, benId);
-                        resolvedBenIds.add(benId);
-                    }
-
-                    // Fetch names for resolved BeneficiaryIds
-                    if (!resolvedBenIds.isEmpty()) {
-                        List<Object[]> resolvedDetails =
-                                beneficiaryRepo.findBenNamesByBenIds(
-                                        new ArrayList<>(resolvedBenIds));
-
-                        for (Object[] row : resolvedDetails) {
-                            Long benId = ((Number) row[0]).longValue();
-
-                            String first = row[1] != null ? row[1].toString() : "";
-                            String last = row[2] != null ? row[2].toString() : "";
-
-                            benIdToNameMap.put(benId, (first + " " + last).trim());
-                        }
+                        benIdToNameMap.put(benId, (first + " " + last).trim());
                     }
                 }
             }
-            // NEW: Bulk fetch verifier (supervisor) roles — replaces N+1 userRepo.getUserRole() calls
-            // Bulk fetch verifier (supervisor) roles — replaces N+1 userRepo.getUserRole() calls
-            List<Integer> verifierIds = entities.stream()
-                    .filter(e -> e.getName() == null && e.getVerifiedByUserId() != null)
-                    .map(e -> e.getVerifiedByUserId().intValue()) // adjust if getVerifiedByUserId() already returns Integer
-                    .distinct()
-                    .collect(Collectors.toList());
+        }
 
-            Map<Integer, UserServiceRoleDTO> verifierRoleMap = new HashMap<>();
-            if (!verifierIds.isEmpty()) {
-                List<UserServiceRoleDTO> roles = userRepo.getUserRolesByIds(verifierIds);
-                for (UserServiceRoleDTO r : roles) {
-                    verifierRoleMap.put(r.getUserId(), r);
+        // Bulk fetch verifier (supervisor) roles — replaces N+1 userRepo.getUserRole() calls
+        List<Integer> verifierIds = entities.stream()
+                .filter(e -> e.getName() == null && e.getVerifiedByUserId() != null)
+                .map(IncentiveActivityRecord::getVerifiedByUserId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Integer, UserServiceRoleDTO> verifierRoleMap = new HashMap<>();
+        if (!verifierIds.isEmpty()) {
+            List<UserServiceRoleDTO> roles = userRepo.getUserRolesByIds(verifierIds);
+            for (UserServiceRoleDTO r : roles) {
+                verifierRoleMap.put(r.getUserId(), r);
+            }
+        }
+
+        // Map entities to DTOs
+        List<IncentiveRecordDTO> finalDtos = entities.stream().map(entry -> {
+            if (entry.getName() == null) {
+                Long originalId = entry.getBenId();
+
+                if (originalId != null && originalId > 0) {
+
+                    Long actualBenId = regIdToBenIdMap.getOrDefault(
+                            originalId, originalId);
+
+                    String name = benIdToNameMap.getOrDefault(actualBenId, "");
+
+                    entry.setBenId(actualBenId);
+                    entry.setName(name);
+
+                    if (isCG) {
+                        entry.setIsEligible(true);
+                    }
+
+                } else {
+                    entry.setName("");
+                }
+
+                if (entry.getVerifiedByUserId() != null) {
+                    UserServiceRoleDTO role = verifierRoleMap.get(entry.getVerifiedByUserId());
+                    if (role != null) {
+                        entry.setSupervisorRole(role.getRoleName());
+                        entry.setVerifiedByUserName(role.getName());
+                    }
+                }
+
+                if (entry.getAshaId() != null) {
+                    if (entry.getCreatedBy() == null) {
+                        entry.setCreatedBy(userName);
+                    }
+                    if (entry.getUpdatedBy() == null) {
+                        entry.setUpdatedBy(userName);
+                    }
+                    if (entry.getIsEligible() == null) {
+                        entry.setIsEligible(true);
+                    }
                 }
             }
-
-            // Map entities to DTOs
-            List<IncentiveRecordDTO> dtos = entities.stream().map(entry -> {
-                if (entry.getName() == null) {
-                    Long originalId = entry.getBenId();
-
-                    if (originalId != null && originalId > 0) {
-
-                        Long actualBenId = regIdToBenIdMap.getOrDefault(
-                                originalId, originalId);
-
-                        String name = benIdToNameMap.getOrDefault(actualBenId, "");
-
-                        entry.setBenId(actualBenId);
-                        entry.setName(name);
-
-                        if (isCG) {
-                            entry.setIsEligible(true);
-                        }
-
-                    } else {
-                        entry.setName("");
-                    }
-
-                    if (entry.getVerifiedByUserId() != null) {
-                        UserServiceRoleDTO role = verifierRoleMap.get(entry.getVerifiedByUserId());
-                        if (role != null) {
-                            entry.setSupervisorRole(role.getRoleName());
-                            entry.setVerifiedByUserName(role.getName());
-                        }
-                    }
-
-                    if (entry.getAshaId() != null) {
-                        if (entry.getCreatedBy() == null) {
-                            entry.setCreatedBy(userName);
-                        }
-                        if (entry.getUpdatedBy() == null) {
-                            entry.setUpdatedBy(userName);
-                        }
-                        if (entry.getIsEligible() == null) {
-                            entry.setIsEligible(true);
-                        }
-                    }
-                }
-                return modelMapper.map(entry, IncentiveRecordDTO.class);
-            }).collect(Collectors.toList());
-
-            finalDtos.addAll(dtos);
-            page++;
-
-        } while (pageResult.hasNext());
+            return modelMapper.map(entry, IncentiveRecordDTO.class);
+        }).collect(Collectors.toList());
 
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         return gson.toJson(finalDtos);
@@ -420,7 +421,10 @@ public class IncentiveServiceImpl implements IncentiveService {
     @Transactional(readOnly = true)
     public String getAllIncentivesGroupedSummary(GetBenRequestHandler request, Integer userId) {
 
-        String roleName = userService.getUserDetail(userId).getRoleName();
+        List<UserServiceRoleDTO> callerRoles = userRepo.getUserRole(userId);
+        String roleName = (callerRoles != null && !callerRoles.isEmpty())
+                ? callerRoles.get(0).getRoleName()
+                : userService.getUserDetail(userId).getRoleName();
         Integer reqStatus = request.getApprovalStatus();
 
         Integer stateId = userRepo.getUserRole(request.getUserId()).get(0).getStateId();
@@ -428,24 +432,30 @@ public class IncentiveServiceImpl implements IncentiveService {
 
         logger.info("Request getAllIncentivesGroupedSummary: {}", reqStatus);
 
+        LocalDate monthStart = LocalDate.of(request.getYear(), request.getMonth(), 1);
+        Timestamp startTs = Timestamp.valueOf(monthStart.atStartOfDay());
+        Timestamp endTs = Timestamp.valueOf(monthStart.plusMonths(1).atStartOfDay());
+
+        // Filter by date range and isClaimed=true in DB instead of loading all historical records
         List<IncentiveActivityRecord> records =
-                recordRepo.findRecordsByAsha(request.getUserId())
+                recordRepo.findClaimedRecordsByAshaAndCreatedDateRange(request.getUserId(), startTs, endTs)
                         .stream()
-                        .filter(r -> r.getCreatedDate() != null)
-                        .filter(r -> {
-                            LocalDateTime created = r.getCreatedDate().toLocalDateTime();
-                            return created.getMonthValue() == request.getMonth()
-                                    && created.getYear() == request.getYear();
-                        })
-                        .filter(r -> Boolean.TRUE.equals(r.getIsClaimed()))
                         .filter(r -> matchesRequestedStatus(r.getApprovalStatus(), reqStatus))
                         .collect(Collectors.toList());
 
+        if (records.isEmpty()) {
+            return new Gson().toJson(Collections.emptyList());
+        }
+
         List<Long> activityIds = records.stream()
                 .map(IncentiveActivityRecord::getActivityId)
+                .filter(Objects::nonNull)
+                .distinct()
                 .collect(Collectors.toList());
 
-        Set<Long> validActivityIds = incentivesRepo.findValidActivityIds(activityIds, isCG);
+        Set<Long> validActivityIds = activityIds.isEmpty()
+                ? Collections.emptySet()
+                : incentivesRepo.findValidActivityIds(activityIds, isCG);
         if (validActivityIds == null) {
             validActivityIds = Collections.emptySet();
         }
@@ -547,6 +557,12 @@ public class IncentiveServiceImpl implements IncentiveService {
         Map<Long, List<IncentiveActivityRecord>> grouped =
                 records.stream().collect(Collectors.groupingBy(IncentiveActivityRecord::getActivityId));
 
+        // Bulk fetch all IncentiveActivity masters in ONE query instead of N findById() calls in loop
+        Map<Long, IncentiveActivity> activityByIdMap = grouped.isEmpty()
+                ? Collections.emptyMap()
+                : incentivesRepo.findAllById(grouped.keySet()).stream()
+                        .collect(Collectors.toMap(IncentiveActivity::getId, Function.identity()));
+
         List<Map<String, Object>> result = new ArrayList<>();
 
         for (Map.Entry<Long, List<IncentiveActivityRecord>> entry : grouped.entrySet()) {
@@ -554,7 +570,7 @@ public class IncentiveServiceImpl implements IncentiveService {
             Long activityId = entry.getKey();
             List<IncentiveActivityRecord> list = entry.getValue();
 
-            IncentiveActivity activity = incentivesRepo.findById(activityId).orElse(null);
+            IncentiveActivity activity = activityByIdMap.get(activityId);
             if (activity == null) continue;
 
             IncentiveActivityRecord latest = list.stream()
@@ -648,19 +664,15 @@ public class IncentiveServiceImpl implements IncentiveService {
             Timestamp startTs = Timestamp.valueOf(startDate.atStartOfDay());
             Timestamp endTs = Timestamp.valueOf(endDate.atStartOfDay());
 
+            // Filter by ashaId, activityId, and date range in DB instead of loading all records for the ASHA
             List<IncentiveActivityRecord> records =
-                    recordRepo.findRecordsByAsha(request.getUserId())
-                            .stream()
-                            .filter(r ->
-                                    r.getActivityId() != null
-                                            && Objects.equals(
-                                            r.getActivityId(),
-                                            request.getActivityId()
-                                    )
-                                            && r.getCreatedDate() != null
-                                            && !r.getCreatedDate().before(startTs)
-                                            && r.getCreatedDate().before(endTs)
+                    recordRepo.findRecordsByAshaAndActivityAndCreatedDateRange(
+                                    request.getUserId(),
+                                    request.getActivityId(),
+                                    startTs,
+                                    endTs
                             )
+                            .stream()
                             .filter(r -> {
 
                                 Integer requestedStatus =
@@ -743,7 +755,9 @@ public class IncentiveServiceImpl implements IncentiveService {
                     incentivesRepo.findById(request.getActivityId()).orElse(null);
 
             String groupName = activity != null ? activity.getGroup() : "";
-            String groupCategoryName = activity != null ? activity.getGroupCategoryName() :activity.getGroup();
+            String groupCategoryName = activity != null
+                    ? (activity.getGroupCategoryName() != null ? activity.getGroupCategoryName() : activity.getGroup())
+                    : "";
             String description = activity != null ? activity.getDescription() : "";
 
             // 🔹 Map result
@@ -888,11 +902,13 @@ public class IncentiveServiceImpl implements IncentiveService {
 
             if (updated > 0) {
 
+                Integer supervisorUserId = dashboardRepo.getSupervisorUserIdByAshaId(ashaId);
+
                 Map<String, String> data = new HashMap<>();
                 data.put("notification_type", "INCENTIVE_APPROVAL");
                 data.put("nav_id", "INCENTIVE_HISTORY");
                 data.put("sender_user_id", String.valueOf(ashaId));
-                data.put("receiver_user_id", String.valueOf(dashboardRepo.getSupervisorUserIdByAshaId(ashaId)));
+                data.put("receiver_user_id", String.valueOf(supervisorUserId));
                 data.put("month", String.valueOf(month));
                 data.put("year", String.valueOf(year));
                 data.put("approval_status", String.valueOf(102));
@@ -912,11 +928,16 @@ public class IncentiveServiceImpl implements IncentiveService {
                             body,
                             "INCENTIVE_CLAIMED",
                             "INCENTIVE",
-                            dashboardRepo.getSupervisorUserIdByAshaId(ashaId)
+                            supervisorUserId
                     );
 
+                    List<UserServiceRoleDTO> ashaRoles = userRepo.getUserRole(ashaId);
+                    String ashaName = (ashaRoles != null && !ashaRoles.isEmpty())
+                            ? ashaRoles.get(0).getName()
+                            : userService.getUserDetail(ashaId).getName();
+
                     String supervisorBody =
-                            userService.getUserDetail(ashaId).getName()
+                            ashaName
                                     + " successfully claimed incentive for month of "
                                     + Month.of(month).name()
                                     + " "
@@ -929,7 +950,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                             supervisorBody,
                             "INCENTIVE_CLAIMED",
                             "INCENTIVE",
-                            dashboardRepo.getSupervisorUserIdByAshaId(ashaId)
+                            supervisorUserId
                     );
                 }
             }
@@ -942,69 +963,125 @@ public class IncentiveServiceImpl implements IncentiveService {
         }
     }
 
-    private void incentiveOfNcdReferal(Integer ashaId, Integer stateId, GetBenRequestHandler request) {
+    private void incentiveOfNcdReferal(Integer ashaId, Integer stateId, GetBenRequestHandler request, String userName) {
         try {
-            String userName = userRepo.getUserNamedByUserId(ashaId);
+            if (userName == null) {
+                userName = userRepo.getUserNamedByUserId(ashaId);
+            }
+            if (userName == null) {
+                return;
+            }
             String groupName = resolveGroupName(stateId);
 
             Map<String, IncentiveActivity> activityMap =
                     incentivesRepo.findIncentiveMasterByNameAndGroup(
                             List.of("NCD_POP_ENUMERATION", "HWC_REFERRAL_10_CASES"), groupName
-                    ).stream().collect(Collectors.toMap(IncentiveActivity::getName, Function.identity()));
+                    ).stream().collect(Collectors.toMap(IncentiveActivity::getName, Function.identity(), (a, b) -> a));
 
             IncentiveActivity ncdPopEnumeration = activityMap.get("NCD_POP_ENUMERATION");
-
             IncentiveActivity hwcReferralEnumeration = activityMap.get("HWC_REFERRAL_10_CASES");
 
-            CompletableFuture<List<BenReferDetails>> benReferFuture =
-                    CompletableFuture.supplyAsync(() -> benReferDetailsRepo.findByCreatedBy(userName));
-            CompletableFuture<List<CbacDetailsImer>> cbacFuture =
-                    CompletableFuture.supplyAsync(() -> cbacIemrDetailsRepo.findByCreatedBy(userName));
-
-            List<CbacDetailsImer> cbacDetailsImer = cbacFuture.get();
-
-            List<IncentiveActivityRecord> recordsToSave = new ArrayList<>();
-
-
-            if (ncdPopEnumeration != null && !cbacDetailsImer.isEmpty()) {
-
-                final IncentiveActivity activity = ncdPopEnumeration;
-                cbacDetailsImer.forEach(cbacDetailsImer1 -> {
-                    if(cbacDetailsImer1!=null){
-                        addNCDandCBACIncentiveRecord(activity, ashaId, cbacDetailsImer1.getBeneficiaryRegId(), cbacDetailsImer1.getCreatedDate(), userName);
+            // 1. Optimize NCD_POP_ENUMERATION: fetch only (beneficiaryRegId, createdDate) instead of all 65 columns,
+            //    check existing records in 1 bulk query instead of N individual queries, and batch insert.
+            if (ncdPopEnumeration != null) {
+                List<Object[]> cbacRows = cbacIemrDetailsRepo.findBenRegIdAndCreatedDateByCreatedBy(userName);
+                if (cbacRows != null && !cbacRows.isEmpty()) {
+                    List<Object[]> existingRows = recordRepo.findBenIdAndStartDateByActivityIdAndAshaId(
+                            ncdPopEnumeration.getId(), ashaId);
+                    Set<String> existingMonthKeys = new HashSet<>();
+                    if (existingRows != null) {
+                        for (Object[] row : existingRows) {
+                            Long existingBenId = row[0] != null ? ((Number) row[0]).longValue() : null;
+                            Timestamp existingStart = (Timestamp) row[1];
+                            if (existingBenId != null && existingStart != null) {
+                                LocalDateTime ldt = existingStart.toLocalDateTime();
+                                existingMonthKeys.add(existingBenId + "_" + ldt.getYear() + "_" + ldt.getMonthValue());
+                            }
+                        }
                     }
-                });
-            }
 
-            if (hwcReferralEnumeration != null) {
-                logger.info("hwcReferralEnumeration: {}", hwcReferralEnumeration.getDescription());
-                logger.info("userName={}", userName);
+                    Timestamp nowTs = Timestamp.valueOf(LocalDateTime.now());
+                    Long rate = Long.valueOf(ncdPopEnumeration.getRate());
+                    List<IncentiveActivityRecord> recordsToSave = new ArrayList<>();
 
-                LocalDate requestDate = request.getFromDate()
-                        .toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate();
+                    for (Object[] cbacRow : cbacRows) {
+                        if (cbacRow == null || cbacRow[0] == null || cbacRow[1] == null) continue;
+                        Long benId = ((Number) cbacRow[0]).longValue();
+                        Timestamp createdDate = (Timestamp) cbacRow[1];
+                        LocalDateTime ldt = createdDate.toLocalDateTime();
+                        String monthKey = benId + "_" + ldt.getYear() + "_" + ldt.getMonthValue();
 
-                Long referralCount = benReferDetailsRepo.countMonthlyReferrals(
-                        userName,
-                        requestDate.getMonthValue(),
-                        requestDate.getYear()
-                );
+                        if (existingMonthKeys.add(monthKey)) {
+                            IncentiveActivityRecord record = new IncentiveActivityRecord();
+                            record.setActivityId(ncdPopEnumeration.getId());
+                            record.setCreatedDate(createdDate);
+                            record.setCreatedBy(userName);
+                            record.setStartDate(createdDate);
+                            record.setEndDate(createdDate);
+                            record.setUpdatedDate(nowTs);
+                            record.setUpdatedBy(userName);
+                            record.setBenId(benId);
+                            record.setAshaId(ashaId);
+                            record.setAmount(rate);
+                            recordsToSave.add(record);
+                        }
+                    }
 
-                logger.info("referralCount: {}", referralCount);
-
-                if (referralCount >= 10) {
-                    addHwcReferalAshaIncentiveRecord(
-                            hwcReferralEnumeration,
-                            ashaId,
-                            userName
-                    );
+                    if (!recordsToSave.isEmpty()) {
+                        recordRepo.saveAll(recordsToSave);
+                    }
                 }
             }
 
-            // ---- Single batch insert instead of N individual saves ----
-            if (!recordsToSave.isEmpty()) {
-                recordRepo.saveAll(recordsToSave);
+            // 2. Optimize HWC_REFERRAL_10_CASES: check if monthly incentive already exists FIRST,
+            //    and use index-friendly date range query instead of MONTH()/YEAR() functions.
+            if (hwcReferralEnumeration != null) {
+                LocalDate now = LocalDate.now();
+                Timestamp startOfMonth = Timestamp.valueOf(now.withDayOfMonth(1).atStartOfDay());
+                Timestamp endOfMonth = Timestamp.valueOf(now.withDayOfMonth(now.lengthOfMonth()).atTime(23, 59, 59));
+
+                IncentiveActivityRecord existingHwcRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                        hwcReferralEnumeration.getId(),
+                        0L,
+                        ashaId,
+                        startOfMonth,
+                        endOfMonth
+                );
+
+                if (existingHwcRecord == null) {
+                    LocalDate requestDate = (request != null && request.getFromDate() != null)
+                            ? request.getFromDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                            : now;
+                    LocalDate reqMonthFirst = requestDate.withDayOfMonth(1);
+                    Timestamp reqStart = Timestamp.valueOf(reqMonthFirst.atStartOfDay());
+                    Timestamp reqEnd = Timestamp.valueOf(reqMonthFirst.plusMonths(1).atStartOfDay());
+
+                    Long referralCount = benReferDetailsRepo.countMonthlyReferralsByDateRange(
+                            userName,
+                            reqStart,
+                            reqEnd
+                    );
+
+                    logger.info("referralCount: {}", referralCount);
+
+                    if (referralCount != null && referralCount >= 10) {
+                        Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+                        IncentiveActivityRecord record = new IncentiveActivityRecord();
+                        record.setActivityId(hwcReferralEnumeration.getId());
+                        record.setCreatedDate(timestamp);
+                        record.setCreatedBy(userName);
+                        record.setStartDate(timestamp);
+                        record.setEndDate(timestamp);
+                        record.setUpdatedDate(timestamp);
+                        record.setUpdatedBy(userName);
+                        record.setBenId(0L);
+                        record.setAshaId(ashaId);
+                        record.setIsEligible(true);
+                        record.setIsDefaultActivity(false);
+                        record.setAmount(Long.valueOf(hwcReferralEnumeration.getRate()));
+                        recordRepo.save(record);
+                    }
+                }
             }
 
         } catch (Exception e) {
@@ -1012,39 +1089,8 @@ public class IncentiveServiceImpl implements IncentiveService {
         }
     }
 
-    // Helper — record banana
-    private void addNCDandCBACIncentiveRecord(IncentiveActivity activity, Integer ashaId,
-                                                                 Long benId, Timestamp createdDate, String userName) {
-
-        String lockKey = activity.getId() + "_" + benId + "_" + createdDate;
-
-        Object lock = lockMap.computeIfAbsent(lockKey, k -> new Object());
-        synchronized (lock){
-            IncentiveActivityRecord incentiveActivityRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(activity.getId(),createdDate,benId,ashaId);
-            if(incentiveActivityRecord==null){
-                Timestamp now = Timestamp.valueOf(LocalDateTime.now());
-                IncentiveActivityRecord record = new IncentiveActivityRecord();
-                record.setActivityId(activity.getId());
-                record.setCreatedDate(createdDate);
-                record.setCreatedBy(userName);
-                record.setStartDate(createdDate);
-                record.setEndDate(createdDate);
-                record.setUpdatedDate(now);
-                record.setUpdatedBy(userName);
-                record.setBenId(benId);
-                record.setAshaId(ashaId);
-                record.setAmount(Long.valueOf(activity.getRate()));
-                recordRepo.save(record);
-            }
-            lockMap.remove(lockKey, lock);
-
-        }
-
-
-    }
-
     private String resolveGroupName(Integer stateId) {
-        if (stateId.equals(StateCode.CG.getStateCode())) {
+        if (stateId != null && stateId.equals(StateCode.CG.getStateCode())) {
             logger.info("State id: {}", StateCode.CG.getStateCode());
             return GroupName.ACTIVITY.getDisplayName();
         }
@@ -1052,198 +1098,159 @@ public class IncentiveServiceImpl implements IncentiveService {
         return GroupName.NCD.getDisplayName();
     }
 
-    private void checkMonthlyAshaIncentive(Integer ashaId) {
-
+    private void checkMonthlyAshaIncentive(Integer ashaId, String userName) {
         try {
-            String userName = userRepo.getUserNamedByUserId(ashaId);
-
-            IncentiveActivity MOBILEBILLREIMB_ACTIVITY = incentivesRepo.findIncentiveMasterByNameAndGroup("MOBILE_BILL_REIMB", GroupName.OTHER_INCENTIVES.getDisplayName());
-            IncentiveActivity ADDITIONAL_ASHA_INCENTIVE = incentivesRepo.findIncentiveMasterByNameAndGroup("ADDITIONAL_ASHA_INCENTIVE", GroupName.ADDITIONAL_INCENTIVE.getDisplayName());
-            IncentiveActivity ASHA_MONTHLY_ROUTINE = incentivesRepo.findIncentiveMasterByNameAndGroup("ASHA_MONTHLY_ROUTINE", GroupName.ASHA_MONTHLY_ROUTINE.getDisplayName());
-            if (MOBILEBILLREIMB_ACTIVITY != null) {
-                addMonthlyAshaIncentiveRecord(MOBILEBILLREIMB_ACTIVITY, ashaId, userName,false);
+            if (userName == null) {
+                userName = userRepo.getUserNamedByUserId(ashaId);
             }
-            if (ADDITIONAL_ASHA_INCENTIVE != null) {
-                addMonthlyAshaIncentiveRecord(ADDITIONAL_ASHA_INCENTIVE, ashaId, userName,false);
-
+            List<IncentiveActivity> candidates = incentivesRepo.findByNamesAndIsDeletedFalse(
+                    List.of("MOBILE_BILL_REIMB", "ADDITIONAL_ASHA_INCENTIVE", "ASHA_MONTHLY_ROUTINE")
+            );
+            List<IncentiveActivity> validActivities = new ArrayList<>();
+            for (IncentiveActivity act : candidates) {
+                if (("MOBILE_BILL_REIMB".equals(act.getName()) && GroupName.OTHER_INCENTIVES.getDisplayName().equals(act.getGroup()))
+                        || ("ADDITIONAL_ASHA_INCENTIVE".equals(act.getName()) && GroupName.ADDITIONAL_INCENTIVE.getDisplayName().equals(act.getGroup()))
+                        || ("ASHA_MONTHLY_ROUTINE".equals(act.getName()) && GroupName.ASHA_MONTHLY_ROUTINE.getDisplayName().equals(act.getGroup()))) {
+                    validActivities.add(act);
+                }
             }
-
-            if (ASHA_MONTHLY_ROUTINE != null) {
-                addMonthlyAshaIncentiveRecord(ASHA_MONTHLY_ROUTINE, ashaId, userName,false);
-
-            }
+            addMonthlyAshaIncentiveRecordsBatch(validActivities, ashaId, userName, Collections.emptySet());
         } catch (Exception e) {
-            logger.error("Error in addMonthlyAshaIncentiveRecord", e);
-
+            logger.error("Error in checkMonthlyAshaIncentive", e);
         }
-
     }
 
-    private void checkMonthlyAshaIncentiveForCg(Integer ashaId) {
+    private void checkMonthlyAshaIncentiveForCg(Integer ashaId, String userName) {
         try {
-            String userName = userRepo.getUserNamedByUserId(ashaId);
-
-            IncentiveActivity MONTHLY_HONORARIUM = incentivesRepo.findIncentiveMasterByNameAndGroup("MONTHLY_HONORARIUM", GroupName.ACTIVITY.getDisplayName());
-            IncentiveActivity MITANIN_REGISTER_5_INFO_FILL = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER_5_INFO_FILL", GroupName.ACTIVITY.getDisplayName());
-            IncentiveActivity MITANIN_REGISTER = incentivesRepo.findIncentiveMasterByNameAndGroup("MITANIN_REGISTER", GroupName.ACTIVITY.getDisplayName());
-            if (MONTHLY_HONORARIUM != null) {
-                addMonthlyAshaIncentiveRecord(MONTHLY_HONORARIUM, ashaId, userName,true);
+            if (userName == null) {
+                userName = userRepo.getUserNamedByUserId(ashaId);
             }
-            if (MITANIN_REGISTER_5_INFO_FILL != null) {
-                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER_5_INFO_FILL, ashaId, userName,false);
-
-            }
-
-            if (MITANIN_REGISTER != null) {
-                addMonthlyAshaIncentiveRecord(MITANIN_REGISTER, ashaId, userName,false);
-
-            }
+            List<IncentiveActivity> validActivities = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    List.of("MONTHLY_HONORARIUM", "MITANIN_REGISTER_5_INFO_FILL", "MITANIN_REGISTER"),
+                    GroupName.ACTIVITY.getDisplayName()
+            );
+            addMonthlyAshaIncentiveRecordsBatch(validActivities, ashaId, userName, Set.of("MONTHLY_HONORARIUM"));
         } catch (Exception e) {
-            logger.error("Error in addMonthlyAshaIncentiveRecord", e);
-
+            logger.error("Error in checkMonthlyAshaIncentiveForCg", e);
         }
-
     }
 
-    private void addMonthlyAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId, String userName,Boolean isApproved) {
+    private void addMonthlyAshaIncentiveRecordsBatch(
+            List<IncentiveActivity> activities,
+            Integer ashaId,
+            String userName,
+            Set<String> preApprovedNames) {
+        if (activities == null || activities.isEmpty()) {
+            return;
+        }
         try {
+            LocalDate now = LocalDate.now();
             Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+            Timestamp startOfMonth = Timestamp.valueOf(now.withDayOfMonth(1).atStartOfDay());
+            Timestamp endOfMonth = Timestamp.valueOf(now.withDayOfMonth(now.lengthOfMonth()).atTime(23, 59, 59));
 
-            Timestamp startOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(1).atStartOfDay());
-            Timestamp endOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth()).atTime(23, 59, 59));
+            List<Long> activityIds = activities.stream()
+                    .map(IncentiveActivity::getId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
 
-            IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
-                    incentiveActivity.getId(),
-                    0L,
-                    ashaId,
-                    startOfMonth,
-                    endOfMonth
+            if (activityIds.isEmpty()) {
+                return;
+            }
+
+            Set<Long> existingIds = new HashSet<>(
+                    recordRepo.findExistingActivityIdsByMonth(activityIds, 0L, ashaId, startOfMonth, endOfMonth)
             );
 
-
-            if (record == null) {
-                record = new IncentiveActivityRecord();
-                record.setActivityId(incentiveActivity.getId());
-                record.setCreatedDate(timestamp);
-                record.setCreatedBy(userName);
-                record.setStartDate(timestamp);
-                record.setEndDate(timestamp);
-                record.setUpdatedDate(timestamp);
-                record.setUpdatedBy(userName);
-                record.setBenId(0L);
-                record.setAshaId(ashaId);
-                record.setIsEligible(true);
-                record.setIsDefaultActivity(true);
-                record.setIsApproved(isApproved);
-                record.setAmount(Long.valueOf(incentiveActivity.getRate()));
-                recordRepo.save(record);
-            }
-        } catch (Exception e) {
-            logger.error("Error in addMonthlyAshaIncentiveRecord", e);
-
-        }
-
-    }
-
-    private void addHwcReferalAshaIncentiveRecord(IncentiveActivity incentiveActivity, Integer ashaId, String userName) {
-        try {
-            Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
-
-            Timestamp startOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(1).atStartOfDay());
-            Timestamp endOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth()).atTime(23, 59, 59));
-
-            IncentiveActivityRecord record = recordRepo.findRecordByActivityIdCreatedDateBenId(
-                    incentiveActivity.getId(),
-                    0L,
-                    ashaId,
-                    startOfMonth,
-                    endOfMonth
-            );
-
-
-            if (record == null) {
-                record = new IncentiveActivityRecord();
-                record.setActivityId(incentiveActivity.getId());
-                record.setCreatedDate(timestamp);
-                record.setCreatedBy(userName);
-                record.setStartDate(timestamp);
-                record.setEndDate(timestamp);
-                record.setUpdatedDate(timestamp);
-                record.setUpdatedBy(userName);
-                record.setBenId(0L);
-                record.setAshaId(ashaId);
-                record.setIsEligible(true);
-                record.setIsDefaultActivity(false);
-                record.setAmount(Long.valueOf(incentiveActivity.getRate()));
-                recordRepo.save(record);
-            }
-        } catch (Exception e) {
-            logger.error("Error in addMonthlyAshaIncentiveRecord", e);
-
-        }
-
-    }
-
-    private void addIncentiveForIronTablets(Integer userId) {
-        IncentiveActivity incentiveActivityAM = incentivesRepo.findIncentiveMasterByNameAndGroup("NATIONAL_IRON_PLUS", GroupName.CHILD_HEALTH.getDisplayName());
-        IncentiveActivity incentiveActivityCG = incentivesRepo.findIncentiveMasterByNameAndGroup("NATIONAL_IRON_PLUS", GroupName.ACTIVITY.getDisplayName());
-
-        String userName = userService.getUserDetail(userId).getUserName();
-        Integer stateId = userService.getUserDetail(userId).getStateId();
-        if (userName != null) {
-            List<EligibleCoupleRegister> eligibleCoupleRegisters = eligibleCoupleRegisterRepo.findByCreatedBy(userName);
-            List<IFAFormSubmissionData> ifaFormSubmissionData = ifaFormSubmissionRepository.findByUserId(userId);
-            logger.info("eligibleCoupleRegisters :" + eligibleCoupleRegisters.size());
-            logger.info("ifaFormSubmissionData :" + ifaFormSubmissionData.size());
-
-            if (!eligibleCoupleRegisters.isEmpty() && !ifaFormSubmissionData.isEmpty()) {
-
-                int percentage = (int) (((double) ifaFormSubmissionData.size()
-                        / eligibleCoupleRegisters.size()) * 100);
-
-                logger.info("IFA Count : {}", ifaFormSubmissionData.size());
-                logger.info("Eligible Couple Count : {}", eligibleCoupleRegisters.size());
-                logger.info("Percentage : {}", percentage);
-
-                if (percentage >= 50) {
-
-                    if (stateId.equals(StateCode.AM.getStateCode())) {
-                        addIFAIncentive(
-                                ifaFormSubmissionData.get(ifaFormSubmissionData.size() - 1),
-                                incentiveActivityAM,
-                                userId,
-                                userName);
-                    }
-
-                    if (stateId.equals(StateCode.CG.getStateCode())) {
-                        addIFAIncentive(
-                                ifaFormSubmissionData.get(ifaFormSubmissionData.size() - 1),
-                                incentiveActivityCG,
-                                userId,
-                                userName);
-                    }
+            List<IncentiveActivityRecord> newRecords = new ArrayList<>();
+            for (IncentiveActivity activity : activities) {
+                if (activity != null && !existingIds.contains(activity.getId())) {
+                    IncentiveActivityRecord record = new IncentiveActivityRecord();
+                    record.setActivityId(activity.getId());
+                    record.setCreatedDate(timestamp);
+                    record.setCreatedBy(userName);
+                    record.setStartDate(timestamp);
+                    record.setEndDate(timestamp);
+                    record.setUpdatedDate(timestamp);
+                    record.setUpdatedBy(userName);
+                    record.setBenId(0L);
+                    record.setAshaId(ashaId);
+                    record.setIsEligible(true);
+                    record.setIsDefaultActivity(true);
+                    record.setIsApproved(preApprovedNames != null && preApprovedNames.contains(activity.getName()));
+                    record.setAmount(Long.valueOf(activity.getRate()));
+                    newRecords.add(record);
                 }
             }
 
+            if (!newRecords.isEmpty()) {
+                recordRepo.saveAll(newRecords);
+            }
+        } catch (Exception e) {
+            logger.error("Error in addMonthlyAshaIncentiveRecordsBatch", e);
         }
-
-
     }
 
-    private void addIFAIncentive(IFAFormSubmissionData ifaFormSubmissionData, IncentiveActivity incentiveActivityAM, Integer userId, String userName) {
-        Timestamp startOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(1).atStartOfDay());
-        Timestamp endOfMonth = Timestamp.valueOf(LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth()).atTime(23, 59, 59));
+    private void addIncentiveForIronTablets(Integer userId, String userName, Integer stateId) {
+        if (userName == null || stateId == null) {
+            return;
+        }
 
-        String lockKey = incentiveActivityAM.getId() + "_" + 0 + "_" + startOfMonth;
+        IncentiveActivity targetActivity = null;
+        if (stateId.equals(StateCode.AM.getStateCode())) {
+            targetActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NATIONAL_IRON_PLUS", GroupName.CHILD_HEALTH.getDisplayName());
+        } else if (stateId.equals(StateCode.CG.getStateCode())) {
+            targetActivity = incentivesRepo.findIncentiveMasterByNameAndGroup("NATIONAL_IRON_PLUS", GroupName.ACTIVITY.getDisplayName());
+        }
 
+        if (targetActivity == null) {
+            return;
+        }
+
+        LocalDate now = LocalDate.now();
+        Timestamp startOfMonth = Timestamp.valueOf(now.withDayOfMonth(1).atStartOfDay());
+        Timestamp endOfMonth = Timestamp.valueOf(now.withDayOfMonth(now.lengthOfMonth()).atTime(23, 59, 59));
+
+        // Check if IFA incentive record already exists for this month BEFORE querying EC & IFA tables
+        IncentiveActivityRecord existingRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
+                targetActivity.getId(),
+                0L,
+                userId,
+                startOfMonth,
+                endOfMonth
+        );
+        if (existingRecord != null) {
+            return;
+        }
+
+        // Use COUNT(*) queries instead of loading full entities (and LONGTEXT photos) into memory
+        long ecCount = eligibleCoupleRegisterRepo.countByCreatedBy(userName);
+        if (ecCount <= 0) {
+            return;
+        }
+        long ifaCount = ifaFormSubmissionRepository.countByUserId(userId);
+        if (ifaCount <= 0) {
+            return;
+        }
+
+        int percentage = (int) (((double) ifaCount / ecCount) * 100);
+        logger.info("IFA Count : {}, Eligible Couple Count : {}, Percentage : {}", ifaCount, ecCount, percentage);
+
+        if (percentage >= 50) {
+            addIFAIncentive(targetActivity, userId, userName, startOfMonth, endOfMonth);
+        }
+    }
+
+    private void addIFAIncentive(IncentiveActivity incentiveActivity, Integer userId, String userName,
+                                 Timestamp startOfMonth, Timestamp endOfMonth) {
+        String lockKey = incentiveActivity.getId() + "_" + 0 + "_" + startOfMonth;
         Object lock = lockMap.computeIfAbsent(lockKey, k -> new Object());
         Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
 
-
         logger.info("IFA incentive");
-        synchronized (lock){
+        synchronized (lock) {
             IncentiveActivityRecord incentiveActivityRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
-                    incentiveActivityAM.getId(),
+                    incentiveActivity.getId(),
                     0L,
                     userId,
                     startOfMonth,
@@ -1251,26 +1258,21 @@ public class IncentiveServiceImpl implements IncentiveService {
             );
             if (incentiveActivityRecord == null) {
                 incentiveActivityRecord = new IncentiveActivityRecord();
-                incentiveActivityRecord.setActivityId(incentiveActivityAM.getId());
+                incentiveActivityRecord.setActivityId(incentiveActivity.getId());
                 incentiveActivityRecord.setCreatedDate(timestamp);
                 incentiveActivityRecord.setStartDate(timestamp);
                 incentiveActivityRecord.setEndDate(timestamp);
                 incentiveActivityRecord.setUpdatedDate(timestamp);
-                incentiveActivityRecord.setUpdatedBy(ifaFormSubmissionData.getUserName());
-                incentiveActivityRecord.setCreatedBy(ifaFormSubmissionData.getUserName());
+                incentiveActivityRecord.setUpdatedBy(userName);
+                incentiveActivityRecord.setCreatedBy(userName);
                 incentiveActivityRecord.setBenId(0L);
                 incentiveActivityRecord.setAshaId(userId);
-                incentiveActivityRecord.setAmount(Long.valueOf(incentiveActivityAM.getRate()));
+                incentiveActivityRecord.setAmount(Long.valueOf(incentiveActivity.getRate()));
                 recordRepo.save(incentiveActivityRecord);
                 logger.info("saved IFA incentive");
-
             }
-
         }
         lockMap.remove(lockKey, lock);
-
-
     }
-
 
 }

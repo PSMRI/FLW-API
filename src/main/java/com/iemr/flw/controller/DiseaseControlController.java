@@ -445,4 +445,70 @@ public class DiseaseControlController {
     }
 
 
+    @RequestMapping(value = "generalCheckUpFollowUp/getAll", method = RequestMethod.POST)
+    public ResponseEntity<Map<String, Object>> getGeneralCheckUpFollowUp(@RequestBody GetBenRequestHandler getBenRequestHandler,@RequestHeader(value = "JwtToken") String token) {
+
+        Map<String, Object> response = new LinkedHashMap<>();
+
+        try {
+            List<GeneralCheckUpFollowUpDto> result =
+                    diseaseControlService.getGeneralCheckUpFollowUp(token);
+
+            if (result != null && !result.isEmpty()) {
+                response.put("statusCode", HttpStatus.OK.value());
+                response.put("data", result);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("statusCode", HttpStatus.NOT_FOUND.value());
+                response.put("message", "No records found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+        } catch (Exception e) {
+            logger.error("Error fetching Chronic Disease Visit :", e);
+            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("errorMessage", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+
+    @RequestMapping(value = "generalCheckUpFollowUp/saveAll", method = RequestMethod.POST)
+    public ResponseEntity<Map<String, Object>> savGeneralCheckUpFollowUp(
+            @RequestBody List<GeneralCheckUpFollowUpDto> requestList,@RequestHeader(value = "JwtToken") String token) {
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        logger.info("####################################################");
+        try {
+            logger.info("General Checkup Save Request: {}",
+                    objectMapper.writerWithDefaultPrettyPrinter()
+                            .writeValueAsString(requestList));
+        } catch (Exception e) {
+            logger.error("Failed to convert request to JSON", e);
+        }
+        logger.info("####################################################");
+
+        try {
+            List<GeneralCheckUpFollowUpDto> savedList =
+                    diseaseControlService.saveGeneralCheckUpFollowUp(requestList,token);
+
+            if (savedList != null && !savedList.isEmpty()) {
+                response.put("statusCode", HttpStatus.OK.value());
+                response.put("message", "Data saved successfully");
+                response.put("data", savedList);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("statusCode", HttpStatus.BAD_REQUEST.value());
+                response.put("message", "No data saved");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+        } catch (Exception e) {
+            logger.error("Error saving Chronic Disease Visit :", e);
+            response.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("errorMessage", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 }

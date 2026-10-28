@@ -45,6 +45,9 @@ public interface IncentivesRepo extends JpaRepository<IncentiveActivity, Long> {
 
     List<IncentiveActivity> findByGroupNotAndIsDeleted(String group, Boolean isDeleted);
 
+    @Query("SELECT i FROM IncentiveActivity i WHERE i.name IN :names AND i.isDeleted = false")
+    List<IncentiveActivity> findByNamesAndIsDeletedFalse(@Param("names") List<String> names);
+
     // IncentivesRepo — replaces N calls to findIncentiveMasterById()
     @Query("SELECT i.id FROM IncentiveActivity i WHERE i.id IN :ids AND i.isDeleted = false AND " +
             "(:isCG = true AND i.group = 'ACTIVITY' OR :isCG = false AND i.group != 'ACTIVITY')")

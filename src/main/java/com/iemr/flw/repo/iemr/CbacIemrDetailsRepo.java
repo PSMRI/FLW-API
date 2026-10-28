@@ -37,6 +37,9 @@ public interface CbacIemrDetailsRepo extends CrudRepository<CbacDetailsImer, Lon
 
 	List<CbacDetailsImer> findByCreatedBy(String userName);
 
+	@Query("SELECT c.beneficiaryRegId, c.createdDate FROM CbacDetailsImer c WHERE c.createdBy = :userName AND c.beneficiaryRegId IS NOT NULL AND c.createdDate IS NOT NULL")
+	List<Object[]> findBenRegIdAndCreatedDateByCreatedBy(@Param("userName") String userName);
+
 	@Query(value = "SELECT BeneficiaryID FROM db_identity.m_beneficiaryregidmapping " +
 			"WHERE BenRegId = :benRegId AND Deleted = 0", nativeQuery = true)
 	Long getBeneficiaryId(@Param("benRegId") Long benRegId);

@@ -38,6 +38,21 @@ public interface IncentiveRecordRepo extends JpaRepository<IncentiveActivityReco
 
     Optional<IncentiveActivityRecord> findById(Long id);
 
+    @Query("SELECT record FROM IncentiveActivityRecord record WHERE record.ashaId = :ashaId ORDER BY record.id DESC")
+    List<IncentiveActivityRecord> findRecordsByAshaOrderByIdDesc(@Param("ashaId") Integer ashaId);
+
+    @Query("SELECT r.activityId FROM IncentiveActivityRecord r WHERE r.activityId IN :activityIds AND r.benId = :benId AND r.ashaId = :ashaId AND r.createdDate >= :startOfMonth AND r.createdDate < :startOfNextMonth")
+    List<Long> findExistingActivityIdsByMonth(@Param("activityIds") List<Long> activityIds, @Param("benId") Long benId, @Param("ashaId") Integer ashaId, @Param("startOfMonth") Timestamp startOfMonth, @Param("startOfNextMonth") Timestamp startOfNextMonth);
+
+    @Query("SELECT r.benId, r.startDate FROM IncentiveActivityRecord r WHERE r.activityId = :activityId AND r.ashaId = :ashaId")
+    List<Object[]> findBenIdAndStartDateByActivityIdAndAshaId(@Param("activityId") Long activityId, @Param("ashaId") Integer ashaId);
+
+    @Query("SELECT r FROM IncentiveActivityRecord r WHERE r.ashaId = :ashaId AND r.isClaimed = true AND r.createdDate >= :startDate AND r.createdDate < :endDate")
+    List<IncentiveActivityRecord> findClaimedRecordsByAshaAndCreatedDateRange(@Param("ashaId") Integer ashaId, @Param("startDate") Timestamp startDate, @Param("endDate") Timestamp endDate);
+
+    @Query("SELECT r FROM IncentiveActivityRecord r WHERE r.ashaId = :ashaId AND r.activityId = :activityId AND r.createdDate >= :startDate AND r.createdDate < :endDate")
+    List<IncentiveActivityRecord> findRecordsByAshaAndActivityAndCreatedDateRange(@Param("ashaId") Integer ashaId, @Param("activityId") Long activityId, @Param("startDate") Timestamp startDate, @Param("endDate") Timestamp endDate);
+
 
     @Query(value = """
             SELECT *
