@@ -13,6 +13,7 @@ import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.TBStopVisitService;
 import com.iemr.flw.service.TBSuspectedService;
+import com.iemr.flw.service.UserService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,11 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 public class TBSuspectedServiceImpl implements TBSuspectedService {
@@ -39,6 +44,9 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
 
     @Autowired
     private IncentiveLogicService incentiveLogicService;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public String getByBenId(Long benId, String authorisation) throws Exception {
@@ -143,6 +151,10 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
         List<TBSuspected> tbSuspectedList = request.getProviderServiceMapID() != null
                 ? tbSuspectedRepo.getByProviderServiceMapIdAndVillageId(request.getProviderServiceMapID(), request.getVillageID())
                 : tbSuspectedRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
+        // The incentive check needs the user's state; look it up once per user instead of loading the
+        // full user detail (role + facility queries) for every confirmed row.
+        Map<Integer, Integer> stateByUser = new HashMap<>();
+        Set<Integer> usersWithoutDetail = new HashSet<>();
         for (TBSuspected tbSuspected : tbSuspectedList) {
             TBSuspectedDTO dto = modelMapper.map(tbSuspected, TBSuspectedDTO.class);
             dto.setUpdateDate(tbSuspected.getLastModDate());
@@ -150,12 +162,24 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
             dtos.add(dto);
 
             if (tbSuspected != null && Boolean.TRUE.equals(tbSuspected.getIsConfirmed())) {
-                incentiveLogicService.incentiveForTbSuspected(
-                        tbSuspected.getBenId(),
-                        tbSuspected.getVisitDate(),
-                        tbSuspected.getVisitDate(),
-                        tbSuspected.getUserId()
-                );
+                Integer userId = tbSuspected.getUserId();
+                if (!stateByUser.containsKey(userId) && !usersWithoutDetail.contains(userId)) {
+                    try {
+                        stateByUser.put(userId, userService.getUserDetail(userId).getStateId());
+                    } catch (Exception e) {
+                        logger.error("Check Tb Suspected Incentive Exception: ", e);
+                        usersWithoutDetail.add(userId);
+                    }
+                }
+                if (stateByUser.containsKey(userId)) {
+                    incentiveLogicService.incentiveForTbSuspected(
+                            tbSuspected.getBenId(),
+                            tbSuspected.getVisitDate(),
+                            tbSuspected.getVisitDate(),
+                            userId,
+                            stateByUser.get(userId)
+                    );
+                }
             }
         }
         TBSuspectedRequestDTO tbSuspectedRequestDTO = new TBSuspectedRequestDTO();

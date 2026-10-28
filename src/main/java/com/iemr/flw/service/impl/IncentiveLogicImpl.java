@@ -87,9 +87,19 @@ public class IncentiveLogicImpl implements IncentiveLogicService {
 
     @Override
     public IncentiveActivityRecord incentiveForTbSuspected(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId) {
+        Integer stateCode;
         try {
-            Integer stateCode = userService.getUserDetail(userId).getStateId();
+            stateCode = userService.getUserDetail(userId).getStateId();
+        } catch (Exception e) {
+            logger.error("Check Tb Suspected Incentive Exception: ", e);
+            return null;
+        }
+        return incentiveForTbSuspected(benId, treatmentStartDate, treatmentEndDate, userId, stateCode);
+    }
 
+    @Override
+    public IncentiveActivityRecord incentiveForTbSuspected(Long benId, Timestamp treatmentStartDate, Timestamp treatmentEndDate, Integer userId, Integer stateCode) {
+        try {
             if (stateCode == null) {
                 logger.warn("State code is null for user: {}", userId);
                 return null;
