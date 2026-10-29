@@ -316,23 +316,47 @@ public class StopTBPrescriptionService {
      */
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> getStandardOpdRecords(Integer providerServiceMapID, Integer villageID) {
-        // With a village, start from the village's beneficiaries (bounded by village size) instead of
-        // every visit of the PSM; the same visits match either way.
-        String visitSource = villageID != null
-                ? "(SELECT /*+ INDEX(f idx_flow_psm_village_reg) */ DISTINCT f.beneficiary_reg_id "
-                        + "FROM db_iemr.i_ben_flow_outreach f WHERE f.providerServiceMapID = :psm AND f.villageID = :villageID) fv "
-                        + "JOIN db_iemr.t_benvisitdetail v ON v.BeneficiaryRegID = fv.beneficiary_reg_id "
-                : "db_iemr.t_benvisitdetail v ";
+        String villageFilter = villageID != null
+                ? "AND v.BeneficiaryRegID IN (SELECT f.beneficiary_reg_id FROM db_iemr.i_ben_flow_outreach f "
+                        + "WHERE f.providerServiceMapID = :psm AND f.villageID = :villageID) "
+                : "";
+        Map<String, Object> params = new HashMap<>();
+        params.put("psm", providerServiceMapID);
+        if (villageID != null) params.put("villageID", villageID);
+        return standardOpdRecords("v.ProviderServiceMapID = :psm " + villageFilter, params);
+    }
+
+    // The same records for specific visits (BenVisitID), for the STOP-TB changes feed. A visit that is
+    // deleted or has no complaint or drug is left out, exactly as getStandardOpdRecords leaves it out.
+    public List<Map<String, Object>> getStandardOpdRecordsByVisitIds(Collection<Long> benVisitIds) {
+        if (benVisitIds.isEmpty()) return new ArrayList<>();
+        Map<String, Object> params = new HashMap<>();
+        params.put("ids", benVisitIds);
+        return standardOpdRecords("v.BenVisitID IN (:ids) ", params);
+    }
+
+    // Visit codes among these that getStandardOpdRecords would return (not deleted, with a complaint or drug).
+    public Set<Long> visitCodesWithStandardOpd(Collection<Long> visitCodes) {
+        Set<Long> out = new HashSet<>();
+        if (visitCodes.isEmpty()) return out;
+        Map<String, Object> params = new HashMap<>();
+        params.put("codes", visitCodes);
+        for (Map<String, Object> m : standardOpdRecords("v.VisitCode IN (:codes) ", params)) {
+            out.add((Long) m.get("visitCode"));
+        }
+        return out;
+    }
+
+    private List<Map<String, Object>> standardOpdRecords(String visitFilter, Map<String, Object> params) {
         Query visitQuery = em.createNativeQuery("SELECT v.BenVisitID, v.BeneficiaryRegID, v.VisitCode, v.CreatedBy, "
-                        + "v.CreatedDate, v.LastModDate FROM " + visitSource
-                        + "WHERE v.ProviderServiceMapID = :psm AND v.Deleted = false "
+                        + "v.CreatedDate, v.LastModDate, v.ProviderServiceMapID FROM db_iemr.t_benvisitdetail v "
+                        + "WHERE " + visitFilter + "AND v.Deleted = false "
                         + "AND (EXISTS (SELECT 1 FROM db_iemr.t_benchiefcomplaint c WHERE c.BeneficiaryRegID = v.BeneficiaryRegID "
                         + "  AND c.VisitCode = v.VisitCode AND c.ChiefComplaintID IS NOT NULL AND c.Deleted = false) "
                         + " OR EXISTS (SELECT 1 FROM db_iemr.t_prescribeddrug d WHERE d.BeneficiaryRegID = v.BeneficiaryRegID "
                         + "  AND d.VisitCode = v.VisitCode AND d.DrugID IS NOT NULL AND d.Deleted = false)) "
-                        + "ORDER BY v.CreatedDate DESC")
-                .setParameter("psm", providerServiceMapID);
-        if (villageID != null) visitQuery.setParameter("villageID", villageID);
+                        + "ORDER BY v.CreatedDate DESC");
+        params.forEach(visitQuery::setParameter);
         List<Object[]> visits = visitQuery.getResultList();
 
         Map<Long, Map<String, Object>> byVisit = new LinkedHashMap<>();
@@ -341,7 +365,7 @@ public class StopTBPrescriptionService {
             m.put("id", ((Number) v[0]).longValue());
             m.put("beneficiaryRegID", ((Number) v[1]).longValue());
             m.put("visitCode", ((Number) v[2]).longValue());
-            m.put("providerServiceMapID", providerServiceMapID);
+            m.put("providerServiceMapID", v[6] != null ? ((Number) v[6]).intValue() : null);
             m.put("chiefComplaint", new ArrayList<String>());
             m.put("medication", new StringJoiner(", "));
             m.put("dosage", new StringJoiner(", "));

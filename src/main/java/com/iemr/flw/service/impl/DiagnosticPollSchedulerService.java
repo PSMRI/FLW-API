@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -33,13 +34,13 @@ public class DiagnosticPollSchedulerService {
     @Scheduled(fixedDelayString = "${diagnostic.poll.xray.tick-ms:15000}")
     public void pollXrayOrders() {
         pollDueOrders("XRAY", DiagnosticOrderType.XRAY_CHEST,
-                () -> diagnosticOrderRepo.findXrayDueForPoll(startOfToday(), startOfTomorrow()));
+                diagnosticOrderRepo::findXrayDueForPoll);
     }
 
     @Scheduled(fixedDelayString = "${diagnostic.poll.truenat.tick-ms:60000}")
     public void pollTrueNatOrders() {
         pollDueOrders("TrueNat", DiagnosticOrderType.MTB,
-                () -> diagnosticOrderRepo.findTrueNatDueForPoll(startOfToday(), startOfTomorrow()));
+                diagnosticOrderRepo::findTrueNatDueForPoll);
     }
 
     private void pollDueOrders(String label, DiagnosticOrderType orderType, Supplier<List<DiagnosticOrder>> dueOrders) {
@@ -88,7 +89,7 @@ public class DiagnosticPollSchedulerService {
     //     }
     // }
 
-    // Polling and the daily close only handle orders created today. JVM default zone on purpose: it's the
+    // The (disabled) daily close only handles orders created today. JVM default zone on purpose: it's the
     // same clock created_date is stamped with (@CreationTimestamp), so the day boundaries line up.
     private static Timestamp startOfToday() {
         return Timestamp.valueOf(LocalDate.now().atStartOfDay());
@@ -103,16 +104,15 @@ public class DiagnosticPollSchedulerService {
         return providerCode == null || providerCode.isBlank();
     }
 
-    // Used only by the (disabled) auto-closure job above.
+    // Used only by the (disabled) auto-closure job above. expireOrder re-reads the order under the
+    // beneficiary lock, so an order completed manually after this batch was loaded is left alone.
     // private void expire(DiagnosticOrder order) {
     //     String reason = "Order validity expired for the day " + LocalDate.now(ZoneId.of("Asia/Kolkata"));
-    //     order.setStatus(DiagnosticOrderStatus.CLOSED.name());
-    //     order.setReasonToClose(reason);
-    //     order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
-    //     order.setModifiedBy("SYSTEM");
-    //     order.setProcessed("N");
-    //     diagnosticOrderRepo.save(order);
-    //     diagnosticOrderService.notifyProviderOrderClosed(order, reason);
+    //     try {
+    //         diagnosticOrderService.expireOrder(order, reason);
+    //     } catch (Exception e) {
+    //         logger.error("Expiry failed for orderId={}: {}", order.getId(), e.getMessage());
+    //     }
     // }
 
     // Returns false only when the vendor couldn't be reached at all (connect/read timeout, refused
@@ -120,19 +120,14 @@ public class DiagnosticPollSchedulerService {
     // (bad data, vendor-side rejection), so it's recorded and the tick carries on.
     private boolean pollSingle(DiagnosticOrder order) {
         try {
-            // pollOnce now saves the result/order fields and ingests any documents itself —
-            // nothing left to do here on success.
             diagnosticOrderService.pollOnce(order);
             return true;
+        } catch (ResourceAccessException e) {
+            logger.error("Vendor unreachable polling orderId={}: {}", order.getId(), e.getMessage());
+            return false;
         } catch (Exception e) {
             logger.error("Poll failed for orderId={}: {}", order.getId(), e.getMessage());
-            order.setRetryCount(order.getRetryCount() + 1);
-            order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
-            order.setErrorMessage(e.getMessage());
-            order.setModifiedBy("SYSTEM");
-            order.setProcessed("N");
-            diagnosticOrderRepo.save(order);
-            return false;
+            return true;
         }
     }
 

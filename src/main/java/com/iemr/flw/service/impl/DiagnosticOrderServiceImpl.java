@@ -63,6 +63,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             DiagnosticOrderStatus.FAILED.name(),
             DiagnosticOrderStatus.CLOSED.name());
 
+    // Statuses the scheduler polls and the daily cutoff expires — matches findXrayDueForPoll /
+    // findTrueNatDueForPoll / findAllOutstandingOrders.
+    private static final Set<String> OUTSTANDING_STATUSES = Set.of(
+            DiagnosticOrderStatus.PENDING.name(),
+            DiagnosticOrderStatus.IN_PROGRESS.name());
+
     // Invalid test outcomes: the result is still recorded (result row, tb_suspected write-back, documents)
     // but the order is CLOSED instead of COMPLETED, so a retest can be pushed. The vendor reports an
     // invalid MTB/MDR_RIF run as "Error-2"; a manual entry uses "Invalid/Error".
@@ -159,6 +165,20 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         lock.lock();
         try {
             return action.call();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // For the poll scheduler: never waits. A busy beneficiary (user push/manual entry in progress) is
+    // simply left for the next tick, rather than stalling the single scheduler thread behind it.
+    private <T> Optional<T> withBeneficiaryLockIfFree(Long beneficiaryId, Callable<T> action) throws Exception {
+        Lock lock = beneficiaryLock(beneficiaryId);
+        if (!lock.tryLock()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.ofNullable(action.call());
         } finally {
             lock.unlock();
         }
@@ -542,8 +562,67 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         }
     }
 
+    // The scheduler loads its due-for-poll batch at the start of a tick and polls each order in turn, so
+    // by the time an order's turn comes it may have been completed/closed by a manual entry. Polling and
+    // saving that stale copy would overwrite the manual result (whole-row save, no @Version), so the
+    // order is re-read under the beneficiary lock and skipped unless it is still awaiting a result.
+    // Failures are recorded on that same fresh row, inside the lock, for the same reason.
     @Override
     public DiagnosticPollResult pollOnce(DiagnosticOrder order) throws Exception {
+        Optional<DiagnosticPollResult> polled = withBeneficiaryLockIfFree(order.getBeneficiaryId(), () -> {
+            Optional<DiagnosticOrder> current = findOutstandingOrder(order.getId());
+            if (current.isEmpty()) {
+                logger.info("Skipping poll for orderId={}: no longer PENDING/IN_PROGRESS", order.getId());
+                return null;
+            }
+            DiagnosticOrder fresh = current.get();
+            try {
+                return pollOnceLocked(fresh);
+            } catch (Exception e) {
+                fresh.setRetryCount(fresh.getRetryCount() + 1);
+                fresh.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
+                fresh.setErrorMessage(e.getMessage());
+                fresh.setModifiedBy("SYSTEM");
+                fresh.setProcessed("N");
+                diagnosticOrderRepo.save(fresh);
+                throw e;
+            }
+        });
+        if (polled.isEmpty()) {
+            logger.debug("Poll for orderId={} skipped or deferred (beneficiary busy / order resolved)", order.getId());
+        }
+        return polled.orElse(null);
+    }
+
+    // Same stale-copy problem as pollOnce: the daily expiry batch is loaded up front, so each order is
+    // re-read under the lock and only closed if it is still outstanding.
+    @Override
+    public void expireOrder(DiagnosticOrder order, String reason) throws Exception {
+        withBeneficiaryLock(order.getBeneficiaryId(), () -> {
+            Optional<DiagnosticOrder> current = findOutstandingOrder(order.getId());
+            if (current.isEmpty()) {
+                logger.info("Skipping expiry for orderId={}: no longer PENDING/IN_PROGRESS", order.getId());
+                return null;
+            }
+            DiagnosticOrder fresh = current.get();
+            fresh.setStatus(DiagnosticOrderStatus.CLOSED.name());
+            fresh.setReasonToClose(reason);
+            fresh.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
+            fresh.setModifiedBy("SYSTEM");
+            fresh.setProcessed("N");
+            diagnosticOrderRepo.save(fresh);
+            notifyProviderOrderClosed(fresh, reason);
+            return null;
+        });
+    }
+
+    private Optional<DiagnosticOrder> findOutstandingOrder(Long orderId) {
+        return diagnosticOrderRepo.findById(orderId)
+                .filter(o -> !Boolean.TRUE.equals(o.getDeleted()))
+                .filter(o -> OUTSTANDING_STATUSES.contains(o.getStatus()));
+    }
+
+    private DiagnosticPollResult pollOnceLocked(DiagnosticOrder order) throws Exception {
         // A null pushResponseJson means the order was never actually confirmed as pushed to the
         // vendor (e.g. a stale/legacy row) — polling the vendor for it would be meaningless, so
         // fail it outright instead of burning a vendor call every tick.
@@ -602,15 +681,33 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     @Override
     public DiagnosticOrderResultDto triggerManualPoll(Long beneficiaryId, String orderType, Long visitCode) throws Exception {
-        DiagnosticOrder order = resolveOrder(beneficiaryId, orderType, visitCode);
-        DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
-        DiagnosticPollResult pollResult = provider.pollResult(order, true);
-        boolean invalid = closeIfInvalidPolledResult(order, pollResult);
-        return processResult(order, pollResult, invalid, "SYSTEM");
+        // Locked, and the order read inside the lock, so this can't interleave with a manual entry or a
+        // scheduler poll for the same beneficiary and save over what they just wrote.
+        return withBeneficiaryLock(beneficiaryId, () -> {
+            DiagnosticOrder order = resolveOrder(beneficiaryId, orderType, visitCode);
+            if (DiagnosticOrderStatus.MANUAL_ENTRY.name().equals(order.getStatus())) {
+                throw new IllegalStateException("Cannot poll a MANUAL_ENTRY order — no vendor is involved, "
+                        + "submit the result via manualResult instead");
+            }
+            if (order.getManuallyEnteredBy() != null) {
+                throw new IllegalStateException("Cannot poll this order: its result was entered manually by "
+                        + order.getManuallyEnteredBy() + " and a vendor poll would overwrite it");
+            }
+            DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
+            DiagnosticPollResult pollResult = provider.pollResult(order, true);
+            boolean invalid = closeIfInvalidPolledResult(order, pollResult);
+            return processResult(order, pollResult, invalid, "SYSTEM");
+        });
     }
 
     @Override
     public DiagnosticOrder retryPoll(Long beneficiaryId, String orderType, Long visitCode) throws Exception {
+        // Locked so the terminal-status check and the reset to PENDING can't straddle a manual entry
+        // that completes the order in between (which would reopen it for polling).
+        return withBeneficiaryLock(beneficiaryId, () -> retryPollLocked(beneficiaryId, orderType, visitCode));
+    }
+
+    private DiagnosticOrder retryPollLocked(Long beneficiaryId, String orderType, Long visitCode) throws Exception {
         DiagnosticOrder order = resolveOrder(beneficiaryId, orderType, visitCode);
         String status = order.getStatus();
 
@@ -667,6 +764,41 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             dto.setDrugResistancePresence(result.getDrugResistancePresence());
         });
         return dto;
+    }
+
+    @Override
+    public java.util.Map<Long, java.util.Map<String, Object>> getOrderRecordsByIds(java.util.Collection<Long> ids) {
+        java.util.Map<Long, java.util.Map<String, Object>> out = new java.util.LinkedHashMap<>();
+        for (DiagnosticOrder order : diagnosticOrderRepo.findAllById(ids)) {
+            if (Boolean.TRUE.equals(order.getDeleted())) continue;
+            DiagnosticOrderResultDto dto = toResultDto(order);
+            if (order.getExternalOrderId() != null) {
+                diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId()).ifPresent(result -> {
+                    dto.setProviderStatus(result.getProviderStatus());
+                    dto.setResultSummary(result.getResultSummary());
+                    dto.setTbPresence(result.getTbPresence());
+                    dto.setTbConfidence(result.getTbConfidence());
+                    dto.setDrugResistancePresence(result.getDrugResistancePresence());
+                });
+            }
+            java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+            m.put("id", order.getId());
+            m.put("beneficiaryId", order.getBeneficiaryId());
+            m.put("visitCode", order.getVisitCode());
+            m.put("createdDate", order.getCreatedDate());
+            m.put("externalOrderId", dto.getExternalOrderId());
+            m.put("orderType", dto.getOrderType());
+            m.put("status", dto.getStatus());
+            m.put("providerStatus", dto.getProviderStatus());
+            m.put("resultSummary", dto.getResultSummary());
+            m.put("errorMessage", dto.getErrorMessage());
+            m.put("reasonToClose", dto.getReasonToClose());
+            m.put("tbPresence", dto.getTbPresence());
+            m.put("tbConfidence", dto.getTbConfidence());
+            m.put("drugResistancePresence", dto.getDrugResistancePresence());
+            out.put(order.getId(), m);
+        }
+        return out;
     }
 
     private DiagnosticOrderResultDto toResultDto(DiagnosticOrder order) {
@@ -740,6 +872,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             return toResultDto(closed);
         }
 
+        return withBeneficiaryLock(request.getBeneficiaryId(),
+                () -> submitManualResultLocked(request, actingUserName));
+    }
+
+    private DiagnosticOrderResultDto submitManualResultLocked(ManualDiagnosticResultRequestDto request,
+                                                              String actingUserName) throws Exception {
         DiagnosticOrder order = findLatestOrder(request.getBeneficiaryId(), request.getOrderType());
         if (DiagnosticOrderStatus.COMPLETED.name().equals(order.getStatus())) {
             throw new IllegalStateException("Cannot submit manual result: order is already COMPLETED (beneficiaryId="

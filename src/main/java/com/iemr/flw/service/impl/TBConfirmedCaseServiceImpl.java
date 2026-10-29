@@ -204,9 +204,25 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         return buildTbConfirmedCasesResponse(null, list);
     }
 
-    private String buildTbConfirmedCasesResponse(Integer userId, List<TBConfirmedCase> list) {
-        List<TBConfirmedCaseDTO> dtoList = list.stream().map(this::toDTO).collect(Collectors.toList());
+    @Override
+    public Map<Long, String> getRecordsByIds(java.util.Collection<Long> ids) {
+        List<Integer> intIds = ids.stream().map(Long::intValue).collect(Collectors.toList());
+        List<TBConfirmedCaseDTO> dtoList = withCounselled(
+                repository.findAllById(intIds).stream().map(this::toDTO).collect(Collectors.toList()));
+        Gson gson = confirmedGson();
+        Map<Long, String> out = new java.util.LinkedHashMap<>();
+        for (TBConfirmedCaseDTO dto : dtoList) out.put(dto.getId().longValue(), gson.toJson(dto));
+        return out;
+    }
 
+    private Gson confirmedGson() {
+        return new GsonBuilder()
+                .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
+                .setDateFormat("MMM dd, yyyy h:mm:ss a")
+                .create();
+    }
+
+    private List<TBConfirmedCaseDTO> withCounselled(List<TBConfirmedCaseDTO> dtoList) {
         List<Long> benIds = dtoList.stream().map(TBConfirmedCaseDTO::getBenId).collect(Collectors.toList());
         Set<Long> counselledBenIds = Collections.emptySet();
         if (!benIds.isEmpty()) {
@@ -217,15 +233,16 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         }
         final Set<Long> counselled = counselledBenIds;
         dtoList.forEach(dto -> dto.setCounselled(counselled.contains(dto.getBenId())));
+        return dtoList;
+    }
+
+    private String buildTbConfirmedCasesResponse(Integer userId, List<TBConfirmedCase> list) {
+        List<TBConfirmedCaseDTO> dtoList = withCounselled(list.stream().map(this::toDTO).collect(Collectors.toList()));
 
         Map<String, Object> response = new java.util.HashMap<>();
         response.put("userId", userId);
         response.put("tbConfirmedCases", dtoList);
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
-                .setDateFormat("MMM dd, yyyy h:mm:ss a")
-                .create();
-        return gson.toJson(response);
+        return confirmedGson().toJson(response);
     }
 
     // Utility: convert entity -> DTO

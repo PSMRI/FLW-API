@@ -579,6 +579,61 @@ public class StopTBServiceImpl implements StopTBService {
         return result;
     }
 
+    // ── By id, for the changes feed ───────────────────────────────────────────
+
+    @Override
+    public Map<Long, Map<String, Object>> getNurseTBScreeningsByIds(Collection<Long> ids) {
+        Map<Long, Map<String, Object>> out = new LinkedHashMap<>();
+        for (TBScreening s : tbScreeningRepo.findAllById(ids)) {
+            if (!Boolean.TRUE.equals(s.getDeleted())) out.put(s.getId(), screeningToMap(s));
+        }
+        return out;
+    }
+
+    @Override
+    public Map<Long, Map<String, Object>> getGeneralExaminationsByIds(Collection<Long> ids) {
+        Map<Long, Map<String, Object>> out = new LinkedHashMap<>();
+        for (StopTBGeneralExamination e : generalExaminationRepo.findAllById(ids)) {
+            if (!Boolean.TRUE.equals(e.getDeleted())) out.put(e.getId(), examToMap(e));
+        }
+        return out;
+    }
+
+    @Override
+    public Map<Long, Map<String, Object>> getDiagnosticsByIds(Collection<Long> ids) {
+        Map<Long, Map<String, Object>> out = new LinkedHashMap<>();
+        for (StopTBDiagnostics d : diagnosticsRepo.findAllById(ids)) {
+            if (!Boolean.TRUE.equals(d.getDeleted())) out.put(d.getId(), diagnosticsToMap(d));
+        }
+        return out;
+    }
+
+    @Override
+    public Map<Long, Map<String, Object>> getGeneralOpdByVisitIds(Collection<Long> benVisitIds) {
+        Map<Long, Map<String, Object>> out = new LinkedHashMap<>();
+        for (Map<String, Object> m : stopTBPrescriptionService.getStandardOpdRecordsByVisitIds(benVisitIds)) {
+            out.put((Long) m.get("id"), m);
+        }
+        return out;
+    }
+
+    @Override
+    public Map<Long, Map<String, Object>> getLegacyGeneralOpdByIds(Collection<Long> ids) {
+        List<StopTBGeneralOpd> rows = new ArrayList<>();
+        Set<Long> visitCodes = new HashSet<>();
+        for (StopTBGeneralOpd o : generalOpdRepo.findAllById(ids)) {
+            if (Boolean.TRUE.equals(o.getDeleted())) continue;
+            rows.add(o);
+            if (o.getVisitCode() != null) visitCodes.add(o.getVisitCode());
+        }
+        Set<Long> standard = stopTBPrescriptionService.visitCodesWithStandardOpd(visitCodes);
+        Map<Long, Map<String, Object>> out = new LinkedHashMap<>();
+        for (StopTBGeneralOpd o : rows) {
+            if (o.getVisitCode() == null || !standard.contains(o.getVisitCode())) out.put(o.getId(), opdToMap(o));
+        }
+        return out;
+    }
+
     private Map<String, Object> diagnosticsToMap(StopTBDiagnostics d) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", d.getId());

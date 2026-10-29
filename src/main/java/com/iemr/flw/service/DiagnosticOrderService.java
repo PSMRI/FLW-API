@@ -23,7 +23,17 @@ public interface DiagnosticOrderService {
 
     DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult result) throws Exception;
 
+    /**
+     * Polls the vendor once for this order. The order is re-read first and skipped (returns null) if it
+     * is no longer PENDING/IN_PROGRESS, e.g. a manual result landed after the scheduler loaded it.
+     */
     DiagnosticPollResult pollOnce(DiagnosticOrder order) throws Exception;
+
+    /**
+     * Daily cutoff: marks this order CLOSED with the given reason and notifies the vendor, unless it was
+     * resolved (e.g. by a manual result) after the scheduler loaded it.
+     */
+    void expireOrder(DiagnosticOrder order, String reason) throws Exception;
 
     DiagnosticOrderResultDto triggerManualPoll(Long beneficiaryId, String orderType, Long visitCode) throws Exception;
 
@@ -37,6 +47,14 @@ public interface DiagnosticOrderService {
     void notifyProviderOrderClosed(DiagnosticOrder order, String reason);
 
     DiagnosticOrderResultDto getOrderResult(Long beneficiaryId, String orderType, Long visitCode);
+
+    /**
+     * Orders with their result, keyed by order id (STOP-TB changes feed). Deleted orders are left
+     * out. Each record carries what getBeneficiariesByStatus and getOrderResult give today: the
+     * beneficiary, order type, visit code and status (the app buckets by the latest order per
+     * beneficiary and type), plus the result fields.
+     */
+    java.util.Map<Long, java.util.Map<String, Object>> getOrderRecordsByIds(java.util.Collection<Long> ids);
 
     DiagnosticOrder getOrder(Long beneficiaryId, String orderType, Long visitCode) throws Exception;
 
