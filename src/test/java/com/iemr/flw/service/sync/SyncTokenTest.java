@@ -10,20 +10,22 @@ class SyncTokenTest {
 
     @Test
     void deltaRoundTrips() {
-        SyncToken t = SyncToken.parse(SyncToken.delta(UUID, 1000, 1761700000L).encode());
+        SyncToken t = SyncToken.parse(SyncToken.delta(UUID, 1000, 1761700000L, 0b101).encode());
         assertEquals(SyncToken.Kind.DELTA, t.kind());
         assertEquals(UUID, t.serverId());
         assertEquals(1000, t.seq());
         assertEquals(1761700000L, t.issuedAt());
+        assertEquals(0b101, t.typesMask());
     }
 
     @Test
     void snapshotRoundTrips() {
-        SyncToken t = SyncToken.parse(SyncToken.snapshot(UUID, 5230, 3, 900).encode());
+        SyncToken t = SyncToken.parse(SyncToken.snapshot(UUID, 5230, 3, 900, 7).encode());
         assertEquals(SyncToken.Kind.SNAPSHOT, t.kind());
         assertEquals(5230, t.seq());
         assertEquals(3, t.typeIndex());
         assertEquals(900, t.afterKey());
+        assertEquals(7, t.typesMask());
     }
 
     @Test
@@ -31,8 +33,9 @@ class SyncTokenTest {
         assertNull(SyncToken.parse(null));
         assertNull(SyncToken.parse(""));
         assertNull(SyncToken.parse("garbage"));
-        assertNull(SyncToken.parse("d." + UUID + ".x.1"));
-        assertNull(SyncToken.parse("d..1.1"));
+        assertNull(SyncToken.parse("d." + UUID + ".x.1.1"));
+        assertNull(SyncToken.parse("d." + UUID + ".1.1"));      // no types: issued before types were bound
+        assertNull(SyncToken.parse("d..1.1.1"));
         assertNull(SyncToken.parse("q." + UUID + ".1.1"));
     }
 

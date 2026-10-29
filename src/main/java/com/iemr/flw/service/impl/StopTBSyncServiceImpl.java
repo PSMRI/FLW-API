@@ -40,6 +40,11 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
 
     static final int DEFAULT_LIMIT = 200;
     static final int MAX_LIMIT = 500;
+    /**
+     * Beneficiary records are the expensive ones (several identity lookups and a FHIR call each), so a
+     * page carries at most this many; the token resumes from the last one sent.
+     */
+    static final int MAX_BENEFICIARIES_PER_PAGE = 25;
     /** Lines younger than this may still have earlier seqs uncommitted; they wait for the next call. */
     static final int SAFE_LAG_SECONDS = 5;
     /** The hub keeps 30 days of log; a token older than this may point at cleaned-up lines. */
@@ -90,9 +95,12 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
                 && (parsed.kind() == SyncToken.Kind.SNAPSHOT || now - parsed.issuedAt() <= MAX_TOKEN_AGE_SECONDS);
 
         Scope scope = new Scope(providerServiceMapID, villageIds, requestedTypes(types));
+        // A token covers only the types it was issued for; newly requested types need a snapshot.
+        usable = usable && parsed.typesMask() == scope.typesMask();
         if (!usable) {
             if (parsed != null) logger.info("Sync token {} not usable here, starting a snapshot", parsed);
-            return snapshotPage(serverId, SyncToken.snapshot(serverId, safePoint(), 0, 0), scope, pageSize, authorisation);
+            return snapshotPage(serverId, SyncToken.snapshot(serverId, safePoint(), 0, 0, scope.typesMask()),
+                    scope, pageSize, authorisation);
         }
         return parsed.kind() == SyncToken.Kind.SNAPSHOT
                 ? snapshotPage(serverId, parsed, scope, pageSize, authorisation)
@@ -116,6 +124,7 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
                 continue;
             }
             int want = pageSize - items.size();
+            if (type == StopTBSyncType.BENEFICIARY) want = Math.min(want, MAX_BENEFICIARIES_PER_PAGE);
             List<Long> keys = snapshotKeys(type, scope, after, want);
             Map<Long, String> records = build(type, keys, authorisation);
             for (Long key : keys) {
@@ -133,8 +142,8 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
 
         boolean done = typeIndex >= types.length;
         SyncToken next = done
-                ? SyncToken.delta(serverId, at.seq(), System.currentTimeMillis() / 1000)
-                : SyncToken.snapshot(serverId, at.seq(), typeIndex, after);
+                ? SyncToken.delta(serverId, at.seq(), System.currentTimeMillis() / 1000, scope.typesMask())
+                : SyncToken.snapshot(serverId, at.seq(), typeIndex, after, scope.typesMask());
         return page(serverId, true, items, next, !done);
     }
 
@@ -176,6 +185,19 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
                 .setParameter("villages", scope.villages)
                 .setParameter("limit", pageSize)
                 .getResultList();
+        boolean full = rows.size() == pageSize;
+
+        // Keep beneficiary records per page bounded: stop before the one over the cap. The token then
+        // resumes from the last row kept, so nothing after it is skipped.
+        int beneficiaries = 0;
+        for (int i = 0; i < rows.size(); i++) {
+            if (!StopTBSyncType.BENEFICIARY.logEntity().equals(rows.get(i)[0])) continue;
+            if (++beneficiaries > MAX_BENEFICIARIES_PER_PAGE) {
+                rows = new ArrayList<>(rows.subList(0, i));
+                full = true;
+                break;
+            }
+        }
 
         // Build each type's records in one batch, then emit in log order.
         Map<StopTBSyncType, List<Long>> keysByType = new EnumMap<>(StopTBSyncType.class);
@@ -205,9 +227,10 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
             }
         }
 
-        boolean hasMore = rows.size() == pageSize;
+        boolean hasMore = full;
         long nextSeq = hasMore ? lastSeq : safe;
-        return page(serverId, false, items, SyncToken.delta(serverId, nextSeq, System.currentTimeMillis() / 1000), hasMore);
+        return page(serverId, false, items,
+                SyncToken.delta(serverId, nextSeq, System.currentTimeMillis() / 1000, scope.typesMask()), hasMore);
     }
 
     // ── Records, in the same JSON each type's existing endpoint returns ───────
@@ -358,6 +381,12 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
             this.psm = psm;
             this.villages = villages;
             this.types = types;
+        }
+
+        long typesMask() {
+            long mask = 0;
+            for (StopTBSyncType t : types) mask |= 1L << t.ordinal();
+            return mask;
         }
 
         List<String> logEntities() {
