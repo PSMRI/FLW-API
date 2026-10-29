@@ -45,7 +45,7 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
      * page carries at most this many; the token resumes from the last one sent.
      */
     static final int MAX_BENEFICIARIES_PER_PAGE = 25;
-    /** Lines younger than this may still have earlier seqs uncommitted; they wait for the next call. */
+    /** Margin under the oldest open transaction (see safePoint); lines younger than this wait. */
     static final int SAFE_LAG_SECONDS = 5;
     /** The hub keeps 30 days of log; a token older than this may point at cleaned-up lines. */
     static final long MAX_TOKEN_AGE_SECONDS = 29L * 24 * 3600;
@@ -73,6 +73,7 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private volatile boolean innodbTrxWarned;
     private volatile Boolean supported;
     private volatile long supportCheckedAt;
 
@@ -310,11 +311,32 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
         return String.valueOf(em.createNativeQuery("SELECT @@server_uuid").getSingleResult());
     }
 
+    /**
+     * The highest seq a reader may move past. seq is taken when a row is inserted, not when its
+     * transaction commits, so a transaction still open may hold a lower seq than lines already
+     * committed. Every line it writes is stamped at or after its start, so lines older than the oldest
+     * open transaction (information_schema.innodb_trx) are final; the lag also covers the gap between a
+     * statement's timestamp and its insert. A long open transaction holds the feed back until it ends.
+     */
     private long safePoint() {
-        Object r = em.createNativeQuery("SELECT COALESCE(MAX(seq), 0) FROM db_iemr.t_sync_change_log "
-                        + "WHERE changed_at <= NOW(6) - INTERVAL " + SAFE_LAG_SECONDS + " SECOND")
-                .getSingleResult();
-        return ((Number) r).longValue();
+        try {
+            Object r = em.createNativeQuery("SELECT COALESCE(MAX(seq), 0) FROM db_iemr.t_sync_change_log "
+                            + "WHERE changed_at <= (SELECT LEAST(NOW(6), COALESCE(MIN(trx_started), NOW(6))) "
+                            + "FROM information_schema.innodb_trx) - INTERVAL " + SAFE_LAG_SECONDS + " SECOND")
+                    .getSingleResult();
+            return ((Number) r).longValue();
+        } catch (Exception e) {
+            // innodb_trx needs the PROCESS privilege; without it only the fixed lag protects late commits.
+            if (!innodbTrxWarned) {
+                logger.warn("STOP-TB changes feed: cannot read information_schema.innodb_trx ({}); "
+                        + "using a fixed {} s lag only", e.getMessage(), SAFE_LAG_SECONDS);
+                innodbTrxWarned = true;
+            }
+            Object r = em.createNativeQuery("SELECT COALESCE(MAX(seq), 0) FROM db_iemr.t_sync_change_log "
+                            + "WHERE changed_at <= NOW(6) - INTERVAL " + SAFE_LAG_SECONDS + " SECOND")
+                    .getSingleResult();
+            return ((Number) r).longValue();
+        }
     }
 
     /**
