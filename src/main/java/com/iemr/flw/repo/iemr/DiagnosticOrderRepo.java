@@ -48,6 +48,14 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
     @Query("UPDATE DiagnosticOrder o SET o.vanSerialNo = o.id WHERE o.id = :id")
     void updateVanSerialNo(@Param("id") Long id);
 
+    // A poll that changed nothing only records when it ran (and the retry count), leaving processed,
+    // modified_by and the rest of the row alone: no re-upload to central, no change-log line.
+    @Transactional
+    @Modifying
+    @Query("UPDATE DiagnosticOrder o SET o.lastPolledAt = :polledAt, o.retryCount = :retryCount WHERE o.id = :id")
+    int recordUnchangedPoll(@Param("id") Long id, @Param("polledAt") Timestamp polledAt,
+                            @Param("retryCount") Integer retryCount);
+
     // Beneficiary-status-summary queries, filtered the same way as
     // FormResponseRepo.findBeneficiaryIdsByFormIdAndStatusFiltered - null-safe optional
     // villageId/providerServiceMapId via a correlated BenFlowStatus subquery.

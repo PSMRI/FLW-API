@@ -454,7 +454,28 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     private DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult pollResult,
                                                    boolean writeBackWhenClosed, String actingUser) throws Exception {
         Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId());
+        // A poll that brings nothing new must not rewrite the rows: every rewrite resets processed
+        // (so MMU re-uploads the order) and would re-send it to every tablet.
+        boolean resultUnchanged = existingResult.isPresent() && sameResult(existingResult.get(), pollResult);
+        boolean orderUnchanged = sameOrderStatus(order, pollResult);
         DiagnosticResult result = existingResult.orElseGet(DiagnosticResult::new);
+        if (resultUnchanged && orderUnchanged && !writeBackWhenClosed) {
+            ingestAssets(order, pollResult);
+            diagnosticOrderRepo.recordUnchangedPoll(order.getId(), new Timestamp(System.currentTimeMillis()),
+                    order.getRetryCount());
+            DiagnosticOrderResultDto unchanged = new DiagnosticOrderResultDto();
+            unchanged.setExternalOrderId(order.getExternalOrderId());
+            unchanged.setOrderType(order.getOrderType());
+            unchanged.setStatus(order.getStatus());
+            unchanged.setProviderStatus(result.getProviderStatus());
+            unchanged.setResultSummary(result.getResultSummary());
+            unchanged.setErrorMessage(order.getErrorMessage());
+            unchanged.setReasonToClose(order.getReasonToClose());
+            unchanged.setTbPresence(result.getTbPresence());
+            unchanged.setTbConfidence(result.getTbConfidence());
+            unchanged.setDrugResistancePresence(result.getDrugResistancePresence());
+            return unchanged;
+        }
         result.setExternalOrderId(order.getExternalOrderId());
         result.setBeneficiaryId(order.getBeneficiaryId());
         result.setProviderStatus(pollResult.getStatus().name());
@@ -579,12 +600,18 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             try {
                 return pollOnceLocked(fresh);
             } catch (Exception e) {
-                fresh.setRetryCount(fresh.getRetryCount() + 1);
-                fresh.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
-                fresh.setErrorMessage(e.getMessage());
-                fresh.setModifiedBy("SYSTEM");
-                fresh.setProcessed("N");
-                diagnosticOrderRepo.save(fresh);
+                int retries = (fresh.getRetryCount() == null ? 0 : fresh.getRetryCount()) + 1;
+                if (java.util.Objects.equals(fresh.getErrorMessage(), e.getMessage())) {
+                    // Same failure as last time: only the attempt is recorded (see recordUnchangedPoll).
+                    diagnosticOrderRepo.recordUnchangedPoll(fresh.getId(), new Timestamp(System.currentTimeMillis()), retries);
+                } else {
+                    fresh.setRetryCount(retries);
+                    fresh.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
+                    fresh.setErrorMessage(e.getMessage());
+                    fresh.setModifiedBy("SYSTEM");
+                    fresh.setProcessed("N");
+                    diagnosticOrderRepo.save(fresh);
+                }
                 throw e;
             }
         });
@@ -614,6 +641,23 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             notifyProviderOrderClosed(fresh, reason);
             return null;
         });
+    }
+
+    private static boolean sameResult(DiagnosticResult stored, DiagnosticPollResult polled) {
+        return java.util.Objects.equals(stored.getProviderStatus(), polled.getStatus() == null ? null : polled.getStatus().name())
+                && java.util.Objects.equals(stored.getResultSummary(), polled.getResultSummary())
+                && java.util.Objects.equals(stored.getTbPresence(), polled.getTbPresence())
+                && java.util.Objects.equals(stored.getTbConfidence(), polled.getTbConfidence())
+                && java.util.Objects.equals(stored.getDrugResistancePresence(), polled.getDrugResistancePresence())
+                && (polled.getAssets() == null || polled.getAssets().isEmpty());
+    }
+
+    private static boolean sameOrderStatus(DiagnosticOrder order, DiagnosticPollResult polled) {
+        return polled.getStatus() != null
+                && polled.getStatus().name().equals(order.getStatus())
+                && java.util.Objects.equals(order.getErrorMessage(), polled.getErrorMessage())
+                && (polled.getProviderOrderId() == null
+                    || polled.getProviderOrderId().equals(order.getProviderOrderId()));
     }
 
     private Optional<DiagnosticOrder> findOutstandingOrder(Long orderId) {
