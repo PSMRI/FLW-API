@@ -52,7 +52,6 @@ public class GeneralCheckUp {
     private String priority;
 
 
-
     @Column(name = "referral_reason", length = 500)
     private String referralReason;
 

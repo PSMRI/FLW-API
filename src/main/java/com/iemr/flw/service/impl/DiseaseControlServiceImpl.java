@@ -1758,6 +1758,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
                 entity.setAshaId(userId);
                 entity.setCreatedBy(username);
+                entity.setReferredTo(dto.getFields().getReferredTo());
 
                 GeneralCheckUpFollowUp savedEntity =
                         generalCheckUpFollowUpRepository.save(entity);
