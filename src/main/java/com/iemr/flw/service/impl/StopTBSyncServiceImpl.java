@@ -73,7 +73,7 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
 
     @Override
     public Map<String, Object> getChanges(String token, Integer providerServiceMapID, List<Integer> villageIds,
-                                          Integer limit, String authorisation) {
+                                          List<String> types, Integer limit, String authorisation) {
         if (!isSupported()) {
             Map<String, Object> out = new LinkedHashMap<>();
             out.put("supported", false);
@@ -89,7 +89,7 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
         boolean usable = parsed != null && serverId.equals(parsed.serverId())
                 && (parsed.kind() == SyncToken.Kind.SNAPSHOT || now - parsed.issuedAt() <= MAX_TOKEN_AGE_SECONDS);
 
-        Scope scope = new Scope(providerServiceMapID, villageIds);
+        Scope scope = new Scope(providerServiceMapID, villageIds, requestedTypes(types));
         if (!usable) {
             if (parsed != null) logger.info("Sync token {} not usable here, starting a snapshot", parsed);
             return snapshotPage(serverId, SyncToken.snapshot(serverId, safePoint(), 0, 0), scope, pageSize, authorisation);
@@ -110,6 +110,11 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
 
         while (items.size() < pageSize && typeIndex < types.length) {
             StopTBSyncType type = types[typeIndex];
+            if (!scope.types.contains(type)) {
+                typeIndex++;
+                after = 0;
+                continue;
+            }
             int want = pageSize - items.size();
             List<Long> keys = snapshotKeys(type, scope, after, want);
             Map<Long, String> records = build(type, keys, authorisation);
@@ -157,7 +162,7 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
         List<Object[]> rows = em.createNativeQuery(
                         "SELECT l.entity, l.row_pk, l.seq, l.op FROM db_iemr.t_sync_change_log l JOIN ("
                                 + "  SELECT c.entity, c.row_pk, MAX(c.seq) AS last_seq FROM db_iemr.t_sync_change_log c "
-                                + "  WHERE c.seq > :from AND c.seq <= :safe AND ("
+                                + "  WHERE c.seq > :from AND c.seq <= :safe AND c.entity IN (:entities) AND ("
                                 + "    (c.ben_reg_id IS NOT NULL AND EXISTS (SELECT 1 FROM db_iemr.i_ben_flow_outreach f "
                                 + "      WHERE f.beneficiary_reg_id = c.ben_reg_id AND f.providerServiceMapID = :psm AND f.villageID IN (:villages)))"
                                 + "    OR (c.beneficiary_id IS NOT NULL AND EXISTS (SELECT 1 FROM db_iemr.i_ben_flow_outreach f "
@@ -166,6 +171,7 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
                                 + ") g ON l.seq = g.last_seq ORDER BY l.seq")
                 .setParameter("from", from)
                 .setParameter("safe", safe)
+                .setParameter("entities", scope.logEntities())
                 .setParameter("psm", scope.psm)
                 .setParameter("villages", scope.villages)
                 .setParameter("limit", pageSize)
@@ -330,13 +336,34 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
         return ok;
     }
 
+    private static Set<StopTBSyncType> requestedTypes(List<String> names) {
+        Set<StopTBSyncType> out = EnumSet.noneOf(StopTBSyncType.class);
+        if (names == null || names.isEmpty()) {
+            out.addAll(EnumSet.allOf(StopTBSyncType.class));
+            return out;
+        }
+        for (StopTBSyncType t : StopTBSyncType.values()) {
+            if (names.contains(t.apiName())) out.add(t);
+        }
+        if (out.isEmpty()) throw new IllegalArgumentException("No known record types in " + names);
+        return out;
+    }
+
     private static final class Scope {
         final Integer psm;
         final List<Integer> villages;
+        final Set<StopTBSyncType> types;
 
-        Scope(Integer psm, List<Integer> villages) {
+        Scope(Integer psm, List<Integer> villages, Set<StopTBSyncType> types) {
             this.psm = psm;
             this.villages = villages;
+            this.types = types;
+        }
+
+        List<String> logEntities() {
+            List<String> out = new ArrayList<>();
+            for (StopTBSyncType t : types) out.add(t.logEntity());
+            return out;
         }
     }
 }

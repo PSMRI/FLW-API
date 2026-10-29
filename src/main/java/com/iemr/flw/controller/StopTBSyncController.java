@@ -26,7 +26,8 @@ public class StopTBSyncController {
     private StopTBSyncService stopTBSyncService;
 
     /**
-     * Body: { token: string|null, providerServiceMapID: int, villageIds: [int], limit: int }.
+     * Body: { token: string|null, providerServiceMapID: int, villageIds: [int], types: [string], limit: int }.
+     * types: the record types the app applies (all when omitted); changing it requires a new snapshot.
      * Response: { supported, serverId, snapshot, items: [{type, op, key, version, data}], nextToken, hasMore }.
      * Call again with nextToken while hasMore is true. On a server without the hub change log the
      * response is { supported: false } and the app keeps using the getAll endpoints.
@@ -46,9 +47,15 @@ public class StopTBSyncController {
                     if (v != null) villageIds.add((int) Double.parseDouble(v.toString()));
                 }
             }
+            List<String> types = new ArrayList<>();
+            if (body.get("types") instanceof List) {
+                for (Object t : (List<?>) body.get("types")) {
+                    if (t != null) types.add(t.toString());
+                }
+            }
             Integer limit = body.get("limit") != null ? (int) Double.parseDouble(body.get("limit").toString()) : null;
             Map<String, Object> data = stopTBSyncService.getChanges(
-                    token != null ? token.toString() : null, psm, villageIds, limit, authorization);
+                    token != null ? token.toString() : null, psm, villageIds, types, limit, authorization);
             response.setResponse(gson.toJson(data));
         } catch (Exception e) {
             logger.error("Error in sync/changes: " + e);
