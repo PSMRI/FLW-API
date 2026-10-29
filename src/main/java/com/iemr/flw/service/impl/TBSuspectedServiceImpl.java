@@ -13,6 +13,8 @@ import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.TBStopVisitService;
 import com.iemr.flw.service.TBSuspectedService;
+import com.iemr.flw.service.UserService;
+import com.iemr.flw.masterEnum.StateCode;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +23,11 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 public class TBSuspectedServiceImpl implements TBSuspectedService {
@@ -39,6 +45,9 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
 
     @Autowired
     private IncentiveLogicService incentiveLogicService;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public String getByBenId(Long benId, String authorisation) throws Exception {
@@ -140,22 +149,27 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
     @Override
     public String getByUserId(GetBenRequestHandler request) {
         List<TBSuspectedDTO> dtos = new ArrayList<>();
-        List<TBSuspected> tbSuspectedList = request.getProviderServiceMapID() != null
+        boolean stopTbVillage = request.getProviderServiceMapID() != null;
+        List<TBSuspected> tbSuspectedList = stopTbVillage
                 ? tbSuspectedRepo.getByProviderServiceMapIdAndVillageId(request.getProviderServiceMapID(), request.getVillageID())
                 : tbSuspectedRepo.getByUserId(request.getAshaId(), request.getFromDate(), request.getToDate());
-        for (TBSuspected tbSuspected : tbSuspectedList) {
-            TBSuspectedDTO dto = modelMapper.map(tbSuspected, TBSuspectedDTO.class);
-            dto.setUpdateDate(tbSuspected.getLastModDate());
-            dto.setUpdatedBy(tbSuspected.getModifiedBy());
-            dtos.add(dto);
+        if (stopTbVillage) {
+            dtos = stopTbVillageDtos(tbSuspectedList);
+        } else {
+            for (TBSuspected tbSuspected : tbSuspectedList) {
+                TBSuspectedDTO dto = modelMapper.map(tbSuspected, TBSuspectedDTO.class);
+                dto.setUpdateDate(tbSuspected.getLastModDate());
+                dto.setUpdatedBy(tbSuspected.getModifiedBy());
+                dtos.add(dto);
 
-            if (tbSuspected != null && Boolean.TRUE.equals(tbSuspected.getIsConfirmed())) {
-                incentiveLogicService.incentiveForTbSuspected(
-                        tbSuspected.getBenId(),
-                        tbSuspected.getVisitDate(),
-                        tbSuspected.getVisitDate(),
-                        tbSuspected.getUserId()
-                );
+                if (tbSuspected != null && Boolean.TRUE.equals(tbSuspected.getIsConfirmed())) {
+                    incentiveLogicService.incentiveForTbSuspected(
+                            tbSuspected.getBenId(),
+                            tbSuspected.getVisitDate(),
+                            tbSuspected.getVisitDate(),
+                            tbSuspected.getUserId()
+                    );
+                }
             }
         }
         TBSuspectedRequestDTO tbSuspectedRequestDTO = new TBSuspectedRequestDTO();
@@ -163,6 +177,74 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
         tbSuspectedRequestDTO.setUserId(request.getAshaId());
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         return gson.toJson(tbSuspectedRequestDTO);
+    }
+
+    // Stop TB village list (psm + village). Same DTOs and incentive calls as the per-user path, but the
+    // user's state is read once per user: IncentiveLogicImpl.incentiveForTbSuspected loads the full user
+    // detail on every call only to check for CG, and does nothing for any other state, so for other
+    // states the call is skipped and for CG users it is made exactly as before.
+    private List<TBSuspectedDTO> stopTbVillageDtos(List<TBSuspected> tbSuspectedList) {
+        List<TBSuspectedDTO> dtos = new ArrayList<>();
+        Map<Integer, Integer> stateByUser = new HashMap<>();
+        Set<Integer> usersWithoutDetail = new HashSet<>();
+        for (TBSuspected tbSuspected : tbSuspectedList) {
+            TBSuspectedDTO dto = toDto(tbSuspected);
+            dto.setUpdateDate(tbSuspected.getLastModDate());
+            dto.setUpdatedBy(tbSuspected.getModifiedBy());
+            dtos.add(dto);
+
+            if (Boolean.TRUE.equals(tbSuspected.getIsConfirmed())) {
+                Integer userId = tbSuspected.getUserId();
+                if (!stateByUser.containsKey(userId) && !usersWithoutDetail.contains(userId)) {
+                    try {
+                        stateByUser.put(userId, userService.getUserDetail(userId).getStateId());
+                    } catch (Exception e) {
+                        logger.error("Check Tb Suspected Incentive Exception: ", e);
+                        usersWithoutDetail.add(userId);
+                    }
+                }
+                Integer stateCode = stateByUser.get(userId);
+                if (stateCode != null && stateCode == StateCode.CG.getStateCode()) {
+                    incentiveLogicService.incentiveForTbSuspected(
+                            tbSuspected.getBenId(),
+                            tbSuspected.getVisitDate(),
+                            tbSuspected.getVisitDate(),
+                            userId
+                    );
+                }
+            }
+        }
+        return dtos;
+    }
+
+    // Field-by-field copy of the same-named fields ModelMapper copied (updateDate/updatedBy are set by
+    // the caller); ModelMapper's reflection per row was most of this list's time at village scale.
+    private static TBSuspectedDTO toDto(TBSuspected s) {
+        TBSuspectedDTO dto = new TBSuspectedDTO();
+        dto.setId(s.getId());
+        dto.setBenId(s.getBenId());
+        dto.setVisitLabel(s.getVisitLabel());
+        dto.setVisitDate(s.getVisitDate());
+        dto.setTypeOfTBCase(s.getTypeOfTBCase());
+        dto.setReasonForSuspicion(s.getReasonForSuspicion());
+        dto.setIsSputumCollected(s.getIsSputumCollected());
+        dto.setSputumSubmittedAt(s.getSputumSubmittedAt());
+        dto.setNikshayId(s.getNikshayId());
+        dto.setSputumTestResult(s.getSputumTestResult());
+        dto.setIsChestXRayDone(s.getIsChestXRayDone());
+        dto.setChestXRayResult(s.getChestXRayResult());
+        dto.setReasonForRefusalXray(s.getReasonForRefusalXray());
+        dto.setReasonForRefusalMTB(s.getReasonForRefusalMTB());
+        dto.setReasonForRefusalMDRRIF(s.getReasonForRefusalMDRRIF());
+        dto.setReasonForRefusalSputum(s.getReasonForRefusalSputum());
+        dto.setMdrRifResult(s.getMdrRifResult());
+        dto.setReferralFacility(s.getReferralFacility());
+        dto.setIsTBConfirmed(s.getIsTBConfirmed());
+        dto.setIsConfirmed(s.getIsConfirmed());
+        dto.setIsDRTBConfirmed(s.getIsDRTBConfirmed());
+        dto.setReferred(s.getReferred());
+        dto.setFollowUps(s.getFollowUps());
+        return dto;
     }
 
     @Override

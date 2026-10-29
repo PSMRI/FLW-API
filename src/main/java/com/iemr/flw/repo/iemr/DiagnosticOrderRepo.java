@@ -103,4 +103,16 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
             "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
     List<Long> findBeneficiaryIdsAwaitingManualEntry(@Param("orderType") String orderType,
             @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
+
+    // The five queries above in one pass: beneficiaryId + status of each beneficiary's latest order,
+    // same filters, for the caller to bucket by status.
+    @Query("SELECT o.beneficiaryId, o.status FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
+            "AND o.status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CLOSED', 'CANCELLED', 'EXPIRED', 'REFUSED', 'MANUAL_ENTRY') " +
+            "AND o.id = (SELECT MAX(o2.id) FROM DiagnosticOrder o2 " +
+            "WHERE o2.beneficiaryId = o.beneficiaryId AND o2.orderType = :orderType AND o2.deleted = false) " +
+            "AND o.beneficiaryId IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
+            "AND (:villageId IS NULL OR b.villageID = :villageId) " +
+            "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
+    List<Object[]> findLatestOrderStatusByBeneficiary(@Param("orderType") String orderType,
+            @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
 }

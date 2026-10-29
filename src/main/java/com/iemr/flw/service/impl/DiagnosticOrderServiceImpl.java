@@ -38,6 +38,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -814,16 +815,25 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     public DiagnosticOrderStatusSummaryDto getOrderStatusSummary(String orderType, Integer villageId,
                                                                  Integer providerServiceMapId) {
         DiagnosticOrderType type = DiagnosticOrderType.fromCode(orderType);
-        List<Long> awaitingProviderResult = diagnosticOrderRepo
-                .findBeneficiaryIdsAwaitingProviderResult(type.name(), villageId, providerServiceMapId);
-        List<Long> completed = diagnosticOrderRepo
-                .findBeneficiaryIdsCompleted(type.name(), villageId, providerServiceMapId);
-        List<Long> failed = diagnosticOrderRepo
-                .findBeneficiaryIdsFailed(type.name(), villageId, providerServiceMapId);
-        List<Long> closed = diagnosticOrderRepo
-                .findBeneficiaryIdsClosed(type.name(), villageId, providerServiceMapId);
-        List<Long> awaitingManualEntry = diagnosticOrderRepo
-                .findBeneficiaryIdsAwaitingManualEntry(type.name(), villageId, providerServiceMapId);
+        List<Long> awaitingProviderResult = new ArrayList<>();
+        List<Long> completed = new ArrayList<>();
+        List<Long> failed = new ArrayList<>();
+        List<Long> closed = new ArrayList<>();
+        List<Long> awaitingManualEntry = new ArrayList<>();
+        // One query instead of one per bucket; buckets are the same status groups the per-bucket
+        // queries used (matched case-insensitively, like the database comparison was).
+        for (Object[] row : diagnosticOrderRepo.findLatestOrderStatusByBeneficiary(type.name(), villageId, providerServiceMapId)) {
+            Long beneficiaryId = row[0] != null ? ((Number) row[0]).longValue() : null;
+            String status = row[1] != null ? row[1].toString().toUpperCase(java.util.Locale.ROOT) : "";
+            switch (status) {
+                case "PENDING", "IN_PROGRESS" -> awaitingProviderResult.add(beneficiaryId);
+                case "COMPLETED" -> completed.add(beneficiaryId);
+                case "FAILED" -> failed.add(beneficiaryId);
+                case "CLOSED", "CANCELLED", "EXPIRED", "REFUSED" -> closed.add(beneficiaryId);
+                case "MANUAL_ENTRY" -> awaitingManualEntry.add(beneficiaryId);
+                default -> { }
+            }
+        }
         return new DiagnosticOrderStatusSummaryDto(awaitingProviderResult, completed, failed, closed, awaitingManualEntry);
     }
 
