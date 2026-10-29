@@ -8,7 +8,7 @@ import java.util.List;
  *
  * For each type:
  *  - {@code logEntity}: the entity name the hub's change-log triggers write (AMRIT-DB
- *    db/migration/dbiemr_hub and dbidentity_hub);
+ *    dbiemr/V132__Sync_Change_Log.sql and dbidentity/V32__Sync_Change_Log_Beneficiary.sql);
  *  - {@code snapshotKeySql}: the keys in scope, for the first full download, with the same filters
  *    the type's getAll endpoint applies. Parameters: :psm, :villages, :after, :limit;
  *  - {@code sourceTables}: every table the type's record is built from. Each must have the change-log

@@ -29,7 +29,7 @@ public class StopTBSyncController {
      * Body: { token: string|null, providerServiceMapID: int, villageIds: [int], types: [string], limit: int }.
      * types: the record types the app applies (all when omitted); changing it requires a new snapshot.
      * Response: { supported, serverId, snapshot, items: [{type, op, key, version, data}], nextToken, hasMore }.
-     * Call again with nextToken while hasMore is true. On a server without the hub change log the
+     * Call again with nextToken while hasMore is true. On a server without the change log (AMRIT-DB before V132) the
      * response is { supported: false } and the app keeps using the getAll endpoints.
      */
     @PostMapping("/changes")

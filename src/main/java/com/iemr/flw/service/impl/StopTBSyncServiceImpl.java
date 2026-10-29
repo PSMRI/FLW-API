@@ -23,8 +23,8 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 /**
- * STOP-TB changes feed, served only on hubs (camp laptops, and UAT central for testing), where
- * AMRIT-DB's hub migrations install t_sync_change_log and its triggers.
+ * STOP-TB changes feed. AMRIT-DB V132 / V32 install t_sync_change_log and its triggers on every
+ * server; tablets call the feed on their camp hub (or UAT central when testing).
  *
  * The tablet keeps one opaque token. With none it gets a first full download in pages (snapshot);
  * after that, each call returns only the records with change-log lines after its token, in their

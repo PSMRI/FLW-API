@@ -12,7 +12,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Every table FLW-API maps must be either synced to STOP-TB tablets through the hub change log
+ * Every table FLW-API maps must be either synced to STOP-TB tablets through the change log
  * (listed in a {@link StopTBSyncType}'s sourceTables, which the hub checks for triggers) or listed
  * below as deliberately not synced. A new entity fails this test until someone decides which, so a
  * STOP-TB table can't be added without its change-log triggers.
@@ -76,7 +76,7 @@ class StopTBSyncCoverageTest {
         Collections.sort(unclassified);
         assertTrue(unclassified.isEmpty(), "Tables neither synced to STOP-TB tablets nor listed as not synced: "
                 + unclassified + ". If the STOP-TB app reads it, add it to a StopTBSyncType's sourceTables and add "
-                + "change-log triggers in AMRIT-DB db/migration/*_hub; otherwise list it here with a reason.");
+                + "change-log triggers in a new AMRIT-DB migration; otherwise list it here with a reason.");
     }
 
     @Test
