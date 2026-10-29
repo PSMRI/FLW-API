@@ -13,6 +13,8 @@ import com.iemr.flw.service.TBConfirmedCaseService;
 import com.iemr.flw.service.TBSuspectedService;
 import com.iemr.flw.service.sync.StopTBSyncType;
 import com.iemr.flw.service.sync.SyncToken;
+import com.iemr.flw.service.sync.UserSyncScope;
+import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.slf4j.Logger;
@@ -73,20 +75,29 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private static final long USER_SCOPE_TTL_MS = 5 * 60 * 1000L;
+    private final Map<Integer, Map.Entry<Long, UserSyncScope>> userScopes = new java.util.concurrent.ConcurrentHashMap<>();
+
+    @Autowired
+    private UserServiceRoleRepo userServiceRoleRepo;
+
     private volatile boolean innodbTrxWarned;
     private volatile Boolean supported;
     private volatile long supportCheckedAt;
 
     @Override
-    public Map<String, Object> getChanges(String token, Integer providerServiceMapID, List<Integer> villageIds,
-                                          List<String> types, Integer limit, String authorisation) {
+    public Map<String, Object> getChanges(Integer userId, String token, Integer providerServiceMapID,
+                                          List<Integer> villageIds, List<String> types, Integer limit,
+                                          String authorisation) {
         if (!isSupported()) {
             Map<String, Object> out = new LinkedHashMap<>();
             out.put("supported", false);
             return out;
         }
+        if (userId == null) throw new IllegalArgumentException("A valid JwtToken is required");
         if (providerServiceMapID == null) throw new IllegalArgumentException("providerServiceMapID is required");
-        if (villageIds == null || villageIds.isEmpty()) throw new IllegalArgumentException("villageIds is required");
+        // Only the user's own service and villages; none asked for means all of them.
+        List<Integer> villages = userScope(userId).resolve(providerServiceMapID, villageIds);
         int pageSize = limit == null || limit <= 0 ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
 
         String serverId = serverId();
@@ -95,12 +106,12 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
         boolean usable = parsed != null && serverId.equals(parsed.serverId())
                 && (parsed.kind() == SyncToken.Kind.SNAPSHOT || now - parsed.issuedAt() <= MAX_TOKEN_AGE_SECONDS);
 
-        Scope scope = new Scope(providerServiceMapID, villageIds, requestedTypes(types));
-        // A token covers only the types it was issued for; newly requested types need a snapshot.
-        usable = usable && parsed.typesMask() == scope.typesMask();
+        Scope scope = new Scope(providerServiceMapID, villages, requestedTypes(types));
+        // A token covers only the types and villages it was issued for; anything else needs a snapshot.
+        usable = usable && parsed.typesMask() == scope.typesMask() && parsed.scopeHash() == scope.scopeHash();
         if (!usable) {
             if (parsed != null) logger.info("Sync token {} not usable here, starting a snapshot", parsed);
-            return snapshotPage(serverId, SyncToken.snapshot(serverId, safePoint(), 0, 0, scope.typesMask()),
+            return snapshotPage(serverId, SyncToken.snapshot(serverId, safePoint(), 0, 0, scope.typesMask(), scope.scopeHash()),
                     scope, pageSize, authorisation);
         }
         return parsed.kind() == SyncToken.Kind.SNAPSHOT
@@ -143,8 +154,8 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
 
         boolean done = typeIndex >= types.length;
         SyncToken next = done
-                ? SyncToken.delta(serverId, at.seq(), System.currentTimeMillis() / 1000, scope.typesMask())
-                : SyncToken.snapshot(serverId, at.seq(), typeIndex, after, scope.typesMask());
+                ? SyncToken.delta(serverId, at.seq(), System.currentTimeMillis() / 1000, scope.typesMask(), scope.scopeHash())
+                : SyncToken.snapshot(serverId, at.seq(), typeIndex, after, scope.typesMask(), scope.scopeHash());
         return page(serverId, true, items, next, !done);
     }
 
@@ -259,7 +270,7 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
         boolean hasMore = full;
         long nextSeq = hasMore ? lastSeq : safe;
         return page(serverId, false, items,
-                SyncToken.delta(serverId, nextSeq, System.currentTimeMillis() / 1000, scope.typesMask()), hasMore);
+                SyncToken.delta(serverId, nextSeq, System.currentTimeMillis() / 1000, scope.typesMask(), scope.scopeHash()), hasMore);
     }
 
     @SuppressWarnings("unchecked")
@@ -341,6 +352,16 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
         out.put("nextToken", next.encode());
         out.put("hasMore", hasMore);
         return out;
+    }
+
+    // The user's services and villages from their role mappings, cached briefly because tablets poll.
+    private UserSyncScope userScope(Integer userId) {
+        long now = System.currentTimeMillis();
+        Map.Entry<Long, UserSyncScope> cached = userScopes.get(userId);
+        if (cached != null && now - cached.getKey() < USER_SCOPE_TTL_MS) return cached.getValue();
+        UserSyncScope scope = UserSyncScope.fromMappingRows(userServiceRoleRepo.getServiceVillageRows(userId));
+        userScopes.put(userId, Map.entry(now, scope));
+        return scope;
     }
 
     // ── Hub state ─────────────────────────────────────────────────────────────
@@ -441,6 +462,10 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
             this.psm = psm;
             this.villages = villages;
             this.types = types;
+        }
+
+        long scopeHash() {
+            return UserSyncScope.scopeHash(psm, villages);
         }
 
         long typesMask() {
