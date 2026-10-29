@@ -12,6 +12,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -220,6 +221,38 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     private String getMappingsForAddressIDs(List<RMNCHMBeneficiaryaddress> addressList, int totalPage,
                                             String authorisation) {
+        List<Map<String, Object>> resultList = buildBeneficiaryRecords(addressList, authorisation);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", resultList);
+        response.put("pageSize", Integer.parseInt(door_to_door_page_size));
+        response.put("totalPage", totalPage);
+        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+        return gson.toJson(response);
+    }
+
+    // One record per beneficiary, in the same JSON shape getBeneficiaryData returns, keyed by BenRegId.
+    // Used by the STOP-TB changes feed; a BenRegId with no mapping or address is left out.
+    @Override
+    public Map<Long, String> getBeneficiaryRecordsByRegIds(List<Long> benRegIds, String authorisation) {
+        List<RMNCHMBeneficiaryaddress> addresses = new ArrayList<>();
+        for (Long benRegId : benRegIds) {
+            RMNCHMBeneficiarymapping m = beneficiaryRepo.getById(BigInteger.valueOf(benRegId));
+            if (m == null || m.getBenAddressId() == null) continue;
+            RMNCHMBeneficiaryaddress a = beneficiaryRepo.getAddressById(m.getBenAddressId());
+            if (a != null) addresses.add(a);
+        }
+        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+        Map<Long, String> records = new LinkedHashMap<>();
+        for (Map<String, Object> record : buildBeneficiaryRecords(addresses, authorisation)) {
+            Object benRegId = record.get("BenRegId");
+            if (benRegId != null) records.put(new BigInteger(benRegId.toString()).longValue(), gson.toJson(record));
+        }
+        return records;
+    }
+
+    private List<Map<String, Object>> buildBeneficiaryRecords(List<RMNCHMBeneficiaryaddress> addressList,
+                                                              String authorisation) {
         RMNCHHouseHoldDetails benHouseHoldRMNCH_ROBJ;
         RMNCHBeneficiaryDetailsRmnch benDetailsRMNCH_OBJ;
         RMNCHBornBirthDetails benBotnBirthRMNCH_ROBJ;
@@ -616,13 +649,7 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
                 logger.error("error for addressID :" + e.getMessage() + a.getId() + " and vanID : " + a.getVanID());
             }
         }
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("data", resultList);
-        response.put("pageSize", Integer.parseInt(door_to_door_page_size));
-        response.put("totalPage", totalPage);
-        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
-        return gson.toJson(response);
+        return resultList;
     }
 
 

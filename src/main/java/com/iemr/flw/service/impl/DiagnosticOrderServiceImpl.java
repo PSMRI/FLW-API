@@ -765,6 +765,41 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         return dto;
     }
 
+    @Override
+    public java.util.Map<Long, java.util.Map<String, Object>> getOrderRecordsByIds(java.util.Collection<Long> ids) {
+        java.util.Map<Long, java.util.Map<String, Object>> out = new java.util.LinkedHashMap<>();
+        for (DiagnosticOrder order : diagnosticOrderRepo.findAllById(ids)) {
+            if (Boolean.TRUE.equals(order.getDeleted())) continue;
+            DiagnosticOrderResultDto dto = toResultDto(order);
+            if (order.getExternalOrderId() != null) {
+                diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId()).ifPresent(result -> {
+                    dto.setProviderStatus(result.getProviderStatus());
+                    dto.setResultSummary(result.getResultSummary());
+                    dto.setTbPresence(result.getTbPresence());
+                    dto.setTbConfidence(result.getTbConfidence());
+                    dto.setDrugResistancePresence(result.getDrugResistancePresence());
+                });
+            }
+            java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+            m.put("id", order.getId());
+            m.put("beneficiaryId", order.getBeneficiaryId());
+            m.put("visitCode", order.getVisitCode());
+            m.put("createdDate", order.getCreatedDate());
+            m.put("externalOrderId", dto.getExternalOrderId());
+            m.put("orderType", dto.getOrderType());
+            m.put("status", dto.getStatus());
+            m.put("providerStatus", dto.getProviderStatus());
+            m.put("resultSummary", dto.getResultSummary());
+            m.put("errorMessage", dto.getErrorMessage());
+            m.put("reasonToClose", dto.getReasonToClose());
+            m.put("tbPresence", dto.getTbPresence());
+            m.put("tbConfidence", dto.getTbConfidence());
+            m.put("drugResistancePresence", dto.getDrugResistancePresence());
+            out.put(order.getId(), m);
+        }
+        return out;
+    }
+
     private DiagnosticOrderResultDto toResultDto(DiagnosticOrder order) {
         DiagnosticOrderResultDto dto = new DiagnosticOrderResultDto();
         dto.setExternalOrderId(order.getExternalOrderId());

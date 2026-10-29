@@ -165,4 +165,26 @@ public class TBSuspectedServiceImpl implements TBSuspectedService {
         return gson.toJson(tbSuspectedRequestDTO);
     }
 
+    @Override
+    public java.util.Map<Long, String> getRecordsByIds(java.util.Collection<Long> ids) {
+        Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
+        java.util.Map<Long, String> out = new java.util.LinkedHashMap<>();
+        for (TBSuspected tbSuspected : tbSuspectedRepo.findAllById(ids)) {
+            TBSuspectedDTO dto = modelMapper.map(tbSuspected, TBSuspectedDTO.class);
+            dto.setUpdateDate(tbSuspected.getLastModDate());
+            dto.setUpdatedBy(tbSuspected.getModifiedBy());
+            out.put(tbSuspected.getId(), gson.toJson(dto));
+            // Same side effect as getByUserId, so incentives don't depend on which pull the app uses.
+            if (Boolean.TRUE.equals(tbSuspected.getIsConfirmed())) {
+                incentiveLogicService.incentiveForTbSuspected(
+                        tbSuspected.getBenId(),
+                        tbSuspected.getVisitDate(),
+                        tbSuspected.getVisitDate(),
+                        tbSuspected.getUserId()
+                );
+            }
+        }
+        return out;
+    }
+
 }

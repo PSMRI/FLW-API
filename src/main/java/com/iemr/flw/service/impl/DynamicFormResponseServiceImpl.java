@@ -61,6 +61,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -459,6 +461,24 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     }
 
     // ---- read helpers ----
+
+    @Override
+    public Map<Long, FormResponseDTO> getResponsesByIds(Collection<Long> responseIds) {
+        List<FormResponse> responses = formResponseRepo.findAllById(responseIds);
+        Set<Long> versionIds = responses.stream()
+                .map(FormResponse::getVersionId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, Integer> versionNumberById = formVersionRepo.findAllById(versionIds).stream()
+                .collect(Collectors.toMap(FormVersion::getVersionId, FormVersion::getVersionNumber));
+        Map<Long, FormResponseDTO> out = new LinkedHashMap<>();
+        for (FormResponse r : responses) {
+            FormResponseDTO dto = buildFormResponseDTO(r, loadSectionResponseDTOs(r.getResponseId()));
+            dto.setVersionNumber(versionNumberById.get(r.getVersionId()));
+            out.put(r.getResponseId(), dto);
+        }
+        return out;
+    }
 
     private List<SectionResponseDTO> loadSectionResponseDTOs(Long responseId) {
         List<SectionResponse> sections = sectionResponseRepo.findByResponseId(responseId);
