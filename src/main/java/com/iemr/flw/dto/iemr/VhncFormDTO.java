@@ -32,8 +32,8 @@ public class VhncFormDTO {
     private String vhncDate;
     private String place;
     private Integer noOfBeneficiariesAttended;
-    private String image1;
-    private String image2;
+    private byte[] image1;
+    private byte[] image2;
     private String villageName;
     private Integer anm;
     private Integer aww;

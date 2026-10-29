@@ -11,6 +11,8 @@ import java.util.List;
 public interface IFAFormSubmissionRepository extends JpaRepository<IFAFormSubmissionData, Long> {
 
     List<IFAFormSubmissionData> findByUserId(Integer userName);
+
+    long countByUserId(Integer userId);
     @Query("SELECT i FROM IFAFormSubmissionData i " +
             "WHERE i.userId = :userId " +
             "AND i.visitDate = :visitDate")

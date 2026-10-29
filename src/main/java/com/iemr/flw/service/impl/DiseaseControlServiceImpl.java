@@ -24,6 +24,8 @@
 */
 package com.iemr.flw.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.flw.domain.identity.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.flw.domain.iemr.*;
@@ -94,6 +96,15 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    private static final DateTimeFormatter VISIT_DATE_FMT = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+    @Autowired
+    private GeneralCheckUpRepo generalCheckUpRepo;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+
     @Autowired
     private IncentiveLogicService incentiveLogicService;
 
@@ -102,8 +113,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
-
-
+@Autowired
+    private  GeneralCheckUpFollowUpRepository
+            generalCheckUpFollowUpRepository;
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     @Override
@@ -1581,4 +1593,344 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         return dtoList;
     }
 
+    @Override
+    @Transactional
+    public List<GeneralCheckUpDto> saveGeneralCheckUp(List<GeneralCheckUpDto> generalCheckUpRequest, String token) throws IEMRException {
+
+
+        if (generalCheckUpRequest == null || generalCheckUpRequest.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<GeneralCheckUp> entities = new ArrayList<>();
+
+        for (GeneralCheckUpDto dto : generalCheckUpRequest) {
+            GeneralCheckUpListDto fields = dto.getFields();
+            if (fields == null) {
+                throw new IllegalArgumentException("fields missing for beneficiary " + dto.getBeneficiaryId());
+            }
+
+            GeneralCheckUp entity = new GeneralCheckUp();
+            entity.setBenId(dto.getBeneficiaryId());
+            entity.setHouseholdId(dto.getHouseHoldId());
+            entity.setAshaId(jwtUtil.extractUserId(token));
+            entity.setCheckupDate(LocalDate.parse(dto.getVisitDate(), VISIT_DATE_FMT));
+            entity.setProblemType(fields.getProblemTypeId());
+            entity.setProblemTypeLabel(fields.getProblemTypeLabel());
+            entity.setPriority(fields.getPriority());
+            entity.setOtherText(fields.getOtherText());
+
+            try {
+                entity.setProblems(fields.getProblems() != null
+                        ? objectMapper.writeValueAsString(fields.getProblems())
+                        : null);
+            } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException("Invalid problems payload for checkup "
+                        + fields.getCheckupId(), e);
+            }
+
+            entity.setReferralReason(fields.getReferralReason());
+            entity.setReferralDate(fields.getReferralDate() != null
+                    ? LocalDate.parse(fields.getReferralDate())
+                    : null);
+            entity.setCreatedBy(fields.getCreatedBy());
+            entity.setSyncedDate(new Timestamp(System.currentTimeMillis()));
+
+            entities.add(entity);
+        }
+
+        List<GeneralCheckUp> saved = generalCheckUpRepo.saveAll(entities);
+
+        for (int i = 0; i < saved.size(); i++) {
+            generalCheckUpRequest.get(i).setId(saved.get(i).getId());
+        }
+
+        return generalCheckUpRequest;
+    }
+
+
+    @Override
+    @Transactional
+    public List<GeneralCheckUpFollowUpDto> saveGeneralCheckUpFollowUp(
+            List<GeneralCheckUpFollowUpDto> dtos,
+            String token) throws IEMRException {
+
+        if (dtos == null || dtos.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        try {
+            Integer userId = jwtUtil.extractUserId(token);
+            String username = jwtUtil.extractUsername(token);
+
+            List<GeneralCheckUpFollowUpDto> result = new ArrayList<>();
+
+            for (GeneralCheckUpFollowUpDto dto : dtos) {
+
+                if (dto == null || dto.getFields() == null) {
+                    throw new IllegalArgumentException(
+                            "Follow-up details are required");
+                }
+
+                if (dto.getBeneficiaryId() == null) {
+                    throw new IllegalArgumentException(
+                            "Beneficiary ID is required");
+                }
+
+                // Referral-specific fields
+                String referralReason = dto.getReferralReason();
+                LocalDate referredOnDate = dto.getReferredOnDate();
+
+                if (referralReason == null || referralReason.isBlank()) {
+                    throw new IllegalArgumentException(
+                            "Referral reason is required");
+                }
+
+                if (referredOnDate == null) {
+                    throw new IllegalArgumentException(
+                            "Referral date is required");
+                }
+
+
+
+                LocalDate monthStart = referredOnDate.withDayOfMonth(1);
+                LocalDate nextMonthStart = monthStart.plusMonths(1);
+
+                GeneralCheckUpFollowUpListDto fields = dto.getFields();
+
+                String date = fields.getFollowUpDate();
+
+                if (date == null || date.isBlank()) {
+                    date = dto.getVisitDate();
+                }
+
+                if (date == null || date.isBlank()) {
+                    throw new IllegalArgumentException(
+                            "Follow-up date is required");
+                }
+
+                LocalDate followUpDate =
+                        LocalDate.parse(date.substring(0, 10));
+
+                String status = fields.getFollowupStatus();
+
+                if (status == null || status.isBlank()) {
+                    throw new IllegalArgumentException(
+                            "Follow-up status is required");
+                }
+
+                boolean referredToHigherFacility =
+                        "referred_to_higher_facility"
+                                .equalsIgnoreCase(status);
+
+                if (referredToHigherFacility
+                        && (fields.getReferredTo() == null
+                        || fields.getReferredTo().isBlank())) {
+                    throw new IllegalArgumentException(
+                            "Referred-to facility is required");
+                }
+
+                // Find the existing record for this specific referral.
+                GeneralCheckUpFollowUp entity =
+                        generalCheckUpFollowUpRepository
+                                .findFirstByBenIdAndReferralReasonAndReferredOnDateGreaterThanEqualAndReferredOnDateLessThan(
+                                        dto.getBeneficiaryId(),
+                                        referralReason,
+                                        monthStart,
+                                        nextMonthStart)
+                                .orElseGet(GeneralCheckUpFollowUp::new);
+
+                // Insert if no matching record exists; otherwise update it.
+                entity.setBenId(dto.getBeneficiaryId());
+                entity.setHouseholdId(dto.getHouseHoldId());
+
+                entity.setReferralReason(referralReason);
+                entity.setReferredOnDate(referredOnDate);
+
+                entity.setFollowUpDate(followUpDate);
+                entity.setFollowupStatus(status);
+
+                entity.setReferredTo(
+                        referredToHigherFacility
+                                ? fields.getReferredTo()
+                                : null
+                );
+
+                entity.setAshaId(userId);
+                entity.setCreatedBy(username);
+                entity.setReferredTo(dto.getFields().getReferredTo());
+
+                GeneralCheckUpFollowUp savedEntity =
+                        generalCheckUpFollowUpRepository.save(entity);
+
+                // Return the saved record with referral information.
+                GeneralCheckUpFollowUpDto response =
+                        new GeneralCheckUpFollowUpDto();
+
+                response.setId(savedEntity.getId());
+                response.setBeneficiaryId(savedEntity.getBenId());
+                response.setHouseHoldId(savedEntity.getHouseholdId());
+
+                response.setReferralReason(savedEntity.getReferralReason());
+                response.setReferredOnDate(
+                        savedEntity.getReferredOnDate() != null
+                                ? savedEntity.getReferredOnDate()
+                                : null
+                );
+
+                GeneralCheckUpFollowUpListDto responseFields =
+                        new GeneralCheckUpFollowUpListDto();
+
+                responseFields.setFollowUpDate(
+                        savedEntity.getFollowUpDate().toString());
+                responseFields.setFollowupStatus(
+                        savedEntity.getFollowupStatus());
+                responseFields.setReferredTo(savedEntity.getReferredTo());
+
+                response.setFields(responseFields);
+
+                result.add(response);
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Error saving General Check-up follow-up", e);
+        }
+    }
+
+    @Override
+    @Transactional()
+    public List<GeneralCheckUpFollowUpDto> getGeneralCheckUpFollowUp(
+            String token) {
+      try {
+          Integer userId = jwtUtil.extractUserId(token);
+
+          List<GeneralCheckUpFollowUp> entities =
+                  generalCheckUpFollowUpRepository.findByAshaId(userId);
+
+          return entities.stream()
+                  .map(entity -> {
+                      GeneralCheckUpFollowUpDto dto =
+                              new GeneralCheckUpFollowUpDto();
+
+                      dto.setId(entity.getId());
+                      dto.setBeneficiaryId(entity.getBenId());
+                      dto.setHouseHoldId(entity.getHouseholdId());
+                      dto.setReferralReason(entity.getReferralReason());
+                      dto.setReferredOnDate(entity.getReferredOnDate());
+
+                      GeneralCheckUpFollowUpListDto fields =
+                              new GeneralCheckUpFollowUpListDto();
+
+                      fields.setFollowUpDate(
+                              entity.getFollowUpDate() != null
+                                      ? entity.getFollowUpDate().toString()
+                                      : null);
+
+                      fields.setFollowupStatus(entity.getFollowupStatus());
+                      fields.setReferredTo(entity.getReferredTo());
+
+
+                      dto.setFields(fields);
+
+                      dto.setVisitDate(
+                              entity.getFollowUpDate() != null
+                                      ? entity.getFollowUpDate().toString()
+                                      : null);
+
+                      return dto;
+                  })
+                  .collect(Collectors.toList());
+      } catch (Exception e) {
+        // Replace with your project's standard IEMRException constructor.
+        throw new RuntimeException(
+                "Error saving General Check-up follow-up", e);
+    }
+
+    }
+
+    @Override
+    public List<GeneralCheckUpDto> getGeneralCheckUp(String token) {
+
+        logger.info("===== getGeneralCheckUp() called =====");
+        logger.info("Received token: {}", token);
+
+        Integer userName = null;
+        try {
+            userName = jwtUtil.extractUserId(token);
+            logger.info("Extracted username from token: {}", userName);
+        } catch (Exception e) {
+            logger.error("Error while extracting username from token", e);
+        }
+
+        List<GeneralCheckUp> rows = null;
+        try {
+            rows = generalCheckUpRepo.findByCreatedBy(userRepo.getUserNamedByUserId(userName));
+            logger.info("Records fetched from DB for user [{}]: {}", userName, rows != null ? rows.size() : 0);
+        } catch (Exception e) {
+            logger.error("Error while fetching GeneralCheckUp records for user: {}", userName, e);
+            throw e;
+        }
+
+        List<GeneralCheckUpDto> result = new ArrayList<>();
+
+        if (rows == null || rows.isEmpty()) {
+            logger.warn("No GeneralCheckUp records found for user: {}", userName);
+            return result;
+        }
+
+        for (GeneralCheckUp e : rows) {
+            logger.debug("Processing GeneralCheckUp id: {}, checkupId: {}", e.getId(), e.getCheckupId());
+
+            String visitDate = e.getCheckupDate() != null
+                    ? e.getCheckupDate().format(VISIT_DATE_FMT) : null;
+
+            GeneralCheckUpListDto f = new GeneralCheckUpListDto();
+            f.setCheck_up_date(visitDate);
+            f.setProblemType(e.getProblemType());
+            f.setOtherText(e.getOtherText());
+            f.setCheckupId(e.getId().toString());
+            f.setAshaId(e.getAshaId());
+            f.setCheckupDate(e.getCheckupDate() != null ? e.getCheckupDate().toString() : null); // "2026-10-22"
+            f.setProblemTypeId(e.getProblemType());
+            f.setProblemTypeLabel(e.getProblemTypeLabel());
+            f.setOtherText(e.getOtherText());
+            f.setPriority(e.getPriority());
+            f.setReferralReason(e.getReferralReason());
+            f.setReferralDate(e.getReferralDate() != null ? e.getReferralDate().toString() : null);
+            f.setCreatedBy(e.getCreatedBy());
+            f.setCreatedDate(e.getCreatedDate() != null ? e.getCreatedDate().getTime() : null);
+            f.setUpdatedDate(e.getUpdatedDate() != null ? e.getUpdatedDate().getTime() : null);
+
+            // json string -> List<ProblemDto>
+            try {
+                if (e.getProblems() != null) {
+                    f.setProblems(objectMapper.readValue(
+                            e.getProblems(), new TypeReference<List<ProblemDto>>() {}));
+                    logger.debug("Successfully parsed problems JSON for id: {}", e.getId());
+                } else {
+                    logger.debug("Problems field is null for id: {}", e.getId());
+                }
+            } catch (JsonProcessingException ex) {
+                logger.error("Invalid problems JSON for id: {}. JSON: {}", e.getId(), e.getProblems(), ex);
+                throw new IllegalStateException("Invalid problems json for id " + e.getId(), ex);
+            }
+
+            GeneralCheckUpDto dto = new GeneralCheckUpDto();
+            dto.setId(e.getId());
+            dto.setBeneficiaryId(e.getBenId());
+            dto.setHouseHoldId(e.getHouseholdId());
+            dto.setVisitDate(visitDate);
+            dto.setFields(f);
+
+            result.add(dto);
+        }
+
+        logger.info("===== getGeneralCheckUp() completed successfully. Total records returned: {} =====", result.size());
+
+
+        return result;
+    }
 }
