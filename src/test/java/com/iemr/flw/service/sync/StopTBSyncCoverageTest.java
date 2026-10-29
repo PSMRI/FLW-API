@@ -23,7 +23,6 @@ class StopTBSyncCoverageTest {
     static final Map<String, String> NOT_SYNCED_STOPTB = Map.ofEntries(
             Map.entry("db_iemr.t_phy_generalexam", "copy of the general examination for the standard tables; the app pulls tb_stoptb_general_examination"),
             Map.entry("db_iemr.t_benreferdetails", "copy written on save for the standard tables; not read by any STOP-TB pull"),
-            Map.entry("db_iemr.t_prescription", "OPD drugs are read from t_prescribeddrug, which is synced"),
             Map.entry("db_iemr.tb_stoptb_registration", "not read by any service"),
             Map.entry("db_iemr.tb_diagnostic_document", "the app does not pull documents"),
             Map.entry("db_iemr.tb_diagnostic_provider_token", "vendor credentials, server only"),

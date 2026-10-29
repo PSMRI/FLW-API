@@ -45,7 +45,9 @@ public enum StopTBSyncType {
     GENERAL_OPD("generalOpd", "opd_visit",
             "SELECT v.BenVisitID FROM db_iemr.t_benvisitdetail v WHERE v.Deleted = 0 AND v.ProviderServiceMapID = :psm "
                     + "AND v.BeneficiaryRegID IN (" + Scope.REG + ") AND v.BenVisitID > :after ORDER BY v.BenVisitID LIMIT :limit",
-            List.of("db_iemr.t_benvisitdetail", "db_iemr.t_benchiefcomplaint", "db_iemr.t_prescribeddrug")),
+            // t_prescription holds the visit's note (latest prescription instruction)
+            List.of("db_iemr.t_benvisitdetail", "db_iemr.t_benchiefcomplaint", "db_iemr.t_prescribeddrug",
+                    "db_iemr.t_prescription")),
 
     /** Older free-text OPD rows; same record shape as GENERAL_OPD. */
     GENERAL_OPD_LEGACY("generalOpdLegacy", "general_opd",
