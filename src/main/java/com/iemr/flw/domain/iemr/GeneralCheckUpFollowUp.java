@@ -46,9 +46,9 @@ public class GeneralCheckUpFollowUp {
     @Column(name = "updated_date", insertable = false, updatable = false)
     private Timestamp updatedDate;
 
-    @Column(name = "referral_reason")
+    @Column(name = "referralReason")
     private String referralReason;
 
-    @Column(name = "referred_on_date")
+    @Column(name = "referredOnDate")
     private LocalDate referredOnDate;
 }
