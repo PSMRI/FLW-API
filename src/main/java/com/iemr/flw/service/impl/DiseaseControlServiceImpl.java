@@ -1648,6 +1648,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
         return generalCheckUpRequest;
     }
 
+
     @Override
     @Transactional
     public List<GeneralCheckUpFollowUpDto> saveGeneralCheckUpFollowUp(
@@ -1662,7 +1663,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
             Integer userId = jwtUtil.extractUserId(token);
             String username = jwtUtil.extractUsername(token);
 
-            List<GeneralCheckUpFollowUp> entities = new ArrayList<>();
+            List<GeneralCheckUpFollowUpDto> result = new ArrayList<>();
 
             for (GeneralCheckUpFollowUpDto dto : dtos) {
 
@@ -1670,6 +1671,30 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                     throw new IllegalArgumentException(
                             "Follow-up details are required");
                 }
+
+                if (dto.getBeneficiaryId() == null) {
+                    throw new IllegalArgumentException(
+                            "Beneficiary ID is required");
+                }
+
+                // Referral-specific fields
+                String referralReason = dto.getReferralReason();
+                LocalDate referredOnDate = dto.getReferredOnDate();
+
+                if (referralReason == null || referralReason.isBlank()) {
+                    throw new IllegalArgumentException(
+                            "Referral reason is required");
+                }
+
+                if (referredOnDate == null) {
+                    throw new IllegalArgumentException(
+                            "Referral date is required");
+                }
+
+
+
+                LocalDate monthStart = referredOnDate.withDayOfMonth(1);
+                LocalDate nextMonthStart = monthStart.plusMonths(1);
 
                 GeneralCheckUpFollowUpListDto fields = dto.getFields();
 
@@ -1684,8 +1709,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                             "Follow-up date is required");
                 }
 
-                LocalDate followUpDate = LocalDate.parse(
-                        date.substring(0, 10));
+                LocalDate followUpDate =
+                        LocalDate.parse(date.substring(0, 10));
 
                 String status = fields.getFollowupStatus();
 
@@ -1695,7 +1720,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 }
 
                 boolean referredToHigherFacility =
-                        "referred_to_higher_facility".equalsIgnoreCase(status);
+                        "referred_to_higher_facility"
+                                .equalsIgnoreCase(status);
 
                 if (referredToHigherFacility
                         && (fields.getReferredTo() == null
@@ -1704,11 +1730,23 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                             "Referred-to facility is required");
                 }
 
+                // Find the existing record for this specific referral.
                 GeneralCheckUpFollowUp entity =
-                        new GeneralCheckUpFollowUp();
+                        generalCheckUpFollowUpRepository
+                                .findFirstByBenIdAndReferralReasonAndReferredOnDateGreaterThanEqualAndReferredOnDateLessThan(
+                                        dto.getBeneficiaryId(),
+                                        referralReason,
+                                        monthStart,
+                                        nextMonthStart)
+                                .orElseGet(GeneralCheckUpFollowUp::new);
 
+                // Insert if no matching record exists; otherwise update it.
                 entity.setBenId(dto.getBeneficiaryId());
                 entity.setHouseholdId(dto.getHouseHoldId());
+
+                entity.setReferralReason(referralReason);
+                entity.setReferredOnDate(referredOnDate);
+
                 entity.setFollowUpDate(followUpDate);
                 entity.setFollowupStatus(status);
 
@@ -1721,37 +1759,41 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                 entity.setAshaId(userId);
                 entity.setCreatedBy(username);
 
-                entities.add(entity);
+                GeneralCheckUpFollowUp savedEntity =
+                        generalCheckUpFollowUpRepository.save(entity);
+
+                // Return the saved record with referral information.
+                GeneralCheckUpFollowUpDto response =
+                        new GeneralCheckUpFollowUpDto();
+
+                response.setId(savedEntity.getId());
+                response.setBeneficiaryId(savedEntity.getBenId());
+                response.setHouseHoldId(savedEntity.getHouseholdId());
+
+                response.setReferralReason(savedEntity.getReferralReason());
+                response.setReferredOnDate(
+                        savedEntity.getReferredOnDate() != null
+                                ? savedEntity.getReferredOnDate()
+                                : null
+                );
+
+                GeneralCheckUpFollowUpListDto responseFields =
+                        new GeneralCheckUpFollowUpListDto();
+
+                responseFields.setFollowUpDate(
+                        savedEntity.getFollowUpDate().toString());
+                responseFields.setFollowupStatus(
+                        savedEntity.getFollowupStatus());
+                responseFields.setReferredTo(savedEntity.getReferredTo());
+
+                response.setFields(responseFields);
+
+                result.add(response);
             }
 
-            List<GeneralCheckUpFollowUp> savedEntities =
-                    generalCheckUpFollowUpRepository.saveAll(entities);
-
-            return savedEntities.stream()
-                    .map(entity -> {
-                        GeneralCheckUpFollowUpDto dto =
-                                new GeneralCheckUpFollowUpDto();
-
-                        dto.setId(entity.getId());
-                        dto.setBeneficiaryId(entity.getBenId());
-                        dto.setHouseHoldId(entity.getHouseholdId());
-
-                        GeneralCheckUpFollowUpListDto fields =
-                                new GeneralCheckUpFollowUpListDto();
-
-                        fields.setFollowUpDate(
-                                entity.getFollowUpDate().toString());
-                        fields.setFollowupStatus(
-                                entity.getFollowupStatus());
-                        fields.setReferredTo(entity.getReferredTo());
-
-                        dto.setFields(fields);
-                        return dto;
-                    })
-                    .collect(Collectors.toList());
+            return result;
 
         } catch (Exception e) {
-            // Replace with your project's standard IEMRException constructor.
             throw new RuntimeException(
                     "Error saving General Check-up follow-up", e);
         }
@@ -1775,6 +1817,8 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                       dto.setId(entity.getId());
                       dto.setBeneficiaryId(entity.getBenId());
                       dto.setHouseHoldId(entity.getHouseholdId());
+                      dto.setReferralReason(entity.getReferralReason());
+                      dto.setReferredOnDate(entity.getReferredOnDate());
 
                       GeneralCheckUpFollowUpListDto fields =
                               new GeneralCheckUpFollowUpListDto();
@@ -1786,6 +1830,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
                       fields.setFollowupStatus(entity.getFollowupStatus());
                       fields.setReferredTo(entity.getReferredTo());
+
 
                       dto.setFields(fields);
 

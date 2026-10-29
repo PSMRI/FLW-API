@@ -45,4 +45,10 @@ public class GeneralCheckUpFollowUp {
 
     @Column(name = "updated_date", insertable = false, updatable = false)
     private Timestamp updatedDate;
+
+    @Column(name = "referralReason")
+    private String referralReason;
+
+    @Column(name = "referredOnDate")
+    private LocalDate referredOnDate;
 }
