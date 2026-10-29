@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
+import jakarta.persistence.QueryHint;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +39,8 @@ public interface TBScreeningRepo extends JpaRepository<TBScreening, Long> {
     @Query("SELECT tbs FROM TBScreening tbs WHERE tbs.providerServiceMapID = :psmId AND tbs.deleted = false ORDER BY tbs.visitDate DESC")
     List<TBScreening> findAllByProviderServiceMapID(@Param("psmId") Integer psmId);
 
+    // Read-only: getAll only reads these rows, so Hibernate keeps no change-tracking snapshot per row
+    @QueryHints(@QueryHint(name = "org.hibernate.readOnly", value = "true"))
     @Query("SELECT tbs FROM TBScreening tbs WHERE tbs.benRegID IN " +
             "(SELECT b.beneficiaryRegID FROM BenFlowStatus b WHERE b.providerServiceMapId = :psmId AND b.villageID = :villageId) " +
             "AND tbs.deleted = false ORDER BY tbs.visitDate DESC")

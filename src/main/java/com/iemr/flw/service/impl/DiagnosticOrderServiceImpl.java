@@ -38,6 +38,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -453,7 +454,28 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     private DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult pollResult,
                                                    boolean writeBackWhenClosed, String actingUser) throws Exception {
         Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId());
+        // A poll that brings nothing new must not rewrite the rows: every rewrite resets processed
+        // (so MMU re-uploads the order) and would re-send it to every tablet.
+        boolean resultUnchanged = existingResult.isPresent() && sameResult(existingResult.get(), pollResult);
+        boolean orderUnchanged = sameOrderStatus(order, pollResult);
         DiagnosticResult result = existingResult.orElseGet(DiagnosticResult::new);
+        if (resultUnchanged && orderUnchanged && !writeBackWhenClosed) {
+            ingestAssets(order, pollResult);
+            diagnosticOrderRepo.recordUnchangedPoll(order.getId(), new Timestamp(System.currentTimeMillis()),
+                    order.getRetryCount());
+            DiagnosticOrderResultDto unchanged = new DiagnosticOrderResultDto();
+            unchanged.setExternalOrderId(order.getExternalOrderId());
+            unchanged.setOrderType(order.getOrderType());
+            unchanged.setStatus(order.getStatus());
+            unchanged.setProviderStatus(result.getProviderStatus());
+            unchanged.setResultSummary(result.getResultSummary());
+            unchanged.setErrorMessage(order.getErrorMessage());
+            unchanged.setReasonToClose(order.getReasonToClose());
+            unchanged.setTbPresence(result.getTbPresence());
+            unchanged.setTbConfidence(result.getTbConfidence());
+            unchanged.setDrugResistancePresence(result.getDrugResistancePresence());
+            return unchanged;
+        }
         result.setExternalOrderId(order.getExternalOrderId());
         result.setBeneficiaryId(order.getBeneficiaryId());
         result.setProviderStatus(pollResult.getStatus().name());
@@ -479,6 +501,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             diagnosticResultRepo.save(result);
             if (result.getVanSerialNo() == null) diagnosticResultRepo.updateVanSerialNo(result.getId());
         } catch (DataIntegrityViolationException dive) {
+            // Only a first insert can lose a race (unique external_order_id). Any other integrity
+            // failure means the result was not saved, so the order must not move on without it.
+            if (existingResult.isPresent()) throw dive;
             logger.warn("Lost result upsert race for externalOrderId={}", order.getExternalOrderId());
             result = diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId()).orElse(result);
         }
@@ -578,12 +603,18 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             try {
                 return pollOnceLocked(fresh);
             } catch (Exception e) {
-                fresh.setRetryCount(fresh.getRetryCount() + 1);
-                fresh.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
-                fresh.setErrorMessage(e.getMessage());
-                fresh.setModifiedBy("SYSTEM");
-                fresh.setProcessed("N");
-                diagnosticOrderRepo.save(fresh);
+                int retries = (fresh.getRetryCount() == null ? 0 : fresh.getRetryCount()) + 1;
+                if (java.util.Objects.equals(fresh.getErrorMessage(), e.getMessage())) {
+                    // Same failure as last time: only the attempt is recorded (see recordUnchangedPoll).
+                    diagnosticOrderRepo.recordUnchangedPoll(fresh.getId(), new Timestamp(System.currentTimeMillis()), retries);
+                } else {
+                    fresh.setRetryCount(retries);
+                    fresh.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
+                    fresh.setErrorMessage(e.getMessage());
+                    fresh.setModifiedBy("SYSTEM");
+                    fresh.setProcessed("N");
+                    diagnosticOrderRepo.save(fresh);
+                }
                 throw e;
             }
         });
@@ -613,6 +644,23 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             notifyProviderOrderClosed(fresh, reason);
             return null;
         });
+    }
+
+    private static boolean sameResult(DiagnosticResult stored, DiagnosticPollResult polled) {
+        return java.util.Objects.equals(stored.getProviderStatus(), polled.getStatus() == null ? null : polled.getStatus().name())
+                && java.util.Objects.equals(stored.getResultSummary(), polled.getResultSummary())
+                && java.util.Objects.equals(stored.getTbPresence(), polled.getTbPresence())
+                && java.util.Objects.equals(stored.getTbConfidence(), polled.getTbConfidence())
+                && java.util.Objects.equals(stored.getDrugResistancePresence(), polled.getDrugResistancePresence())
+                && (polled.getAssets() == null || polled.getAssets().isEmpty());
+    }
+
+    private static boolean sameOrderStatus(DiagnosticOrder order, DiagnosticPollResult polled) {
+        return polled.getStatus() != null
+                && polled.getStatus().name().equals(order.getStatus())
+                && java.util.Objects.equals(order.getErrorMessage(), polled.getErrorMessage())
+                && (polled.getProviderOrderId() == null
+                    || polled.getProviderOrderId().equals(order.getProviderOrderId()));
     }
 
     private Optional<DiagnosticOrder> findOutstandingOrder(Long orderId) {
@@ -765,6 +813,41 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         return dto;
     }
 
+    @Override
+    public java.util.Map<Long, java.util.Map<String, Object>> getOrderRecordsByIds(java.util.Collection<Long> ids) {
+        java.util.Map<Long, java.util.Map<String, Object>> out = new java.util.LinkedHashMap<>();
+        for (DiagnosticOrder order : diagnosticOrderRepo.findAllById(ids)) {
+            if (Boolean.TRUE.equals(order.getDeleted())) continue;
+            DiagnosticOrderResultDto dto = toResultDto(order);
+            if (order.getExternalOrderId() != null) {
+                diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId()).ifPresent(result -> {
+                    dto.setProviderStatus(result.getProviderStatus());
+                    dto.setResultSummary(result.getResultSummary());
+                    dto.setTbPresence(result.getTbPresence());
+                    dto.setTbConfidence(result.getTbConfidence());
+                    dto.setDrugResistancePresence(result.getDrugResistancePresence());
+                });
+            }
+            java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+            m.put("id", order.getId());
+            m.put("beneficiaryId", order.getBeneficiaryId());
+            m.put("visitCode", order.getVisitCode());
+            m.put("createdDate", order.getCreatedDate());
+            m.put("externalOrderId", dto.getExternalOrderId());
+            m.put("orderType", dto.getOrderType());
+            m.put("status", dto.getStatus());
+            m.put("providerStatus", dto.getProviderStatus());
+            m.put("resultSummary", dto.getResultSummary());
+            m.put("errorMessage", dto.getErrorMessage());
+            m.put("reasonToClose", dto.getReasonToClose());
+            m.put("tbPresence", dto.getTbPresence());
+            m.put("tbConfidence", dto.getTbConfidence());
+            m.put("drugResistancePresence", dto.getDrugResistancePresence());
+            out.put(order.getId(), m);
+        }
+        return out;
+    }
+
     private DiagnosticOrderResultDto toResultDto(DiagnosticOrder order) {
         DiagnosticOrderResultDto dto = new DiagnosticOrderResultDto();
         dto.setExternalOrderId(order.getExternalOrderId());
@@ -779,16 +862,25 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     public DiagnosticOrderStatusSummaryDto getOrderStatusSummary(String orderType, Integer villageId,
                                                                  Integer providerServiceMapId) {
         DiagnosticOrderType type = DiagnosticOrderType.fromCode(orderType);
-        List<Long> awaitingProviderResult = diagnosticOrderRepo
-                .findBeneficiaryIdsAwaitingProviderResult(type.name(), villageId, providerServiceMapId);
-        List<Long> completed = diagnosticOrderRepo
-                .findBeneficiaryIdsCompleted(type.name(), villageId, providerServiceMapId);
-        List<Long> failed = diagnosticOrderRepo
-                .findBeneficiaryIdsFailed(type.name(), villageId, providerServiceMapId);
-        List<Long> closed = diagnosticOrderRepo
-                .findBeneficiaryIdsClosed(type.name(), villageId, providerServiceMapId);
-        List<Long> awaitingManualEntry = diagnosticOrderRepo
-                .findBeneficiaryIdsAwaitingManualEntry(type.name(), villageId, providerServiceMapId);
+        List<Long> awaitingProviderResult = new ArrayList<>();
+        List<Long> completed = new ArrayList<>();
+        List<Long> failed = new ArrayList<>();
+        List<Long> closed = new ArrayList<>();
+        List<Long> awaitingManualEntry = new ArrayList<>();
+        // One query instead of one per bucket; buckets are the same status groups the per-bucket
+        // queries used (matched case-insensitively, like the database comparison was).
+        for (Object[] row : diagnosticOrderRepo.findLatestOrderStatusByBeneficiary(type.name(), villageId, providerServiceMapId)) {
+            Long beneficiaryId = row[0] != null ? ((Number) row[0]).longValue() : null;
+            String status = row[1] != null ? row[1].toString().toUpperCase(java.util.Locale.ROOT) : "";
+            switch (status) {
+                case "PENDING", "IN_PROGRESS" -> awaitingProviderResult.add(beneficiaryId);
+                case "COMPLETED" -> completed.add(beneficiaryId);
+                case "FAILED" -> failed.add(beneficiaryId);
+                case "CLOSED", "CANCELLED", "EXPIRED", "REFUSED" -> closed.add(beneficiaryId);
+                case "MANUAL_ENTRY" -> awaitingManualEntry.add(beneficiaryId);
+                default -> { }
+            }
+        }
         return new DiagnosticOrderStatusSummaryDto(awaitingProviderResult, completed, failed, closed, awaitingManualEntry);
     }
 

@@ -52,7 +52,7 @@ public class StopTBController {
             if (raw == null) throw new Exception("providerServiceMapID is required");
             Integer villageID = body.get("villageID") != null ? Integer.parseInt(body.get("villageID").toString()) : null;
             Map<String, Object> data = stopTBService.getAllGeneralExaminations(Integer.parseInt(raw.toString()), villageID);
-            response.setResponse(gson.toJson(data));
+            response.setResponse(gson.toJsonTree(data));
         } catch (Exception e) {
             logger.error("Error in getAllGeneralExaminations: " + e);
             response.setError(5000, "Error fetching general examinations: " + e.getMessage());
@@ -85,7 +85,7 @@ public class StopTBController {
             if (raw == null) throw new Exception("providerServiceMapID is required");
             Integer villageID = body.get("villageID") != null ? Integer.parseInt(body.get("villageID").toString()) : null;
             Map<String, Object> data = stopTBService.getAllNurseTBScreenings(Integer.parseInt(raw.toString()), villageID);
-            response.setResponse(gson.toJson(data));
+            response.setResponse(gson.toJsonTree(data));
         } catch (Exception e) {
             logger.error("Error in getAllNurseTBScreenings: " + e);
             response.setError(5000, "Error fetching TB screenings: " + e.getMessage());
@@ -122,7 +122,7 @@ public class StopTBController {
             if (raw == null) throw new Exception("providerServiceMapID is required");
             Integer villageID = body.get("villageID") != null ? Integer.parseInt(body.get("villageID").toString()) : null;
             Map<String, Object> data = stopTBService.getAllGeneralOpd(Integer.parseInt(raw.toString()), villageID);
-            response.setResponse(gson.toJson(data));
+            response.setResponse(gson.toJsonTree(data));
         } catch (Exception e) {
             logger.error("Error in getAllGeneralOpd: " + e);
             response.setError(5000, "Error fetching general OPD records: " + e.getMessage());
@@ -155,7 +155,7 @@ public class StopTBController {
             if (raw == null) throw new Exception("providerServiceMapID is required");
             Integer villageID = body.get("villageID") != null ? Integer.parseInt(body.get("villageID").toString()) : null;
             Map<String, Object> data = stopTBService.getAllDiagnostics(Integer.parseInt(raw.toString()), villageID);
-            response.setResponse(gson.toJson(data));
+            response.setResponse(gson.toJsonTree(data));
         } catch (Exception e) {
             logger.error("Error in getAllDiagnostics: " + e);
             response.setError(5000, "Error fetching diagnostics records: " + e.getMessage());

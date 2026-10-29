@@ -29,8 +29,11 @@ public interface TBSuspectedRepo extends JpaRepository<TBSuspected, Long> {
     @Query("SELECT tbs FROM TBSuspected tbs WHERE tbs.userId = :userId and tbs.visitDate >= :fromDate and tbs.visitDate <= :toDate")
     List<TBSuspected> getByUserId(@Param("userId") Integer userId, @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
 
-    @Query("SELECT tbs FROM TBSuspected tbs WHERE tbs.benId IN " +
-            "(SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.providerServiceMapId = :psmId AND b.villageID = :villageId)")
+    // Same query as before in SQL, with an optimizer hint so the village subquery reads
+    // idx_flow_psm_village_reg instead of the PSM-only index (ignored if that index is missing).
+    @Query(nativeQuery = true, value = "SELECT t.* FROM db_iemr.tb_suspected t WHERE t.ben_id IN " +
+            "(SELECT /*+ INDEX(b idx_flow_psm_village_reg) */ b.beneficiary_id FROM db_iemr.i_ben_flow_outreach b " +
+            "WHERE b.providerServiceMapID = :psmId AND b.villageID = :villageId)")
     List<TBSuspected> getByProviderServiceMapIdAndVillageId(@Param("psmId") Integer psmId, @Param("villageId") Integer villageId);
 
     @Transactional

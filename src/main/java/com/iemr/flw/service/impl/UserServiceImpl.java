@@ -28,7 +28,15 @@ public class UserServiceImpl implements UserService {
 
     public UserServiceRoleDTO getUserDetail(Integer userId) {
         logger.info("calling getUserRole for userId: " + userId);
-        UserServiceRoleDTO userRole = userServiceRoleRepo.getUserRole(userId).get(0);
+        List<UserServiceRoleDTO> roles = userServiceRoleRepo.getUserRole(userId);
+        if (roles == null || roles.isEmpty()) {
+            throw new IllegalStateException("No active role mapping for userId " + userId);
+        }
+        // A user can have several mapping rows. Taking whichever came first dropped the villages
+        // on the others; use the STOP-TB (Nikshay) row when there is one, and the villages of
+        // every row for that same service.
+        UserServiceRoleDTO userRole = primaryRole(userId, roles);
+        mergeVillages(userRole, roles);
         userRole.setFacilityData(facilityDataService.buildFacilityData(userId, userRole.getRoleName()));
 
         // Two different villages can legitimately share the same name (confirmed live:
@@ -101,6 +109,36 @@ public class UserServiceImpl implements UserService {
         }
 
         return userRole;
+    }
+
+    private UserServiceRoleDTO primaryRole(Integer userId, List<UserServiceRoleDTO> roles) {
+        if (roles.size() == 1) return roles.get(0);
+        for (UserServiceRoleDTO role : roles) {
+            List<Object[]> nikshay = userServiceRoleRepo.getNikshayMappingRows(userId, role.getProviderServiceMapId());
+            if (nikshay != null && !nikshay.isEmpty()) return role;
+        }
+        return roles.get(0);
+    }
+
+    // Unions the parallel villageId/villageName lists of every row for the chosen row's service,
+    // keeping first-seen order and one entry per village ID. Rows whose two lists don't line up
+    // are left out of the merge rather than risk pairing an ID with the wrong name.
+    private void mergeVillages(UserServiceRoleDTO userRole, List<UserServiceRoleDTO> roles) {
+        java.util.LinkedHashMap<String, String> byId = new java.util.LinkedHashMap<>();
+        for (UserServiceRoleDTO role : roles) {
+            if (!java.util.Objects.equals(role.getProviderServiceMapId(), userRole.getProviderServiceMapId())) continue;
+            if (role.getVillageId() == null || role.getVillageId().isBlank()
+                    || role.getVillageName() == null || role.getVillageName().isBlank()) continue;
+            String[] ids = role.getVillageId().split(",", -1);
+            String[] names = role.getVillageName().split(",", -1);
+            if (ids.length != names.length) continue;
+            for (int i = 0; i < ids.length; i++) {
+                if (!ids[i].isBlank()) byId.putIfAbsent(ids[i].trim(), names[i].trim());
+            }
+        }
+        if (byId.isEmpty()) return;
+        userRole.setVillageId(String.join(",", byId.keySet()));
+        userRole.setVillageName(String.join(",", byId.values()));
     }
 
     // Zips the parallel villageId/villageName comma lists and rejoins each pair as

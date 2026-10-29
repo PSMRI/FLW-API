@@ -10,6 +10,7 @@ import jakarta.persistence.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +48,11 @@ public class StopTBPrescriptionService {
 
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
+
+    // Off by default: save the prescription only (no store/stock check, no patient issue, stock unchanged).
+    // true = check stock and dispense from the camp store.
+    @Value("${stoptb.dispense.enabled:false}")
+    private boolean dispenseEnabled;
 
     private final Logger logger = LoggerFactory.getLogger(StopTBPrescriptionService.class);
 
@@ -150,6 +156,10 @@ public class StopTBPrescriptionService {
     public Map<String, Object> prescribeAndDispense(Map<String, Object> prescription, Long beneficiaryRegID,
             BenVisitDetail visit, String submissionId, String createdBy, Integer vanID, Integer parkingPlaceID) {
         List<Map<String, Object>> drugs = toList(prescription.get("drugs"));
+        if (!dispenseEnabled) {
+            return prescribeWithoutDispensing(prescription, drugs, beneficiaryRegID, visit, createdBy, vanID,
+                    parkingPlaceID);
+        }
         Map<String, Object> result = new LinkedHashMap<>();
         if (drugs.isEmpty()) {
             // Remarks without medicine are still kept, as MMU saves the visit instruction without drugs.
@@ -176,7 +186,7 @@ public class StopTBPrescriptionService {
             Integer qty = toInt(d.get("qtyPrescribed"));
             if (qty == null || qty <= 0) {
                 // No quantity from the app: tablets/capsules = doses per day x days, other forms = 1.
-                qty = calculateQuantity(d, items.get(drugID));
+                qty = calculateQuantity(d, toInt(items.get(drugID)[7]));
                 if (qty == null) {
                     throw new IllegalArgumentException("qtyPrescribed is required for drugID " + drugID
                             + " (tablet/capsule quantity needs frequency and duration)");
@@ -320,16 +330,43 @@ public class StopTBPrescriptionService {
                 ? "AND v.BeneficiaryRegID IN (SELECT f.beneficiary_reg_id FROM db_iemr.i_ben_flow_outreach f "
                         + "WHERE f.providerServiceMapID = :psm AND f.villageID = :villageID) "
                 : "";
+        Map<String, Object> params = new HashMap<>();
+        params.put("psm", providerServiceMapID);
+        if (villageID != null) params.put("villageID", villageID);
+        return standardOpdRecords("v.ProviderServiceMapID = :psm " + villageFilter, params);
+    }
+
+    // The same records for specific visits (BenVisitID), for the STOP-TB changes feed. A visit that is
+    // deleted or has no complaint or drug is left out, exactly as getStandardOpdRecords leaves it out.
+    public List<Map<String, Object>> getStandardOpdRecordsByVisitIds(Collection<Long> benVisitIds) {
+        if (benVisitIds.isEmpty()) return new ArrayList<>();
+        Map<String, Object> params = new HashMap<>();
+        params.put("ids", benVisitIds);
+        return standardOpdRecords("v.BenVisitID IN (:ids) ", params);
+    }
+
+    // Visit codes among these that getStandardOpdRecords would return (not deleted, with a complaint or drug).
+    public Set<Long> visitCodesWithStandardOpd(Collection<Long> visitCodes) {
+        Set<Long> out = new HashSet<>();
+        if (visitCodes.isEmpty()) return out;
+        Map<String, Object> params = new HashMap<>();
+        params.put("codes", visitCodes);
+        for (Map<String, Object> m : standardOpdRecords("v.VisitCode IN (:codes) ", params)) {
+            out.add((Long) m.get("visitCode"));
+        }
+        return out;
+    }
+
+    private List<Map<String, Object>> standardOpdRecords(String visitFilter, Map<String, Object> params) {
         Query visitQuery = em.createNativeQuery("SELECT v.BenVisitID, v.BeneficiaryRegID, v.VisitCode, v.CreatedBy, "
-                        + "v.CreatedDate, v.LastModDate FROM db_iemr.t_benvisitdetail v "
-                        + "WHERE v.ProviderServiceMapID = :psm AND v.Deleted = false "
+                        + "v.CreatedDate, v.LastModDate, v.ProviderServiceMapID FROM db_iemr.t_benvisitdetail v "
+                        + "WHERE " + visitFilter + "AND v.Deleted = false "
                         + "AND (EXISTS (SELECT 1 FROM db_iemr.t_benchiefcomplaint c WHERE c.BeneficiaryRegID = v.BeneficiaryRegID "
                         + "  AND c.VisitCode = v.VisitCode AND c.ChiefComplaintID IS NOT NULL AND c.Deleted = false) "
                         + " OR EXISTS (SELECT 1 FROM db_iemr.t_prescribeddrug d WHERE d.BeneficiaryRegID = v.BeneficiaryRegID "
                         + "  AND d.VisitCode = v.VisitCode AND d.DrugID IS NOT NULL AND d.Deleted = false)) "
-                        + villageFilter + "ORDER BY v.CreatedDate DESC")
-                .setParameter("psm", providerServiceMapID);
-        if (villageID != null) visitQuery.setParameter("villageID", villageID);
+                        + "ORDER BY v.CreatedDate DESC");
+        params.forEach(visitQuery::setParameter);
         List<Object[]> visits = visitQuery.getResultList();
 
         Map<Long, Map<String, Object>> byVisit = new LinkedHashMap<>();
@@ -338,7 +375,7 @@ public class StopTBPrescriptionService {
             m.put("id", ((Number) v[0]).longValue());
             m.put("beneficiaryRegID", ((Number) v[1]).longValue());
             m.put("visitCode", ((Number) v[2]).longValue());
-            m.put("providerServiceMapID", providerServiceMapID);
+            m.put("providerServiceMapID", v[6] != null ? ((Number) v[6]).intValue() : null);
             m.put("chiefComplaint", new ArrayList<String>());
             m.put("medication", new StringJoiner(", "));
             m.put("dosage", new StringJoiner(", "));
@@ -453,6 +490,68 @@ public class StopTBPrescriptionService {
         }
     }
 
+    /**
+     * Dispensing off (stoptb.dispense.enabled=false): the prescription is saved as the app sent it. No store or
+     * stock check and no patient issue, so drugs from the app's own list need not exist in this camp's store;
+     * DrugID, name and form are taken from the request. A new save replaces the visit's earlier prescription
+     * (same as chief complaints), so an edit or retry does not leave a second copy.
+     */
+    private Map<String, Object> prescribeWithoutDispensing(Map<String, Object> prescription,
+            List<Map<String, Object>> drugs, Long beneficiaryRegID, BenVisitDetail visit, String createdBy,
+            Integer vanID, Integer parkingPlaceID) {
+        for (Map<String, Object> d : drugs) {
+            if (toInt(d.get("drugID")) == null) throw new IllegalArgumentException("drugID is required for every drug");
+        }
+        // Processed='N' so the removal is uploaded to central again (central updates rows it already has).
+        for (String table : new String[] { "t_prescribeddrug", "t_prescription" }) {
+            em.createNativeQuery("UPDATE db_iemr." + table + " SET Deleted = true, Processed = 'N', ModifiedBy = :user "
+                            + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false")
+                    .setParameter("user", createdBy)
+                    .setParameter("ben", beneficiaryRegID)
+                    .setParameter("visitCode", visit.getVisitCode())
+                    .executeUpdate();
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        String instruction = toStr(prescription.get("instruction"));
+        if (!drugs.isEmpty() || (instruction != null && !instruction.isBlank())) {
+            long prescriptionID = insertPrescription(beneficiaryRegID, visit, instruction, createdBy, vanID,
+                    parkingPlaceID);
+            for (Map<String, Object> d : drugs) {
+                Integer qty = toInt(d.get("qtyPrescribed"));
+                if (qty == null || qty <= 0) qty = calculateQuantity(d, toInt(d.get("itemFormID"))); // null if unknown
+                em.createNativeQuery("INSERT INTO db_iemr.t_prescribeddrug (BeneficiaryRegID, BenVisitID, "
+                                + "ProviderServiceMapID, VisitCode, PrescriptionID, DrugForm, DrugID, GenericDrugName, Dose, "
+                                + "Frequency, Duration, DuartionUnit, SpecialInstruction, QtyPrescribed, Deleted, Processed, "
+                                + "CreatedBy, VanID, ParkingPlaceID) VALUES (:ben, :visitID, :psm, :visitCode, "
+                                + ":prescriptionID, :form, :drugID, :name, :dose, :frequency, :duration, :durationUnit, "
+                                + ":instruction, :qty, false, 'N', :user, :van, :pp)")
+                        .setParameter("ben", beneficiaryRegID)
+                        .setParameter("visitID", visit.getBenVisitId())
+                        .setParameter("psm", visit.getProviderServiceMapID())
+                        .setParameter("visitCode", visit.getVisitCode())
+                        .setParameter("prescriptionID", prescriptionID)
+                        .setParameter("form", toStr(d.get("drugForm")))
+                        .setParameter("drugID", toInt(d.get("drugID")))
+                        .setParameter("name", toStr(d.get("drugName")))
+                        .setParameter("dose", toStr(d.get("dose")))
+                        .setParameter("frequency", toStr(d.get("frequency")))
+                        .setParameter("duration", toStr(d.get("duration")))
+                        .setParameter("durationUnit", toStr(d.get("durationUnit")))
+                        .setParameter("instruction", toStr(d.get("instructions")))
+                        .setParameter("qty", qty)
+                        .setParameter("user", createdBy)
+                        .setParameter("van", vanID)
+                        .setParameter("pp", parkingPlaceID)
+                        .executeUpdate();
+                stampVanSerialNo("t_prescribeddrug", "PrescribedDrugID", lastInsertId());
+            }
+            result.put("prescriptionID", prescriptionID);
+        }
+        result.put("dispensed", new ArrayList<Map<String, Object>>());
+        return result;
+    }
+
     // t_prescription row for the visit (Stop TB service line, same as the visit).
     private long insertPrescription(Long beneficiaryRegID, BenVisitDetail visit, String instruction, String createdBy,
             Integer vanID, Integer parkingPlaceID) {
@@ -481,8 +580,7 @@ public class StopTBPrescriptionService {
      * one intake per 7 days. Other forms (syrup, cream, injection, drops...): 1 bottle/tube/vial. Null when a
      * tablet/capsule quantity cannot be worked out (unknown frequency or missing duration).
      */
-    private Integer calculateQuantity(Map<String, Object> drug, Object[] item) {
-        Integer formID = item[7] != null ? ((Number) item[7]).intValue() : null;
+    private Integer calculateQuantity(Map<String, Object> drug, Integer formID) {
         if (formID == null || (formID != 1 && formID != 2)) return 1; // 1 = Tablet, 2 = Capsule
         double perIntake = formID == 2 ? 1 : tabletsPerIntake(toStr(drug.get("dose")));
         String frequency = Optional.ofNullable(toStr(drug.get("frequency"))).orElse("").toUpperCase();

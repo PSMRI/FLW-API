@@ -48,6 +48,14 @@ public interface DiagnosticOrderService {
 
     DiagnosticOrderResultDto getOrderResult(Long beneficiaryId, String orderType, Long visitCode);
 
+    /**
+     * Orders with their result, keyed by order id (STOP-TB changes feed). Deleted orders are left
+     * out. Each record carries what getBeneficiariesByStatus and getOrderResult give today: the
+     * beneficiary, order type, visit code and status (the app buckets by the latest order per
+     * beneficiary and type), plus the result fields.
+     */
+    java.util.Map<Long, java.util.Map<String, Object>> getOrderRecordsByIds(java.util.Collection<Long> ids);
+
     DiagnosticOrder getOrder(Long beneficiaryId, String orderType, Long visitCode) throws Exception;
 
     List<DiagnosticOrder> getOrdersByBeneficiaryId(Long beneficiaryId) throws Exception;
