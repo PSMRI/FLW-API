@@ -87,6 +87,11 @@ public enum StopTBSyncType {
         static final String BEN_ID = "SELECT f.beneficiary_id FROM db_iemr.i_ben_flow_outreach f "
                 + "WHERE f.providerServiceMapID = :psm AND f.villageID IN (:villages)";
         static final String BEN_ID_NOT_DELETED = BEN_ID + " AND f.deleted = 0";
+        // The same, for specific beneficiaries (by BenRegId) that just came into scope.
+        static final String REG_FOR_BENS = "SELECT f.beneficiary_reg_id FROM db_iemr.i_ben_flow_outreach f "
+                + "WHERE f.beneficiary_reg_id IN (:regIds)";
+        static final String BEN_ID_FOR_BENS = "SELECT f.beneficiary_id FROM db_iemr.i_ben_flow_outreach f "
+                + "WHERE f.beneficiary_reg_id IN (:regIds)";
 
         private Scope() {
         }
@@ -95,12 +100,20 @@ public enum StopTBSyncType {
     private final String apiName;
     private final String logEntity;
     private final String snapshotKeySql;
+    private final String keysForBeneficiariesSql;
     private final List<String> sourceTables;
 
     StopTBSyncType(String apiName, String logEntity, String snapshotKeySql, List<String> sourceTables) {
         this.apiName = apiName;
         this.logEntity = logEntity;
         this.snapshotKeySql = snapshotKeySql;
+        // The snapshot query with its village scope swapped for "these beneficiaries" and its keyset
+        // paging dropped. Parameters: :regIds (and :psm where the snapshot filters on it).
+        this.keysForBeneficiariesSql = snapshotKeySql
+                .replace(Scope.BEN_ID_NOT_DELETED, Scope.BEN_ID_FOR_BENS)
+                .replace(Scope.BEN_ID, Scope.BEN_ID_FOR_BENS)
+                .replace(Scope.REG, Scope.REG_FOR_BENS)
+                .replaceAll(" AND \\S+ > :after ORDER BY \\S+ LIMIT :limit$", "");
         this.sourceTables = sourceTables;
     }
 
@@ -115,6 +128,14 @@ public enum StopTBSyncType {
 
     public String snapshotKeySql() {
         return snapshotKeySql;
+    }
+
+    /**
+     * Keys of this type's records for beneficiaries that just came into a tablet's scope, so their
+     * older records (logged before they were in scope) still reach it. Not used for BENEFICIARY.
+     */
+    public String keysForBeneficiariesSql() {
+        return keysForBeneficiariesSql;
     }
 
     public List<String> sourceTables() {

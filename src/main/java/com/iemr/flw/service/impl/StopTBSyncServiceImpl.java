@@ -170,8 +170,9 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
         // One row per record: its latest line in range, and that line's op. Deduplicates a record
         // changed many times since the token.
         List<Object[]> rows = em.createNativeQuery(
-                        "SELECT l.entity, l.row_pk, l.seq, l.op FROM db_iemr.t_sync_change_log l JOIN ("
-                                + "  SELECT c.entity, c.row_pk, MAX(c.seq) AS last_seq FROM db_iemr.t_sync_change_log c "
+                        "SELECT l.entity, l.row_pk, l.seq, l.op, g.scoped FROM db_iemr.t_sync_change_log l JOIN ("
+                                + "  SELECT c.entity, c.row_pk, MAX(c.seq) AS last_seq, MAX(c.op = 'S') AS scoped "
+                                + "  FROM db_iemr.t_sync_change_log c "
                                 + "  WHERE c.seq > :from AND c.seq <= :safe AND c.entity IN (:entities) AND ("
                                 + "    (c.ben_reg_id IS NOT NULL AND EXISTS (SELECT 1 FROM db_iemr.i_ben_flow_outreach f "
                                 + "      WHERE f.beneficiary_reg_id = c.ben_reg_id AND f.providerServiceMapID = :psm AND f.villageID IN (:villages)))"
@@ -210,6 +211,17 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
         keysByType.forEach((type, keys) -> built.put(type, build(type, keys, authorisation)));
 
         List<Map<String, Object>> items = new ArrayList<>();
+        // Beneficiaries that came into scope (op 'S': new flow row, or a village / service change):
+        // their records logged before that never passed the scope check, so send them now.
+        List<Long> scopedRegIds = new ArrayList<>();
+        Map<Long, Long> scopedSeq = new HashMap<>();
+        for (Object[] r : rows) {
+            if (StopTBSyncType.BENEFICIARY.logEntity().equals(r[0]) && r[4] != null && ((Number) r[4]).intValue() == 1) {
+                long regId = ((Number) r[1]).longValue();
+                scopedRegIds.add(regId);
+                scopedSeq.put(regId, ((Number) r[2]).longValue());
+            }
+        }
         long lastSeq = from;
         for (Object[] r : rows) {
             lastSeq = ((Number) r[2]).longValue();
@@ -228,10 +240,36 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
             }
         }
 
+        if (!scopedRegIds.isEmpty()) {
+            long version = scopedSeq.values().stream().mapToLong(Long::longValue).max().orElse(lastSeq);
+            for (StopTBSyncType type : scope.types) {
+                if (type == StopTBSyncType.BENEFICIARY) continue;
+                List<Long> keys = keysForBeneficiaries(type, scope, scopedRegIds);
+                List<Long> alreadySent = keysByType.getOrDefault(type, List.of());
+                keys.removeAll(alreadySent);
+                if (keys.isEmpty()) continue;
+                Map<Long, String> records = build(type, keys, authorisation);
+                for (Long key : keys) {
+                    String data = records.get(key);
+                    if (data != null) items.add(item(type, "upsert", key, version, data));
+                }
+            }
+        }
+
         boolean hasMore = full;
         long nextSeq = hasMore ? lastSeq : safe;
         return page(serverId, false, items,
                 SyncToken.delta(serverId, nextSeq, System.currentTimeMillis() / 1000, scope.typesMask()), hasMore);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Long> keysForBeneficiaries(StopTBSyncType type, Scope scope, List<Long> regIds) {
+        jakarta.persistence.Query q = em.createNativeQuery(type.keysForBeneficiariesSql()).setParameter("regIds", regIds);
+        if (type.keysForBeneficiariesSql().contains(":psm")) q.setParameter("psm", scope.psm);
+        List<Object> rows = q.getResultList();
+        List<Long> keys = new ArrayList<>(rows.size());
+        for (Object r : rows) keys.add(((Number) r).longValue());
+        return keys;
     }
 
     // ── Records, in the same JSON each type's existing endpoint returns ───────
