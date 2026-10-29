@@ -501,6 +501,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             diagnosticResultRepo.save(result);
             if (result.getVanSerialNo() == null) diagnosticResultRepo.updateVanSerialNo(result.getId());
         } catch (DataIntegrityViolationException dive) {
+            // Only a first insert can lose a race (unique external_order_id). Any other integrity
+            // failure means the result was not saved, so the order must not move on without it.
+            if (existingResult.isPresent()) throw dive;
             logger.warn("Lost result upsert race for externalOrderId={}", order.getExternalOrderId());
             result = diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId()).orElse(result);
         }
