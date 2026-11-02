@@ -5,6 +5,9 @@ import lombok.Data;
 
 @Data
 public class IfaDistributionDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     @SerializedName("beneficiaryId")
     private Long beneficiaryId;

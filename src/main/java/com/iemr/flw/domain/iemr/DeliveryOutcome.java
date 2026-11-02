@@ -77,4 +77,11 @@ public class DeliveryOutcome {
     @Column(name = "updated_date")
     private Timestamp updatedDate;
 
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
+
 }

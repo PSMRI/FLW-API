@@ -108,4 +108,11 @@ public class DiagnosticOrder {
 
     @Column(name = "vanSerialNo", updatable = false)
     private Long vanSerialNo;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

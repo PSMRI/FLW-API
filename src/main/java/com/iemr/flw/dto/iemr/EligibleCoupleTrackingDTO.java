@@ -7,6 +7,9 @@ import java.sql.Timestamp;
 
 @Data
 public class EligibleCoupleTrackingDTO implements Serializable {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private Long id;
 
@@ -46,5 +49,6 @@ public class EligibleCoupleTrackingDTO implements Serializable {
 
     private String dischargeSummary1;
     private String dischargeSummary2;
+
 
 }

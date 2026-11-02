@@ -50,4 +50,10 @@ public class NonPregnantWomanHighRiskAssess {
     @Column(name = "visit_date")
     private Timestamp visitDate;
 
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

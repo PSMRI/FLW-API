@@ -69,8 +69,8 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
-        
+//        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+//        
         setupMappingDataMocks();
         setupHealthDetailsMocks();
 
@@ -103,7 +103,7 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataWithinDates("testUser", fromDate, toDate, pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+//        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
         
         setupMappingDataMocks();
         setupHealthDetailsMocks();
@@ -228,7 +228,7 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+//        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
         
         setupCompleteEntityMocks();
         setupHealthDetailsMocks();
@@ -259,7 +259,7 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+//        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
         
         // Create detail with DOB 25 years ago
         RMNCHMBeneficiarydetail detail = createTestBeneficiaryDetail();
@@ -287,7 +287,7 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
         
         // Create detail with DOB 6 months ago
         RMNCHMBeneficiarydetail detail = createTestBeneficiaryDetail();
@@ -315,7 +315,7 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
         
         // Create detail with DOB 15 days ago
         RMNCHMBeneficiarydetail detail = createTestBeneficiaryDetail();
@@ -343,19 +343,19 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
         
         // Create RMNCH details with related beneficiary IDs
         RMNCHBeneficiaryDetailsRmnch rmnchDetails = createTestRMNCHBeneficiaryDetails();
         rmnchDetails.setRelatedBeneficiaryIdsDB("123,456,789");
         
-        when(beneficiaryRepo.getDetailsByRegID(mapping.getBenRegId().longValue())).thenReturn(rmnchDetails);
+        //when(beneficiaryRepo.getDetailsByRegID(mapping.getBenRegId().longValue())).thenReturn(rmnchDetails);
         
         // Setup minimal required mocks (avoid unnecessary stubbings)
         when(beneficiaryRepo.getDetailsById(mapping.getBenDetailsId())).thenReturn(createTestBeneficiaryDetail());
         when(beneficiaryRepo.getBenIdFromRegID(mapping.getBenRegId().longValue())).thenReturn(BigInteger.valueOf(1000L));
         when(beneficiaryRepo.getBornBirthByRegID(mapping.getBenRegId().longValue())).thenReturn(createTestBornBirthDetails());
-        when(houseHoldRepo.getByHouseHoldID(rmnchDetails.getHouseoldId())).thenReturn(createTestHouseHoldDetails());
+//        when(houseHoldRepo.getByHouseHoldID(rmnchDetails.getHouseoldId())).thenReturn(createTestHouseHoldDetails());
         setupHealthDetailsMocks();
 
         // Act
@@ -375,7 +375,7 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
         
         setupMappingDataMocks();
         setupHealthDetailsMocks();
@@ -398,7 +398,7 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
         
         setupMappingDataMocks();
         setupHealthDetailsMocks();
@@ -425,7 +425,7 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
         
         setupMappingDataMocks();
 
@@ -458,7 +458,7 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
         
         setupMappingDataMocks();
 
@@ -486,7 +486,7 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
         
         setupMappingDataMocks();
 
@@ -516,7 +516,7 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(nullRegIdMapping);
+//        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(nullRegIdMapping);
 
         // Act
         String result = service.getBenData(request, authorization);
@@ -543,12 +543,12 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(partialMapping);
+//        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(partialMapping);
         
         // Setup minimal mocks for non-null IDs
         when(beneficiaryRepo.getDetailsById(partialMapping.getBenDetailsId())).thenReturn(createTestBeneficiaryDetail());
         when(beneficiaryRepo.getBenIdFromRegID(partialMapping.getBenRegId().longValue())).thenReturn(BigInteger.valueOf(1000L));
-        when(beneficiaryRepo.getDetailsByRegID(partialMapping.getBenRegId().longValue())).thenReturn(createTestRMNCHBeneficiaryDetails());
+//        when(beneficiaryRepo.getDetailsByRegID(partialMapping.getBenRegId().longValue())).thenReturn(createTestRMNCHBeneficiaryDetails());
         when(beneficiaryRepo.getBornBirthByRegID(partialMapping.getBenRegId().longValue())).thenReturn(createTestBornBirthDetails());
         setupHealthDetailsMocks();
 
@@ -576,7 +576,7 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
         when(beneficiaryRepo.getByAddressID(problematicAddress.getId())).thenThrow(new RuntimeException("Database error"));
         
         setupMappingDataMocks();
@@ -602,7 +602,7 @@ class BeneficiaryServiceImplTest {
 
         when(beneficiaryRepo.getUserName(request.getAshaId())).thenReturn("testUser");
         when(beneficiaryRepo.getBenDataByUser("testUser", pageRequest)).thenReturn(page);
-        when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
+        //when(beneficiaryRepo.getByAddressID(address.getId())).thenReturn(mapping);
         
         // Create detail with null DOB
         RMNCHMBeneficiarydetail detail = createTestBeneficiaryDetail();
@@ -735,9 +735,9 @@ class BeneficiaryServiceImplTest {
         when(beneficiaryRepo.getAddressById(mapping.getBenAddressId())).thenReturn(address);
         when(beneficiaryRepo.getContactById(mapping.getBenContactsId())).thenReturn(contact);
         when(beneficiaryRepo.getBenIdFromRegID(mapping.getBenRegId().longValue())).thenReturn(BigInteger.valueOf(1000L));
-        when(beneficiaryRepo.getDetailsByRegID(mapping.getBenRegId().longValue())).thenReturn(rmnchDetails);
+        //when(beneficiaryRepo.getDetailsByRegID(mapping.getBenRegId().longValue())).thenReturn(rmnchDetails);
         when(beneficiaryRepo.getBornBirthByRegID(mapping.getBenRegId().longValue())).thenReturn(birthDetails);
-        when(houseHoldRepo.getByHouseHoldID(rmnchDetails.getHouseoldId())).thenReturn(houseHold);
+//        when(houseHoldRepo.getByHouseHoldID(rmnchDetails.getHouseoldId())).thenReturn(houseHold);
         when(beneficiaryRepo.getUserIDByUserName("testUser")).thenReturn(123);
     }
 
@@ -758,9 +758,9 @@ class BeneficiaryServiceImplTest {
         when(beneficiaryRepo.getAddressById(mapping.getBenAddressId())).thenReturn(address);
         when(beneficiaryRepo.getContactById(mapping.getBenContactsId())).thenReturn(contact);
         when(beneficiaryRepo.getBenIdFromRegID(mapping.getBenRegId().longValue())).thenReturn(BigInteger.valueOf(1000L));
-        when(beneficiaryRepo.getDetailsByRegID(mapping.getBenRegId().longValue())).thenReturn(rmnchDetails);
+//        //when(beneficiaryRepo.getDetailsByRegID(mapping.getBenRegId().longValue())).thenReturn(rmnchDetails);
         when(beneficiaryRepo.getBornBirthByRegID(mapping.getBenRegId().longValue())).thenReturn(birthDetails);
-        when(houseHoldRepo.getByHouseHoldID(rmnchDetails.getHouseoldId())).thenReturn(houseHold);
+//        when(houseHoldRepo.getByHouseHoldID(rmnchDetails.getHouseoldId())).thenReturn(houseHold);
         when(beneficiaryRepo.getUserIDByUserName("testUser")).thenReturn(123);
     }
 

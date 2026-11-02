@@ -3,6 +3,8 @@ package com.iemr.flw.domain.iemr;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.sql.Timestamp;
+
 @Entity
 @Data
 @Table(name = "general_opd_entry") // Updated table name
@@ -42,4 +44,11 @@ public class GeneralOpdEntry {
 
     @Column(name = "follow_up_date")
     private String followUpDate;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

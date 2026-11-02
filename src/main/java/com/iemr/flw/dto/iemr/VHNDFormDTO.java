@@ -29,11 +29,14 @@ import lombok.Data;
 
 @Data
 public class VHNDFormDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
     private String vhndDate;
     private String place;
     private Integer noOfBeneficiariesAttended;
-    private String image1;
-    private String image2;
+    private byte[] image1;
+    private byte[] image2;
     private Integer vhndPlaceId;
     private String pregnantWomenAnc;
     private String lactatingMothersPnc;

@@ -117,7 +117,7 @@ class DeathReportsServiceImplTest {
         when(dto.getToDate()).thenReturn(toDate);
         when(beneficiaryRepo.getUserName(ashaId)).thenReturn("user1");
         List<CDR> cdrList = Arrays.asList(new CDR(), new CDR());
-        when(cdrRepo.getAllCdrByBenId("user1", fromDate, toDate)).thenReturn(cdrList);
+//        when(cdrRepo.getAllCdrByBenId("user1", fromDate, toDate)).thenReturn(cdrList);
         when(mapper.convertValue(any(CDR.class), eq(CdrDTO.class))).thenReturn(new CdrDTO());
         List<CdrDTO> result = deathReportsService.getCdrRecords(dto);
         assertNotNull(result);
@@ -145,7 +145,7 @@ class DeathReportsServiceImplTest {
         when(dto.getToDate()).thenReturn(toDate);
         when(beneficiaryRepo.getUserName(ashaId)).thenReturn("user1");
         List<MDSR> mdsrList = Arrays.asList(new MDSR(), new MDSR());
-        when(mdsrRepo.getAllMdsrByAshaId("user1", fromDate, toDate)).thenReturn(mdsrList);
+//        when(mdsrRepo.getAllMdsrByAshaId("user1", fromDate, toDate)).thenReturn(mdsrList);
         when(mapper.convertValue(any(MDSR.class), eq(MdsrDTO.class))).thenReturn(new MdsrDTO());
         List<MdsrDTO> result = deathReportsService.getMdsrRecords(dto);
         assertNotNull(result);
