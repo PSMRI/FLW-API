@@ -38,5 +38,8 @@ public enum ValidationType {
     REGEX,
     /** Field becomes mandatory when another field equals a specific value.
      *  validationParam format: "QUESTION_UUID=OPTION_VALUE" e.g. "Q-GENDER=FEMALE". */
-    MANDATORY_IF
+    MANDATORY_IF,
+    /** Display unit for a numeric answer. validationParam = unit label e.g. "sq. m.".
+     *  Informational only — not a rule the answer is checked against. */
+    UNIT
 }

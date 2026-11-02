@@ -15,14 +15,11 @@ public class DiagnosticOrderRequestDto {
     private Long beneficiaryId;
 
     @NotNull
-    private Long visitCode;
-
-    @NotNull
     private String orderType;
 
     private String orderEvent;
 
-    private String reasonForRefusal;
+    private String reasonToClose;
 
     @NotNull
     @Valid

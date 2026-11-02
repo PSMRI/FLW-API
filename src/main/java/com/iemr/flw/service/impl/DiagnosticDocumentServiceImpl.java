@@ -116,7 +116,7 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         String orderType = documentType.impliedOrderType().name();
         DiagnosticOrder order;
         if (visitCode != null) {
-            order = diagnosticOrderRepo.findByBeneficiaryIdAndVisitCodeAndOrderType(beneficiaryId, visitCode, orderType)
+            order = diagnosticOrderRepo.findFirstByBeneficiaryIdAndVisitCodeAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, visitCode, orderType)
                     .orElseThrow(() -> new Exception("No diagnostic order found for beneficiaryId=" + beneficiaryId
                             + ", visitCode=" + visitCode + ", orderType=" + orderType));
         } else {

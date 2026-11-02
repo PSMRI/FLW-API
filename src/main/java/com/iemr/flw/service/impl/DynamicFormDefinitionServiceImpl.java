@@ -30,6 +30,7 @@ import com.iemr.flw.domain.iemr.QuestionValidation;
 import com.iemr.flw.domain.iemr.SectionQuestion;
 import com.iemr.flw.dto.iemr.DynamicFormDTO;
 import com.iemr.flw.dto.iemr.FormSectionDTO;
+import com.iemr.flw.dto.iemr.LatestFormVersionDTO;
 import com.iemr.flw.dto.iemr.OptionConditionDTO;
 import com.iemr.flw.dto.iemr.QuestionOptionDTO;
 import com.iemr.flw.dto.iemr.QuestionValidationDTO;
@@ -150,7 +151,9 @@ public class DynamicFormDefinitionServiceImpl implements DynamicFormDefinitionSe
                 .stream()
                 .map(form -> {
                     try {
-                        return loadLatestFromDb(form.getFormId());
+                        DynamicFormDTO latest = loadLatestFromDb(form.getFormId());
+                        latest.setVersions(loadAllVersionsFromDb(form.getFormId()));
+                        return latest;
                     } catch (RuntimeException e) {
                         log.warn("Skipping form {} — no active version: {}", form.getFormId(), e.getMessage());
                         return null;
@@ -211,6 +214,10 @@ public class DynamicFormDefinitionServiceImpl implements DynamicFormDefinitionSe
                     for (QuestionOptionDTO oDto : qDto.getOptions()) {
                         QuestionOption opt = mapper.toEntity(oDto);
                         opt.setSectionQuestion(savedQ);
+                        if (opt.getOptionUuid() == null || opt.getOptionUuid().isBlank()) {
+                            opt.setOptionUuid(QuestionOption.buildOptionUuid(
+                                    version.getDynamicForm().getFormType(), opt.getOptionValue()));
+                        }
                         opt.setConditions(new ArrayList<>());
                         QuestionOption savedOpt = optionRepo.save(opt);
                         if (oDto.getConditions() != null && !oDto.getConditions().isEmpty()) {
@@ -266,6 +273,14 @@ public class DynamicFormDefinitionServiceImpl implements DynamicFormDefinitionSe
 
     // ── LOAD / READ HELPERS ───────────────────────────────────────────────────
 
+    /** Full definition of every active version of the form, oldest first. */
+    private List<DynamicFormDTO> loadAllVersionsFromDb(Long formId) {
+        return versionRepo.findByDynamicForm_FormIdOrderByVersionNumberAsc(formId).stream()
+                .filter(version -> Boolean.TRUE.equals(version.getIsActive()))
+                .map(version -> buildFormDto(version.getDynamicForm(), version))
+                .collect(Collectors.toList());
+    }
+
     private DynamicFormDTO loadLatestFromDb(Long formId) {
         FormVersion version = versionRepo.findByDynamicForm_FormIdAndIsLatest(formId, true)
                 .orElseThrow(() -> new RuntimeException("No active version for formId: " + formId));
@@ -280,7 +295,7 @@ public class DynamicFormDefinitionServiceImpl implements DynamicFormDefinitionSe
     private DynamicFormDTO buildFormDto(DynamicForm form, FormVersion version) {
         // Query 1: sections
         List<FormSection> sections = sectionRepo
-                .findByFormVersion_VersionIdOrderByDisplayOrderAsc(version.getVersionId());
+                .findByFormVersion_VersionIdAndIsActiveTrueOrderByDisplayOrderAsc(version.getVersionId());
         if (sections.isEmpty()) {
             DynamicFormDTO dto = mapper.toDto(form);
             dto.setVersionNumber(version.getVersionNumber());
@@ -413,4 +428,9 @@ public class DynamicFormDefinitionServiceImpl implements DynamicFormDefinitionSe
                 .orElseThrow(() -> new RuntimeException("Question not found: " + questionId));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<LatestFormVersionDTO> getLatestFormVersions() {
+        return versionRepo.findLatestVersionOfActiveForms();
+    }
 }

@@ -2,6 +2,7 @@ package com.iemr.flw.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.iemr.flw.service.StopTBPrescriptionService;
 import com.iemr.flw.service.StopTBService;
 import com.iemr.flw.utils.response.OutputResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,7 +52,7 @@ public class StopTBController {
             if (raw == null) throw new Exception("providerServiceMapID is required");
             Integer villageID = body.get("villageID") != null ? Integer.parseInt(body.get("villageID").toString()) : null;
             Map<String, Object> data = stopTBService.getAllGeneralExaminations(Integer.parseInt(raw.toString()), villageID);
-            response.setResponse(gson.toJson(data));
+            response.setResponse(gson.toJsonTree(data));
         } catch (Exception e) {
             logger.error("Error in getAllGeneralExaminations: " + e);
             response.setError(5000, "Error fetching general examinations: " + e.getMessage());
@@ -84,7 +85,7 @@ public class StopTBController {
             if (raw == null) throw new Exception("providerServiceMapID is required");
             Integer villageID = body.get("villageID") != null ? Integer.parseInt(body.get("villageID").toString()) : null;
             Map<String, Object> data = stopTBService.getAllNurseTBScreenings(Integer.parseInt(raw.toString()), villageID);
-            response.setResponse(gson.toJson(data));
+            response.setResponse(gson.toJsonTree(data));
         } catch (Exception e) {
             logger.error("Error in getAllNurseTBScreenings: " + e);
             response.setError(5000, "Error fetching TB screenings: " + e.getMessage());
@@ -101,6 +102,10 @@ public class StopTBController {
         try {
             List<Map<String, Object>> result = stopTBService.saveGeneralOpd(dataList);
             response.setResponse(gson.toJson(result));
+        } catch (StopTBPrescriptionService.InsufficientStockException e) {
+            // Nothing was saved; the app shows this and lets the nurse lower the quantity.
+            logger.warn("saveGeneralOpd rejected: " + e.getMessage());
+            response.setError(5000, e.getMessage());
         } catch (Exception e) {
             logger.error("Error in saveGeneralOpd: " + e);
             response.setError(5000, "Error saving general OPD: " + e.getMessage());
@@ -117,7 +122,7 @@ public class StopTBController {
             if (raw == null) throw new Exception("providerServiceMapID is required");
             Integer villageID = body.get("villageID") != null ? Integer.parseInt(body.get("villageID").toString()) : null;
             Map<String, Object> data = stopTBService.getAllGeneralOpd(Integer.parseInt(raw.toString()), villageID);
-            response.setResponse(gson.toJson(data));
+            response.setResponse(gson.toJsonTree(data));
         } catch (Exception e) {
             logger.error("Error in getAllGeneralOpd: " + e);
             response.setError(5000, "Error fetching general OPD records: " + e.getMessage());
@@ -150,7 +155,7 @@ public class StopTBController {
             if (raw == null) throw new Exception("providerServiceMapID is required");
             Integer villageID = body.get("villageID") != null ? Integer.parseInt(body.get("villageID").toString()) : null;
             Map<String, Object> data = stopTBService.getAllDiagnostics(Integer.parseInt(raw.toString()), villageID);
-            response.setResponse(gson.toJson(data));
+            response.setResponse(gson.toJsonTree(data));
         } catch (Exception e) {
             logger.error("Error in getAllDiagnostics: " + e);
             response.setError(5000, "Error fetching diagnostics records: " + e.getMessage());

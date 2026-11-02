@@ -29,6 +29,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for option conditions.
@@ -37,6 +38,13 @@ import java.util.List;
 public interface OptionConditionRepo extends JpaRepository<OptionCondition, Long> {
 
     List<OptionCondition> findByQuestionOption_OptionId(Long optionId);
+
+    /** No surrogate natural key on conditions — matched by (actionType, target) within an option. */
+    Optional<OptionCondition> findByQuestionOption_OptionIdAndActionTypeAndTargetQuestion_QuestionUuid(
+            Long optionId, String actionType, String targetQuestionUuid);
+
+    Optional<OptionCondition> findByQuestionOption_OptionIdAndActionTypeAndTargetSection_SectionUuid(
+            Long optionId, String actionType, String targetSectionUuid);
 
     @Query("SELECT oc.targetQuestion.questionId FROM OptionCondition oc "
             + "WHERE oc.questionOption.sectionQuestion.formSection.formVersion.versionId = :versionId "
@@ -47,9 +55,11 @@ public interface OptionConditionRepo extends JpaRepository<OptionCondition, Long
      * Loads all conditions for a set of options in one query.
      * JOIN FETCH ensures questionOption, targetQuestion, and targetSection are hydrated
      * so callers can group and resolve references without extra queries.
+     * Excludes removed (isActive=false) conditions — used only by read paths; reconciliation matching
+     * uses the natural-key finders above, which must see inactive rows too.
      */
     @Query("SELECT c FROM OptionCondition c JOIN FETCH c.questionOption "
             + "LEFT JOIN FETCH c.targetQuestion LEFT JOIN FETCH c.targetSection "
-            + "WHERE c.questionOption.optionId IN :optionIds")
+            + "WHERE c.questionOption.optionId IN :optionIds AND c.isActive = true")
     List<OptionCondition> findByOptionIds(@Param("optionIds") Collection<Long> optionIds);
 }

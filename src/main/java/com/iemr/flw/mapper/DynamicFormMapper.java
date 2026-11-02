@@ -48,6 +48,7 @@ public interface DynamicFormMapper {
 
     @Mapping(target = "sections", ignore = true)
     @Mapping(target = "versionNumber", ignore = true)
+    @Mapping(target = "versions", ignore = true)
     DynamicFormDTO toDto(DynamicForm entity);
 
     FormVersionDTO toDto(FormVersion entity);

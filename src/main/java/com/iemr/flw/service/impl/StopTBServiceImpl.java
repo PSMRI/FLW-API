@@ -30,6 +30,7 @@ import com.iemr.flw.repo.iemr.StopTBGeneralExaminationRepo;
 import com.iemr.flw.repo.iemr.StopTBGeneralOpdRepo;
 import com.iemr.flw.repo.iemr.TBScreeningRepo;
 import com.iemr.flw.service.CampConfigService;
+import com.iemr.flw.service.StopTBPrescriptionService;
 import com.iemr.flw.service.StopTBService;
 import com.iemr.flw.service.TBStopVisitService;
 import org.slf4j.Logger;
@@ -50,6 +51,9 @@ public class StopTBServiceImpl implements StopTBService {
 
     @Autowired
     private CampConfigService campConfigService;
+
+    @Autowired
+    private StopTBPrescriptionService stopTBPrescriptionService;
 
     @Autowired
     private BenFlowStatusRepo benFlowStatusRepo;
@@ -254,6 +258,13 @@ public class StopTBServiceImpl implements StopTBService {
             screening.setKeyPopulationRiskFactors(toJsonString(data.get("keyPopulationRiskFactors")));
             screening.setHivStatusId(getInt(data, "hivStatusId"));
             screening.setHivStatus(getString(data, "hivStatus"));
+            screening.setChestPain(getBool(data, "chestPain"));
+            screening.setShortnessOfBreath(getBool(data, "shortnessOfBreath"));
+            screening.setFatigue(getBool(data, "fatigue"));
+            screening.setFailureToGainWeight(getBool(data, "failureToGainWeightInChildren"));
+            screening.setDecreasedActivityOrPlayfulness(getBool(data, "decreasedActivityOrPlayfulnessInChildren"));
+            screening.setOthers(getBool(data, "otherSymptoms"));
+
             String symptomaticInput = getString(data, "symptomatic");
             if ("Yes".equalsIgnoreCase(symptomaticInput)) {
                 screening.setSympotomatic(null);
@@ -349,23 +360,59 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("visitDate", s.getVisitDate());
         m.put("updateDate", s.getLastModDate());
         m.put("updatedBy", s.getModifiedBy());
+        m.put("chestPain", s.getChestPain());
+        m.put("shortnessOfBreath", s.getShortnessOfBreath());
+        m.put("fatigue", s.getFatigue());
+        m.put("failureToGainWeightInChildren", s.getFailureToGainWeight());
+        m.put("decreasedActivityOrPlayfulnessInChildren", s.getDecreasedActivityOrPlayfulness());
+        m.put("otherSymptoms", s.getOthers());
         return m;
     }
 
     // ── Nurse: General OPD ────────────────────────────────────────────────────
 
+    // Whole list is one transaction: any failure (incl. insufficient stock) rolls back every record.
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public List<Map<String, Object>> saveGeneralOpd(List<Map<String, Object>> dataList) throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
-        Integer vanID = campConfigService.getVanID();
         Integer parkingPlaceID = campConfigService.getParkingPlaceID();
         for (Map<String, Object> data : dataList) {
             Long beneficiaryRegID = getLong(data, "beneficiaryRegID");
             if (beneficiaryRegID == null) throw new Exception("beneficiaryRegID is required");
+            Integer vanID = campConfigService.resolveVanID(getInt(data, "vanID"));
 
             Integer providerServiceMapID = getInt(data, "providerServiceMapID");
             String createdBy = getString(data, "createdBy");
+
+            // New payload (chiefComplaints[] / prescription.drugs[]): AMRIT standard tables only, with dispensing.
+            // tb_stoptb_general_opd is not written; getAll and the Nikshay export read the standard tables.
+            if (data.get("chiefComplaints") instanceof List || data.get("prescription") instanceof Map) {
+                if (providerServiceMapID == null) throw new Exception("providerServiceMapID is required");
+                if (createdBy == null || createdBy.isBlank()) throw new Exception("createdBy is required");
+                String submissionId = getString(data, "submissionId");
+                Map<String, Object> previous = stopTBPrescriptionService.findPreviousSubmission(beneficiaryRegID, submissionId);
+                if (previous != null) {
+                    results.add(previous);
+                    continue;
+                }
+                BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
+                        createdBy, vanID, parkingPlaceID);
+                Map<String, Object> result = new LinkedHashMap<>();
+                result.put("beneficiaryRegID", beneficiaryRegID);
+                result.put("visitCode", visit.getVisitCode());
+                stopTBPrescriptionService.saveChiefComplaints(toMapList(data.get("chiefComplaints")), beneficiaryRegID,
+                        visit, createdBy, vanID, parkingPlaceID);
+                if (data.get("prescription") instanceof Map) {
+                    result.putAll(stopTBPrescriptionService.prescribeAndDispense(
+                            (Map<String, Object>) data.get("prescription"), beneficiaryRegID, visit, submissionId,
+                            createdBy, vanID, parkingPlaceID));
+                }
+                results.add(result);
+                continue;
+            }
+
+            // Old app payload (free-text chiefComplaint / medication): unchanged behaviour.
             BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
                     createdBy, vanID, parkingPlaceID);
 
@@ -403,13 +450,30 @@ public class StopTBServiceImpl implements StopTBService {
         return results;
     }
 
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> toMapList(Object v) {
+        return v instanceof List ? (List<Map<String, Object>>) v : null;
+    }
+
+    // Standard tables first (visits saved with the new payload); for older visits, which exist only in
+    // tb_stoptb_general_opd, fall back to that table. Same response fields either way.
     @Override
     public Map<String, Object> getAllGeneralOpd(Integer providerServiceMapID, Integer villageID) throws Exception {
+        List<Map<String, Object>> items = stopTBPrescriptionService.getStandardOpdRecords(providerServiceMapID, villageID);
+        Set<Long> standardVisitCodes = new HashSet<>();
+        for (Map<String, Object> item : items) standardVisitCodes.add((Long) item.get("visitCode"));
+
         List<StopTBGeneralOpd> list = (villageID != null)
                 ? generalOpdRepo.findAllByProviderServiceMapIDAndVillageID(providerServiceMapID, villageID)
                 : generalOpdRepo.findAllByProviderServiceMapID(providerServiceMapID);
-        List<Map<String, Object>> items = new ArrayList<>();
-        for (StopTBGeneralOpd o : list) items.add(opdToMap(o));
+        for (StopTBGeneralOpd o : list) {
+            if (o.getVisitCode() == null || !standardVisitCodes.contains(o.getVisitCode())) items.add(opdToMap(o));
+        }
+        items.sort((a, b) -> {
+            Date da = (Date) a.get("createdDate"), db = (Date) b.get("createdDate");
+            if (da == null || db == null) return da == null ? (db == null ? 0 : 1) : -1;
+            return db.compareTo(da);
+        });
         Map<String, Object> result = new HashMap<>();
         result.put("data", items);
         result.put("count", items.size());
@@ -427,6 +491,7 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("dosage", o.getDosage());
         m.put("frequency", o.getFrequency());
         m.put("duration", o.getDuration());
+        m.put("drugs", Collections.emptyList()); // old free-text records have no per-drug details
         m.put("notes", o.getNotes());
         m.put("createdBy", o.getCreatedBy());
         m.put("createdDate", o.getCreatedDate());
@@ -514,6 +579,61 @@ public class StopTBServiceImpl implements StopTBService {
         return result;
     }
 
+    // ── By id, for the changes feed ───────────────────────────────────────────
+
+    @Override
+    public Map<Long, Map<String, Object>> getNurseTBScreeningsByIds(Collection<Long> ids) {
+        Map<Long, Map<String, Object>> out = new LinkedHashMap<>();
+        for (TBScreening s : tbScreeningRepo.findAllById(ids)) {
+            if (!Boolean.TRUE.equals(s.getDeleted())) out.put(s.getId(), screeningToMap(s));
+        }
+        return out;
+    }
+
+    @Override
+    public Map<Long, Map<String, Object>> getGeneralExaminationsByIds(Collection<Long> ids) {
+        Map<Long, Map<String, Object>> out = new LinkedHashMap<>();
+        for (StopTBGeneralExamination e : generalExaminationRepo.findAllById(ids)) {
+            if (!Boolean.TRUE.equals(e.getDeleted())) out.put(e.getId(), examToMap(e));
+        }
+        return out;
+    }
+
+    @Override
+    public Map<Long, Map<String, Object>> getDiagnosticsByIds(Collection<Long> ids) {
+        Map<Long, Map<String, Object>> out = new LinkedHashMap<>();
+        for (StopTBDiagnostics d : diagnosticsRepo.findAllById(ids)) {
+            if (!Boolean.TRUE.equals(d.getDeleted())) out.put(d.getId(), diagnosticsToMap(d));
+        }
+        return out;
+    }
+
+    @Override
+    public Map<Long, Map<String, Object>> getGeneralOpdByVisitIds(Collection<Long> benVisitIds) {
+        Map<Long, Map<String, Object>> out = new LinkedHashMap<>();
+        for (Map<String, Object> m : stopTBPrescriptionService.getStandardOpdRecordsByVisitIds(benVisitIds)) {
+            out.put((Long) m.get("id"), m);
+        }
+        return out;
+    }
+
+    @Override
+    public Map<Long, Map<String, Object>> getLegacyGeneralOpdByIds(Collection<Long> ids) {
+        List<StopTBGeneralOpd> rows = new ArrayList<>();
+        Set<Long> visitCodes = new HashSet<>();
+        for (StopTBGeneralOpd o : generalOpdRepo.findAllById(ids)) {
+            if (Boolean.TRUE.equals(o.getDeleted())) continue;
+            rows.add(o);
+            if (o.getVisitCode() != null) visitCodes.add(o.getVisitCode());
+        }
+        Set<Long> standard = stopTBPrescriptionService.visitCodesWithStandardOpd(visitCodes);
+        Map<Long, Map<String, Object>> out = new LinkedHashMap<>();
+        for (StopTBGeneralOpd o : rows) {
+            if (o.getVisitCode() == null || !standard.contains(o.getVisitCode())) out.put(o.getId(), opdToMap(o));
+        }
+        return out;
+    }
+
     private Map<String, Object> diagnosticsToMap(StopTBDiagnostics d) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", d.getId());
@@ -562,10 +682,33 @@ public class StopTBServiceImpl implements StopTBService {
         return Collections.emptyMap();
     }
 
+    // Latest non-null height/weight/bmi/temperatureValue for the beneficiary. Identity-API's
+    // syncDataToAmrit writes these to t_phy_anthropometry / t_phy_vitals at registration;
+    // otherFields is only a fallback for beneficiaries registered before that.
+    private Map<String, Object> getLatestAnthropometry(Long beneficiaryRegID) {
+        Map<String, Object> values = new HashMap<>();
+        for (BenAnthropometryDetail a : benAnthropometryRepo.findByBeneficiaryRegIDOrderByCreatedDateDesc(beneficiaryRegID)) {
+            if (a.getHeightCm() != null) values.putIfAbsent("height", a.getHeightCm());
+            if (a.getWeightKg() != null) values.putIfAbsent("weight", a.getWeightKg());
+            if (a.getBmi() != null) values.putIfAbsent("bmi", a.getBmi());
+        }
+        for (BenPhysicalVitalDetail v : benPhysicalVitalRepo.findByBeneficiaryRegIDOrderByCreatedDateDesc(beneficiaryRegID)) {
+            if (v.getTemperature() != null) {
+                values.put("temperatureValue", v.getTemperature());
+                break;
+            }
+        }
+        Map<String, Object> extras = getRegistrationExtras(beneficiaryRegID);
+        for (String key : List.of("height", "weight", "bmi", "temperatureValue")) {
+            if (extras.get(key) instanceof Number) values.putIfAbsent(key, extras.get(key));
+        }
+        return values;
+    }
+
     private void dualWriteExamToStandardTables(StopTBGeneralExamination exam, Long beneficiaryRegID,
             BenVisitDetail visit, String createdBy, Integer vanID, Integer parkingPlaceID) {
         try {
-            Map<String, Object> extras = getRegistrationExtras(beneficiaryRegID);
+            Map<String, Object> extras = getLatestAnthropometry(beneficiaryRegID);
             writeAnthropometry(extras, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
             writeVitals(exam, extras, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
             writePhyGeneralExam(exam, beneficiaryRegID, visit, createdBy, vanID, parkingPlaceID);
@@ -579,6 +722,9 @@ public class StopTBServiceImpl implements StopTBService {
 
     private void writeAnthropometry(Map<String, Object> extras, Long beneficiaryRegID,
             BenVisitDetail visit, String createdBy, Integer vanID, Integer parkingPlaceID) {
+        // An all-null row would become the latest one and hide the registration values
+        if (!(extras.get("height") instanceof Number) && !(extras.get("weight") instanceof Number)
+                && !(extras.get("bmi") instanceof Number)) return;
         try {
             BenAnthropometryDetail a = new BenAnthropometryDetail();
             a.setBeneficiaryRegID(beneficiaryRegID);

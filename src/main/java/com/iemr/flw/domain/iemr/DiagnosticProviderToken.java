@@ -46,7 +46,7 @@ public class DiagnosticProviderToken {
     @Column(name = "parkingPlaceID")
     private Integer parkingPlaceID;
 
-    @Column(name = "vanSerialNo")
+    @Column(name = "vanSerialNo", updatable = false)
     private Long vanSerialNo;
 
     @Column(name = "synced_by")

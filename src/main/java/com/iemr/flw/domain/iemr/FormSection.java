@@ -90,6 +90,11 @@ public class FormSection {
     @Column(name = "isEditable", nullable = false)
     private Boolean isEditable = false;
 
+    /** Soft-delete flag: false means removed from its version. Never hard-deleted — historical
+     *  section responses reference it. */
+    @Column(name = "isActive", nullable = false)
+    private Boolean isActive = true;
+
     @Column(name = "created_by", length = 100)
     private String createdBy;
 

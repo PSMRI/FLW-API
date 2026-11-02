@@ -1,13 +1,16 @@
 package com.iemr.flw.service.impl;
 
+import com.iemr.flw.domain.iemr.BenVisitDetail;
 import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.domain.iemr.DiagnosticResult;
 import com.iemr.flw.domain.iemr.TBSuspected;
+import com.iemr.flw.domain.iemr.User;
 import com.iemr.flw.dto.DiagnosticOrderRequestDto;
 import com.iemr.flw.dto.DiagnosticOrderResultDto;
 import com.iemr.flw.dto.DiagnosticOrderStatusSummaryDto;
 import com.iemr.flw.dto.ManualDiagnosticResultRequestDto;
 import com.iemr.flw.dto.VendorHealthDto;
+import com.iemr.flw.integration.provider.DiagnosticCancelResult;
 import com.iemr.flw.integration.provider.DiagnosticDocumentAsset;
 import com.iemr.flw.integration.provider.DiagnosticPollResult;
 import com.iemr.flw.integration.provider.DiagnosticProvider;
@@ -15,12 +18,19 @@ import com.iemr.flw.integration.provider.DiagnosticProviderFactory;
 import com.iemr.flw.integration.provider.DiagnosticPushResult;
 import com.iemr.flw.masterEnum.DiagnosticOrderStatus;
 import com.iemr.flw.masterEnum.DiagnosticOrderType;
+import com.iemr.flw.repo.identity.BeneficiaryRepo;
 import com.iemr.flw.repo.iemr.DiagnosticOrderRepo;
 import com.iemr.flw.repo.iemr.DiagnosticResultRepo;
+import com.iemr.flw.repo.iemr.EmployeeMasterRepo;
 import com.iemr.flw.repo.iemr.TBSuspectedRepo;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.DiagnosticDocumentService;
 import com.iemr.flw.service.DiagnosticOrderService;
+import com.iemr.flw.service.TBStopVisitService;
+import com.iemr.flw.utils.JwtUtil;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +38,15 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
@@ -39,10 +55,26 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     private static final Set<String> BLOCKING_STATUSES = Set.of(
             DiagnosticOrderStatus.PENDING.name(),
-            DiagnosticOrderStatus.IN_PROGRESS.name(),
-            DiagnosticOrderStatus.EXPIRED.name(),
             DiagnosticOrderStatus.COMPLETED.name(),
             DiagnosticOrderStatus.MANUAL_ENTRY.name());
+
+    private static final Set<String> NON_REUSABLE_ON_CLOSE_STATUSES = Set.of(
+            DiagnosticOrderStatus.COMPLETED.name(),
+            DiagnosticOrderStatus.FAILED.name(),
+            DiagnosticOrderStatus.CLOSED.name());
+
+    // Statuses the scheduler polls and the daily cutoff expires — matches findXrayDueForPoll /
+    // findTrueNatDueForPoll / findAllOutstandingOrders.
+    private static final Set<String> OUTSTANDING_STATUSES = Set.of(
+            DiagnosticOrderStatus.PENDING.name(),
+            DiagnosticOrderStatus.IN_PROGRESS.name());
+
+    // Invalid test outcomes: the result is still recorded (result row, tb_suspected write-back, documents)
+    // but the order is CLOSED instead of COMPLETED, so a retest can be pushed. The vendor reports an
+    // invalid MTB/MDR_RIF run as "Error-2"; a manual entry uses "Invalid/Error".
+    private static final String XRAY_INVALID_RESULT = "AI Invalid Result";
+    private static final String SPUTUM_INVALID_POLLED_RESULT = "Error-2";
+    private static final String SPUTUM_INVALID_MANUAL_RESULT = "Invalid/Error";
 
     @Autowired
     private DiagnosticOrderRepo diagnosticOrderRepo;
@@ -62,10 +94,109 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     @Autowired
     private CampConfigService campConfigService;
 
+    @Autowired
+    private BeneficiaryRepo beneficiaryRepo;
+
+    @Autowired
+    private TBStopVisitService tbStopVisitService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private EmployeeMasterRepo employeeMasterRepo;
+
     @Override
-    public DiagnosticOrder createAndPushOrder(DiagnosticOrderRequestDto request) throws Exception {
+    public DiagnosticOrder createAndPushOrderByUser(DiagnosticOrderRequestDto request, String jwtToken) throws Exception {
+        return createAndPushOrder(request, resolveActingUserName(jwtToken));
+    }
+
+    private String resolveActingUserName(String jwtToken) {
+        try {
+            User user = employeeMasterRepo.findUserByUserID(jwtUtil.extractUserId(jwtToken));
+            if (user != null && user.getUserName() != null && !user.getUserName().isBlank()) {
+                return user.getUserName();
+            }
+        } catch (Exception e) {
+            logger.warn("Could not resolve acting user's username from m_user: {}", e.getMessage());
+        }
+        return jwtUtil.extractUsername(jwtToken);
+    }
+
+    @Override
+    public DiagnosticOrder createAndPushOrderAsSystem(DiagnosticOrderRequestDto request) throws Exception {
+        return createAndPushOrder(request, "SYSTEM");
+    }
+
+    // One lock per beneficiary, held across visit lookup → dedup check → insert → vendor push. Without it,
+    // two simultaneous pushes for the same beneficiary could both pass the dedup check (or both create a
+    // visit for today) and send the same patient to the vendor twice — shown as duplicate names on the
+    // TrueNat machine. Keyed by beneficiary, not orderType, because the visit is shared across order types.
+    // (release-3.9.3 keys its lock by beneficiary+orderType because there the client supplies the
+    // visitCode; here the server creates the visit, so the key must be the beneficiary alone.)
+    // In-memory, so it only serialises within this JVM: correct while orders are created only by the
+    // single van server that can reach the vendor. Same mechanism as release-3.9.3: one ReentrantLock per
+    // beneficiary, held weakly so an idle beneficiary's lock is garbage-collected — any thread waiting on
+    // or holding it keeps a strong reference, so concurrent callers always share the same instance.
+    // User requests wait at most LOCK_WAIT_SECONDS and then fail with a retry message, instead of piling
+    // up behind a slow vendor push (bounded by the EmrLiteRestTemplateConfig timeouts).
+    private final LoadingCache<Long, Lock> beneficiaryOrderLocks = CacheBuilder.newBuilder()
+            .weakValues()
+            .build(CacheLoader.from(beneficiaryId -> new ReentrantLock()));
+
+    private static final long LOCK_WAIT_SECONDS = 30;
+
+    private <T> T withBeneficiaryLock(Long beneficiaryId, Callable<T> action) throws Exception {
+        Lock lock = beneficiaryLock(beneficiaryId);
+        if (!lock.tryLock(LOCK_WAIT_SECONDS, TimeUnit.SECONDS)) {
+            throw new IllegalStateException("Another diagnostic order operation is still in progress for beneficiaryId="
+                    + beneficiaryId + " — please retry shortly");
+        }
+        try {
+            return action.call();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // For background work with no caller to retry it (the automatic retest): waits as long as it takes.
+    private <T> T withBeneficiaryLockBlocking(Long beneficiaryId, Callable<T> action) throws Exception {
+        Lock lock = beneficiaryLock(beneficiaryId);
+        lock.lock();
+        try {
+            return action.call();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // For the poll scheduler: never waits. A busy beneficiary (user push/manual entry in progress) is
+    // simply left for the next tick, rather than stalling the single scheduler thread behind it.
+    private <T> Optional<T> withBeneficiaryLockIfFree(Long beneficiaryId, Callable<T> action) throws Exception {
+        Lock lock = beneficiaryLock(beneficiaryId);
+        if (!lock.tryLock()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.ofNullable(action.call());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private Lock beneficiaryLock(Long beneficiaryId) {
+        if (beneficiaryId == null) {
+            throw new IllegalArgumentException("beneficiaryId is required");
+        }
+        return beneficiaryOrderLocks.getUnchecked(beneficiaryId);
+    }
+
+    private DiagnosticOrder createAndPushOrder(DiagnosticOrderRequestDto request, String createdBy) throws Exception {
+        return withBeneficiaryLock(request.getBeneficiaryId(), () -> createAndPushOrderLocked(request, createdBy));
+    }
+
+    private DiagnosticOrder createAndPushOrderLocked(DiagnosticOrderRequestDto request, String createdBy) throws Exception {
         Long beneficiaryId            = request.getBeneficiaryId();
-        Long visitCode               = request.getVisitCode();
         DiagnosticOrderType orderType = DiagnosticOrderType.fromCode(request.getOrderType());
         String orderEvent            = request.getOrderEvent();
         String patientFirstName      = request.getPatient().getFirstName();
@@ -73,24 +204,43 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         String patientDateOfBirth    = request.getPatient().getDateOfBirth();
         String patientSex            = request.getPatient().getSex();
 
-        String providerCode = providerFactory.getProviderCodeForOrderType(orderType);
-        String externalOrderId = String.format("%d-%d-%s", beneficiaryId, visitCode, orderType.name());
-        
-        String reasonForRefusal = request.getReasonForRefusal();
-        if (reasonForRefusal != null) {
-            return saveRefusedOrder(beneficiaryId, visitCode, orderType, orderEvent, providerCode, externalOrderId,
-                    patientFirstName, patientLastName, patientDateOfBirth, patientSex, reasonForRefusal);
+        String reasonToClose = request.getReasonToClose();
+        if (reasonToClose != null) {
+            return closeOrder(beneficiaryId, orderType, orderEvent, patientFirstName, patientLastName,
+                    patientDateOfBirth, patientSex, reasonToClose, createdBy);
         }
+
+        Integer vanID = campConfigService.getVanID();
+        Integer parkingPlaceID = campConfigService.getParkingPlaceID();
+
+        Long beneficiaryRegID = beneficiaryRepo.getRegIDFromBenId(beneficiaryId);
+        if (beneficiaryRegID == null) {
+            throw new Exception("No beneficiaryRegID found for beneficiaryId=" + beneficiaryId);
+        }
+        BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, null, createdBy, vanID,
+                parkingPlaceID);
+        Long visitCode = visit.getVisitCode();
+
+        String providerCode = providerFactory.getProviderCodeForOrderType(orderType);
+        String externalOrderId = String.format("%s-%d-%s", UUID.randomUUID(), visitCode, orderType.name());
 
         Optional<DiagnosticOrder> latestForType = diagnosticOrderRepo
                 .findFirstByBeneficiaryIdAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, orderType.name());
 
         Optional<DiagnosticOrder> existing = (latestForType.isPresent() && visitCode.equals(latestForType.get().getVisitCode()))
                 ? latestForType
-                : diagnosticOrderRepo.findByBeneficiaryIdAndVisitCodeAndOrderType(beneficiaryId, visitCode, orderType.name());
+                : diagnosticOrderRepo.findFirstByBeneficiaryIdAndVisitCodeAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, visitCode, orderType.name());
 
-        if (existing.isPresent() && !DiagnosticOrderStatus.FAILED.name().equals(existing.get().getStatus())) {
-            return existing.get();
+        if (existing.isPresent()) {
+            String existingStatus = existing.get().getStatus();
+            if (!DiagnosticOrderStatus.FAILED.name().equals(existingStatus)
+                    && !DiagnosticOrderStatus.CLOSED.name().equals(existingStatus)) {
+                // Still active or already resolved (PENDING/COMPLETED/legacy IN_PROGRESS/MANUAL_ENTRY)
+                // — returned as-is.
+                return existing.get();
+            }
+            // FAILED and CLOSED are never reused, even for the same visit — both stay as-is for
+            // history, and a fresh push always creates a brand new row instead of overwriting either.
         }
 
         if (latestForType.isPresent()
@@ -98,16 +248,16 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 && !visitCode.equals(latestForType.get().getVisitCode())) {
             DiagnosticOrder blocker = latestForType.get();
             logger.info("Duplicate order push suppressed for beneficiaryId={}, orderType={}: unresolved order id={} "
-                    + "(visitCode={}, status={}) already exists — returning it instead of pushing a new order for visitCode={}",
+                            + "(visitCode={}, status={}) already exists — returning it instead of pushing a new order for visitCode={}",
                     beneficiaryId, orderType, blocker.getId(), blocker.getVisitCode(), blocker.getStatus(), visitCode);
             return blocker;
         }
 
-        DiagnosticOrder order = existing.orElseGet(DiagnosticOrder::new);
-        if (order.getVanID() == null) {
-            order.setVanID(campConfigService.getVanID());
-            order.setParkingPlaceID(campConfigService.getParkingPlaceID());
-        }
+        // Neither FAILED nor CLOSED is ever reused above, so this is always a brand new row — a
+        // beneficiary's diagnostic order history is a sequence of rows, not one row overwritten in place.
+        DiagnosticOrder order = new DiagnosticOrder();
+        order.setVanID(vanID);
+        order.setParkingPlaceID(parkingPlaceID);
         order.setOrderEvent(orderEvent);
         order.setBeneficiaryId(beneficiaryId);
         order.setVisitCode(visitCode);
@@ -115,20 +265,20 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         order.setProviderCode(providerCode);
         order.setOrderType(orderType.name());
         order.setExternalOrderId(externalOrderId);
-        // Reset required when reusing a previously-FAILED row, otherwise a successful retry would
-        // leave status=FAILED and findDueForPoll (PENDING/IN_PROGRESS only) would never poll it.
-        order.setStatus(DiagnosticOrderStatus.PENDING.name());
-        order.setErrorMessage(null);
+        boolean noVendor = providerCode == null || providerCode.isBlank();
+        order.setStatus(noVendor ? DiagnosticOrderStatus.MANUAL_ENTRY.name() : DiagnosticOrderStatus.PENDING.name());
         order.setPatientFirstName(patientFirstName);
         order.setPatientLastName(patientLastName);
         order.setPatientDateOfBirth(patientDateOfBirth);
         order.setPatientSex(patientSex);
+        order.setCreatedBy(createdBy);
+        order.setModifiedBy(createdBy);
 
         try {
             order = diagnosticOrderRepo.save(order);
         } catch (DataIntegrityViolationException dive) {
             Optional<DiagnosticOrder> winner = diagnosticOrderRepo
-                    .findByBeneficiaryIdAndVisitCodeAndOrderType(beneficiaryId, visitCode, orderType.name());
+                    .findFirstByBeneficiaryIdAndVisitCodeAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, visitCode, orderType.name());
             if (winner.isPresent()) {
                 logger.warn("Lost create race for beneficiaryId={}, visitCode={}, orderType={} — returning existing order id={}",
                         beneficiaryId, visitCode, orderType, winner.get().getId());
@@ -137,15 +287,21 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             throw dive;
         }
 
-        if (providerCode == null || providerCode.isBlank()) {
+        if (noVendor) {
             logger.info("No active vendor configured for orderType={}, beneficiaryId={} — order saved for manual entry",
                     orderType, beneficiaryId);
-            order.setStatus(DiagnosticOrderStatus.MANUAL_ENTRY.name());
+            // Status is MANUAL_ENTRY (set above) — awaiting manual entry via submitManualResult.
             order = diagnosticOrderRepo.save(order);
             if (order.getVanSerialNo() == null) diagnosticOrderRepo.updateVanSerialNo(order.getId());
             return order;
         }
 
+        return pushToProvider(order, providerCode);
+    }
+
+    // Pushes an already-saved PENDING order to the vendor and saves the outcome — FAILED (with the
+    // error) if the push is rejected or throws. Shared by createAndPushOrder and pushRetestOrder.
+    private DiagnosticOrder pushToProvider(DiagnosticOrder order, String providerCode) {
         try {
             DiagnosticProvider provider = providerFactory.getProvider(providerCode);
             DiagnosticPushResult pushResult = provider.pushOrder(order);
@@ -171,16 +327,57 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         return order;
     }
 
+    // Shared by createAndPushOrder (push with reasonToClose) and submitManualResult (manualResult
+    // with reasonToClose) — resolves the same visit/provider/externalOrderId a normal push would, then
+    // closes the order via saveRefusedOrder. Identical outcome regardless of which endpoint triggered it.
+    private DiagnosticOrder closeOrder(Long beneficiaryId, DiagnosticOrderType orderType, String orderEvent,
+                                       String patientFirstName, String patientLastName, String patientDateOfBirth, String patientSex,
+                                       String reasonToClose, String actingUserId) throws Exception {
+        Integer vanID = campConfigService.getVanID();
+        Integer parkingPlaceID = campConfigService.getParkingPlaceID();
+
+        Long beneficiaryRegID = beneficiaryRepo.getRegIDFromBenId(beneficiaryId);
+        if (beneficiaryRegID == null) {
+            throw new Exception("No beneficiaryRegID found for beneficiaryId=" + beneficiaryId);
+        }
+        BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, null, actingUserId, vanID,
+                parkingPlaceID);
+        Long visitCode = visit.getVisitCode();
+
+        String providerCode = providerFactory.getProviderCodeForOrderType(orderType);
+        String externalOrderId = String.format("%s-%d-%s", UUID.randomUUID(), visitCode, orderType.name());
+        return saveRefusedOrder(beneficiaryId, visitCode, orderType, orderEvent, providerCode, externalOrderId,
+                patientFirstName, patientLastName, patientDateOfBirth, patientSex, reasonToClose, actingUserId);
+    }
+
+    // manualResult's reasonToClose variant has no patient/orderEvent in its request — it sources them
+    // from the beneficiary's own most recent order for this orderType (whatever its status), since that
+    // information already exists there. No prior order at all means there's nothing to source it from.
+    private DiagnosticOrder closeOrderManually(Long beneficiaryId, DiagnosticOrderType orderType,
+                                               String reasonToClose, String actingUserId) throws Exception {
+        return withBeneficiaryLock(beneficiaryId, () -> {
+            DiagnosticOrder source = diagnosticOrderRepo
+                    .findFirstByBeneficiaryIdAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, orderType.name())
+                    .orElseThrow(() -> new Exception("No diagnostic order found for beneficiaryId=" + beneficiaryId
+                            + ", orderType=" + orderType.name() + " — cannot close a record that was never created"));
+            return closeOrder(beneficiaryId, orderType, source.getOrderEvent(), source.getPatientFirstName(),
+                    source.getPatientLastName(), source.getPatientDateOfBirth(), source.getPatientSex(), reasonToClose,
+                    actingUserId);
+        });
+    }
+
     // Refusals are keyed to the latest order for this beneficiary+orderType (not the exact visitCode
     // of this request), since a refusal can be recorded outside the visit that originally created the
-    // order. A COMPLETED latest order is left untouched (treated as "not found") and a new REFUSED row
-    // is created instead. Refused orders are saved as-is and never pushed to the vendor.
+    // order. A COMPLETED, FAILED or already-CLOSED latest order is left untouched (treated as "not found")
+    // and a new CLOSED row is created instead, so its history (e.g. a FAILED row's errorMessage) survives.
+    // Refused orders are saved as-is and never pushed to the vendor.
     private DiagnosticOrder saveRefusedOrder(Long beneficiaryId, Long visitCode, DiagnosticOrderType orderType,
-            String orderEvent, String providerCode, String externalOrderId, String patientFirstName,
-            String patientLastName, String patientDateOfBirth, String patientSex, String reasonForRefusal) {
+                                             String orderEvent, String providerCode, String externalOrderId, String patientFirstName,
+                                             String patientLastName, String patientDateOfBirth, String patientSex, String reasonToClose,
+                                             String actingUserId) {
         Optional<DiagnosticOrder> latest = diagnosticOrderRepo
                 .findFirstByBeneficiaryIdAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, orderType.name());
-        if (latest.isPresent() && DiagnosticOrderStatus.COMPLETED.name().equals(latest.get().getStatus())) {
+        if (latest.isPresent() && NON_REUSABLE_ON_CLOSE_STATUSES.contains(latest.get().getStatus())) {
             latest = Optional.empty();
         }
 
@@ -201,18 +398,23 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             order.setPatientLastName(patientLastName);
             order.setPatientDateOfBirth(patientDateOfBirth);
             order.setPatientSex(patientSex);
+            order.setCreatedBy(actingUserId);
         }
-        order.setStatus(DiagnosticOrderStatus.REFUSED.name());
-        order.setReasonToClose(reasonForRefusal);
+        order.setStatus(DiagnosticOrderStatus.CLOSED.name());
+        order.setReasonToClose(reasonToClose);
         order.setErrorMessage(null);
+        order.setModifiedBy(actingUserId);
+        order.setManuallyEnteredBy(actingUserId);
+        order.setProcessed("N");
 
         try {
             order = diagnosticOrderRepo.save(order);
             if (order.getVanSerialNo() == null) diagnosticOrderRepo.updateVanSerialNo(order.getId());
+            notifyProviderOrderClosed(order, reasonToClose);
             return order;
         } catch (DataIntegrityViolationException dive) {
             Optional<DiagnosticOrder> winner = diagnosticOrderRepo
-                    .findByBeneficiaryIdAndVisitCodeAndOrderType(beneficiaryId, visitCode, orderType.name());
+                    .findFirstByBeneficiaryIdAndVisitCodeAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, visitCode, orderType.name());
             if (winner.isPresent()) {
                 logger.warn("Lost create race for beneficiaryId={}, visitCode={}, orderType={} — returning existing order id={}",
                         beneficiaryId, visitCode, orderType, winner.get().getId());
@@ -223,9 +425,57 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     }
 
     @Override
+    public void notifyProviderOrderClosed(DiagnosticOrder order, String reason) {
+        String providerCode = order.getProviderCode();
+        if (providerCode == null || providerCode.isBlank()) {
+            return; // no vendor was ever involved (manual-entry order)
+        }
+        if (order.getPushResponseJson() == null || order.getPushResponseJson().isEmpty()) {
+            return; // never actually confirmed as pushed to the vendor — nothing to cancel there
+        }
+        try {
+            DiagnosticCancelResult result = providerFactory.getProvider(providerCode).cancelOrder(order, reason);
+            order.setCancelResponseJson(result.getRawResponseJson());
+            order.setProcessed("N");
+            diagnosticOrderRepo.save(order);
+        } catch (Exception e) {
+            // Transport-level failure only (unreachable, timeout) — a provider-level rejection is
+            // already captured in the returned result above, not thrown.
+            logger.warn("Failed to notify provider of order cancellation for externalOrderId={}: {}",
+                    order.getExternalOrderId(), e.getMessage());
+        }
+    }
+
+    @Override
     public DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult pollResult) throws Exception {
+        return processResult(order, pollResult, false, "SYSTEM");
+    }
+
+    private DiagnosticOrderResultDto processResult(DiagnosticOrder order, DiagnosticPollResult pollResult,
+                                                   boolean writeBackWhenClosed, String actingUser) throws Exception {
         Optional<DiagnosticResult> existingResult = diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId());
+        // A poll that brings nothing new must not rewrite the rows: every rewrite resets processed
+        // (so MMU re-uploads the order) and would re-send it to every tablet.
+        boolean resultUnchanged = existingResult.isPresent() && sameResult(existingResult.get(), pollResult);
+        boolean orderUnchanged = sameOrderStatus(order, pollResult);
         DiagnosticResult result = existingResult.orElseGet(DiagnosticResult::new);
+        if (resultUnchanged && orderUnchanged && !writeBackWhenClosed) {
+            ingestAssets(order, pollResult);
+            diagnosticOrderRepo.recordUnchangedPoll(order.getId(), new Timestamp(System.currentTimeMillis()),
+                    order.getRetryCount());
+            DiagnosticOrderResultDto unchanged = new DiagnosticOrderResultDto();
+            unchanged.setExternalOrderId(order.getExternalOrderId());
+            unchanged.setOrderType(order.getOrderType());
+            unchanged.setStatus(order.getStatus());
+            unchanged.setProviderStatus(result.getProviderStatus());
+            unchanged.setResultSummary(result.getResultSummary());
+            unchanged.setErrorMessage(order.getErrorMessage());
+            unchanged.setReasonToClose(order.getReasonToClose());
+            unchanged.setTbPresence(result.getTbPresence());
+            unchanged.setTbConfidence(result.getTbConfidence());
+            unchanged.setDrugResistancePresence(result.getDrugResistancePresence());
+            return unchanged;
+        }
         result.setExternalOrderId(order.getExternalOrderId());
         result.setBeneficiaryId(order.getBeneficiaryId());
         result.setProviderStatus(pollResult.getStatus().name());
@@ -239,7 +489,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         result.setTbPresence(pollResult.getTbPresence());
         result.setTbConfidence(pollResult.getTbConfidence());
         result.setDrugResistancePresence(pollResult.getDrugResistancePresence());
-        result.setCreatedBy("SYSTEM");
+        result.setCreatedBy(actingUser);
+        result.setModifiedBy(actingUser);
         if (result.getVanID() == null) {
             // Inherit from the parent order rather than re-reading Redis — the result belongs
             // to whichever van originated the order, not whichever van happens to be polling now.
@@ -250,6 +501,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             diagnosticResultRepo.save(result);
             if (result.getVanSerialNo() == null) diagnosticResultRepo.updateVanSerialNo(result.getId());
         } catch (DataIntegrityViolationException dive) {
+            // Only a first insert can lose a race (unique external_order_id). Any other integrity
+            // failure means the result was not saved, so the order must not move on without it.
+            if (existingResult.isPresent()) throw dive;
             logger.warn("Lost result upsert race for externalOrderId={}", order.getExternalOrderId());
             result = diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId()).orElse(result);
         }
@@ -262,9 +516,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             order.setProviderOrderId(pollResult.getProviderOrderId());
         }
         order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
+        order.setModifiedBy(actingUser);
+        order.setProcessed("N");
         diagnosticOrderRepo.save(order);
 
-        if (DiagnosticOrderStatus.COMPLETED.name().equals(order.getStatus())) {
+        if (DiagnosticOrderStatus.COMPLETED.name().equals(order.getStatus())
+                || (writeBackWhenClosed && DiagnosticOrderStatus.CLOSED.name().equals(order.getStatus()))) {
             recordTbSuspectedResult(order, result);
         }
 
@@ -273,7 +530,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         dto.setOrderType(order.getOrderType());
         dto.setStatus(order.getStatus());
         dto.setErrorMessage(order.getErrorMessage());
-        dto.setReasonForRefusal(order.getReasonToClose());
+        dto.setReasonToClose(order.getReasonToClose());
         dto.setProviderStatus(result.getProviderStatus());
         dto.setResultSummary(result.getResultSummary());
         dto.setTbPresence(result.getTbPresence());
@@ -329,8 +586,90 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         }
     }
 
+    // The scheduler loads its due-for-poll batch at the start of a tick and polls each order in turn, so
+    // by the time an order's turn comes it may have been completed/closed by a manual entry. Polling and
+    // saving that stale copy would overwrite the manual result (whole-row save, no @Version), so the
+    // order is re-read under the beneficiary lock and skipped unless it is still awaiting a result.
+    // Failures are recorded on that same fresh row, inside the lock, for the same reason.
     @Override
     public DiagnosticPollResult pollOnce(DiagnosticOrder order) throws Exception {
+        Optional<DiagnosticPollResult> polled = withBeneficiaryLockIfFree(order.getBeneficiaryId(), () -> {
+            Optional<DiagnosticOrder> current = findOutstandingOrder(order.getId());
+            if (current.isEmpty()) {
+                logger.info("Skipping poll for orderId={}: no longer PENDING/IN_PROGRESS", order.getId());
+                return null;
+            }
+            DiagnosticOrder fresh = current.get();
+            try {
+                return pollOnceLocked(fresh);
+            } catch (Exception e) {
+                int retries = (fresh.getRetryCount() == null ? 0 : fresh.getRetryCount()) + 1;
+                if (java.util.Objects.equals(fresh.getErrorMessage(), e.getMessage())) {
+                    // Same failure as last time: only the attempt is recorded (see recordUnchangedPoll).
+                    diagnosticOrderRepo.recordUnchangedPoll(fresh.getId(), new Timestamp(System.currentTimeMillis()), retries);
+                } else {
+                    fresh.setRetryCount(retries);
+                    fresh.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
+                    fresh.setErrorMessage(e.getMessage());
+                    fresh.setModifiedBy("SYSTEM");
+                    fresh.setProcessed("N");
+                    diagnosticOrderRepo.save(fresh);
+                }
+                throw e;
+            }
+        });
+        if (polled.isEmpty()) {
+            logger.debug("Poll for orderId={} skipped or deferred (beneficiary busy / order resolved)", order.getId());
+        }
+        return polled.orElse(null);
+    }
+
+    // Same stale-copy problem as pollOnce: the daily expiry batch is loaded up front, so each order is
+    // re-read under the lock and only closed if it is still outstanding.
+    @Override
+    public void expireOrder(DiagnosticOrder order, String reason) throws Exception {
+        withBeneficiaryLock(order.getBeneficiaryId(), () -> {
+            Optional<DiagnosticOrder> current = findOutstandingOrder(order.getId());
+            if (current.isEmpty()) {
+                logger.info("Skipping expiry for orderId={}: no longer PENDING/IN_PROGRESS", order.getId());
+                return null;
+            }
+            DiagnosticOrder fresh = current.get();
+            fresh.setStatus(DiagnosticOrderStatus.CLOSED.name());
+            fresh.setReasonToClose(reason);
+            fresh.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
+            fresh.setModifiedBy("SYSTEM");
+            fresh.setProcessed("N");
+            diagnosticOrderRepo.save(fresh);
+            notifyProviderOrderClosed(fresh, reason);
+            return null;
+        });
+    }
+
+    private static boolean sameResult(DiagnosticResult stored, DiagnosticPollResult polled) {
+        return java.util.Objects.equals(stored.getProviderStatus(), polled.getStatus() == null ? null : polled.getStatus().name())
+                && java.util.Objects.equals(stored.getResultSummary(), polled.getResultSummary())
+                && java.util.Objects.equals(stored.getTbPresence(), polled.getTbPresence())
+                && java.util.Objects.equals(stored.getTbConfidence(), polled.getTbConfidence())
+                && java.util.Objects.equals(stored.getDrugResistancePresence(), polled.getDrugResistancePresence())
+                && (polled.getAssets() == null || polled.getAssets().isEmpty());
+    }
+
+    private static boolean sameOrderStatus(DiagnosticOrder order, DiagnosticPollResult polled) {
+        return polled.getStatus() != null
+                && polled.getStatus().name().equals(order.getStatus())
+                && java.util.Objects.equals(order.getErrorMessage(), polled.getErrorMessage())
+                && (polled.getProviderOrderId() == null
+                    || polled.getProviderOrderId().equals(order.getProviderOrderId()));
+    }
+
+    private Optional<DiagnosticOrder> findOutstandingOrder(Long orderId) {
+        return diagnosticOrderRepo.findById(orderId)
+                .filter(o -> !Boolean.TRUE.equals(o.getDeleted()))
+                .filter(o -> OUTSTANDING_STATUSES.contains(o.getStatus()));
+    }
+
+    private DiagnosticPollResult pollOnceLocked(DiagnosticOrder order) throws Exception {
         // A null pushResponseJson means the order was never actually confirmed as pushed to the
         // vendor (e.g. a stale/legacy row) — polling the vendor for it would be meaningless, so
         // fail it outright instead of burning a vendor call every tick.
@@ -338,15 +677,24 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             order.setStatus(DiagnosticOrderStatus.FAILED.name());
             order.setErrorMessage("No push response recorded for this order — cannot poll");
             order.setLastPolledAt(new Timestamp(System.currentTimeMillis()));
+            order.setModifiedBy("SYSTEM");
+            order.setProcessed("N");
             diagnosticOrderRepo.save(order);
             return null;
         }
         DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
         DiagnosticPollResult result = provider.pollResult(order, false);
         if (DiagnosticOrderStatus.COMPLETED.equals(result.getStatus())) {
-            // Save as COMPLETED now, without assets, so a failure fetching/ingesting assets below
-            // doesn't also lose the already-confirmed completed status (see pollSingle's catch).
-            processResult(order, result);
+            // Save as COMPLETED (or CLOSED for an invalid outcome) now, without assets, so a failure
+            // fetching/ingesting assets below doesn't also lose the already-confirmed status (see
+            // pollSingle's catch).
+            boolean invalid = closeIfInvalidPolledResult(order, result);
+            processResult(order, result, invalid, "SYSTEM");
+            if (invalid) {
+                // Before the asset fetch below: if that throws, this CLOSED order is never polled
+                // again, so the retest must already exist by then.
+                pushRetestOrder(order);
+            }
             result = provider.pollResult(order, true);
             // Only ingest the documents this time — the result/order fields were already saved above
             // and this second, asset-bearing response carries the same status/summary, so re-saving
@@ -373,29 +721,51 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             return findLatestOrder(beneficiaryId, orderType);
         }
         DiagnosticOrderType type = DiagnosticOrderType.fromCode(orderType);
-        return diagnosticOrderRepo.findByBeneficiaryIdAndVisitCodeAndOrderType(beneficiaryId, visitCode, type.name())
+        return diagnosticOrderRepo.findFirstByBeneficiaryIdAndVisitCodeAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, visitCode, type.name())
                 .orElseThrow(() -> new Exception("DiagnosticOrder not found for beneficiaryId=" + beneficiaryId
                         + ", visitCode=" + visitCode + ", orderType=" + orderType));
     }
 
     @Override
     public DiagnosticOrderResultDto triggerManualPoll(Long beneficiaryId, String orderType, Long visitCode) throws Exception {
-        DiagnosticOrder order = resolveOrder(beneficiaryId, orderType, visitCode);
-        DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
-        DiagnosticPollResult pollResult = provider.pollResult(order, true);
-        return processResult(order, pollResult);
+        // Locked, and the order read inside the lock, so this can't interleave with a manual entry or a
+        // scheduler poll for the same beneficiary and save over what they just wrote.
+        return withBeneficiaryLock(beneficiaryId, () -> {
+            DiagnosticOrder order = resolveOrder(beneficiaryId, orderType, visitCode);
+            if (DiagnosticOrderStatus.MANUAL_ENTRY.name().equals(order.getStatus())) {
+                throw new IllegalStateException("Cannot poll a MANUAL_ENTRY order — no vendor is involved, "
+                        + "submit the result via manualResult instead");
+            }
+            if (order.getManuallyEnteredBy() != null) {
+                throw new IllegalStateException("Cannot poll this order: its result was entered manually by "
+                        + order.getManuallyEnteredBy() + " and a vendor poll would overwrite it");
+            }
+            DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
+            DiagnosticPollResult pollResult = provider.pollResult(order, true);
+            boolean invalid = closeIfInvalidPolledResult(order, pollResult);
+            return processResult(order, pollResult, invalid, "SYSTEM");
+        });
     }
 
     @Override
     public DiagnosticOrder retryPoll(Long beneficiaryId, String orderType, Long visitCode) throws Exception {
+        // Locked so the terminal-status check and the reset to PENDING can't straddle a manual entry
+        // that completes the order in between (which would reopen it for polling).
+        return withBeneficiaryLock(beneficiaryId, () -> retryPollLocked(beneficiaryId, orderType, visitCode));
+    }
+
+    private DiagnosticOrder retryPollLocked(Long beneficiaryId, String orderType, Long visitCode) throws Exception {
         DiagnosticOrder order = resolveOrder(beneficiaryId, orderType, visitCode);
         String status = order.getStatus();
 
         if (DiagnosticOrderStatus.COMPLETED.name().equals(status)
-                || DiagnosticOrderStatus.CANCELLED.name().equals(status)
-                || DiagnosticOrderStatus.REFUSED.name().equals(status)
-                || DiagnosticOrderStatus.MANUAL_ENTRY.name().equals(status)) {
-            throw new IllegalStateException("Cannot retry polling for order in terminal status " + status);
+                || DiagnosticOrderStatus.CLOSED.name().equals(status)) {
+            throw new IllegalStateException("Cannot retry polling for order in terminal status " + status
+                    + " — create a new order instead");
+        }
+        if (DiagnosticOrderStatus.MANUAL_ENTRY.name().equals(status)) {
+            throw new IllegalStateException("Cannot retry polling for a MANUAL_ENTRY order — no vendor is involved, "
+                    + "submit the result via manualResult instead");
         }
 
         // retriedAt is kept as an audit timestamp only — the scheduler no longer uses it to anchor a
@@ -404,6 +774,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         order.setRetriedAt(new Timestamp(System.currentTimeMillis()));
         order.setStatus(DiagnosticOrderStatus.PENDING.name());
         order.setErrorMessage(null);
+        order.setProcessed("N");
         return diagnosticOrderRepo.save(order);
     }
 
@@ -419,22 +790,18 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     @Override
     public DiagnosticOrderResultDto getOrderResult(Long beneficiaryId, String orderType, Long visitCode) {
-        DiagnosticOrderResultDto dto = new DiagnosticOrderResultDto();
-        dto.setOrderType(orderType);
-
         Optional<DiagnosticOrder> orderOpt = visitCode != null
-                ? diagnosticOrderRepo.findByBeneficiaryIdAndVisitCodeAndOrderType(beneficiaryId, visitCode, orderType)
+                ? diagnosticOrderRepo.findFirstByBeneficiaryIdAndVisitCodeAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, visitCode, orderType)
                 : diagnosticOrderRepo.findFirstByBeneficiaryIdAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, orderType);
         if (orderOpt.isEmpty()) {
+            DiagnosticOrderResultDto dto = new DiagnosticOrderResultDto();
+            dto.setOrderType(orderType);
             dto.setStatus("NOT_FOUND");
             return dto;
         }
 
         DiagnosticOrder order = orderOpt.get();
-        dto.setExternalOrderId(order.getExternalOrderId());
-        dto.setStatus(order.getStatus());
-        dto.setErrorMessage(order.getErrorMessage());
-        dto.setReasonForRefusal(order.getReasonToClose());
+        DiagnosticOrderResultDto dto = toResultDto(order);
 
         diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId()).ifPresent(result -> {
             dto.setProviderStatus(result.getProviderStatus());
@@ -447,23 +814,74 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     }
 
     @Override
+    public java.util.Map<Long, java.util.Map<String, Object>> getOrderRecordsByIds(java.util.Collection<Long> ids) {
+        java.util.Map<Long, java.util.Map<String, Object>> out = new java.util.LinkedHashMap<>();
+        for (DiagnosticOrder order : diagnosticOrderRepo.findAllById(ids)) {
+            if (Boolean.TRUE.equals(order.getDeleted())) continue;
+            DiagnosticOrderResultDto dto = toResultDto(order);
+            if (order.getExternalOrderId() != null) {
+                diagnosticResultRepo.findByExternalOrderIdAndDeletedFalse(order.getExternalOrderId()).ifPresent(result -> {
+                    dto.setProviderStatus(result.getProviderStatus());
+                    dto.setResultSummary(result.getResultSummary());
+                    dto.setTbPresence(result.getTbPresence());
+                    dto.setTbConfidence(result.getTbConfidence());
+                    dto.setDrugResistancePresence(result.getDrugResistancePresence());
+                });
+            }
+            java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+            m.put("id", order.getId());
+            m.put("beneficiaryId", order.getBeneficiaryId());
+            m.put("visitCode", order.getVisitCode());
+            m.put("createdDate", order.getCreatedDate());
+            m.put("externalOrderId", dto.getExternalOrderId());
+            m.put("orderType", dto.getOrderType());
+            m.put("status", dto.getStatus());
+            m.put("providerStatus", dto.getProviderStatus());
+            m.put("resultSummary", dto.getResultSummary());
+            m.put("errorMessage", dto.getErrorMessage());
+            m.put("reasonToClose", dto.getReasonToClose());
+            m.put("tbPresence", dto.getTbPresence());
+            m.put("tbConfidence", dto.getTbConfidence());
+            m.put("drugResistancePresence", dto.getDrugResistancePresence());
+            out.put(order.getId(), m);
+        }
+        return out;
+    }
+
+    private DiagnosticOrderResultDto toResultDto(DiagnosticOrder order) {
+        DiagnosticOrderResultDto dto = new DiagnosticOrderResultDto();
+        dto.setExternalOrderId(order.getExternalOrderId());
+        dto.setOrderType(order.getOrderType());
+        dto.setStatus(order.getStatus());
+        dto.setErrorMessage(order.getErrorMessage());
+        dto.setReasonToClose(order.getReasonToClose());
+        return dto;
+    }
+
+    @Override
     public DiagnosticOrderStatusSummaryDto getOrderStatusSummary(String orderType, Integer villageId,
-            Integer providerServiceMapId) {
+                                                                 Integer providerServiceMapId) {
         DiagnosticOrderType type = DiagnosticOrderType.fromCode(orderType);
-        List<Long> awaitingProviderResult = diagnosticOrderRepo
-                .findBeneficiaryIdsAwaitingProviderResult(type.name(), villageId, providerServiceMapId);
-        List<Long> completed = diagnosticOrderRepo
-                .findBeneficiaryIdsCompleted(type.name(), villageId, providerServiceMapId);
-        List<Long> pollingTimedOut = diagnosticOrderRepo
-                .findBeneficiaryIdsPollingTimedOut(type.name(), villageId, providerServiceMapId);
-        List<Long> failed = diagnosticOrderRepo
-                .findBeneficiaryIdsFailed(type.name(), villageId, providerServiceMapId);
-        List<Long> refused = diagnosticOrderRepo
-                .findBeneficiaryIdsRefused(type.name(), villageId, providerServiceMapId);
-        List<Long> awaitingManualEntry = diagnosticOrderRepo
-                .findBeneficiaryIdsAwaitingManualEntry(type.name(), villageId, providerServiceMapId);
-        return new DiagnosticOrderStatusSummaryDto(awaitingProviderResult, completed, pollingTimedOut, failed, refused,
-                awaitingManualEntry);
+        List<Long> awaitingProviderResult = new ArrayList<>();
+        List<Long> completed = new ArrayList<>();
+        List<Long> failed = new ArrayList<>();
+        List<Long> closed = new ArrayList<>();
+        List<Long> awaitingManualEntry = new ArrayList<>();
+        // One query instead of one per bucket; buckets are the same status groups the per-bucket
+        // queries used (matched case-insensitively, like the database comparison was).
+        for (Object[] row : diagnosticOrderRepo.findLatestOrderStatusByBeneficiary(type.name(), villageId, providerServiceMapId)) {
+            Long beneficiaryId = row[0] != null ? ((Number) row[0]).longValue() : null;
+            String status = row[1] != null ? row[1].toString().toUpperCase(java.util.Locale.ROOT) : "";
+            switch (status) {
+                case "PENDING", "IN_PROGRESS" -> awaitingProviderResult.add(beneficiaryId);
+                case "COMPLETED" -> completed.add(beneficiaryId);
+                case "FAILED" -> failed.add(beneficiaryId);
+                case "CLOSED", "CANCELLED", "EXPIRED", "REFUSED" -> closed.add(beneficiaryId);
+                case "MANUAL_ENTRY" -> awaitingManualEntry.add(beneficiaryId);
+                default -> { }
+            }
+        }
+        return new DiagnosticOrderStatusSummaryDto(awaitingProviderResult, completed, failed, closed, awaitingManualEntry);
     }
 
     @Override
@@ -484,14 +902,128 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     }
 
     @Override
-    public DiagnosticOrderResultDto submitManualResult(ManualDiagnosticResultRequestDto request) throws Exception {
+    public DiagnosticOrderResultDto submitManualResult(ManualDiagnosticResultRequestDto request, String jwtToken)
+            throws Exception {
+        boolean hasResult = request.getResultSummary() != null && !request.getResultSummary().isBlank();
+        boolean hasReasonToClose = request.getReasonToClose() != null && !request.getReasonToClose().isBlank();
+        if (hasResult == hasReasonToClose) {
+            throw new IllegalArgumentException("Exactly one of resultSummary or reasonToClose must be provided");
+        }
+
+        String actingUserName = resolveActingUserName(jwtToken);
+
+        if (hasReasonToClose) {
+            DiagnosticOrderType orderType = DiagnosticOrderType.fromCode(request.getOrderType());
+            DiagnosticOrder closed = closeOrderManually(request.getBeneficiaryId(), orderType,
+                    request.getReasonToClose(), actingUserName);
+            return toResultDto(closed);
+        }
+
+        return withBeneficiaryLock(request.getBeneficiaryId(),
+                () -> submitManualResultLocked(request, actingUserName));
+    }
+
+    private DiagnosticOrderResultDto submitManualResultLocked(ManualDiagnosticResultRequestDto request,
+                                                              String actingUserName) throws Exception {
         DiagnosticOrder order = findLatestOrder(request.getBeneficiaryId(), request.getOrderType());
         if (DiagnosticOrderStatus.COMPLETED.name().equals(order.getStatus())) {
             throw new IllegalStateException("Cannot submit manual result: order is already COMPLETED (beneficiaryId="
                     + request.getBeneficiaryId() + ", orderType=" + request.getOrderType() + ")");
         }
+        order.setManuallyEnteredBy(actingUserName);
+        // An invalid test outcome is still recorded exactly like a normal result (result row +
+        // tb_suspected write-back), but the order is CLOSED rather than COMPLETED.
+        DiagnosticOrderStatus status = isInvalidResult(order.getOrderType(), request.getResultSummary(),
+                SPUTUM_INVALID_MANUAL_RESULT)
+                ? DiagnosticOrderStatus.CLOSED
+                : DiagnosticOrderStatus.COMPLETED;
         DiagnosticPollResult pollResult = new DiagnosticPollResult(
-                DiagnosticOrderStatus.COMPLETED, null, request.getResultSummary(), null, null, null, null, null, null);
-        return processResult(order, pollResult);
+                status, null, request.getResultSummary(), null, null, null, null, null, null);
+        return processResult(order, pollResult, true, actingUserName);
+    }
+
+    // sputumInvalidResult differs by source: SPUTUM_INVALID_POLLED_RESULT for vendor polls,
+    // SPUTUM_INVALID_MANUAL_RESULT for manual entry. The X-ray value is the same for both.
+    private static boolean isInvalidResult(String orderTypeCode, String resultSummary, String sputumInvalidResult) {
+        if (resultSummary == null) {
+            return false;
+        }
+        String summary = resultSummary.trim();
+        DiagnosticOrderType type = DiagnosticOrderType.fromCode(orderTypeCode);
+        if (type == DiagnosticOrderType.XRAY_CHEST) {
+            return XRAY_INVALID_RESULT.equalsIgnoreCase(summary);
+        }
+        if (type == DiagnosticOrderType.MTB || type == DiagnosticOrderType.MDR_RIF) {
+            return sputumInvalidResult.equalsIgnoreCase(summary);
+        }
+        return false;
+    }
+
+    // Automatic retest after a polled invalid outcome: a brand new PENDING row copying the closed
+    // order's beneficiary, visit, vendor and patient details, with only a fresh externalOrderId,
+    // pushed to the vendor straight away. Never throws — a failure here must not undo the close.
+    private void pushRetestOrder(DiagnosticOrder closed) {
+        try {
+            withBeneficiaryLockBlocking(closed.getBeneficiaryId(), () -> {
+                pushRetestOrderLocked(closed);
+                return null;
+            });
+        } catch (Exception e) {
+            logger.error("Failed to create retest order after invalid result, closedOrderId={}: {}",
+                    closed.getId(), e.getMessage());
+        }
+    }
+
+    private void pushRetestOrderLocked(DiagnosticOrder closed) {
+        // A user push may have created a fresh order for this beneficiary+orderType after this one was
+        // closed — the retest would then put the same patient on the vendor twice, so skip it.
+        Optional<DiagnosticOrder> latest = diagnosticOrderRepo
+                .findFirstByBeneficiaryIdAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(
+                        closed.getBeneficiaryId(), closed.getOrderType());
+        if (latest.isPresent() && !latest.get().getId().equals(closed.getId())
+                && BLOCKING_STATUSES.contains(latest.get().getStatus())) {
+            logger.info("Retest skipped for closedOrderId={}: newer order id={} (status={}) already exists",
+                    closed.getId(), latest.get().getId(), latest.get().getStatus());
+            return;
+        }
+        try {
+            DiagnosticOrder retest = new DiagnosticOrder();
+            retest.setVanID(closed.getVanID());
+            retest.setParkingPlaceID(closed.getParkingPlaceID());
+            retest.setOrderEvent(closed.getOrderEvent());
+            retest.setBeneficiaryId(closed.getBeneficiaryId());
+            retest.setVisitCode(closed.getVisitCode());
+            retest.setProviderServiceName(closed.getProviderServiceName());
+            retest.setProviderCode(closed.getProviderCode());
+            retest.setOrderType(closed.getOrderType());
+            retest.setExternalOrderId(String.format("%s-%d-%s", UUID.randomUUID(), closed.getVisitCode(),
+                    closed.getOrderType()));
+            retest.setStatus(DiagnosticOrderStatus.PENDING.name());
+            retest.setPatientFirstName(closed.getPatientFirstName());
+            retest.setPatientLastName(closed.getPatientLastName());
+            retest.setPatientDateOfBirth(closed.getPatientDateOfBirth());
+            retest.setPatientSex(closed.getPatientSex());
+            retest.setCreatedBy("SYSTEM");
+            retest.setModifiedBy("SYSTEM");
+            retest = diagnosticOrderRepo.save(retest);
+            retest = pushToProvider(retest, closed.getProviderCode());
+            logger.info("Retest order created after invalid result: closedOrderId={}, retestOrderId={}, "
+                            + "externalOrderId={}, status={}", closed.getId(), retest.getId(), retest.getExternalOrderId(),
+                    retest.getStatus());
+        } catch (Exception e) {
+            logger.error("Failed to create retest order after invalid result, closedOrderId={}: {}",
+                    closed.getId(), e.getMessage());
+        }
+    }
+
+    // A vendor poll that COMPLETED with an invalid outcome is downgraded to CLOSED in place.
+    // Returns true when that happened, so the caller still writes the result back to tb_suspected.
+    private static boolean closeIfInvalidPolledResult(DiagnosticOrder order, DiagnosticPollResult result) {
+        if (DiagnosticOrderStatus.COMPLETED.equals(result.getStatus())
+                && isInvalidResult(order.getOrderType(), result.getResultSummary(), SPUTUM_INVALID_POLLED_RESULT)) {
+            result.setStatus(DiagnosticOrderStatus.CLOSED);
+            return true;
+        }
+        return false;
     }
 }

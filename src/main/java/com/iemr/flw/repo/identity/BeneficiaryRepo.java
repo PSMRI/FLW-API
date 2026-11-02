@@ -47,7 +47,11 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     @Query(value = " SELECT t FROM RMNCHMBeneficiaryaddress t WHERE t.createdBy = :userName ")
     Page<RMNCHMBeneficiaryaddress> getBenDataByUser(@Param("userName") String userName, Pageable pageable);
 
-    @Query(value = " SELECT t FROM RMNCHMBeneficiarymapping t WHERE t.benAddressId = :addressID")
+    // BenAddressId can have more than one mapping row (confirmed live: address-ID collisions
+    // between old/test registrations and real ones). Order by PK desc, same "latest wins"
+    // convention already used for findByBenRegIdFromMapping, so callers picking .get(0) get
+    // the newest mapping deterministically instead of whichever row the DB returns first.
+    @Query(value = " SELECT t FROM RMNCHMBeneficiarymapping t WHERE t.benAddressId = :addressID ORDER BY t.benMapId DESC")
     List<RMNCHMBeneficiarymapping> getByAddressID(@Param("addressID") BigInteger addressID);
 
     @Query(value = " SELECT t FROM RMNCHMBeneficiarymapping t WHERE t.benRegId = :BenRegId")
@@ -80,7 +84,11 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     @Query(value = " SELECT t.beneficiaryID FROM RMNCHMBeneficiaryregidmapping t  WHERE t.benRegId = :benRegID ")
     BigInteger getBenIdFromRegID(@Param("benRegID") Long benRegID);
 
-    @Query(value = " SELECT t FROM RMNCHBeneficiaryDetailsRmnch t WHERE t.BenRegId =:benRegID ")
+    // BenRegId has no unique constraint on i_beneficiarydetails_rmnch — a beneficiary can have
+    // more than one row (confirmed live: duplicates, some created well after the original with
+    // a household link the older row never got). Order by PK desc so callers picking .get(0)
+    // get the latest row, not whichever one the DB happens to return first.
+    @Query(value = " SELECT t FROM RMNCHBeneficiaryDetailsRmnch t WHERE t.BenRegId =:benRegID ORDER BY t.beneficiaryDetails_RmnchId DESC ")
     List<RMNCHBeneficiaryDetailsRmnch> getDetailsByRegID(@Param("benRegID") Long benRegID);
 
     @Query(value = " SELECT t FROM RMNCHBornBirthDetails t WHERE t.BenRegId =:benRegID ")
@@ -98,6 +106,13 @@ public interface BeneficiaryRepo extends JpaRepository<RMNCHBeneficiaryDetailsRm
     
     @Query(nativeQuery = true, value = " SELECT HealthID,HealthIdNumber,isNewAbha FROM db_iemr.t_healthid WHERE HealthIdNumber = :healthIdNumber ")
     ArrayList<Object[]> getBenHealthDetails(@Param("healthIdNumber") String healthIdNumber);
+
+    // Same rows FHIR-API getBenhealthID reads, so the worklist can fill healthId/healthIdNumber without an HTTP call
+    @Query(nativeQuery = true, value = " SELECT HealthID, HealthIdNumber FROM db_iemr.m_benhealthidmapping WHERE BeneficiaryRegID = :benRegId ")
+    List<Object[]> getHealthIdMappingRows(@Param("benRegId") Long benRegId);
+
+    @Query(nativeQuery = true, value = " SELECT HealthId FROM db_iemr.t_healthid WHERE HealthIdNumber = :healthIdNumber ")
+    List<String> getHealthIdByNumber(@Param("healthIdNumber") String healthIdNumber);
 
     // benRegId has no unique constraint on i_beneficiarymapping — a beneficiary can have
     // more than one mapping row, so this must return a list, not assume a single result.

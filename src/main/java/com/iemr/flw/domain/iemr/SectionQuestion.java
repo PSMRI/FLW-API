@@ -98,6 +98,11 @@ public class SectionQuestion {
     @Column(name = "containsPii", nullable = false)
     private Boolean containsPii = false;
 
+    /** Soft-delete flag: false means unlinked from its section. Never hard-deleted — historical
+     *  QuestionResponse rows reference questionId as a plain Long outside JPA's cascade graph. */
+    @Column(name = "isActive", nullable = false)
+    private Boolean isActive = true;
+
     @Column(name = "created_by", length = 100)
     private String createdBy;
 
