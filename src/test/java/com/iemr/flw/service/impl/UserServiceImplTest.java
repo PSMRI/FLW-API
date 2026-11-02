@@ -7,16 +7,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class UserServiceImplTest {
-
     @Mock
     private UserServiceRoleRepo userServiceRoleRepo;
 
@@ -25,27 +21,21 @@ class UserServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testGetUserDetail_Success() {
-        // Arrange
-        int userId = 123;
-        UserServiceRoleDTO expectedUserRoleDTO = new UserServiceRoleDTO();
-        expectedUserRoleDTO.setUserId(userId);
-        expectedUserRoleDTO.setRoleName("ROLE_USER");
+    void getUserDetail_returnsUserRole() {
+        UserServiceRoleDTO dto = new UserServiceRoleDTO();
+        when(userServiceRoleRepo.getUserRole(123)).thenReturn(Collections.singletonList(dto));
+        UserServiceRoleDTO result = userService.getUserDetail(123);
+        assertSame(dto, result);
+        verify(userServiceRoleRepo).getUserRole(123);
+    }
 
-        List<UserServiceRoleDTO> userRoleList = new ArrayList<>();
-        userRoleList.add(expectedUserRoleDTO);
-
-        when(userServiceRoleRepo.getUserRole(anyInt())).thenReturn(userRoleList);
-
-        // Act
-        UserServiceRoleDTO result = userService.getUserDetail(userId);
-
-        // Assert
-        assertEquals(expectedUserRoleDTO.getUserId(), result.getUserId());
-        assertEquals(expectedUserRoleDTO.getRoleName(), result.getRoleName());
+    @Test
+    void getUserDetail_emptyList_throwsException() {
+        when(userServiceRoleRepo.getUserRole(456)).thenReturn(Collections.emptyList());
+        assertThrows(IndexOutOfBoundsException.class, () -> userService.getUserDetail(456));
     }
 }
