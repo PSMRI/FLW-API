@@ -16,4 +16,7 @@ public class GeneralCheckUpFollowUpListDto {
     @JsonProperty("referred_to")
     private String referredTo;
 
+    @JsonProperty("other_follow_up")
+    private String  otherFollowUp;
+
 }

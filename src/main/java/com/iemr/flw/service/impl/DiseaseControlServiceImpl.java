@@ -1730,6 +1730,7 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                             "Referred-to facility is required");
                 }
 
+
                 // Find the existing record for this specific referral.
                 GeneralCheckUpFollowUp entity =
                         generalCheckUpFollowUpRepository
@@ -1756,6 +1757,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
                                 : null
                 );
 
+                if(fields.getOtherFollowUp()!=null){
+                      entity.setOtherFollowUp(fields.getOtherFollowUp());
+                }
                 entity.setAshaId(userId);
                 entity.setCreatedBy(username);
                 entity.setReferredTo(dto.getFields().getReferredTo());
@@ -1823,6 +1827,9 @@ public class DiseaseControlServiceImpl implements DiseaseControlService {
 
                       GeneralCheckUpFollowUpListDto fields =
                               new GeneralCheckUpFollowUpListDto();
+                      if(entity.getOtherFollowUp()!=null){
+                          fields.setOtherFollowUp(entity.getOtherFollowUp());
+                      }
 
                       fields.setFollowUpDate(
                               entity.getFollowUpDate() != null

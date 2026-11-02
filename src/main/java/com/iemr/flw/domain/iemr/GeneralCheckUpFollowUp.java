@@ -51,4 +51,7 @@ public class GeneralCheckUpFollowUp {
 
     @Column(name = "referredOnDate")
     private LocalDate referredOnDate;
+
+    @Column(name = "other_follow_up")
+    private String otherFollowUp;
 }

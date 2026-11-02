@@ -36,4 +36,5 @@ public class TBSuspectedDTO {
     private Boolean isDRTBConfirmed;
     private Boolean referred;
     private String followUps;
+    private Boolean isRecommendedForTpt;
 }
