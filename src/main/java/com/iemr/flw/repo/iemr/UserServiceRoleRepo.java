@@ -60,6 +60,11 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
     List<Object[]> getNikshayMappingRows(@Param("userId") Integer userId,
                                           @Param("providerServiceMapId") Integer providerServiceMapId);
 
+    // Every active mapping row's service and village list, for the STOP-TB changes feed's scope check.
+    @Query(value = "SELECT usrm.ProviderServiceMapID, usrm.Villageid FROM m_userservicerolemapping usrm " +
+            "WHERE usrm.UserID = :userId AND usrm.Deleted = false", nativeQuery = true)
+    List<Object[]> getServiceVillageRows(@Param("userId") Integer userId);
+
     @Query(value = "SELECT NikshayTUID, TUName FROM m_nikshay_tu WHERE NikshayTUID IN (:ids)", nativeQuery = true)
     List<Object[]> findNikshayTuNames(@Param("ids") java.util.Collection<Integer> ids);
 
@@ -73,5 +78,11 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
     // district happens to share that same numeric ID by coincidence.
     @Query(value = "SELECT DistrictName FROM m_nikshay_district WHERE NikshayDistrictID = :id", nativeQuery = true)
     String findNikshayDistrictName(@Param("id") Integer id);
+
+    @Query("SELECT new com.iemr.flw.dto.iemr.UserServiceRoleDTO(u.userId, u.name, u.userName, u.stateId, u.stateName, u.workingDistrictId," +
+            "u.workingDistrictName, u.serviceProviderId, u.roleId, u.roleName, u.providerServiceMapId, u.blockid, u.blockname, u.villageid, " +
+            "u.villagename) FROM UserServiceRole u WHERE u.userId IN :userIds " +
+            "AND u.userServciceRoleDeleted = false AND u.userDeleted = false")
+    List<UserServiceRoleDTO> getUserRolesByIds(@Param("userIds") List<Integer> userIds);
 
 }

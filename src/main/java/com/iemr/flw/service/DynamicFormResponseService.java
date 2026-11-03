@@ -56,6 +56,12 @@ public interface DynamicFormResponseService {
     FormResponseDTO getResponseById(Long responseId);
 
     /**
+     * Responses with all nested answers, keyed by responseId, as getResponsesByBeneficiary returns
+     * them (STOP-TB changes feed). Ids with no response are left out.
+     */
+    java.util.Map<Long, FormResponseDTO> getResponsesByIds(java.util.Collection<Long> responseIds);
+
+    /**
      * Submit multiple form responses in one bulk transaction.
      * All FormResponse rows are batch-inserted via saveAll() so responseIds are available
      * before section/question processing begins. All-or-nothing: any failure rolls back all.

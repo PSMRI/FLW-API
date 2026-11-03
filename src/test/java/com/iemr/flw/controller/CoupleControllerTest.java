@@ -1,233 +1,205 @@
 package com.iemr.flw.controller;
 
-import static org.mockito.Mockito.*;
-
+import com.google.gson.Gson;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.EligibleCoupleDTO;
 import com.iemr.flw.dto.iemr.EligibleCoupleTrackingDTO;
 import com.iemr.flw.service.CoupleService;
-import com.iemr.flw.utils.ApiResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
-import java.util.Arrays;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import java.util.Collections;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class CoupleControllerTest {
-
-    @InjectMocks
-    private CoupleController coupleController;
+    private MockMvc mockMvc;
 
     @Mock
     private CoupleService coupleService;
 
+    @InjectMocks
+    private CoupleController controller;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
-//    @Test
-//    void testSaveEligibleCouple() {
-//        // Arrange
-//        List<EligibleCoupleDTO> eligibleCoupleDTOs = Arrays.asList(new EligibleCoupleDTO());
-//
-//        when(coupleService.registerEligibleCouple(any())).thenReturn("Save successful");
-//
-//        // Act
-//        ResponseEntity<?> responseEntity = coupleController.saveEligibleCouple(eligibleCoupleDTOs, "AuthorizationToken");
-//
-//        // Assert
-//        assertNotNull(responseEntity);
-//        assertEquals(HttpStatus.ACCEPTED, responseEntity.getStatusCode());
-//
-//        ApiResponse apiResponse = (ApiResponse) responseEntity.getBody();
-//        assertNotNull(apiResponse);
-//        assertTrue(apiResponse.getSuccess());
-//        assertNull(apiResponse.getMessage());
-//
-//        assertEquals("Save successful", apiResponse.getData());
-//
-//        verify(coupleService, times(1)).registerEligibleCouple(eligibleCoupleDTOs);
-//    }
-//
-//    @Test
-//    void testSaveEligibleCouple_Exception() {
-//        // Arrange
-//        List<EligibleCoupleDTO> eligibleCoupleDTOs = Arrays.asList(new EligibleCoupleDTO());
-//
-//        when(coupleService.registerEligibleCouple(any())).thenThrow(new RuntimeException("Test exception"));
-//
-//        // Act
-//        ResponseEntity<?> responseEntity = coupleController.saveEligibleCouple(eligibleCoupleDTOs, "AuthorizationToken");
-//
-//        // Assert
-//        assertNotNull(responseEntity);
-//        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
-//
-//        ApiResponse apiResponse = (ApiResponse) responseEntity.getBody();
-//        assertNotNull(apiResponse);
-//        assertFalse(apiResponse.getSuccess());
-//        assertNotNull(apiResponse.getMessage());
-//
-//        assertNull(apiResponse.getData());
-//
-//        verify(coupleService, times(1)).registerEligibleCouple(eligibleCoupleDTOs);
-//    }
-//
-//    @Test
-//    void testGetEligibleCouple() {
-//        // Arrange
-//        GetBenRequestHandler requestDTO = new GetBenRequestHandler();
-//        requestDTO.setAshaId(198);
-//
-//        List<EligibleCoupleDTO> responseDTOs = Arrays.asList(new EligibleCoupleDTO());
-//        when(coupleService.getEligibleCoupleRegRecords(any())).thenReturn(responseDTOs);
-//
-//        // Act
-//        ResponseEntity<?> responseEntity = coupleController.getEligibleCouple(requestDTO, "AuthorizationToken");
-//
-//        // Assert
-//        assertNotNull(responseEntity);
-//        assertEquals(HttpStatus.ACCEPTED, responseEntity.getStatusCode());
-//
-//        ApiResponse apiResponse = (ApiResponse) responseEntity.getBody();
-//        assertNotNull(apiResponse);
-//        assertTrue(apiResponse.getSuccess());
-//        assertNull(apiResponse.getMessage());
-//
-//        assertEquals(responseDTOs, apiResponse.getData());
-//
-//        verify(coupleService, times(1)).getEligibleCoupleRegRecords(requestDTO);
-//    }
-//
-//    @Test
-//    void testGetEligibleCouple_Exception() {
-//        // Arrange
-//        GetBenRequestHandler requestDTO = new GetBenRequestHandler();
-//        requestDTO.setAshaId(1098);
-//
-//        when(coupleService.getEligibleCoupleRegRecords(any())).thenThrow(new RuntimeException("Test exception"));
-//
-//        // Act
-//        ResponseEntity<?> responseEntity = coupleController.getEligibleCouple(requestDTO, "AuthorizationToken");
-//
-//        // Assert
-//        assertNotNull(responseEntity);
-//        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
-//
-//        ApiResponse apiResponse = (ApiResponse) responseEntity.getBody();
-//        assertNotNull(apiResponse);
-//        assertFalse(apiResponse.getSuccess());
-//        assertNotNull(apiResponse.getMessage());
-//
-//        assertNull(apiResponse.getData());
-//
-//        verify(coupleService, times(1)).getEligibleCoupleRegRecords(requestDTO);
-//    }
-//
-//    @Test
-//    void testSaveEligibleCoupleTracking() {
-//        // Arrange
-//        List<EligibleCoupleTrackingDTO> eligibleCoupleTrackingDTOS = Arrays.asList(new EligibleCoupleTrackingDTO());
-//
-//        when(coupleService.registerEligibleCoupleTracking(any())).thenReturn("Save successful");
-//
-//        // Act
-//        ResponseEntity<?> responseEntity = coupleController.saveEligibleCoupleTracking(eligibleCoupleTrackingDTOS, "AuthorizationToken");
-//
-//        // Assert
-//        assertNotNull(responseEntity);
-//        assertEquals(HttpStatus.ACCEPTED, responseEntity.getStatusCode());
-//
-//        ApiResponse apiResponse = (ApiResponse) responseEntity.getBody();
-//        assertNotNull(apiResponse);
-//        assertTrue(apiResponse.getSuccess());
-//        assertNull(apiResponse.getMessage());
-//
-//        assertEquals("Save successful", apiResponse.getData());
-//
-//        verify(coupleService, times(1)).registerEligibleCoupleTracking(eligibleCoupleTrackingDTOS);
-//    }
-//
-//    @Test
-//    void testSaveEligibleCoupleTracking_Exception() {
-//        // Arrange
-//        List<EligibleCoupleTrackingDTO> eligibleCoupleTrackingDTOS = Arrays.asList(new EligibleCoupleTrackingDTO());
-//
-//        when(coupleService.registerEligibleCoupleTracking(any())).thenThrow(new RuntimeException("Test exception"));
-//
-//        // Act
-//        ResponseEntity<?> responseEntity = coupleController.saveEligibleCoupleTracking(eligibleCoupleTrackingDTOS, "AuthorizationToken");
-//
-//        // Assert
-//        assertNotNull(responseEntity);
-//        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
-//
-//        ApiResponse apiResponse = (ApiResponse) responseEntity.getBody();
-//        assertNotNull(apiResponse);
-//        assertFalse(apiResponse.getSuccess());
-//        assertNotNull(apiResponse.getMessage());
-//
-//        assertNull(apiResponse.getData());
-//
-//        verify(coupleService, times(1)).registerEligibleCoupleTracking(eligibleCoupleTrackingDTOS);
-//    }
-//
-//    @Test
-//    void testGetEligibleCoupleTracking() {
-//        // Arrange
-//        GetBenRequestHandler requestDTO = new GetBenRequestHandler();
-//        requestDTO.setAshaId(1298);
-//
-//        List<EligibleCoupleTrackingDTO> responseDTOs = Arrays.asList(new EligibleCoupleTrackingDTO());
-//        when(coupleService.getEligibleCoupleTracking(any())).thenReturn(responseDTOs);
-//
-//        // Act
-//        ResponseEntity<?> responseEntity = coupleController.getEligibleCoupleTracking(requestDTO, "AuthorizationToken");
-//
-//        // Assert
-//        assertNotNull(responseEntity);
-//        assertEquals(HttpStatus.ACCEPTED, responseEntity.getStatusCode());
-//
-//        ApiResponse apiResponse = (ApiResponse) responseEntity.getBody();
-//        assertNotNull(apiResponse);
-//        assertTrue(apiResponse.getSuccess());
-//        assertNull(apiResponse.getMessage());
-//
-//        assertEquals(responseDTOs, apiResponse.getData());
-//
-//        verify(coupleService, times(1)).getEligibleCoupleTracking(requestDTO);
-//    }
-//
-//    @Test
-//    void testGetEligibleCoupleTracking_Exception() {
-//        // Arrange
-//        GetBenRequestHandler requestDTO = new GetBenRequestHandler();
-//        requestDTO.setAshaId(1028);
-//
-//        when(coupleService.getEligibleCoupleTracking(any())).thenThrow(new RuntimeException("Test exception"));
-//
-//        // Act
-//        ResponseEntity<?> responseEntity = coupleController.getEligibleCoupleTracking(requestDTO, "AuthorizationToken");
-//
-//        // Assert
-//        assertNotNull(responseEntity);
-//        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
-//
-//        ApiResponse apiResponse = (ApiResponse) responseEntity.getBody();
-//        assertNotNull(apiResponse);
-//        assertFalse(apiResponse.getSuccess());
-//        assertNotNull(apiResponse.getMessage());
-//
-//        assertNull(apiResponse.getData());
-//
-//        verify(coupleService, times(1)).getEligibleCoupleTracking(requestDTO);
-//    }
+    @Test
+    void saveEligibleCouple_success() throws Exception {
+        List<EligibleCoupleDTO> dtos = Collections.singletonList(new EligibleCoupleDTO());
+        when(coupleService.registerEligibleCouple(any())).thenReturn("data");
+        mockMvc.perform(post("/couple/register/saveAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(new Gson().toJson(dtos)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void saveEligibleCouple_noRecordFound() throws Exception {
+        List<EligibleCoupleDTO> dtos = Collections.singletonList(new EligibleCoupleDTO());
+        when(coupleService.registerEligibleCouple(any())).thenReturn(null);
+        mockMvc.perform(post("/couple/register/saveAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(new Gson().toJson(dtos)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void saveEligibleCouple_invalidRequest() throws Exception {
+        mockMvc.perform(post("/couple/register/saveAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content("null"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void saveEligibleCouple_exception() throws Exception {
+        List<EligibleCoupleDTO> dtos = Collections.singletonList(new EligibleCoupleDTO());
+        when(coupleService.registerEligibleCouple(any())).thenThrow(new RuntimeException("fail"));
+        mockMvc.perform(post("/couple/register/saveAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(new Gson().toJson(dtos)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void saveEligibleCoupleTracking_success() throws Exception {
+        List<EligibleCoupleTrackingDTO> dtos = Collections.singletonList(new EligibleCoupleTrackingDTO());
+        when(coupleService.registerEligibleCoupleTracking(any())).thenReturn("data");
+        mockMvc.perform(post("/couple/tracking/saveAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(new Gson().toJson(dtos)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void saveEligibleCoupleTracking_noRecordFound() throws Exception {
+        List<EligibleCoupleTrackingDTO> dtos = Collections.singletonList(new EligibleCoupleTrackingDTO());
+        when(coupleService.registerEligibleCoupleTracking(any())).thenReturn(null);
+        mockMvc.perform(post("/couple/tracking/saveAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(new Gson().toJson(dtos)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void saveEligibleCoupleTracking_invalidRequest() throws Exception {
+        mockMvc.perform(post("/couple/tracking/saveAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content("null"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void saveEligibleCoupleTracking_exception() throws Exception {
+        List<EligibleCoupleTrackingDTO> dtos = Collections.singletonList(new EligibleCoupleTrackingDTO());
+        when(coupleService.registerEligibleCoupleTracking(any())).thenThrow(new RuntimeException("fail"));
+        mockMvc.perform(post("/couple/tracking/saveAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(new Gson().toJson(dtos)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getEligibleCouple_success() throws Exception {
+        when(coupleService.getEligibleCoupleRegRecords(any())).thenReturn("data");
+        GetBenRequestHandler req = new GetBenRequestHandler();
+        mockMvc.perform(post("/couple/register/getAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(new Gson().toJson(req)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getEligibleCouple_noRecordFound() throws Exception {
+        when(coupleService.getEligibleCoupleRegRecords(any())).thenReturn(null);
+        GetBenRequestHandler req = new GetBenRequestHandler();
+        mockMvc.perform(post("/couple/register/getAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(new Gson().toJson(req)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getEligibleCouple_invalidRequest() throws Exception {
+        mockMvc.perform(post("/couple/register/getAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content("null"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getEligibleCouple_exception() throws Exception {
+        when(coupleService.getEligibleCoupleRegRecords(any())).thenThrow(new RuntimeException("fail"));
+        GetBenRequestHandler req = new GetBenRequestHandler();
+        mockMvc.perform(post("/couple/register/getAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(new Gson().toJson(req)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getEligibleCoupleTracking_success() throws Exception {
+        when(coupleService.getEligibleCoupleTracking(any())).thenReturn(Collections.singletonList(new EligibleCoupleTrackingDTO()));
+        GetBenRequestHandler req = new GetBenRequestHandler();
+        mockMvc.perform(post("/couple/tracking/getAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(new Gson().toJson(req)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getEligibleCoupleTracking_noRecordFound() throws Exception {
+        when(coupleService.getEligibleCoupleTracking(any())).thenReturn(null);
+        GetBenRequestHandler req = new GetBenRequestHandler();
+        mockMvc.perform(post("/couple/tracking/getAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(new Gson().toJson(req)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getEligibleCoupleTracking_invalidRequest() throws Exception {
+        mockMvc.perform(post("/couple/tracking/getAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content("null"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getEligibleCoupleTracking_exception() throws Exception {
+        when(coupleService.getEligibleCoupleTracking(any())).thenThrow(new RuntimeException("fail"));
+        GetBenRequestHandler req = new GetBenRequestHandler();
+        mockMvc.perform(post("/couple/tracking/getAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(new Gson().toJson(req)))
+                .andExpect(status().isOk());
+    }
 }

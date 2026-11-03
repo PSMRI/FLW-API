@@ -105,4 +105,11 @@ public class TBConfirmedCase {
 
     @Column(name = "side_effects")
     private String sideEffects;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private java.sql.Timestamp syncedDate;
 }

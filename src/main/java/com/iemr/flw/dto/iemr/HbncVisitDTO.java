@@ -9,6 +9,9 @@ import java.util.List;
 
  @Data
  public class HbncVisitDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
  @SerializedName("id")
  private Integer id;
 
@@ -92,6 +95,9 @@ import java.util.List;
 
   @Column(name = "baby_eyes_swollen")
   private Boolean babyEyesSwollen;
+
+  @SerializedName("is_admitted_in_sncu")
+  private String is_admitted_in_sncu;
 
 
  }

@@ -149,8 +149,15 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
 
         vhncForm.setFormType("VHNC");
         vhncFormRepo.save(vhncForm);
+        if(vhncFormDTO.getVhncDate()!=null && !vhncFormDTO.getVhncDate().isEmpty()){
 
-        checkVhncIncentive(vhncForm.getCreatedDate(),Math.toIntExact(vhncForm.getUserId()));
+            Timestamp timestamp = Timestamp.valueOf(
+                    LocalDate.parse(vhncForm.getVhncDate(), DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+                            .atStartOfDay()
+            );
+
+            checkVhncIncentive(timestamp,Math.toIntExact(vhncForm.getUserId()));
+        }
 
         return true;
     }
@@ -170,8 +177,17 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         phcReviewForm.setImage2(dto.getImage2());
         phcReviewForm.setFormType("PHC");
         phcReviewFormRepo.save(phcReviewForm);
+        if(dto.getPhcReviewDate()!=null && !dto.getPhcReviewDate().isEmpty()){
 
-        checkPhcMeetingIncentive(phcReviewForm.getCreatedDate(),Math.toIntExact(phcReviewForm.getUserId()));
+            Timestamp timestamp = Timestamp.valueOf(
+                    LocalDate.parse(phcReviewForm.getPhcReviewDate(), DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+                            .atStartOfDay()
+            );
+
+            checkPhcMeetingIncentive(timestamp,Math.toIntExact(phcReviewForm.getUserId()));
+        }
+
+
 
         return true;
     }
@@ -217,8 +233,8 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         VHNDForm vhndForm = new VHNDForm();
         vhndForm.setUserId(userID);
         vhndForm.setVhndDate(vhndFormDTO.getVhndDate());
-        vhndForm.setImage2(vhndFormDTO.getImage2() != null ? vhndFormDTO.getImage2() : "");
-        vhndForm.setImage1(vhndFormDTO.getImage1() != null ? vhndFormDTO.getImage1() : "");
+        vhndForm.setImage2(vhndFormDTO.getImage2() != null ? vhndFormDTO.getImage2() : null);
+        vhndForm.setImage1(vhndFormDTO.getImage1() != null ? vhndFormDTO.getImage1() : null);
         vhndForm.setPlace(vhndFormDTO.getPlace() != null ? vhndFormDTO.getPlace() : "");
 
         vhndForm.setNoOfBeneficiariesAttended(
@@ -278,8 +294,18 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
         vhndForm.setFormType("VHND");
         vhndRepo.save(vhndForm);
 
+        if (vhndFormDTO.getVhndDate() != null
+                && !vhndFormDTO.getVhndDate().isEmpty()) {
 
-        checkVhndIncentive(vhndForm.getCreatedDate(),vhndForm.getUserId());
+            Timestamp timestamp = Timestamp.valueOf(
+                    LocalDate.parse(
+                            vhndFormDTO.getVhndDate(),
+                            DateTimeFormatter.ofPattern("dd-MM-yyyy")
+                    ).atStartOfDay()
+            );
+
+            checkVhndIncentive(timestamp, vhndForm.getUserId());
+        }
 
         return true;
 
@@ -339,6 +365,7 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
                     record.setUpdatedBy(userRepo.getUserNamedByUserId(userId));
                     record.setAshaId(userId);
                     record.setBenId(0L);
+                    record.setIsDefaultActivity(true);
                     record.setAmount(Long.valueOf(activity.getRate()));
                     record.setIsEligible(true);
                     recordRepo.save(record);
@@ -375,6 +402,7 @@ public class VillageLevelFormServiceImpl implements VillageLevelFormService {
                     record.setUpdatedBy(userRepo.getUserNamedByUserId(userId));
                     record.setAshaId(userId);
                     record.setBenId(0L);
+                    record.setIsDefaultActivity(true);
                     record.setAmount(Long.valueOf(activity.getRate()));
                     record.setIsEligible(true);
                     recordRepo.save(record);

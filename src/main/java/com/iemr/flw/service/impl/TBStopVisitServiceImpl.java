@@ -25,7 +25,17 @@ public class TBStopVisitServiceImpl implements TBStopVisitService {
         Timestamp dayEnd   = Timestamp.valueOf(today.plusDays(1).atStartOfDay());
 
         BenVisitDetail existing = benVisitDetailsRepo.findStopTBVisitForToday(beneficiaryRegID, dayStart, dayEnd);
-        if (existing != null) return existing;
+        if (existing != null) {
+            // TB suspected / confirmed / diagnostic saves create the visit without a service line; whichever
+            // form syncs first decides. Fill it from the first later save that has one (screening, OPD...).
+            if (existing.getProviderServiceMapID() == null && providerServiceMapID != null) {
+                existing.setProviderServiceMapID(providerServiceMapID);
+                existing.setModifiedBy(createdBy);
+                existing.setProcessed("N");
+                existing = benVisitDetailsRepo.saveAndFlush(existing);
+            }
+            return existing;
+        }
 
         Integer visitCount = benVisitDetailsRepo.countStopTBVisits(beneficiaryRegID);
         short visitNo = (short) ((visitCount != null ? visitCount : 0) + 1);

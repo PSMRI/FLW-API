@@ -6,6 +6,9 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class VaccineDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private short vaccineId;
     private String immunizationService;

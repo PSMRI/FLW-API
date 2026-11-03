@@ -66,4 +66,10 @@ public class MicroBirthPlan {
     private String modeOfTransportation; // Mode of transport
 
 
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private java.sql.Timestamp syncedDate;
 }

@@ -4,6 +4,9 @@ import lombok.Data;
 
 @Data
 public class OrsDistributionDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
     private Long id;
     private Long beneficiaryId;
     private Long houseHoldId;

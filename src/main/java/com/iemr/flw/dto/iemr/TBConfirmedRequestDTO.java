@@ -10,4 +10,5 @@ public class TBConfirmedRequestDTO {
     private Long userId;
 
     private List<TBConfirmedCaseDTO> tbConfirmedList;
+
 }

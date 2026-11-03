@@ -1,10 +1,13 @@
 package com.iemr.flw.domain.iemr;
 
 import jakarta.persistence.*;
+import lombok.Data;
+
 import java.sql.Timestamp;
 import java.util.Objects;
 
 @Entity
+@Data
 @Table(name = "t_anccare", schema = "db_iemr")
 public class AncCare {
     private long id;
@@ -40,6 +43,7 @@ public class AncCare {
     private String syncedBy;
     private Timestamp syncedDate;
     private String reservedForChange;
+
 
     @Id
     @Column(name = "ID")

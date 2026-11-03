@@ -31,4 +31,10 @@ public class MosquitoNetEntity {
     @Column(name = "is_net_distributed")
     private String isNetDistributed;
 
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private java.sql.Timestamp syncedDate;
 }

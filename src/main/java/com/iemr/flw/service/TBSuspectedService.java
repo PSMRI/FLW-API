@@ -13,4 +13,7 @@ public interface TBSuspectedService {
     String save(TBSuspectedRequestDTO tbScreeningList) throws Exception;
 
     String getByUserId(GetBenRequestHandler userId);
+
+    // One record per row, in the same JSON shape getAll returns (STOP-TB changes feed), keyed by id.
+    java.util.Map<Long, String> getRecordsByIds(java.util.Collection<Long> ids);
 }

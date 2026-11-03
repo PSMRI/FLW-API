@@ -29,6 +29,9 @@ import lombok.Data;
 import java.util.List;
 @Data
 public class MalariaFollowUpDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
     private Integer userId;
     private List<MalariaFollowListUpDTO> malariaFollowListUp;
 }

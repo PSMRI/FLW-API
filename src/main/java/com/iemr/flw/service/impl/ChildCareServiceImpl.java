@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.iemr.flw.domain.identity.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
@@ -16,6 +17,7 @@ import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.UserService;
 import com.iemr.flw.utils.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.aspectj.weaver.ast.Or;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -36,6 +38,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -98,6 +101,7 @@ public class ChildCareServiceImpl implements ChildCareService {
     @Autowired
     private PNCVisitRepo pncVisitRepo;
 
+    private final ConcurrentHashMap<String, Object> lockMap = new ConcurrentHashMap<>();
 
     @Override
     public String registerHBYC(List<HbycRequestDTO> hbycDTOs) {
@@ -198,7 +202,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 addIfValid(fields, "is_child_sick", convert(hbycChildVisit.getIs_child_sick()));
                 addIfValid(fields, "exclusive_breastfeeding", convert(hbycChildVisit.getExclusive_breastfeeding()));
                 addIfValid(fields, "mother_counseled_ebf", convert(hbycChildVisit.getMother_counseled_ebf()));
-//                addIfValid(fields, "complementary_feeding", convert(hbycChildVisit.getComplementary_feeding()));
+                addIfValid(fields, "complementary_feeding", convert(hbycChildVisit.getComplementary_feeding()));
                 addIfValid(fields, "mother_counseled_cf", convert(hbycChildVisit.getMother_counseled_cf()));
                 addIfValid(fields, "weight_recorded", convert(hbycChildVisit.getWeight_recorded()));
                 addIfValid(fields, "developmental_delay", convert(hbycChildVisit.getDevelopmental_delay()));
@@ -212,7 +216,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 addIfValid(fields, "parenting_counseling", convert(hbycChildVisit.getParenting_counseling()));
                 addIfValid(fields, "family_planning_counseling", convert(hbycChildVisit.getFamily_planning_counseling()));
                 addIfValid(fields, "diarrhoea_episode", convert(hbycChildVisit.getDiarrhoea_episode()));
-//                addIfValid(fields, "breathing_difficulty", convert(hbycChildVisit.getBreathing_difficulty()));
+                addIfValid(fields, "breathing_difficulty", convert(hbycChildVisit.getBreathing_difficulty()));
                 addIfValid(fields, "temperature_check", hbycChildVisit.getTemperature());
                 addIfValid(fields, "mcp_card_images", hbycChildVisit.getMcp_card_images());
 
@@ -279,11 +283,13 @@ public class ChildCareServiceImpl implements ChildCareService {
                     addIfValid(fields, "umbilical_stump", visit.getUmbilical_stump());
                     addIfValid(fields, "discharged_from_sncu", convert(visit.getDischarged_from_sncu()));
                     addIfValid(fields, "discharge_summary_upload", visit.getDischarge_summary_upload());
+                    addIfValid(fields, "is_admitted_in_sncu", convert(visit.getIs_admitted_in_sncu()));
 
                     // Add more fields as required
 
                     responseDTO.setFields(fields);
                     result.add(responseDTO);
+
 
                 }
                 page++;
@@ -372,27 +378,93 @@ public class ChildCareServiceImpl implements ChildCareService {
     }
 
     @Override
+    public String saveHBNCDetails(List<HbncRequestDTO> hbncRequestDTOs) {
+        try {
+            List<HbncVisit> hbncList = new ArrayList<>();
+
+            hbncRequestDTOs.forEach(it -> {
+                if (it.getVisitDate() != null) {
+
+                    HbncVisitDTO hbncVisitDTO = it.getFields();
+                    hbncVisitDTO.setVisit_date(it.getVisitDate());
+                    HbncVisit hbncVisit = hbncVisitRepo.findByBeneficiaryIdAndVisit_day(it.getBeneficiaryId(), hbncVisitDTO.getVisit_day());
+
+                    if (hbncVisit != null) {
+                        Long id = hbncVisit.getId();
+                        modelMapper.map(hbncVisitDTO, hbncVisit);
+                        hbncVisit.setId(id);
+                    } else {
+                        hbncVisit = new HbncVisit();
+                        modelMapper.map(hbncVisitDTO, hbncVisit);
+                        hbncVisit.setBeneficiaryId(it.getBeneficiaryId());
+                        hbncVisit.setAshaId(userRepo.getUserIdByName(it.getUserName()));
+                        hbncVisit.setCreatedBy(it.getUserName());
+                        hbncVisit.setHouseHoldId(it.getHouseHoldId());
+                        hbncVisit.setId(null);
+                    }
+                    hbncList.add(hbncVisit);
+                }
+            });
+
+
+            hbncVisitRepo.saveAll(hbncList);
+
+
+            logger.info("HBNC details saved");
+            return "no of hbnc details saved: " + (hbncList.size());
+        } catch (Exception e) {
+            logger.info("Saving HBNC details failed with error : " + e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
     public List<ChildVaccinationDTO> getChildVaccinationDetails(GetBenRequestHandler dto) {
         try {
             String user = beneficiaryRepo.getUserName(dto.getAshaId());
-            List<ChildVaccination> vaccinationDetails = childVaccinationRepo.getChildVaccinationDetails(user, dto.getFromDate(), dto.getToDate());
+            List<ChildVaccination> vaccinationDetails =
+                    childVaccinationRepo.getChildVaccinationDetails(user);
+
+            if (vaccinationDetails.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            // Bulk fetch all beneficiary IDs in ONE query instead of one-per-record
+            List<Long> regIds = vaccinationDetails.stream()
+                    .map(ChildVaccination::getBeneficiaryRegId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            Map<Long, BigInteger> regIdToBenIdMap = new HashMap<>();
+            if (!regIds.isEmpty()) {
+                List<Object[]> benIdRows = beneficiaryRepo.getBenIdsFromRegIds(regIds);
+                for (Object[] row : benIdRows) {
+                    Long regId = ((Number) row[0]).longValue();
+                    BigInteger benId = row[1] == null
+                            ? null
+                            : new BigInteger(row[1].toString());
+                    regIdToBenIdMap.put(regId, benId);
+                }
+            }
+
+            // Call ONCE for the whole batch — not per record
+            checkAndAddIncentives(vaccinationDetails);
 
             List<ChildVaccinationDTO> result = new ArrayList<>();
-            vaccinationDetails.forEach(childVaccination -> {
+            for (ChildVaccination childVaccination : vaccinationDetails) {
                 ChildVaccinationDTO vaccinationDTO = mapper.convertValue(childVaccination, ChildVaccinationDTO.class);
-                if(childVaccination.getBeneficiaryRegId()!=null){
-                    BigInteger benId = beneficiaryRepo.getBenIdFromRegID(childVaccination.getBeneficiaryRegId());
-                    vaccinationDTO.setBeneficiaryId(benId.longValue());
 
+                if (childVaccination.getBeneficiaryRegId() != null) {
+                    BigInteger benId = regIdToBenIdMap.get(childVaccination.getBeneficiaryRegId());
+                    if (benId != null) {
+                        vaccinationDTO.setBeneficiaryId(benId.longValue());
+                    }
                 }
-                if(!vaccinationDetails.isEmpty()){
-                    checkAndAddIncentives(vaccinationDetails);
-
-                }
-
 
                 result.add(vaccinationDTO);
-            });
+            }
+
             return result;
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -516,6 +588,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                 samVisit.setVisitLabel(samDTO.getFields().getVisit_label());
                 samVisit.setWeightForHeightStatus(samDTO.getFields().getWeight_for_height_status());
                 samVisit.setIsChildReferredNrc(samDTO.getFields().getIs_child_referred_nrc());
+                samVisit.setIsChildAdmittedNrc(samDTO.getFields().getIs_child_admitted_nrc());
                 samVisit.setNrcAdmissionDate(samDTO.getFields().getNrc_admission_date());
                 samVisit.setIsChildDischargedNrc(samDTO.getFields().getIs_child_discharged_nrc());
                 samVisit.setNrcDischargeDate(samDTO.getFields().getNrc_discharge_date());
@@ -709,7 +782,8 @@ public class ChildCareServiceImpl implements ChildCareService {
         savedList.forEach(data -> {
             Timestamp visitTimestamp =
                     Timestamp.valueOf(data.getIfaProvisionDate().atStartOfDay());
-            if(data.getIfaBottleCount().equals("10.0")){
+
+            if(data!=null){
                 incentiveLogicService.incentiveForGiveingIFA(
                         data.getBeneficiaryId(),
                         visitTimestamp,
@@ -774,8 +848,10 @@ public class ChildCareServiceImpl implements ChildCareService {
             fields.setIfa_provision_date(entity.getIfaProvisionDate().format(FORMATTER));
         }
         fields.setMcp_card_upload(entity.getMcpCardUpload());
-        fields.setIfa_bottle_count(Double.valueOf(entity.getIfaBottleCount()));
+        if(entity.getIfaBottleCount()!=null){
+            fields.setIfa_bottle_count(Double.valueOf(entity.getIfaBottleCount()));
 
+        }
         dto.setFields(fields);
         return dto;
     }
@@ -803,7 +879,10 @@ public class ChildCareServiceImpl implements ChildCareService {
                     entity.setIfaProvisionDate(null);
                 }
             }
-            entity.setIfaBottleCount(dto.getFields().getIfa_bottle_count().toString());
+            if(dto.getFields().getIfa_bottle_count()!=null){
+                entity.setIfaBottleCount(dto.getFields().getIfa_bottle_count().toString());
+
+            }
             entity.setMcpCardUpload(dto.getFields().getMcp_card_upload());
         }
 
@@ -930,18 +1009,112 @@ public class ChildCareServiceImpl implements ChildCareService {
             }
 
             if (stateCode.equals(StateCode.CG.getStateCode())) {
-                if (hbncVisit.getVisit_day().equals("42nd Day")) {
-                    IncentiveActivity visitActivityCH = incentivesRepo.findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.ACTIVITY.getDisplayName());
+                if ("42nd Day".equals(hbncVisit.getVisit_day())) {
+                    IncentiveActivity visitActivityCH = incentivesRepo
+                            .findIncentiveMasterByNameAndGroup("HBNC_0_42_DAYS", GroupName.ACTIVITY.getDisplayName());
                     createIncentiveRecordforHbncVisit(hbncVisit, benId, visitActivityCH, "HBNC_0_42_DAYS");
 
+                    // 1. Child ka record
+                    List<RMNCHBeneficiaryDetailsRmnch> childList =
+                            beneficiaryRepo.findByBenficieryid(hbncVisit.getBeneficiaryId());
 
+                    if (childList != null && !childList.isEmpty()) {
+                        RMNCHBeneficiaryDetailsRmnch child = childList.get(childList.size() - 1);
+
+                        // 2. Same household se mother
+                        RMNCHBeneficiaryDetailsRmnch mother = beneficiaryRepo
+                                .findByHouseoldId(child.getHouseoldId()).stream()
+                                .filter(b -> !"NewBorn".equalsIgnoreCase(b.getRegistrationType())
+                                        && "Postnatal Mother".equalsIgnoreCase(b.getReproductiveStatus()))
+                                .findFirst()
+                                .orElse(null);
+
+                        if (mother != null) {
+                            generateHighRiskPostpartumIncentives(mother.getBenficieryid(), true, userId);
+                        }
+                    }
                 }
+
             }
 
 
         });
 
 
+    }
+
+
+    private void generateHighRiskPostpartumIncentives(Long motherBenId, boolean childHbnc42Done, Integer userId) {
+
+        if (!childHbnc42Done) return;
+
+        List<PNCVisit> motherPnc = pncVisitRepo.findByBenId(motherBenId);
+
+        PNCVisit visit42 = motherPnc.stream()
+                .filter(v -> Integer.valueOf(42).equals(v.getPncPeriod()))
+                .findFirst()
+                .orElse(null);
+
+        if (visit42 == null) return;
+
+        boolean hasDangerSign = motherPnc.stream()
+                .anyMatch(v -> v.getMotherDangerSign() != null
+                        && !v.getMotherDangerSign().isEmpty()
+                        && v.getPncPeriod() != null
+                        && v.getPncPeriod() >= 1
+                        && v.getPncPeriod() <= 42);
+
+        if (hasDangerSign) {
+            IncentiveActivity act1 = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "HIGH_RISK_POSTPARTUM_CARE", GroupName.ACTIVITY.getDisplayName());
+            if (act1 != null) {
+                addIncenticeRecord(visit42, userId, act1);   // date 42 wale visit ki
+            }
+        }
+
+        boolean motherAlive = !Boolean.TRUE.equals(visit42.getMotherDeath());
+
+        boolean hrpConfirmed = ancVisitRepo.findByBenId(motherBenId).stream()
+                .filter(a -> a.getAncVisit() != null && a.getAncVisit() >= 1 && a.getAncVisit() <= 7)
+                .anyMatch(a -> Boolean.TRUE.equals(a.getIsHrpConfirmed()));
+
+        if (motherAlive && hrpConfirmed) {
+            IncentiveActivity act2 = incentivesRepo.findIncentiveMasterByNameAndGroup(
+                    "HIGH_RISK_POSTPARTUM_HEALTH_CHECK", GroupName.ACTIVITY.getDisplayName());
+            if (act2 != null) {
+                addIncenticeRecord(visit42, userId, act2);
+            }
+        }
+    }
+
+    @Transactional
+    private void addIncenticeRecord(PNCVisit ect, Integer userId, IncentiveActivity antaraActivity) {
+
+        String lockKey = antaraActivity.getId() + "_" + ect.getBenId() + "_" + ect.getPncDate();
+
+        Object lock = lockMap.computeIfAbsent(lockKey, k -> new Object());
+
+        synchronized (lock) {
+            IncentiveActivityRecord record = recordRepo
+                    .findRecordByActivityIdCreatedDateBenId(antaraActivity.getId(), ect.getPncDate(), ect.getBenId(),userId);
+
+            if (record == null) {
+                record = new IncentiveActivityRecord();
+                record.setActivityId(antaraActivity.getId());
+                record.setCreatedDate(ect.getPncDate());
+                record.setCreatedBy(ect.getCreatedBy());
+                record.setStartDate(ect.getPncDate());
+                record.setEndDate(ect.getPncDate());
+                record.setUpdatedDate(ect.getPncDate());
+                record.setUpdatedBy(ect.getCreatedBy());
+                record.setBenId(ect.getBenId());
+                record.setAshaId(userId);
+                record.setAmount(Long.valueOf(antaraActivity.getRate()));
+                recordRepo.save(record);
+            }
+        }
+
+        lockMap.remove(lockKey, lock);
     }
 
 

@@ -104,6 +104,7 @@ public class FormVersion {
     @Column(name = "vanSerialNo")
     private Long vanSerialNo;
 
+    @org.hibernate.annotations.CreationTimestamp
     @Column(name = "SyncedDate")
     private Timestamp syncedDate;
 

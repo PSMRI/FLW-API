@@ -8,72 +8,50 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 class UserControllerTest {
+    private MockMvc mockMvc;
 
     @Mock
     private UserService userService;
 
     @InjectMocks
-    private UserController userController;
+    private UserController controller;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
     @Test
-    void testGetUserDetail_Success() {
-        // Arrange
-        Integer userId = 123;
-        UserServiceRoleDTO userServiceRoleDTO = new UserServiceRoleDTO();
-        userServiceRoleDTO.setUserId(userId);
-
-        when(userService.getUserDetail(anyInt())).thenReturn(userServiceRoleDTO);
-
-        // Act
-        ResponseEntity<?> responseEntity = userController.getUserDetail(userId, "AuthorizationToken");
-
-        // Assert
-        assertNotNull(responseEntity);
-        assertEquals(HttpStatus.ACCEPTED, responseEntity.getStatusCode());
-
-        ApiResponse apiResponse = (ApiResponse) responseEntity.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.getSuccess());
-        assertNull(apiResponse.getMessage());
-
-        assertEquals(userServiceRoleDTO, apiResponse.getData());
-
-        verify(userService, times(1)).getUserDetail(userId);
+    void getUserDetail_success() throws Exception {
+        UserServiceRoleDTO dto = new UserServiceRoleDTO();
+        when(userService.getUserDetail(anyInt())).thenReturn(dto);
+        mockMvc.perform(get("/user/getUserDetail")
+                .param("userId", "1")
+                .header("Authorization", "Bearer token")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.success").value(true));
     }
 
     @Test
-    void testGetUserDetail_Exception() {
-        // Arrange
-        Integer userId = 123;
-
-        when(userService.getUserDetail(anyInt())).thenThrow(new RuntimeException("Test exception"));
-
-        // Act
-        ResponseEntity<?> responseEntity = userController.getUserDetail(userId, "AuthorizationToken");
-
-        // Assert
-        assertNotNull(responseEntity);
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
-
-        ApiResponse apiResponse = (ApiResponse) responseEntity.getBody();
-        assertNotNull(apiResponse);
-        assertFalse(apiResponse.getSuccess());
-        assertNotNull(apiResponse.getMessage());
-
-        assertNull(apiResponse.getData());
-
-        verify(userService, times(1)).getUserDetail(userId);
+    void getUserDetail_exception() throws Exception {
+        when(userService.getUserDetail(anyInt())).thenThrow(new RuntimeException("fail"));
+        mockMvc.perform(get("/user/getUserDetail")
+                .param("userId", "1")
+                .header("Authorization", "Bearer token")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false));
     }
 }

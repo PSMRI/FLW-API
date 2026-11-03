@@ -37,4 +37,8 @@ public class InfantRegisterDTO {
     private String deliveryDischargeSummary3;
     private String deliveryDischargeSummary4;
     private String isSNCU;
+    private Boolean isReferredHigherFacility;
+    private String syncedBy;
+    private Timestamp syncedDate;
+
 }
