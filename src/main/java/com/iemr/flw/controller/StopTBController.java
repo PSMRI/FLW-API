@@ -160,7 +160,8 @@ public class StopTBController {
             logger.error("Error in getAllDiagnostics: " + e);
             response.setError(5000, "Error fetching diagnostics records: " + e.getMessage());
         }
-        return response.toString();
+        // toString() drops null fields; keep keys like sputumCollectionDate present as null
+        return response.toStringWithSerializeNulls();
     }
 
 }

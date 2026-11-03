@@ -263,7 +263,12 @@ public class StopTBServiceImpl implements StopTBService {
             screening.setFatigue(getBool(data, "fatigue"));
             screening.setFailureToGainWeight(getBool(data, "failureToGainWeightInChildren"));
             screening.setDecreasedActivityOrPlayfulness(getBool(data, "decreasedActivityOrPlayfulnessInChildren"));
-            screening.setOthers(getBool(data, "otherSymptoms"));
+            Boolean otherSymptoms = getBool(data, "otherSymptoms");
+            screening.setOthers(otherSymptoms);
+            // Details are only kept when "Others" = Yes; older app versions don't send them.
+            screening.setOtherSymptomsDetails(Boolean.TRUE.equals(otherSymptoms)
+                    ? normalizeOtherSymptomsDetails(getString(data, "otherSymptomsDetails"))
+                    : null);
 
             String symptomaticInput = getString(data, "symptomatic");
             if ("Yes".equalsIgnoreCase(symptomaticInput)) {
@@ -366,6 +371,7 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("failureToGainWeightInChildren", s.getFailureToGainWeight());
         m.put("decreasedActivityOrPlayfulnessInChildren", s.getDecreasedActivityOrPlayfulness());
         m.put("otherSymptoms", s.getOthers());
+        m.put("otherSymptomsDetails", s.getOtherSymptomsDetails());
         return m;
     }
 
@@ -539,6 +545,12 @@ public class StopTBServiceImpl implements StopTBService {
             diag.setReasonForDenialSputum(getString(data, "reasonForDenialSputum"));
             diag.setReasonForDenialSputumOther(getString(data, "reasonForDenialSputumOther"));
             diag.setSputumSubmittedAt(getString(data, "sputumSubmittedAt"));
+            // The today/yesterday window is enforced in the app: records can sync days after entry.
+            if (Boolean.FALSE.equals(getBool(data, "isSputumCollected"))) {
+                diag.setSputumCollectionDate(null);
+            } else if (data.containsKey("sputumCollectionDate")) {
+                diag.setSputumCollectionDate(getTimestamp(data, "sputumCollectionDate"));
+            }
 
             diag.setIsTruenatConducted(getBool(data, "isTruenatConducted"));
             diag.setReasonNotConductedNaat(getString(data, "reasonNotConductedNaat"));
@@ -652,6 +664,7 @@ public class StopTBServiceImpl implements StopTBService {
         m.put("reasonForDenialSputum", d.getReasonForDenialSputum());
         m.put("reasonForDenialSputumOther", d.getReasonForDenialSputumOther());
         m.put("sputumSubmittedAt", d.getSputumSubmittedAt());
+        m.put("sputumCollectionDate", d.getSputumCollectionDate());
         m.put("isTruenatConducted", d.getIsTruenatConducted());
         m.put("reasonNotConductedNaat", d.getReasonNotConductedNaat());
         m.put("reasonNotConductedNaatOther", d.getReasonNotConductedNaatOther());
@@ -885,6 +898,16 @@ public class StopTBServiceImpl implements StopTBService {
     private String getString(Map<String, Object> m, String key) {
         Object v = m.get(key);
         return v != null ? v.toString() : null;
+    }
+
+    private static final int OTHER_SYMPTOMS_DETAILS_MAX_LENGTH = 200;
+
+    private String normalizeOtherSymptomsDetails(String details) {
+        if (details == null || details.trim().isEmpty()) return null;
+        String trimmed = details.trim();
+        return trimmed.length() > OTHER_SYMPTOMS_DETAILS_MAX_LENGTH
+                ? trimmed.substring(0, OTHER_SYMPTOMS_DETAILS_MAX_LENGTH)
+                : trimmed;
     }
 
     private Long getLong(Map<String, Object> m, String key) {
