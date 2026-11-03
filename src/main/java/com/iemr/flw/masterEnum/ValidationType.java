@@ -46,5 +46,8 @@ public enum ValidationType {
      *  A question may have several; display them in validationId order. Informational only. */
     HELPER_TEXT_ENGLISH,
     /** Hindi counterpart of {@link #HELPER_TEXT_ENGLISH}, one bullet per row, in validationId order. */
-    HELPER_TEXT_HINDI
+    HELPER_TEXT_HINDI,
+    /** The client must fill this answer itself instead of asking the user. validationParam = the source,
+     *  e.g. "TODAY" or "CAMP_XRAY_RESULT". Informational only — not a rule the answer is checked against. */
+    AUTO_FILL
 }

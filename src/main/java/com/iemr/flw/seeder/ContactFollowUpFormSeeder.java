@@ -116,10 +116,6 @@ public class ContactFollowUpFormSeeder {
         qs.add(yesNoQuestion("CFU_VISITED_FACILITY", "Have you visited the health facility",
                 "क्या आपने स्वास्थ्य सुविधा का दौरा किया", 2));
 
-        // Status of Clinical Screening — "TPT Eligible" opens the TPT Follow Up form.
-        // "Full Treatment"/"No Treatment" are meant to route this record elsewhere (confirmed-case
-        // listing / no action) — that record-routing is out of scope here, so no condition is wired
-        // for those two options.
         SectionQuestionDTO screeningStatus = new SectionQuestionDTO();
         screeningStatus.setQuestionUuid("CFU_CLINICAL_SCREENING_STATUS");
         screeningStatus.setQuestionText("Status of Clinical Screening");

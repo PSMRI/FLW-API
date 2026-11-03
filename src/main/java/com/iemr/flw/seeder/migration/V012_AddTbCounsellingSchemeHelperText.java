@@ -45,6 +45,8 @@ import java.util.List;
  *    so the client shows them in validationId order. Each bullet fits validationParam's 255 chars, so
  *    no schema change is needed; errorMessage (NOT NULL) carries the same text, as UNIT rows do.
  * 2. Renames TB2_C_Q2 from "DOTS free treatment explained" to "DOTS treatment", per the spec.
+ * 3. Flags both changed questions (TB2_C_Q1, TB2_C_Q2) with requiresBackFill, so the client asks for them
+ *    on beneficiaries whose earlier responses were captured on version 1.
  *
  * Unchanged: Section C still opens only when "Has the beneficiary agreed for counselling" = Yes, keeps
  * its single "Select All", and both checkboxes stay mandatory.
@@ -108,6 +110,14 @@ public class V012_AddTbCounsellingSchemeHelperText implements FormStructureMigra
         dots.setQuestionTextHindi(DOTS_NEW_TEXT_HINDI);
         questionRepo.save(dots);
         addHelperText(svc, dots, DOTS_HELPER_ENGLISH, DOTS_HELPER_HINDI);
+
+        flagForBackFill(npy);
+        flagForBackFill(dots);
+    }
+
+    private void flagForBackFill(SectionQuestion question) {
+        question.setRequiresBackFill(true);
+        questionRepo.save(question);
     }
 
     private SectionQuestion requireQuestion(DynamicFormReconciliationService svc, FormSection section, String uuid) {

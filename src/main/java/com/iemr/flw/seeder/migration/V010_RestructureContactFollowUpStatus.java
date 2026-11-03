@@ -31,6 +31,7 @@ import com.iemr.flw.dto.iemr.QuestionValidationDTO;
 import com.iemr.flw.dto.iemr.SectionQuestionDTO;
 import com.iemr.flw.masterEnum.QuestionType;
 import com.iemr.flw.masterEnum.ValidationType;
+import com.iemr.flw.repo.iemr.FormSectionRepo;
 import com.iemr.flw.repo.iemr.QuestionOptionRepo;
 import com.iemr.flw.repo.iemr.QuestionValidationRepo;
 import com.iemr.flw.repo.iemr.SectionQuestionRepo;
@@ -49,33 +50,40 @@ import java.util.Set;
  *
  * Final version-2 order (FINAL_QUESTION_ORDER):
  *
- *  1. Date (CFU_FOLLOW_UP_DATE, mandatory date, not in the future) — auto-selected by the client.
- *  2. "Is beneficiary Referred to PHI?" (CFU_REFERRED_TO_PHI, mandatory Yes/No).
- *  3. "Has beneficiary visited the PHI?" (CFU_VISITED_PHI, Yes/No) — shown when #2 = Yes; No → submit.
- *  4. "Is Chest X-ray conducted?" (CFU_XRAY_CONDUCTED, Yes/No) — shown when #3 = Yes.
- *  5. "Chest X-ray Result" (CFU_XRAY_RESULT: Normal, TB Presumptive, Abnormal but not TB Presumptive)
- *     — shown when #4 = Yes.
- *  6. "Is NAAT conducted?" (CFU_NAAT_CONDUCTED, Yes/No) — shown when #3 = Yes.
- *  7. "NAAT Result" (CFU_NAAT_RESULT: MTB Detected, MTB Not Detected, Indeterminate) — shown when #6 = Yes.
- *  8. "Is Cy-TB Test conducted?" (CFU_CYTB_CONDUCTED, Yes/No) — always shown.
- *  9. "Cy-TB Test Result" (CFU_CYTB_RESULT: Positive, Negative) — shown when #8 = Yes.
- * 10. "Treatment recommended by MO/ TU/ PHI" (CFU_CLINICAL_SCREENING_STATUS, radio: Recommend for TPT,
- *     Not recommended TPT, Recommend for ATT) — shown when #3 = Yes. Its option rows are the seeded
+ *  1. Date (CFU_FOLLOW_UP_DATE, mandatory date, not in the future) — AUTO_FILL "TODAY".
+ *  2. "Chest X-ray Result" (CFU_CAMP_XRAY_RESULT, AUTO_FILL, optional) — AUTO_FILL "CAMP_XRAY_RESULT":
+ *     the client fills it from the X-ray done in the camp, if any.
+ *  3. "NAAT Result" (CFU_CAMP_NAAT_RESULT, AUTO_FILL, optional) — AUTO_FILL "CAMP_NAAT_RESULT": the client
+ *     fills it from the NAAT done in the camp, if any.
+ *  4. "Is beneficiary Referred to PHI?" (CFU_REFERRED_TO_PHI, mandatory Yes/No).
+ *  5. "Has beneficiary visited the PHI?" (CFU_VISITED_PHI, Yes/No) — shown when #4 = Yes; No → submit.
+ *  6. "Is Chest X-ray conducted?" (CFU_XRAY_CONDUCTED, Yes/No) — shown when #5 = Yes.
+ *  7. "Chest X-ray Result" (CFU_XRAY_RESULT: Normal, TB Presumptive, Abnormal but not TB Presumptive)
+ *     — shown when #6 = Yes.
+ *  8. "Is NAAT conducted?" (CFU_NAAT_CONDUCTED, Yes/No) — shown when #5 = Yes.
+ *  9. "NAAT Result" (CFU_NAAT_RESULT: MTB Detected, MTB Not Detected, Indeterminate) — shown when #8 = Yes.
+ * 10. "Is Cy-TB Test conducted?" (CFU_CYTB_CONDUCTED, Yes/No) — shown when #5 = Yes.
+ * 11. "Cy-TB Test Result" (CFU_CYTB_RESULT: Positive, Negative) — shown when #10 = Yes.
+ * 12. "Treatment recommended by MO/ TU/ PHI" (CFU_CLINICAL_SCREENING_STATUS, radio: Recommend for TPT,
+ *     Not recommended TPT, Recommend for ATT) — shown when #5 = Yes. Its option rows are the seeded
  *     ones renamed in place (TPT_ELIGIBLE, NO_TREATMENT, FULL_TREATMENT); optionUuid is deliberately left
  *     unchanged so clients keep mapping existing answers to the same option.
- * 11. Remarks (CFU_REMARKS, optional free text, max 200 chars, all characters allowed).
+ * 13. Remarks (CFU_REMARKS, optional free text, max 200 chars, all characters allowed).
  *
  * "Advised to visit health facility" (CFU_ADVISED_VISIT_FACILITY) and "Have you visited the health
  * facility" (CFU_VISITED_FACILITY) are soft-removed — never hard-deleted, historical responses may
- * reference them. All eleven questions above are flagged requiresBackFill, so the client asks for them on
- * beneficiaries whose earlier responses were captured on version 1. #2, #3, #4, #6 and #8 are flagged
- * editableAfterSubmit, so the follow-up can be continued after submit.
+ * reference them. Every question above is flagged requiresBackFill, so the client makes sure each has a
+ * value on beneficiaries whose earlier responses were captured on version 1 (for the camp results, by
+ * auto-filling them). #4, #5, #6, #8 and #10 are flagged editableAfterSubmit,
+ * and the section itself is set isEditable — the submit path skips every answer in a non-editable section,
+ * so the follow-up can be continued after submit.
  *
- * Out of scope here, handled by the client or elsewhere: the auto-filled camp X-ray / NAAT results and
- * their hide rules (the engine has no hide action), enabling "Recommend for ATT" only when the X-ray
- * result is not Normal or NAAT = MTB Detected (the engine has no option-level conditions), multiline
- * rendering of Remarks, and routing a record on "Recommend for TPT" (TPT Follow up) / "Recommend for ATT"
- * (Confirmed TB Cases).
+ * Deliberately not implemented: routing a record on "Recommend for TPT" (TPT Follow up) / "Recommend for
+ * ATT" (Confirmed TB Cases) — no option opens another form; those flows will be built separately. Handled
+ * statically by the client: hiding #2 when #6 = Yes and #3 when #8 = Yes, and hiding #6 / #8 when the camp
+ * result was auto-filled (the engine has no hide action); enabling "Recommend for ATT" only when the X-ray
+ * result is not Normal or NAAT = MTB Detected (the engine has no option-level conditions); and multiline
+ * rendering of Remarks (there is no multiline question type).
  *
  * Re-runnable: questions/options/conditions/validations go through ensureX or uuid/optionValue lookups,
  * labels, option order, Remarks' limit and the final display order are set to the same values each run,
@@ -89,6 +97,8 @@ public class V010_RestructureContactFollowUpStatus implements FormStructureMigra
     private static final String FORM_UUID = "CONTACT_FOLLOW_UP";
     private static final String SECTION_UUID = "CFU_SEC_1";
     private static final String DATE_UUID = "CFU_FOLLOW_UP_DATE";
+    private static final String CAMP_XRAY_RESULT_UUID = "CFU_CAMP_XRAY_RESULT";
+    private static final String CAMP_NAAT_RESULT_UUID = "CFU_CAMP_NAAT_RESULT";
     private static final String REFERRED_TO_PHI_UUID = "CFU_REFERRED_TO_PHI";
     private static final String VISITED_PHI_UUID = "CFU_VISITED_PHI";
     private static final String XRAY_CONDUCTED_UUID = "CFU_XRAY_CONDUCTED";
@@ -106,9 +116,11 @@ public class V010_RestructureContactFollowUpStatus implements FormStructureMigra
             "CFU_ADVISED_VISIT_FACILITY",
             "CFU_VISITED_FACILITY");
 
-    /** Active questions top to bottom; all are new or changed in version 2, so all are flagged for back-fill. */
+    /** Active questions top to bottom; all are new or changed in version 2. */
     private static final List<String> FINAL_QUESTION_ORDER = List.of(
             DATE_UUID,
+            CAMP_XRAY_RESULT_UUID,
+            CAMP_NAAT_RESULT_UUID,
             REFERRED_TO_PHI_UUID,
             VISITED_PHI_UUID,
             XRAY_CONDUCTED_UUID,
@@ -157,6 +169,7 @@ public class V010_RestructureContactFollowUpStatus implements FormStructureMigra
     private final QuestionOptionRepo optionRepo;
     private final SectionQuestionRepo questionRepo;
     private final QuestionValidationRepo validationRepo;
+    private final FormSectionRepo sectionRepo;
     private final FormVersionCloner versionCloner;
 
     @Override
@@ -175,6 +188,10 @@ public class V010_RestructureContactFollowUpStatus implements FormStructureMigra
 
         // New questions are appended (no displayOrder → no shifting); the final order is set at the end.
         addDateQuestion(svc, section);
+        addAutoFillQuestion(svc, section, CAMP_XRAY_RESULT_UUID, "Chest X-ray Result",
+                "छाती के एक्स-रे का परिणाम", "CAMP_XRAY_RESULT", "Auto-filled from the X-ray done in the camp");
+        addAutoFillQuestion(svc, section, CAMP_NAAT_RESULT_UUID, "NAAT Result",
+                "NAAT परिणाम", "CAMP_NAAT_RESULT", "Auto-filled from the NAAT done in the camp");
         addChoiceQuestion(svc, section, REFERRED_TO_PHI_UUID, "Is beneficiary Referred to PHI?",
                 "क्या लाभार्थी को पीएचआई रेफर किया गया है?", QuestionType.RADIO, YES_NO);
         addChoiceQuestion(svc, section, VISITED_PHI_UUID, "Has beneficiary visited the PHI?",
@@ -197,6 +214,7 @@ public class V010_RestructureContactFollowUpStatus implements FormStructureMigra
         showWhenYes(svc, version, section, REFERRED_TO_PHI_UUID, VISITED_PHI_UUID);
         showWhenYes(svc, version, section, VISITED_PHI_UUID, XRAY_CONDUCTED_UUID);
         showWhenYes(svc, version, section, VISITED_PHI_UUID, NAAT_CONDUCTED_UUID);
+        showWhenYes(svc, version, section, VISITED_PHI_UUID, CYTB_CONDUCTED_UUID);
         showWhenYes(svc, version, section, VISITED_PHI_UUID, STATUS_QUESTION_UUID);
         showWhenYes(svc, version, section, XRAY_CONDUCTED_UUID, XRAY_RESULT_UUID);
         showWhenYes(svc, version, section, NAAT_CONDUCTED_UUID, NAAT_RESULT_UUID);
@@ -219,6 +237,28 @@ public class V010_RestructureContactFollowUpStatus implements FormStructureMigra
         maxDate.setValidationParam("TODAY");
         maxDate.setErrorMessage("Cannot be a future date");
         svc.ensureValidation(date, maxDate);
+
+        svc.ensureValidation(date, autoFill("TODAY", "Auto-filled with today's date"));
+    }
+
+    private void addAutoFillQuestion(DynamicFormReconciliationService svc, FormSection section, String uuid,
+            String text, String textHindi, String source, String message) {
+        SectionQuestionDTO dto = new SectionQuestionDTO();
+        dto.setQuestionUuid(uuid);
+        dto.setQuestionText(text);
+        dto.setQuestionTextHindi(textHindi);
+        dto.setQuestionType(QuestionType.AUTO_FILL);
+        dto.setIsMandatory(false);
+        SectionQuestion question = svc.ensureQuestion(section, dto);
+        svc.ensureValidation(question, autoFill(source, message));
+    }
+
+    private QuestionValidationDTO autoFill(String source, String message) {
+        QuestionValidationDTO dto = new QuestionValidationDTO();
+        dto.setValidationType(ValidationType.AUTO_FILL);
+        dto.setValidationParam(source);
+        dto.setErrorMessage(message);
+        return dto;
     }
 
     // Labels are (re)applied on the entity too, so a question created by an earlier revision picks them up.
@@ -316,6 +356,9 @@ public class V010_RestructureContactFollowUpStatus implements FormStructureMigra
 
     // Soft-removed questions go after the active ones so they never collide with a live display slot.
     private void applyFinalOrderAndFlags(DynamicFormReconciliationService svc, FormSection section) {
+        section.setIsEditable(true);
+        sectionRepo.save(section);
+
         for (int i = 0; i < FINAL_QUESTION_ORDER.size(); i++) {
             String uuid = FINAL_QUESTION_ORDER.get(i);
             SectionQuestion question = svc.question(section, uuid)
