@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.dto.iemr.*;
+import com.iemr.flw.dto.iemr.Period;
 import com.iemr.flw.masterEnum.GroupName;
 import com.iemr.flw.masterEnum.StateCode;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
@@ -28,6 +29,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Timestamp;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,7 +87,11 @@ public class IncentiveServiceImpl implements IncentiveService {
     @Autowired
     private SupervisorDashboardRepo dashboardRepo;
 
+    @Autowired
+    private UtpreronaPaymentIntegrationImpl paymentService;
 
+    @Autowired
+    EmployeeMasterRepo employeeMasterRepo;
 
     // ================= MASTER SAVE =================
     @Override
@@ -917,6 +924,8 @@ public class IncentiveServiceImpl implements IncentiveService {
                 title = "Incentive Claimed";
 
                 if (isClaimed) {
+                    triggerPayment(ashaId,month,year,recordRepo.findRecordsByAsha(ashaId),supervisorUserId);
+
 
                     String body = "Your incentive successfully claimed for month of "
                             + Month.of(month).name() + " " + year;
@@ -952,6 +961,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                             "INCENTIVE",
                             supervisorUserId
                     );
+
                 }
             }
 
@@ -1273,6 +1283,130 @@ public class IncentiveServiceImpl implements IncentiveService {
             }
         }
         lockMap.remove(lockKey, lock);
+    }
+
+
+    public void triggerPayment(Integer ashaId, Integer month, Integer year,
+                               List<IncentiveActivityRecord> approvedRecords,Integer supervisorUserId) {
+
+        logger.info("========================================");
+        logger.info("SSD Request Send to portal");
+        logger.info("========================================");
+
+        try {
+            if (approvedRecords == null || approvedRecords.isEmpty()) {
+                logger.info("No approved records, payment not triggered for asha {}", ashaId);
+                return;
+            }
+
+            LocalDate first = LocalDate.of(year, month, 1);
+
+            Period period = new Period();
+            period.setStart(first.toString());
+            period.setEnd(first.withDayOfMonth(first.lengthOfMonth()).toString());
+
+            VerifiedBy verifiedBy = new VerifiedBy();
+            verifiedBy.setEmployeeId("NRHM-22547");
+            verifiedBy.setName("Test");
+
+            Map<Long, List<IncentiveActivityRecord>> byActivity =
+                    approvedRecords.stream()
+                            .collect(Collectors.groupingBy(
+                                    IncentiveActivityRecord::getActivityId
+                            ));
+
+            List<PaymentItem> items = new ArrayList<>();
+
+            byActivity.forEach((activityId, recs) -> {
+
+                var activityOpt = incentivesRepo.findById(activityId);
+
+                // Activity not found -> skip
+                if (activityOpt.isEmpty()) {
+                    logger.warn(
+                            "Activity not found, skipping payment item. activityId={}",
+                            activityId
+                    );
+                    return;
+                }
+
+                var activity = activityOpt.get();
+
+                // State Activity Code null -> skip
+                if (activity.getStateActivityCode() == null) {
+                    logger.warn(
+                            "State Activity Code is null, skipping payment item. activityId={}",
+                            activityId
+                    );
+                    return;
+                }
+
+                long count = recs.size();
+
+                long total = recs.stream()
+                        .mapToLong(r -> r.getAmount() == null ? 0L : r.getAmount())
+                        .sum();
+
+                PaymentItem item = new PaymentItem();
+
+                item.setActivityCode(
+                        String.valueOf(activity.getStateActivityCode())
+                );
+
+                item.setCount(String.valueOf(count));
+                item.setIncentiveAmount(String.valueOf(total));
+
+                items.add(item);
+            });
+
+            // Agar saare records ka activity code null tha
+            if (items.isEmpty()) {
+                logger.info(
+                        "No valid payment items found for asha {}, payment not triggered",
+                        ashaId
+                );
+                return;
+            }
+
+            String timestamp = OffsetDateTime.now(ZoneId.of("Asia/Kolkata"))
+                    .truncatedTo(ChronoUnit.SECONDS)
+                    .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+            if (employeeMasterRepo.findUserByUserID(ashaId) != null) {
+
+                String empId = employeeMasterRepo
+                        .findUserByUserID(ashaId)
+                        .getEmployeeID();
+
+                if (empId != null) {
+
+                    PaymentRequest paymentRequest = new PaymentRequest(
+                            UUID.randomUUID().toString(),
+                            "AMRIT",
+                            period,
+                            String.valueOf(30638),
+                            timestamp,
+                            verifiedBy,
+                            items
+                    );
+
+                    logger.info(
+                            "PAYMENT REQUEST Payload: {}",
+                            new Gson().toJson(paymentRequest)
+                    );
+
+                    paymentService.sendPaymentRequest(paymentRequest);
+                }
+            }
+
+        } catch (Exception e) {
+            logger.error(
+                    "Payment request failed for asha {}: {}",
+                    ashaId,
+                    e.getMessage(),
+                    e
+            );
+        }
     }
 
 }
