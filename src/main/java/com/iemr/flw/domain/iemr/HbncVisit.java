@@ -107,4 +107,14 @@ public class HbncVisit {
     @Column(name = "baby_eyes_swollen")
     private Boolean babyEyesSwollen;
 
+    @Column(name = "is_admitted_in_sncu")
+    private Boolean is_admitted_in_sncu;
+
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 };

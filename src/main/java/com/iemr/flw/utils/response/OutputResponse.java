@@ -83,6 +83,15 @@ public class OutputResponse {
 
 	}
 
+	// Same result as setResponse(gson.toJson(x)) for an object/array, without writing the JSON text
+	// and parsing it back: pass gson.toJsonTree(x).
+	public void setResponse(JsonElement tree) {
+		this.data = tree;
+		statusCode = SUCCESS;
+		errorMessage = "Success";
+		status = "Success";
+	}
+
 	public void setError(Throwable thrown) {
 		Date currDate = Calendar.getInstance().getTime();
 		logger.info("error happened due to " + thrown.getClass().getSimpleName() + " at " + currDate.toString());

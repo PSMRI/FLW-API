@@ -87,4 +87,11 @@ public class LeprosyFollowUp {
 
     @Column(name = "last_mod_date")
     private Timestamp lastModDate;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

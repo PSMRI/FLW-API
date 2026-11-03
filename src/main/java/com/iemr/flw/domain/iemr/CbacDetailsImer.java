@@ -262,6 +262,7 @@ public class CbacDetailsImer {
 	@Column(name = "SyncedBy")
 	private String syncedBy;
 	@Expose
+	@org.hibernate.annotations.CreationTimestamp
 	@Column(name = "SyncedDate")
 	private Timestamp syncedDate;
 

@@ -8,6 +8,7 @@ import java.util.Map;
 public class AncCounsellingCareResponseDTO {
     private String formId;
     private Long beneficiaryId;
+    private Long id;
     private String visitDate;
     private Map<String, Object> fields; // for dynamic form fields
 

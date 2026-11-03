@@ -28,11 +28,13 @@ public class VHNDForm {
     @Column(name = "no_of_beneficiaries_attended")
     private Integer noOfBeneficiariesAttended;
 
+    @Lob
     @Column(name = "image1")
-    private String image1;
+    private byte[] image1;
 
+    @Lob
     @Column(name = "image2")
-    private String image2;
+    private byte[] image2;
 
     @Column(name = "form_type")
     private String formType;
@@ -77,5 +79,11 @@ public class VHNDForm {
     @Column(name = "created_date", updatable = false)
     private Timestamp createdDate;
 
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 
 }

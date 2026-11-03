@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 
 
@@ -108,5 +109,12 @@ public class AshaWorker {
     private String  supervisorName;
     @Column(name = "supervisorMobile")
     private String supervisorMobile;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 
 }

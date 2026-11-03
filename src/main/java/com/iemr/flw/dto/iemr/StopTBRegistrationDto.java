@@ -5,6 +5,9 @@ import lombok.Data;
 
 @Data
 public class StopTBRegistrationDto {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     // Standard beneficiary fields — forwarded to Common-API
     @JsonRawValue

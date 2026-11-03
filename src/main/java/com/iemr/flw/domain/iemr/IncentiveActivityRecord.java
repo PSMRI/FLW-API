@@ -87,4 +87,24 @@ public class IncentiveActivityRecord {
 
     @Transient
     private String groupName;
+
+    @Transient String groupCategoryName;
+
+    @Column(name = "is_approved")
+    private Boolean isApproved = false;
+
+    @PrePersist
+    @PreUpdate
+    private void applyDefaults() {
+        if (isApproved == null) {
+            isApproved = false;
+        }
+    }
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

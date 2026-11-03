@@ -122,4 +122,11 @@ public class TBSuspected {
 
     @Column(name = "visitCode")
     private Long visitCode;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,13 +38,23 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
             "ORDER BY o.lastPolledAt ASC NULLS FIRST")
     List<DiagnosticOrder> findTrueNatDueForPoll();
 
-    @Query("SELECT o FROM DiagnosticOrder o WHERE o.status IN ('PENDING', 'IN_PROGRESS') AND o.deleted = false")
-    List<DiagnosticOrder> findAllOutstandingOrders();
+    // The (disabled) daily close only touches orders created within [dayStart, dayEnd) — i.e. today's.
+    @Query("SELECT o FROM DiagnosticOrder o WHERE o.status IN ('PENDING', 'IN_PROGRESS') AND o.deleted = false " +
+            "AND o.createdDate >= :dayStart AND o.createdDate < :dayEnd")
+    List<DiagnosticOrder> findAllOutstandingOrders(@Param("dayStart") Timestamp dayStart, @Param("dayEnd") Timestamp dayEnd);
 
     @Transactional
     @Modifying
     @Query("UPDATE DiagnosticOrder o SET o.vanSerialNo = o.id WHERE o.id = :id")
     void updateVanSerialNo(@Param("id") Long id);
+
+    // A poll that changed nothing only records when it ran (and the retry count), leaving processed,
+    // modified_by and the rest of the row alone: no re-upload to central, no change-log line.
+    @Transactional
+    @Modifying
+    @Query("UPDATE DiagnosticOrder o SET o.lastPolledAt = :polledAt, o.retryCount = :retryCount WHERE o.id = :id")
+    int recordUnchangedPoll(@Param("id") Long id, @Param("polledAt") Timestamp polledAt,
+                            @Param("retryCount") Integer retryCount);
 
     // Beneficiary-status-summary queries, filtered the same way as
     // FormResponseRepo.findBeneficiaryIdsByFormIdAndStatusFiltered - null-safe optional
@@ -99,5 +110,17 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
             "AND (:villageId IS NULL OR b.villageID = :villageId) " +
             "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
     List<Long> findBeneficiaryIdsAwaitingManualEntry(@Param("orderType") String orderType,
+            @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
+
+    // The five queries above in one pass: beneficiaryId + status of each beneficiary's latest order,
+    // same filters, for the caller to bucket by status.
+    @Query("SELECT o.beneficiaryId, o.status FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
+            "AND o.status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CLOSED', 'CANCELLED', 'EXPIRED', 'REFUSED', 'MANUAL_ENTRY') " +
+            "AND o.id = (SELECT MAX(o2.id) FROM DiagnosticOrder o2 " +
+            "WHERE o2.beneficiaryId = o.beneficiaryId AND o2.orderType = :orderType AND o2.deleted = false) " +
+            "AND o.beneficiaryId IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
+            "AND (:villageId IS NULL OR b.villageID = :villageId) " +
+            "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
+    List<Object[]> findLatestOrderStatusByBeneficiary(@Param("orderType") String orderType,
             @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
 }

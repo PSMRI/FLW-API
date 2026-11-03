@@ -32,6 +32,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FormVersionDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private Long versionId;
     private Integer versionNumber;

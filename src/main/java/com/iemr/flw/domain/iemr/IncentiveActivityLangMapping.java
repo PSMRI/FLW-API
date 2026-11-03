@@ -43,5 +43,10 @@ public class IncentiveActivityLangMapping {
     @Column(name = "hindi_activity_description")
     private String hindiActivityDescription;
 
+    @Column(name = "synced_by")
+    private String syncedBy;
 
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

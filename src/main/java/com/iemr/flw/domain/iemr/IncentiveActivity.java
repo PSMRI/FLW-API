@@ -57,9 +57,19 @@ public class IncentiveActivity {
     @Column(name = "is_deleted")
     private Boolean isDeleted;
 
-
     @Column(name = "state_activity_code")
     private Integer stateActivityCode;
 
+    @Column(name = "is_default_activity")
+    private Boolean isDefaultActivity;
 
+    @Column(name = "group_category_name")
+    private String groupCategoryName;
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

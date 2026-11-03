@@ -12,9 +12,8 @@ import java.util.List;
 @Repository
 public interface ChildVaccinationRepo extends JpaRepository<ChildVaccination, Long> {
 
-    @Query(value = "SELECT cv FROM  ChildVaccination cv WHERE cv.createdBy = :userId and cv.createdDate >= :fromDate and cv.createdDate <= :toDate")
-    List<ChildVaccination> getChildVaccinationDetails(@Param("userId") String userId,
-                               @Param("fromDate") Timestamp fromDate, @Param("toDate") Timestamp toDate);
+    @Query(value = "SELECT cv FROM  ChildVaccination cv WHERE cv.createdBy = :userId")
+    List<ChildVaccination> getChildVaccinationDetails(@Param("userId") String userId);
 
     ChildVaccination findChildVaccinationByBeneficiaryRegIdAndCreatedDateAndVaccineName(Long benRegId, Timestamp createdDate, String vaccine);
 

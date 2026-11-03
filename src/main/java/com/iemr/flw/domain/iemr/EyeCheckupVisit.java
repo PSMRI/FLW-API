@@ -3,6 +3,7 @@ package com.iemr.flw.domain.iemr;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 @Data
@@ -51,4 +52,11 @@ public class EyeCheckupVisit {
 
     @Column(name = "updated_date")
     private LocalDateTime updatedDate = LocalDateTime.now();
+
+    @Column(name = "synced_by")
+    private String syncedBy;
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "synced_date")
+    private Timestamp syncedDate;
 }

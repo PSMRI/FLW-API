@@ -182,6 +182,7 @@ public class MaternalHealthController {
                 logger.info("Request: " + requestDTO);
 
                 List<AncCounsellingCareResponseDTO> result = maternalHealthService.getANCCounselling(requestDTO);
+                logger.info("ANC Counselling result: {}", new Gson().toJson(result));
 
                 response.setStatusCode(200);
                 response.setStatus("Success");

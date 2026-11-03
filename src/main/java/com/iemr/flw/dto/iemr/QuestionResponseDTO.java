@@ -37,6 +37,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class QuestionResponseDTO {
+    private String syncedBy;
+    private java.sql.Timestamp syncedDate;
+
 
     private Long questionResponseId;
     private Long questionId;
