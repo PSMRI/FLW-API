@@ -25,6 +25,7 @@
 package com.iemr.flw.service.impl;
 
 import com.iemr.flw.domain.identity.*;
+import com.iemr.flw.domain.iemr.BenReferDetails;
 import com.iemr.flw.domain.iemr.GeneralOpdData;
 import com.iemr.flw.dto.identity.GetBenRequestHandler;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
@@ -61,33 +62,29 @@ public class GeneralOpdServiceImpl implements GeneralOpdService {
 
     @Override
     public Page<GeneralOpdData> getOutreachData(Integer villageId,String userName) {
-        int page = 0; // always start from 0
         int pageSize = 20;
-        Page<GeneralOpdData> result;
+        Pageable pageable = PageRequest.of(0, pageSize);
+        Page<GeneralOpdData> result = generalOpdRepo.findFilteredOutreachData(villageId, pageable, userName);
 
-        do {
-            Pageable pageable = PageRequest.of(page, pageSize);
-            result = generalOpdRepo.findFilteredOutreachData(villageId, pageable,userName);
-            result.forEach(generalOpdData->{
-                if(benReferDetailsRepo.findInstituteNameByBeneficiaryRegID(generalOpdData.getBeneficiaryRegID())!=null){
-                    generalOpdData.setVisitCategory(benReferDetailsRepo.findInstituteNameByBeneficiaryRegID(generalOpdData.getBeneficiaryRegID()));
+        List<Long> beneficiaryRegIDs = result.getContent().stream()
+                .map(GeneralOpdData::getBeneficiaryRegID)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
 
-                }else {
-                    generalOpdData.setVisitCategory("");
+        if (!beneficiaryRegIDs.isEmpty()) {
+            Map<Long, BenReferDetails> latestReferralByBeneficiary = new HashMap<>();
+            benReferDetailsRepo.findLatestByBeneficiaryRegIDs(beneficiaryRegIDs).forEach(referral ->
+                    latestReferralByBeneficiary.putIfAbsent(referral.getBeneficiaryRegID(), referral));
 
-                }
-                if(benReferDetailsRepo.findReasonByBeneficiaryRegID(generalOpdData.getBeneficiaryRegID())!=null){
-                    generalOpdData.setVisitReason(benReferDetailsRepo.findReasonByBeneficiaryRegID(generalOpdData.getBeneficiaryRegID()));
-
-                }else {
-                    generalOpdData.setVisitReason("");
-
-                }
+            result.forEach(generalOpdData -> {
+                BenReferDetails referral = latestReferralByBeneficiary.get(generalOpdData.getBeneficiaryRegID());
+                generalOpdData.setVisitCategory(referral == null || referral.getReferredToInstituteName() == null
+                        ? "" : referral.getReferredToInstituteName());
+                generalOpdData.setVisitReason(referral == null || referral.getReferralReason() == null
+                        ? "" : referral.getReferralReason());
             });
-
-            page++;
-        } while (result.isEmpty() && page < 50); // 50 = safety limit to avoid infinite loop
-
+        }
         return result;
     }
 
