@@ -42,7 +42,7 @@ import java.sql.Timestamp;
 
 /**
  * Server-side validation rule for a question.
- * validationType: MAX_LENGTH | MIN_DATE | MAX_DATE | REGEX | MANDATORY_IF
+ * validationType: MAX_LENGTH | MIN_DATE | MAX_DATE | REGEX | MANDATORY_IF | UNIT | HELPER_TEXT_ENGLISH | HELPER_TEXT_HINDI | AUTO_FILL
  */
 @Entity
 @Table(name = "t_question_validation", schema = "db_iemr")

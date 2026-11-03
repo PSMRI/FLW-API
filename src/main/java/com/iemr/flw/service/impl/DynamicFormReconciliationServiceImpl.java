@@ -169,6 +169,12 @@ public class DynamicFormReconciliationServiceImpl implements DynamicFormReconcil
         question.setMaxLength(dto.getMaxLength());
         question.setDefaultValue(dto.getDefaultValue());
         question.setContainsPii(dto.getContainsPii());
+        if (dto.getRequiresBackFill() != null) {
+            question.setRequiresBackFill(dto.getRequiresBackFill());
+        }
+        if (dto.getEditableAfterSubmit() != null) {
+            question.setEditableAfterSubmit(dto.getEditableAfterSubmit());
+        }
         if (dto.getDisplayOrder() != null && !dto.getDisplayOrder().equals(question.getDisplayOrder())) {
             moveQuestion(question, dto.getDisplayOrder());
         }

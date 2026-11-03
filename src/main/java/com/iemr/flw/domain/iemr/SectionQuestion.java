@@ -98,6 +98,15 @@ public class SectionQuestion {
     @Column(name = "containsPii", nullable = false)
     private Boolean containsPii = false;
 
+    /** If true, the client must make sure this question has a value at least once after a new form
+     *  version is sent — e.g. a field added in that version that earlier responses never captured. */
+    @Column(name = "requiresBackFill", nullable = false)
+    private Boolean requiresBackFill = false;
+
+    /** If true, the client lets the user change this question's answer after the form is submitted. */
+    @Column(name = "editableAfterSubmit", nullable = false)
+    private Boolean editableAfterSubmit = false;
+
     /** Soft-delete flag: false means unlinked from its section. Never hard-deleted — historical
      *  QuestionResponse rows reference questionId as a plain Long outside JPA's cascade graph. */
     @Column(name = "isActive", nullable = false)

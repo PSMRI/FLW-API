@@ -68,6 +68,12 @@ public class SectionQuestionDTO {
 
     private Boolean containsPii = false;
 
+    /** If true, the client must make sure this question has a value at least once after a new form version is sent. */
+    private Boolean requiresBackFill = false;
+
+    /** If true, the client lets the user change this question's answer after the form is submitted. */
+    private Boolean editableAfterSubmit = false;
+
     /** Computed at read time: false if this question is a target of any OptionCondition. */
     private Boolean visibleByDefault = true;
 
