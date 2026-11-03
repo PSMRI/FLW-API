@@ -1384,7 +1384,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                             UUID.randomUUID().toString(),
                             "AMRIT",
                             period,
-                            String.valueOf(30638),
+                            String.valueOf(empId),
                             timestamp,
                             verifiedBy,
                             items
