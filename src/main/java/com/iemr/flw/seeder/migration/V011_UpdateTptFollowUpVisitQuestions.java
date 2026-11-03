@@ -71,9 +71,10 @@ import java.util.stream.Collectors;
  * 5. Adds "Remarks" (TFU_OUTCOME_REMARKS, optional free text, max 500 chars) in the removed
  *    TFU_OUTCOME_OTHER's place, always shown (no condition targets it).
  *
- * 6. Flags every question added or changed above — TFU_REGIMEN_ADVISED, TFU_ADR, TFU_OUTCOME_STATUS and
- *    TFU_OUTCOME_REMARKS — with requiresBackFill, so the client asks for them on beneficiaries whose earlier
- *    responses were captured on version 1.
+ * 6. Flags TFU_REGIMEN_ADVISED with requiresBackFill, so the client asks for it on beneficiaries whose
+ *    earlier responses were captured on version 1. The changed Follow-up Visit questions — TFU_ADR,
+ *    TFU_OUTCOME_STATUS and TFU_OUTCOME_REMARKS — are explicitly set requiresBackFill = false: TFU_SEC_2 is
+ *    a POST_SUBMIT section, so every visit is a new entry and there is no earlier answer to back-fill.
  *
  * Option replacement (0, 3, 4): options not in the list are soft-removed (never hard-deleted — historical
  * responses may reference them). Listed options reuse the row with the same optionValue where one
@@ -194,15 +195,16 @@ public class V011_UpdateTptFollowUpVisitQuestions implements FormStructureMigrat
             addOutcomeRemarksQuestion(svc, section, other.getDisplayOrder());
         });
 
-        flagForBackFill(svc, registration, REGIMEN_QUESTION_UUID);
-        flagForBackFill(svc, section, ADR_QUESTION_UUID);
-        flagForBackFill(svc, section, OUTCOME_STATUS_QUESTION_UUID);
-        flagForBackFill(svc, section, OUTCOME_REMARKS_QUESTION_UUID);
+        setRequiresBackFill(svc, registration, REGIMEN_QUESTION_UUID, true);
+        setRequiresBackFill(svc, section, ADR_QUESTION_UUID, false);
+        setRequiresBackFill(svc, section, OUTCOME_STATUS_QUESTION_UUID, false);
+        setRequiresBackFill(svc, section, OUTCOME_REMARKS_QUESTION_UUID, false);
     }
 
-    private void flagForBackFill(DynamicFormReconciliationService svc, FormSection section, String uuid) {
+    private void setRequiresBackFill(DynamicFormReconciliationService svc, FormSection section, String uuid,
+                                     boolean requiresBackFill) {
         SectionQuestion question = requireQuestion(svc, section, uuid);
-        question.setRequiresBackFill(true);
+        question.setRequiresBackFill(requiresBackFill);
         questionRepo.save(question);
     }
 
