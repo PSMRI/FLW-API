@@ -71,6 +71,9 @@ public class StopTBDiagnostics {
     @Column(name = "sputum_submitted_at", length = 255)
     private String sputumSubmittedAt;
 
+    @Column(name = "SputumCollectionDate")
+    private Timestamp sputumCollectionDate;
+
     // Truenat / NAAT
     @Column(name = "is_truenat_conducted_id")
     private Integer isTruenatConductedId;
