@@ -45,7 +45,13 @@ public interface BenReferDetailsRepo extends JpaRepository<BenReferDetails, Long
 	@Query("SELECT b.referralReason FROM BenReferDetails b WHERE b.beneficiaryRegID = :benRegID")
 	String findReasonByBeneficiaryRegID(@Param("benRegID") Long benRegID);
 
+	@Query("SELECT b FROM BenReferDetails b WHERE b.beneficiaryRegID IN :benRegIDs ORDER BY b.benReferID DESC")
+	List<BenReferDetails> findLatestByBeneficiaryRegIDs(@Param("benRegIDs") List<Long> benRegIDs);
+
 	List<BenReferDetails> findByCreatedBy(String userName);
+
+	@Query(value = "SELECT COUNT(*) FROM db_iemr.t_benreferdetails WHERE CreatedBy = :userName AND revisitDate >= :startDate AND revisitDate < :endDate", nativeQuery = true)
+	Long countMonthlyReferralsByDateRange(@Param("userName") String userName, @Param("startDate") java.sql.Timestamp startDate, @Param("endDate") java.sql.Timestamp endDate);
 
 	@Query(value = """
         SELECT COUNT(*)
