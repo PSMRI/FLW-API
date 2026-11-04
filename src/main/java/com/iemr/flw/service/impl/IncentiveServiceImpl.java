@@ -924,7 +924,7 @@ public class IncentiveServiceImpl implements IncentiveService {
                 title = "Incentive Claimed";
 
                 if (isClaimed) {
-                    triggerPayment(ashaId,month,year,recordRepo.findRecordsByAsha(ashaId),supervisorUserId);
+//                    triggerPayment(ashaId,month,year,recordRepo.findRecordsByAsha(ashaId),supervisorUserId);
 
 
                     String body = "Your incentive successfully claimed for month of "
