@@ -43,10 +43,12 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
     static final int DEFAULT_LIMIT = 200;
     static final int MAX_LIMIT = 500;
     /**
-     * Beneficiary records are the expensive ones (several identity lookups and a FHIR call each), so a
-     * page carries at most this many; the token resumes from the last one sent.
+     * Beneficiary records are the most expensive to build, so a page carries at most this many; the
+     * token resumes from the last one sent. They are now built with one query per table for the whole
+     * page (WorklistPagePrefetch, health IDs read locally), so the cap was raised from 25 to cut the
+     * number of pages a new tablet needs for its first download.
      */
-    static final int MAX_BENEFICIARIES_PER_PAGE = 25;
+    static final int MAX_BENEFICIARIES_PER_PAGE = 100;
     /** Margin under the oldest open transaction (see safePoint); lines younger than this wait. */
     static final int SAFE_LAG_SECONDS = 5;
     /** The hub keeps 30 days of log; a token older than this may point at cleaned-up lines. */

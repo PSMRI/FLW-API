@@ -266,12 +266,19 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     // Used by the STOP-TB changes feed; a BenRegId with no mapping or address is left out.
     @Override
     public Map<Long, String> getBeneficiaryRecordsByRegIds(List<Long> benRegIds, String authorisation) {
-        List<RMNCHMBeneficiaryaddress> addresses = new ArrayList<>();
-        for (Long benRegId : benRegIds) {
-            RMNCHMBeneficiarymapping m = beneficiaryRepo.getById(BigInteger.valueOf(benRegId));
-            if (m == null || m.getBenAddressId() == null) continue;
-            RMNCHMBeneficiaryaddress a = beneficiaryRepo.getAddressById(m.getBenAddressId());
-            if (a != null) addresses.add(a);
+        // Two queries for the whole page; the per-beneficiary lookups stay as the fallback.
+        List<RMNCHMBeneficiaryaddress> addresses;
+        try {
+            addresses = worklistPagePrefetch.addressesForRegIds(benRegIds);
+        } catch (Exception e) {
+            logger.warn("Beneficiary address prefetch failed, using per-beneficiary queries: " + e.getMessage());
+            addresses = new ArrayList<>();
+            for (Long benRegId : benRegIds) {
+                RMNCHMBeneficiarymapping m = beneficiaryRepo.getById(BigInteger.valueOf(benRegId));
+                if (m == null || m.getBenAddressId() == null) continue;
+                RMNCHMBeneficiaryaddress a = beneficiaryRepo.getAddressById(m.getBenAddressId());
+                if (a != null) addresses.add(a);
+            }
         }
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         Map<Long, String> records = new LinkedHashMap<>();
