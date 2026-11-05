@@ -959,7 +959,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                     }
                     if(hbyc.getIfa_given() && eligibleHbycVisits.contains(hbyc.getVisit_day())){
                         if(hbyncLactatingIronPacketActivityCH!=null){
-                            createIncentiveRecordforHbyncVisit(hbyc, hbyc.getBeneficiaryId(), hbyncLactatingIronPacketActivityCH, hbyc.getCreated_by());
+                            createIncentiveRecordforHbyncVisit(hbyc, 0L, hbyncLactatingIronPacketActivityCH, hbyc.getCreated_by());
 
                         }
 
