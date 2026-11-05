@@ -1301,11 +1301,11 @@ public class ChildCareServiceImpl implements ChildCareService {
         if (record == null) {
             record = new IncentiveActivityRecord();
             record.setActivityId(immunizationActivity.getId());
-            record.setCreatedDate(vaccination.getCreatedDate());
+            record.setCreatedDate(vaccination.getReceivedDate());
             record.setCreatedBy(vaccination.getCreatedBy());
-            record.setStartDate(vaccination.getCreatedDate());
-            record.setEndDate(vaccination.getCreatedDate());
-            record.setUpdatedDate(vaccination.getCreatedDate());
+            record.setStartDate(vaccination.getReceivedDate());
+            record.setEndDate(vaccination.getReceivedDate());
+            record.setUpdatedDate(vaccination.getReceivedDate());
             record.setUpdatedBy(vaccination.getCreatedBy());
             record.setBenId(benId);
             record.setAshaId(userId);

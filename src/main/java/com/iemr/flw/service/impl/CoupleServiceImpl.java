@@ -382,11 +382,11 @@ public class CoupleServiceImpl implements CoupleService {
                 if (record == null) {
                     record = new IncentiveActivityRecord();
                     record.setActivityId(activity.getId());
-                    record.setCreatedDate(eligibleCoupleDTO.getCreatedDate());
+                    record.setCreatedDate(eligibleCoupleDTO.getRegistrationDate());
                     record.setCreatedBy(eligibleCoupleDTO.getCreatedBy());
-                    record.setStartDate(eligibleCoupleDTO.getCreatedDate());
-                    record.setEndDate(eligibleCoupleDTO.getCreatedDate());
-                    record.setUpdatedDate(eligibleCoupleDTO.getCreatedDate());
+                    record.setStartDate(eligibleCoupleDTO.getRegistrationDate());
+                    record.setEndDate(eligibleCoupleDTO.getRegistrationDate());
+                    record.setUpdatedDate(eligibleCoupleDTO.getRegistrationDate());
                     record.setUpdatedBy(eligibleCoupleDTO.getCreatedBy());
                     record.setBenId(eligibleCoupleDTO.getBenId());
                     record.setAshaId(userId);
