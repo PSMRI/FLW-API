@@ -1071,11 +1071,12 @@ public class IncentiveServiceImpl implements IncentiveService {
                             reqStart,
                             reqEnd
                     );
+                   Timestamp  timestamp = benReferDetailsRepo.findTenthReferralDate(userName,reqStart,reqEnd);
+
 
                     logger.info("referralCount: {}", referralCount);
 
                     if (referralCount != null && referralCount >= 10) {
-                        Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
                         IncentiveActivityRecord record = new IncentiveActivityRecord();
                         record.setActivityId(hwcReferralEnumeration.getId());
                         record.setCreatedDate(timestamp);
