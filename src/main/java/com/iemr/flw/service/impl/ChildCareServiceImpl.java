@@ -1296,7 +1296,7 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     private void createIncentiveRecord(ChildVaccination vaccination, Long benId, Integer userId, IncentiveActivity immunizationActivity) {
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), vaccination.getCreatedDate(), benId,userId);
+                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), vaccination.getReceivedDate(), benId,userId);
 
         if (record == null) {
             record = new IncentiveActivityRecord();
