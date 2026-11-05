@@ -355,7 +355,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
     private void addIncentiveForHighRisk(IncentiveActivity incentiveActivity, PMSMA pmsma) {
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), pmsma.getCreatedDate(), pmsma.getBenId(),userRepo.getUserIdByName(pmsma.getCreatedBy()));
+                .findRecordByActivityIdCreatedDateBenId(incentiveActivity.getId(), pmsma.getVisitDate(), pmsma.getBenId(),userRepo.getUserIdByName(pmsma.getCreatedBy()));
         // get bene details
 
         if (record == null) {
@@ -968,7 +968,7 @@ public class MaternalHealthServiceImpl implements MaternalHealthService {
 
 
                 if (identifiedHrpActivityCH != null && ancVisit.getIsHrpConfirmed() != null
-                        && ancVisit.getIsHrpConfirmed()) {
+                        && ancVisit.getIsHrpConfirmed() && ancVisit.getPlaceOfAnc().equals("PMSMA Visit") ) {
                     recordAncRelatedIncentive(identifiedHrpActivityCH, ancVisit);
                 }
             });
