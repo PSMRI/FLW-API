@@ -1066,6 +1066,9 @@ public class IncentiveServiceImpl implements IncentiveService {
                         reqEnd
                 );
 
+                logger.info("HWC Incentive Request Start Date: {}", reqStart);
+                logger.info("HWC Incentive Request End Date: {}", reqEnd);
+
                 if (existingHwcRecord == null) {
 
 
