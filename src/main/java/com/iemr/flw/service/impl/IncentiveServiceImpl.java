@@ -1046,36 +1046,43 @@ public class IncentiveServiceImpl implements IncentiveService {
             // 2. Optimize HWC_REFERRAL_10_CASES: check if monthly incentive already exists FIRST,
             //    and use index-friendly date range query instead of MONTH()/YEAR() functions.
             if (hwcReferralEnumeration != null) {
+
                 LocalDate now = LocalDate.now();
                 Timestamp startOfMonth = Timestamp.valueOf(now.withDayOfMonth(1).atStartOfDay());
                 Timestamp endOfMonth = Timestamp.valueOf(now.withDayOfMonth(now.lengthOfMonth()).atTime(23, 59, 59));
+
+                LocalDate requestDate = (request != null && request.getFromDate() != null)
+                        ? request.getFromDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                        : now;
+                LocalDate reqMonthFirst = requestDate.withDayOfMonth(1);
+                Timestamp reqStart = Timestamp.valueOf(reqMonthFirst.atStartOfDay());
+                Timestamp reqEnd = Timestamp.valueOf(reqMonthFirst.plusMonths(1).atStartOfDay());
 
                 IncentiveActivityRecord existingHwcRecord = recordRepo.findRecordByActivityIdCreatedDateBenId(
                         hwcReferralEnumeration.getId(),
                         0L,
                         ashaId,
-                        startOfMonth,
-                        endOfMonth
+                        reqStart,
+                        reqEnd
                 );
 
+                logger.info("HWC Incentive Request Start Date: {}", reqStart);
+                logger.info("HWC Incentive Request End Date: {}", reqEnd);
+
                 if (existingHwcRecord == null) {
-                    LocalDate requestDate = (request != null && request.getFromDate() != null)
-                            ? request.getFromDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-                            : now;
-                    LocalDate reqMonthFirst = requestDate.withDayOfMonth(1);
-                    Timestamp reqStart = Timestamp.valueOf(reqMonthFirst.atStartOfDay());
-                    Timestamp reqEnd = Timestamp.valueOf(reqMonthFirst.plusMonths(1).atStartOfDay());
+
 
                     Long referralCount = benReferDetailsRepo.countMonthlyReferralsByDateRange(
                             userName,
                             reqStart,
                             reqEnd
                     );
+                   Timestamp  timestamp = benReferDetailsRepo.findTenthReferralDate(userName,reqStart,reqEnd);
+
 
                     logger.info("referralCount: {}", referralCount);
 
                     if (referralCount != null && referralCount >= 10) {
-                        Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
                         IncentiveActivityRecord record = new IncentiveActivityRecord();
                         record.setActivityId(hwcReferralEnumeration.getId());
                         record.setCreatedDate(timestamp);

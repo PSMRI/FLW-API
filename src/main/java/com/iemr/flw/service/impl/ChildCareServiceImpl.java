@@ -959,7 +959,7 @@ public class ChildCareServiceImpl implements ChildCareService {
                     }
                     if(hbyc.getIfa_given() && eligibleHbycVisits.contains(hbyc.getVisit_day())){
                         if(hbyncLactatingIronPacketActivityCH!=null){
-                            createIncentiveRecordforHbyncVisit(hbyc, hbyc.getBeneficiaryId(), hbyncLactatingIronPacketActivityCH, hbyc.getCreated_by());
+                            createIncentiveRecordforHbyncVisit(hbyc, 0L, hbyncLactatingIronPacketActivityCH, hbyc.getCreated_by());
 
                         }
 
@@ -1296,16 +1296,16 @@ public class ChildCareServiceImpl implements ChildCareService {
 
     private void createIncentiveRecord(ChildVaccination vaccination, Long benId, Integer userId, IncentiveActivity immunizationActivity) {
         IncentiveActivityRecord record = recordRepo
-                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), vaccination.getCreatedDate(), benId,userId);
+                .findRecordByActivityIdCreatedDateBenId(immunizationActivity.getId(), vaccination.getReceivedDate(), benId,userId);
 
         if (record == null) {
             record = new IncentiveActivityRecord();
             record.setActivityId(immunizationActivity.getId());
-            record.setCreatedDate(vaccination.getCreatedDate());
+            record.setCreatedDate(vaccination.getReceivedDate());
             record.setCreatedBy(vaccination.getCreatedBy());
-            record.setStartDate(vaccination.getCreatedDate());
-            record.setEndDate(vaccination.getCreatedDate());
-            record.setUpdatedDate(vaccination.getCreatedDate());
+            record.setStartDate(vaccination.getReceivedDate());
+            record.setEndDate(vaccination.getReceivedDate());
+            record.setUpdatedDate(vaccination.getReceivedDate());
             record.setUpdatedBy(vaccination.getCreatedBy());
             record.setBenId(benId);
             record.setAshaId(userId);

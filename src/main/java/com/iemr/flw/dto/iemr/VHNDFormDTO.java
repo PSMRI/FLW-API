@@ -35,8 +35,8 @@ public class VHNDFormDTO {
     private String vhndDate;
     private String place;
     private Integer noOfBeneficiariesAttended;
-    private byte[] image1;
-    private byte[] image2;
+    private String image1;
+    private String image2;
     private Integer vhndPlaceId;
     private String pregnantWomenAnc;
     private String lactatingMothersPnc;
