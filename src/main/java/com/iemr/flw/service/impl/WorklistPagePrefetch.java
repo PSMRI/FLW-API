@@ -153,6 +153,33 @@ public class WorklistPagePrefetch {
         return page;
     }
 
+    /**
+     * The address row of each beneficiary, in the order of regIds, using one query for the mappings
+     * and one for the addresses instead of two per beneficiary. If a beneficiary has several mappings,
+     * the newest one with an address is used. A beneficiary with no mapping or no address is left out,
+     * as the per-row lookup did.
+     */
+    public List<RMNCHMBeneficiaryaddress> addressesForRegIds(List<Long> regIds) {
+        if (regIds.isEmpty()) return Collections.emptyList();
+        Map<Long, BigInteger> addressIdByRegId = new HashMap<>();
+        for (Object[] r : rows(identityEm,
+                "SELECT BenRegId, BenAddressId FROM db_identity.i_beneficiarymapping WHERE BenRegId IN (%s) ORDER BY BenMapId DESC",
+                new LinkedHashSet<>(regIds))) {
+            if (r[1] != null) addressIdByRegId.putIfAbsent(toLong(r[0]), toBigInteger(r[1]));
+        }
+        Map<BigInteger, RMNCHMBeneficiaryaddress> addressById = new HashMap<>();
+        putAll(addressById, entities(identityEm, RMNCHMBeneficiaryaddress.class,
+                "SELECT * FROM db_identity.i_beneficiaryaddress WHERE BenAddressID IN (%s)",
+                new LinkedHashSet<>(addressIdByRegId.values())), RMNCHMBeneficiaryaddress::getBenAddressID);
+        List<RMNCHMBeneficiaryaddress> out = new ArrayList<>();
+        for (Long regId : regIds) {
+            BigInteger addressId = addressIdByRegId.get(regId);
+            RMNCHMBeneficiaryaddress a = addressId == null ? null : addressById.get(addressId);
+            if (a != null) out.add(a);
+        }
+        return out;
+    }
+
     @SuppressWarnings("unchecked")
     private static <T> List<T> entities(EntityManager em, Class<T> type, String sql, Collection<?> ids) {
         if (ids.isEmpty()) return Collections.emptyList();
