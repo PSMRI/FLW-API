@@ -1,24 +1,15 @@
 package com.iemr.flw.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.flw.domain.iemr.TbReferralFollowUp;
-import com.iemr.flw.domain.iemr.TbTptFollowUp;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.iemr.flw.domain.iemr.*;
 import com.iemr.flw.dto.iemr.TbReferralFollowUpDTO;
 import com.iemr.flw.dto.iemr.TbReferralFollowUpListDTO;
 import com.iemr.flw.dto.iemr.TbTptFollowUpDTO;
 import com.iemr.flw.dto.iemr.TbTptFollowUpListDTO;
-import com.iemr.flw.repo.iemr.TbReferralFollowUpRepo;
-import com.iemr.flw.repo.iemr.TbTptFollowUpRepo;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.iemr.flw.domain.iemr.DynamicForm;
-import com.iemr.flw.domain.iemr.TBConfirmedCaseDTO;
-import com.iemr.flw.domain.iemr.TBConfirmedCase;
-import com.iemr.flw.domain.iemr.BenVisitDetail;
 import com.iemr.flw.repo.identity.BeneficiaryRepo;
-import com.iemr.flw.repo.iemr.DynamicFormRepo;
-import com.iemr.flw.repo.iemr.FormResponseRepo;
-import com.iemr.flw.repo.iemr.TBConfirmedTreatmentRepository;
+import com.iemr.flw.repo.iemr.*;
 import com.iemr.flw.seeder.TbCounsellingV2FormSeeder;
 import com.iemr.flw.service.IncentiveLogicService;
 import com.iemr.flw.service.CampConfigService;
@@ -34,16 +25,9 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -168,27 +152,61 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                         || "Longer Regimen (18–24 Months)".equalsIgnoreCase(regimen);
 
         if (Boolean.TRUE.equals(entity.getTreatmentCompleted())
-                && entity.getExpectedTreatmentCompletionDate() != null) {
+                && entity.getFollowUpDate() != null) {
 
 
             if (isDrTb) {
-                incentiveLogicService.incentiveForTbFollowUpIsDrTb(
-                        entity.getBenId(),
-                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
-                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
-                        entity.getUserId()
-                );
+                if("Shorter Regimen (9–12 Months)".equalsIgnoreCase(regimen)){
+                    if ("cured".equalsIgnoreCase(entity.getTreatmentOutcome())) {
+                        incentiveLogicService.incentiveForTbFollowUpIsDrTb(
+                                entity.getBenId(),
+                                Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
+                                Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
+                                entity.getUserId()
+                        );
+                    }
+
+                }else  if("Longer Regimen (18–24 Months)".equalsIgnoreCase(regimen)){
+                    if ("cured".equalsIgnoreCase(entity.getTreatmentOutcome())) {
+
+                        incentiveLogicService.incentiveForTbFollowUpIsDrTb(
+                                entity.getBenId(),
+                                Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
+                                Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
+                                entity.getUserId()
+                        );
+                    }
+                }
+
             } else {
                 incentiveLogicService.incentiveForTbFollowUp(
                         entity.getBenId(),
-                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
-                        Timestamp.valueOf(entity.getExpectedTreatmentCompletionDate().atStartOfDay()),
+                        Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
+                        Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
                         entity.getUserId()
                 );
 
             }
 
         }
+    }
+
+    public boolean isEligibleForIncentive(LocalDate treatmentStartDate, LocalDate endDate,Integer minMonth) {
+
+        if (treatmentStartDate == null || endDate == null) {
+            return false;
+        }
+
+        LocalDate start = treatmentStartDate.atStartOfDay()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+
+        LocalDate end = endDate.atStartOfDay()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+
+        return end.isAfter(start.plusMonths(minMonth))
+                || end.isEqual(start.plusMonths(minMonth));
     }
 
     @Override
