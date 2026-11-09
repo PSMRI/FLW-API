@@ -50,4 +50,11 @@ public interface TBScreeningRepo extends JpaRepository<TBScreening, Long> {
     @Modifying
     @Query("UPDATE TBScreening t SET t.vanSerialNo = t.id WHERE t.id = :id")
     void updateVanSerialNo(@Param("id") Long id);
+
+    // This van's screenings since dayStart that referred the beneficiary for a chest X-ray or a
+    // sputum test; read by the hub's referral-order sweep.
+    @Query("SELECT tbs FROM TBScreening tbs WHERE tbs.vanID = :vanID AND tbs.deleted = false " +
+            "AND tbs.visitDate >= :dayStart " +
+            "AND (tbs.referredForDigitalChestXray = true OR tbs.referredForSputumCollection = true)")
+    List<TBScreening> findReferredSince(@Param("vanID") Integer vanID, @Param("dayStart") Timestamp dayStart);
 }
