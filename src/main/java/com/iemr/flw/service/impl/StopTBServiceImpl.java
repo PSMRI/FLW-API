@@ -77,6 +77,9 @@ public class StopTBServiceImpl implements StopTBService {
     private TBStopVisitService tbStopVisitService;
 
     @Autowired
+    private StopTBReferralOrderService referralOrderService;
+
+    @Autowired
     private BenAnthropometryRepo benAnthropometryRepo;
 
     @Autowired
@@ -225,6 +228,7 @@ public class StopTBServiceImpl implements StopTBService {
     @Transactional
     public List<Map<String, Object>> saveNurseTBScreening(List<Map<String, Object>> dataList) throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
+        List<StopTBReferralOrderService.Referral> referrals = new ArrayList<>();
         Integer vanID = campConfigService.getVanID();
         Integer parkingPlaceID = campConfigService.getParkingPlaceID();
         for (Map<String, Object> data : dataList) {
@@ -305,12 +309,17 @@ public class StopTBServiceImpl implements StopTBService {
 
             tbScreeningRepo.save(screening);
             if (isNew) tbScreeningRepo.updateVanSerialNo(screening.getId());
+            referrals.add(new StopTBReferralOrderService.Referral(beneficiaryRegID,
+                    Boolean.TRUE.equals(screening.getReferredForDigitalChestXray()),
+                    Boolean.TRUE.equals(screening.getReferredForSputumCollection())));
 
             Map<String, Object> result = new HashMap<>();
             result.put("beneficiaryRegID", beneficiaryRegID);
             result.put("visitCode", visit.getVisitCode());
             results.add(result);
         }
+        // The hub, not the tablet, places the X-ray / TrueNat orders the screening refers for.
+        referralOrderService.createAfterCommit(referrals);
         return results;
     }
 

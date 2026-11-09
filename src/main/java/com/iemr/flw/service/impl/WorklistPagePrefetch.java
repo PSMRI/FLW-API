@@ -77,6 +77,15 @@ public class WorklistPagePrefetch {
     }
 
     public Page load(List<RMNCHMBeneficiaryaddress> pageAddresses) {
+        return load(pageAddresses, Collections.emptySet());
+    }
+
+    /**
+     * As {@link #load(List)}, and also loads the rows of any mapping belonging to one of
+     * requestedRegIds, so a caller that picks the requested registration's mapping (rather than
+     * the newest one at the address) finds its details here too.
+     */
+    public Page load(List<RMNCHMBeneficiaryaddress> pageAddresses, Set<Long> requestedRegIds) {
         Page page = new Page();
         pageAddresses.forEach(a -> page.addresses.put(a.getBenAddressID(), a));
         // The builder looks mappings up by address.getId(), which is the VanSerialNo column, not the
@@ -90,9 +99,17 @@ public class WorklistPagePrefetch {
                 "SELECT * FROM db_identity.i_beneficiarymapping WHERE BenAddressId IN (%s) ORDER BY BenMapId DESC", lookupIds)) {
             page.mappingsByAddress.computeIfAbsent(m.getBenAddressId(), k -> new ArrayList<>()).add(m);
         }
-        // the builder only uses the first (newest) mapping of each address
-        List<RMNCHMBeneficiarymapping> used = page.mappingsByAddress.values().stream()
-                .map(l -> l.get(0)).collect(Collectors.toList());
+        // the builder uses the first (newest) mapping of each address, or the requested
+        // registration's mapping when it was asked for specific registrations
+        List<RMNCHMBeneficiarymapping> used = new ArrayList<>();
+        for (List<RMNCHMBeneficiarymapping> l : page.mappingsByAddress.values()) {
+            for (int i = 0; i < l.size(); i++) {
+                RMNCHMBeneficiarymapping m = l.get(i);
+                if (i == 0 || (m.getBenRegId() != null && requestedRegIds.contains(m.getBenRegId().longValue()))) {
+                    used.add(m);
+                }
+            }
+        }
 
         putAll(page.details, entities(identityEm, RMNCHMBeneficiarydetail.class,
                 "SELECT * FROM db_identity.i_beneficiarydetails WHERE BeneficiaryDetailsId IN (%s)",
@@ -151,6 +168,34 @@ public class WorklistPagePrefetch {
             page.regIdsWithHealthId.add(toLong(id));
         }
         return page;
+    }
+
+    /**
+     * The address row of each beneficiary keyed by its registration ID, in the order of regIds,
+     * using one query for the mappings and one for the addresses instead of two per beneficiary. If a
+     * beneficiary has several mappings, the newest one with an address is used. A beneficiary with no
+     * mapping or no address is left out, as the per-row lookup did. The registration ID stays with
+     * its address because an address ID can be shared by mappings of different registrations.
+     */
+    public LinkedHashMap<Long, RMNCHMBeneficiaryaddress> addressesForRegIds(List<Long> regIds) {
+        if (regIds.isEmpty()) return new LinkedHashMap<>();
+        Map<Long, BigInteger> addressIdByRegId = new HashMap<>();
+        for (Object[] r : rows(identityEm,
+                "SELECT BenRegId, BenAddressId FROM db_identity.i_beneficiarymapping WHERE BenRegId IN (%s) ORDER BY BenMapId DESC",
+                new LinkedHashSet<>(regIds))) {
+            if (r[1] != null) addressIdByRegId.putIfAbsent(toLong(r[0]), toBigInteger(r[1]));
+        }
+        Map<BigInteger, RMNCHMBeneficiaryaddress> addressById = new HashMap<>();
+        putAll(addressById, entities(identityEm, RMNCHMBeneficiaryaddress.class,
+                "SELECT * FROM db_identity.i_beneficiaryaddress WHERE BenAddressID IN (%s)",
+                new LinkedHashSet<>(addressIdByRegId.values())), RMNCHMBeneficiaryaddress::getBenAddressID);
+        LinkedHashMap<Long, RMNCHMBeneficiaryaddress> out = new LinkedHashMap<>();
+        for (Long regId : regIds) {
+            BigInteger addressId = addressIdByRegId.get(regId);
+            RMNCHMBeneficiaryaddress a = addressId == null ? null : addressById.get(addressId);
+            if (a != null) out.putIfAbsent(regId, a);
+        }
+        return out;
     }
 
     @SuppressWarnings("unchecked")

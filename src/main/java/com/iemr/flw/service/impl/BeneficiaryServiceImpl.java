@@ -266,16 +266,26 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     // Used by the STOP-TB changes feed; a BenRegId with no mapping or address is left out.
     @Override
     public Map<Long, String> getBeneficiaryRecordsByRegIds(List<Long> benRegIds, String authorisation) {
-        List<RMNCHMBeneficiaryaddress> addresses = new ArrayList<>();
-        for (Long benRegId : benRegIds) {
-            RMNCHMBeneficiarymapping m = beneficiaryRepo.getById(BigInteger.valueOf(benRegId));
-            if (m == null || m.getBenAddressId() == null) continue;
-            RMNCHMBeneficiaryaddress a = beneficiaryRepo.getAddressById(m.getBenAddressId());
-            if (a != null) addresses.add(a);
+        // Two queries for the whole page; the per-beneficiary lookups stay as the fallback.
+        Map<Long, RMNCHMBeneficiaryaddress> addressByRegId;
+        try {
+            addressByRegId = worklistPagePrefetch.addressesForRegIds(benRegIds);
+        } catch (Exception e) {
+            logger.warn("Beneficiary address prefetch failed, using per-beneficiary queries: " + e.getMessage());
+            addressByRegId = new LinkedHashMap<>();
+            for (Long benRegId : benRegIds) {
+                RMNCHMBeneficiarymapping m = beneficiaryRepo.getById(BigInteger.valueOf(benRegId));
+                if (m == null || m.getBenAddressId() == null) continue;
+                RMNCHMBeneficiaryaddress a = beneficiaryRepo.getAddressById(m.getBenAddressId());
+                if (a != null) addressByRegId.putIfAbsent(benRegId, a);
+            }
         }
         Gson gson = new GsonBuilder().setDateFormat("MMM dd, yyyy h:mm:ss a").create();
         Map<Long, String> records = new LinkedHashMap<>();
-        for (Map<String, Object> record : buildBeneficiaryRecords(addresses, authorisation)) {
+        // The registration each address was looked up for is passed along, so the record is built
+        // from that registration's mapping even when another registration shares the address ID.
+        for (Map<String, Object> record : buildBeneficiaryRecords(new ArrayList<>(addressByRegId.values()),
+                new ArrayList<>(addressByRegId.keySet()), authorisation)) {
             Object benRegId = record.get("BenRegId");
             if (benRegId != null) records.put(new BigInteger(benRegId.toString()).longValue(), gson.toJson(record));
         }
@@ -283,6 +293,16 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
     }
 
     private List<Map<String, Object>> buildBeneficiaryRecords(List<RMNCHMBeneficiaryaddress> addressList,
+                                                              String authorisation) {
+        return buildBeneficiaryRecords(addressList, null, authorisation);
+    }
+
+    // requestedRegIds, when given, holds the registration each address (same index) was looked up
+    // for: the record is built from that registration's mapping, and the address is skipped if it
+    // has none, instead of using the newest mapping at the address, which may belong to another
+    // registration that shares the address ID.
+    private List<Map<String, Object>> buildBeneficiaryRecords(List<RMNCHMBeneficiaryaddress> addressList,
+                                                              List<Long> requestedRegIds,
                                                               String authorisation) {
         RMNCHHouseHoldDetails benHouseHoldRMNCH_ROBJ;
         RMNCHBeneficiaryDetailsRmnch benDetailsRMNCH_OBJ;
@@ -301,16 +321,28 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         // original per-beneficiary query.
         WorklistPagePrefetch.Page pf = null;
         try {
-            pf = worklistPagePrefetch.load(addressList);
+            pf = requestedRegIds == null ? worklistPagePrefetch.load(addressList)
+                    : worklistPagePrefetch.load(addressList, new java.util.HashSet<>(requestedRegIds));
         } catch (Exception e) {
             logger.warn("Worklist page prefetch failed, using per-beneficiary queries: " + e.getMessage());
         }
 
-        for (RMNCHMBeneficiaryaddress a : addressList) {
+        for (int idx = 0; idx < addressList.size(); idx++) {
+            RMNCHMBeneficiaryaddress a = addressList.get(idx);
             // exception by-passing
             try {
                 List<RMNCHMBeneficiarymapping> mappingsForAddress = pf != null ? pf.mappings(a.getId())
                         : beneficiaryRepo.getByAddressID(a.getId());
+                if (requestedRegIds != null) {
+                    Long wanted = requestedRegIds.get(idx);
+                    mappingsForAddress = mappingsForAddress.stream()
+                            .filter(mp -> mp.getBenRegId() != null && wanted != null
+                                    && mp.getBenRegId().longValue() == wanted)
+                            .limit(1).collect(Collectors.toList());
+                    if (mappingsForAddress.isEmpty()) {
+                        logger.warn("No mapping for benRegID=" + wanted + " at its address; record left out");
+                    }
+                }
                 if(!mappingsForAddress.isEmpty()){
                     RMNCHMBeneficiarymapping m = mappingsForAddress.get(0);
                     if (m != null) {
