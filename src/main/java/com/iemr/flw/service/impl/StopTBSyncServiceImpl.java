@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 import com.iemr.flw.service.BeneficiaryService;
+import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.DiagnosticOrderService;
 import com.iemr.flw.service.DynamicFormResponseService;
 import com.iemr.flw.service.StopTBService;
@@ -76,6 +77,8 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
     private DiagnosticOrderService diagnosticOrderService;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private CampConfigService campConfigService;
 
     private static final long USER_SCOPE_TTL_MS = 5 * 60 * 1000L;
     private final Map<Integer, Map.Entry<Long, UserSyncScope>> userScopes = new java.util.concurrent.ConcurrentHashMap<>();
@@ -353,6 +356,10 @@ public class StopTBSyncServiceImpl implements StopTBSyncService {
         out.put("items", items);
         out.put("nextToken", next.encode());
         out.put("hasMore", hasMore);
+        // Tells the tablet this server creates the X-ray / TrueNat orders a screening refers for
+        // (StopTBReferralOrderService), so the tablet can stop placing them itself. Only a camp hub
+        // does; servers that predate this send no field, which the tablet reads as false.
+        out.put("createsReferralOrders", campConfigService.isCampConfigured());
         return out;
     }
 
