@@ -82,6 +82,9 @@ public class TBSuspected {
     @Column(name = "is_tb_confirmed")
     private Boolean isTBConfirmed;
 
+    @Column(name = "is_recommended_for_tpt")
+    private Boolean isRecommendedForTpt;
+
     @Column(name = "is_drtb_confirmed")
     private Boolean isDRTBConfirmed;
 

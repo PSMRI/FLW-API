@@ -12,6 +12,6 @@ public class DewormingFormDTO {
     private String dewormingDate;
     private String dewormingLocation;
     private Integer ageGroup;
-    private byte[] image1;
-    private byte[] image2;
+    private String image1;
+    private String image2;
 }

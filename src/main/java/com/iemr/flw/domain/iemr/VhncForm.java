@@ -26,13 +26,11 @@ public class VhncForm {
     @Column(name = "no_of_beneficiaries_attended")
     private Integer noOfBeneficiariesAttended;
 
-    @Lob
     @Column(name = "image1")
-    private byte[] image1;
+    private String image1;
 
-    @Lob
     @Column(name = "image2")
-    private byte[] image2;
+    private String image2;
     
     @Column(name = "user_id")
     private Long userId;

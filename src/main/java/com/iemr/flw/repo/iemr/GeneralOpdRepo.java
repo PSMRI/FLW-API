@@ -25,11 +25,11 @@
 package com.iemr.flw.repo.iemr;
 
 import com.iemr.flw.domain.iemr.GeneralOpdData;
-import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 
@@ -44,7 +44,7 @@ public interface GeneralOpdRepo extends JpaRepository<GeneralOpdData,Long> {
     WHERE ibfo.visit_category = 'General OPD'
       AND ibfo.beneficiary_visit_code <> 0
       AND ibfo.villageID = :villageID
-      AND ibfo.created_by =:userName
+      AND ibfo.created_by = :userName
       AND (ibfo.deleted IS NULL OR ibfo.deleted = 0)
       AND (mbrm.Deleted IS NULL OR mbrm.Deleted = 0)
     ORDER BY ibfo.created_date DESC
@@ -57,12 +57,13 @@ public interface GeneralOpdRepo extends JpaRepository<GeneralOpdData,Long> {
     WHERE ibfo.visit_category = 'General OPD'
       AND ibfo.beneficiary_visit_code <> 0
       AND ibfo.villageID = :villageID
+      AND ibfo.created_by = :userName
       AND (ibfo.deleted IS NULL OR ibfo.deleted = 0)
       AND (mbrm.Deleted IS NULL OR mbrm.Deleted = 0)
     """,
             nativeQuery = true)
     Page<GeneralOpdData> findFilteredOutreachData(
             @Param("villageID") Integer villageID,
-            Pageable pageable,@Param("userName") String  userName);
+            Pageable pageable, @Param("userName") String userName);
 
 }
