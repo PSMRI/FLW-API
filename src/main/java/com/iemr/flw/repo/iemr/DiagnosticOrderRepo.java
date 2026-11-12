@@ -123,4 +123,14 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
             "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
     List<Object[]> findLatestOrderStatusByBeneficiary(@Param("orderType") String orderType,
             @Param("villageId") Integer villageId, @Param("providerServiceMapId") Integer providerServiceMapId);
+
+    // True when the beneficiary already has an order of this type that a new referral must not
+    // duplicate: any row created since dayStart (whatever its status, so a FAILED push is left for
+    // the nurse's Retry instead of being re-sent every sweep), or an open/resolved order from an
+    // earlier day, which createAndPushOrder would return instead of creating a new one anyway.
+    @Query("SELECT COUNT(o) > 0 FROM DiagnosticOrder o WHERE o.beneficiaryId = :beneficiaryId " +
+            "AND o.orderType = :orderType AND o.deleted = false " +
+            "AND (o.createdDate >= :dayStart OR o.status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'MANUAL_ENTRY'))")
+    boolean hasOrderTodayOrOpen(@Param("beneficiaryId") Long beneficiaryId, @Param("orderType") String orderType,
+            @Param("dayStart") Timestamp dayStart);
 }
