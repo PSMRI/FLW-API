@@ -15,6 +15,8 @@ public interface DiagnosticDocumentRepo extends JpaRepository<DiagnosticDocument
 
     Optional<DiagnosticDocument> findByExternalOrderIdAndDocumentTypeAndDeletedFalse(String externalOrderId, String documentType);
 
+    boolean existsByExternalOrderIdAndDeletedFalse(String externalOrderId);
+
     @Transactional
     @Modifying
     @Query("UPDATE DiagnosticDocument d SET d.vanSerialNo = d.id WHERE d.id = :id")

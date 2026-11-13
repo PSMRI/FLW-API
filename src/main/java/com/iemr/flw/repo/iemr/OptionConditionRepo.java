@@ -52,6 +52,17 @@ public interface OptionConditionRepo extends JpaRepository<OptionCondition, Long
     List<Long> findTargetQuestionIdsByVersionId(@Param("versionId") Long versionId);
 
     /**
+     * Parent → child edges of the SHOW_QUESTION graph for a version, as
+     * [parentQuestionId, targetQuestionId] pairs. Active conditions only.
+     */
+    @Query("SELECT oc.questionOption.sectionQuestion.questionId, oc.targetQuestion.questionId "
+            + "FROM OptionCondition oc "
+            + "WHERE oc.questionOption.sectionQuestion.formSection.formVersion.versionId = :versionId "
+            + "AND oc.actionType = 'SHOW_QUESTION' AND oc.targetQuestion IS NOT NULL "
+            + "AND oc.isActive = true")
+    List<Object[]> findShowQuestionEdgesByVersionId(@Param("versionId") Long versionId);
+
+    /**
      * Loads all conditions for a set of options in one query.
      * JOIN FETCH ensures questionOption, targetQuestion, and targetSection are hydrated
      * so callers can group and resolve references without extra queries.

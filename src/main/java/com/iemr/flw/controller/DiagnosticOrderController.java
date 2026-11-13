@@ -98,7 +98,10 @@ public class DiagnosticOrderController {
 
     @PostMapping("/order/result")
     @Operation(summary = "Get the diagnostic result for beneficiaryId+orderType, at whatever stage it's currently in "
-            + "(targets the latest order unless visitCode is given)")
+            + "(targets the latest order unless visitCode is given). results[] has one entry per test: the order's "
+            + "own (XRAY_CHEST / MTB / MTB_PLUS), then MDR_RIF on an MTB order once its RIF test exists. status INVALID: the MTB/RIF test came back "
+            + "invalid (e.g. Error-2) and the machine is retesting the same order — it is still polled and "
+            + "moves to COMPLETED when the retest result arrives.")
     public String getOrderResult(@RequestParam Long beneficiaryId, @RequestParam String orderType,
             @RequestParam(required = false) Long visitCode) {
         OutputResponse response = new OutputResponse();
@@ -114,7 +117,8 @@ public class DiagnosticOrderController {
 
     @PostMapping("/order/poll")
     @Operation(summary = "Trigger an immediate poll for one beneficiary+orderType's diagnostic order and return the result (ops use). "
-            + "Targets the latest order unless visitCode is given")
+            + "Targets the latest order unless visitCode is given. An invalid MTB/RIF result gives status INVALID "
+            + "(still polled, no retest order); an invalid X-ray closes the order and pushes a retest.")
     public String pollOrder(@RequestParam Long beneficiaryId, @RequestParam String orderType,
             @RequestParam(required = false) Long visitCode) {
         OutputResponse response = new OutputResponse();
@@ -129,11 +133,19 @@ public class DiagnosticOrderController {
     }
 
     @PostMapping("/order/manualResult")
-    @Operation(summary = "Exactly one of resultSummary/reasonToClose is required. resultSummary: manually submit "
-            + "a diagnostic result for a beneficiary's latest order of the given type, for use when no vendor "
-            + "device is integrated. Stored as-is; tbPresence, tbConfidence, and drugResistancePresence are left "
-            + "null since nothing derives them. Rejected if that order is already COMPLETED. reasonToClose: close "
-            + "the order instead (same behavior as reasonToClose on /order/push), sourcing patient/orderEvent "
+    @Operation(summary = "Send either a result (resultSummary and/or mdrRifResult) or one reasonToClose. resultSummary: "
+            + "manually submit a diagnostic result for a beneficiary's latest order of the given type, for use when "
+            + "no vendor device is integrated. Stored like a vendor result, one row per test in results[]. "
+            + "MTB/MTB_PLUS orders carry two results: resultSummary is the MTB result; mdrRifResult is the MDR RIF "
+            + "result, stored as the order's MDR_RIF result (and tb_suspected's MDR RIF result), only allowed on a positive MTB. "
+            + "A positive MTB without mdrRifResult leaves the order open until RIF is in: PENDING if it was pushed "
+            + "to a vendor (polling continues, and the vendor's result replaces a differing manual one), "
+            + "MANUAL_ENTRY if there is no vendor (send mdrRifResult or reasonToCloseRif). Otherwise the order "
+            + "is COMPLETED; a vendor's differing result still replaces it when its documents are fetched. "
+            + "An invalid result (resultSummary or mdrRifResult \"Invalid/Error\") closes the order. "
+            + "Rejected if that order is already COMPLETED or CLOSED (push a new order to test again). Closing (same as on /order/push): reasonToCloseXray for "
+            + "XRAY_CHEST; reasonToCloseMTB when the MTB test wasn't done; reasonToCloseRif when MTB was positive but "
+            + "MDR RIF wasn't done — closes that same order, keeping its MTB result. Patient/orderEvent are sourced "
             + "from the beneficiary's existing order for this type.")
     public String submitManualResult(@RequestBody @Valid ManualDiagnosticResultRequestDto request,
             @RequestHeader("JwtToken") String jwtToken) {
@@ -150,7 +162,8 @@ public class DiagnosticOrderController {
 
     @GetMapping("/order/getBeneficiariesByStatus")
     @Operation(summary = "Get beneficiary IDs bucketed by diagnostic order status for the given order type, "
-            + "optionally filtered by village and/or provider service map")
+            + "optionally filtered by village and/or provider service map. invalid: MTB/RIF invalid, waiting for "
+            + "the machine's own retest")
     public ResponseEntity<ApiResponse> getBeneficiariesByStatus(
             @RequestParam DiagnosticOrderType orderType,
             @RequestParam(required = false) Integer villageId,

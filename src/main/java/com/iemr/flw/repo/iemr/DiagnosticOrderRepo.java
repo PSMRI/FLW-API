@@ -32,16 +32,34 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
             "ORDER BY o.lastPolledAt ASC NULLS FIRST")
     List<DiagnosticOrder> findXrayDueForPoll();
 
-    @Query("SELECT o FROM DiagnosticOrder o WHERE o.orderType IN ('MTB', 'MTB_PLUS', 'MDR_RIF') " +
-            "AND o.status IN ('PENDING', 'IN_PROGRESS') " +
+    @Query("SELECT o FROM DiagnosticOrder o WHERE o.orderType IN ('MTB', 'MTB_PLUS') " +
+            "AND o.status IN ('PENDING', 'IN_PROGRESS', 'INVALID') " +
             "AND o.deleted = false " +
             "ORDER BY o.lastPolledAt ASC NULLS FIRST")
     List<DiagnosticOrder> findTrueNatDueForPoll();
 
     // The (disabled) daily close only touches orders created within [dayStart, dayEnd) — i.e. today's.
-    @Query("SELECT o FROM DiagnosticOrder o WHERE o.status IN ('PENDING', 'IN_PROGRESS') AND o.deleted = false " +
+    @Query("SELECT o FROM DiagnosticOrder o WHERE o.status IN ('PENDING', 'IN_PROGRESS', 'INVALID') AND o.deleted = false " +
             "AND o.createdDate >= :dayStart AND o.createdDate < :dayEnd")
     List<DiagnosticOrder> findAllOutstandingOrders(@Param("dayStart") Timestamp dayStart, @Param("dayEnd") Timestamp dayEnd);
+
+    // COMPLETED orders the vendor accepted (providerOrderId is set only on a successful push) whose
+    // documents still need fetching: no stored document at all, or an MTB/MTB_PLUS order whose MTB
+    // result is TB Positive but has no MDR RIF report yet (the vendor adds the RIF test, and its
+    // report, after a positive MTB). Mostly orders whose result was entered manually, which the poll
+    // no longer visits. Excludes orders the vendor never received: no-vendor orders and failed pushes.
+    @Query("SELECT o FROM DiagnosticOrder o WHERE o.deleted = false " +
+            "AND o.externalOrderId IS NOT NULL AND o.providerOrderId IS NOT NULL " +
+            "AND o.status = 'COMPLETED' " +
+            "AND (NOT EXISTS (SELECT d.id FROM DiagnosticDocument d " +
+            "        WHERE d.externalOrderId = o.externalOrderId AND d.deleted = false) " +
+            "  OR (o.orderType IN ('MTB', 'MTB_PLUS') " +
+            "      AND EXISTS (SELECT r.id FROM DiagnosticResult r WHERE r.externalOrderId = o.externalOrderId " +
+            "          AND r.deleted = false AND r.resultType IN ('MTB', 'MTB_PLUS') AND r.resultSummary = 'TB Positive') " +
+            "      AND NOT EXISTS (SELECT d.id FROM DiagnosticDocument d WHERE d.externalOrderId = o.externalOrderId " +
+            "          AND d.deleted = false AND d.documentType = 'MDR_RIF_REPORT'))) " +
+            "ORDER BY o.createdDate ASC")
+    List<DiagnosticOrder> findOrdersNeedingDocuments();
 
     @Transactional
     @Modifying
@@ -115,7 +133,7 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
     // The five queries above in one pass: beneficiaryId + status of each beneficiary's latest order,
     // same filters, for the caller to bucket by status.
     @Query("SELECT o.beneficiaryId, o.status FROM DiagnosticOrder o WHERE o.orderType = :orderType AND o.deleted = false " +
-            "AND o.status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CLOSED', 'CANCELLED', 'EXPIRED', 'REFUSED', 'MANUAL_ENTRY') " +
+            "AND o.status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CLOSED', 'CANCELLED', 'EXPIRED', 'REFUSED', 'MANUAL_ENTRY', 'INVALID') " +
             "AND o.id = (SELECT MAX(o2.id) FROM DiagnosticOrder o2 " +
             "WHERE o2.beneficiaryId = o.beneficiaryId AND o2.orderType = :orderType AND o2.deleted = false) " +
             "AND o.beneficiaryId IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
@@ -130,7 +148,7 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
     // earlier day, which createAndPushOrder would return instead of creating a new one anyway.
     @Query("SELECT COUNT(o) > 0 FROM DiagnosticOrder o WHERE o.beneficiaryId = :beneficiaryId " +
             "AND o.orderType = :orderType AND o.deleted = false " +
-            "AND (o.createdDate >= :dayStart OR o.status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'MANUAL_ENTRY'))")
+            "AND (o.createdDate >= :dayStart OR o.status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'MANUAL_ENTRY', 'INVALID'))")
     boolean hasOrderTodayOrOpen(@Param("beneficiaryId") Long beneficiaryId, @Param("orderType") String orderType,
             @Param("dayStart") Timestamp dayStart);
 }

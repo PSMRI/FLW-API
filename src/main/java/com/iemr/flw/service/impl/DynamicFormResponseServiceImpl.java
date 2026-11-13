@@ -98,6 +98,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     private final JwtUtil jwtUtil;
     private final CampConfigService campConfigService;
     private final ConsentRefusalEvaluator consentRefusalEvaluator;
+    private final ConditionalAnswerPruner conditionalAnswerPruner;
 
     @Override
     @Transactional
@@ -273,6 +274,9 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                         o -> o.getSectionQuestion().getQuestionId(),
                         Collectors.toMap(QuestionOption::getOptionValue, Function.identity())));
 
+        Map<Long, Set<Long>> childrenByParent =
+                conditionalAnswerPruner.loadChildrenByParent(version.getVersionId());
+
         List<SectionResponseDTO> sectionDTOs = new ArrayList<>();
         for (SectionAnswerRequest sectionReq : request.getSections()) {
             if (sectionReq.getSectionUuid() == null) {
@@ -310,6 +314,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                     sectionReq.getAnswers(),
                     questionMap,
                     optionsByQuestion,
+                    childrenByParent,
                     actor,
                     vanID,
                     parkingPlaceID);
@@ -368,10 +373,18 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             List<QuestionAnswerRequest> answers,
             Map<String, SectionQuestion> questionMap,
             Map<Long, Map<String, QuestionOption>> optionsByQuestion,
+            Map<Long, Set<Long>> childrenByParent,
             String actor,
             Integer vanID,
             Integer parkingPlaceID) {
 
+        // Pass 1: clear old answers of every received question and its SHOW_QUESTION descendants,
+        // so children hidden by an edited parent don't keep stale answers. Done up-front so a
+        // parent listed after its child can't wipe the child's freshly inserted answer.
+        conditionalAnswerPruner.deleteWithDescendants(
+                sectionResponseId, answeredQuestionIds(answers, questionMap), childrenByParent);
+
+        // Pass 2: insert the received answers
         List<QuestionResponse> results = new ArrayList<>();
 
         for (QuestionAnswerRequest answer : answers) {
@@ -391,9 +404,6 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 // DISPLAY questions carry no answer data
                 continue;
             }
-
-            // Delete any existing answers for this question in this section (handles re-saves)
-            questionResponseRepo.deleteByQuestionIdAndSectionResponseId(questionId, sectionResponseId);
 
             if (type == QuestionType.RADIO || type == QuestionType.CHECKBOX || type == QuestionType.DROPDOWN) {
                 if (answer.getOptionValue() != null) {
@@ -443,6 +453,15 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             }
         }
         return results;
+    }
+
+    /** Ids of the non-DISPLAY questions in the request; unknown/null uuids are left to processAnswers to reject. */
+    private Set<Long> answeredQuestionIds(List<QuestionAnswerRequest> answers, Map<String, SectionQuestion> questionMap) {
+        return answers.stream()
+                .map(a -> a.getQuestionUuid() == null ? null : questionMap.get(a.getQuestionUuid()))
+                .filter(q -> q != null && q.getQuestionType() != QuestionType.DISPLAY)
+                .map(SectionQuestion::getQuestionId)
+                .collect(Collectors.toSet());
     }
 
     private QuestionOption resolveOption(

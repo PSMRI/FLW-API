@@ -38,7 +38,7 @@ public class DiagnosticProviderFactory {
         return provider;
     }
 
-    // XRAY_CHEST is routed to its own vendor; the TrueNat family (MTB/MTB_PLUS/MDR_RIF) shares
+    // XRAY_CHEST is routed to its own vendor; the TrueNat family (MTB/MTB_PLUS) shares
     // another, each configurable independently so a new vendor can be swapped in for either group
     // without a code change.
     public String getProviderCodeForOrderType(DiagnosticOrderType orderType) {
