@@ -532,6 +532,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         // retest result overwrites it later.
         if (DiagnosticOrderStatus.COMPLETED.name().equals(order.getStatus())
                 || DiagnosticOrderStatus.INVALID.name().equals(order.getStatus())
+                || (DiagnosticOrderStatus.FAILED.name().equals(order.getStatus()) && main.getResultSummary() != null)
                 || (writeBackWhenClosed && DiagnosticOrderStatus.CLOSED.name().equals(order.getStatus()))
                 || (writeBackWhenClosed && main.getResultSummary() != null
                     && (DiagnosticOrderStatus.MANUAL_ENTRY.name().equals(order.getStatus())
@@ -757,7 +758,11 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 storedSummary == null ? "" : storedSummary.trim());
         boolean rifChanged = vendorRif != null && !vendorRif.equalsIgnoreCase(
                 storedRifSummary == null ? "" : storedRifSummary.trim());
-        if (!summaryChanged && !rifChanged) {
+        // A RIF status change with no RIF result (e.g. the vendor's RIF test FAILED) counts too.
+        String vendorRifStatus = vendor.getDrugResistanceStatus();
+        boolean rifStatusChanged = vendorRifStatus != null && !vendorRifStatus.equalsIgnoreCase(
+                storedRif != null && storedRif.getProviderStatus() != null ? storedRif.getProviderStatus() : "");
+        if (!summaryChanged && !rifChanged && !rifStatusChanged) {
             return false;
         }
 
@@ -767,32 +772,31 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         String rifSummary = vendorRif != null ? vendorRif : storedRifSummary;
         Boolean drugResistance = vendorRif != null ? TrueNatResultRules.classifyDrugResistance(vendorRif)
                 : (storedRif != null ? storedRif.getDrugResistancePresence() : null);
-        String rifStatus = vendorRif != null
-                ? (vendor.getDrugResistanceStatus() != null ? vendor.getDrugResistanceStatus() : DiagnosticOrderStatus.COMPLETED.name())
+        String rifStatus = vendorRifStatus != null ? vendorRifStatus
+                : vendorRif != null ? DiagnosticOrderStatus.COMPLETED.name()
                 : (storedRif != null ? storedRif.getProviderStatus() : null);
 
-        // The order stays COMPLETED. An invalid vendor MTB/RIF result makes it INVALID, so the poll
-        // resumes and picks up the machine's retest; any other invalid result (X-ray, a manual
-        // "Invalid/Error" kept) closes it. A positive MTB with no RIF yet is picked up again by the
+        // Same rules as the poll. A test the vendor reports FAILED makes the order FAILED; an invalid
+        // vendor MTB/RIF result ("Error-2") makes it INVALID, so the poll resumes and picks up the
+        // machine's retest; any other invalid result (X-ray, a manual "Invalid/Error" kept) closes it.
+        // Otherwise it stays COMPLETED: a positive MTB with no RIF yet is picked up again by the
         // back-fill until the vendor's RIF report arrives.
-        DiagnosticOrderStatus status;
-        if (TrueNatResultRules.isTrueNat(order.getOrderType())
-                && (SPUTUM_INVALID_POLLED_RESULT.equalsIgnoreCase(vendorSummary == null ? "" : vendorSummary)
-                    || SPUTUM_INVALID_POLLED_RESULT.equalsIgnoreCase(vendorRif == null ? "" : vendorRif))) {
-            status = DiagnosticOrderStatus.INVALID;
-        } else if (isInvalidResult(order.getOrderType(), summary, SPUTUM_INVALID_POLLED_RESULT)
-                || isInvalidResult(order.getOrderType(), summary, SPUTUM_INVALID_MANUAL_RESULT)) {
-            status = DiagnosticOrderStatus.CLOSED;
-        } else {
-            status = DiagnosticOrderStatus.COMPLETED;
+        boolean trueNat = TrueNatResultRules.isTrueNat(order.getOrderType());
+        DiagnosticOrderStatus status = trueNat && DiagnosticOrderStatus.FAILED.equals(vendor.getStatus())
+                ? DiagnosticOrderStatus.FAILED : DiagnosticOrderStatus.COMPLETED;
+        DiagnosticPollResult merged = new DiagnosticPollResult(status, null, summary, null, null, null,
+                tbPresence, null, drugResistance, rifSummary, rifStatus);
+        if (!markInvalidTrueNatResult(order, merged) && status == DiagnosticOrderStatus.COMPLETED
+                && (isInvalidResult(order.getOrderType(), summary, SPUTUM_INVALID_POLLED_RESULT)
+                    || isInvalidResult(order.getOrderType(), summary, SPUTUM_INVALID_MANUAL_RESULT))) {
+            merged.setStatus(DiagnosticOrderStatus.CLOSED);
         }
+        status = merged.getStatus();
 
         logger.warn("Overwriting manually entered result with vendor's for orderId={} (externalOrderId={}): "
                         + "{} '{}' -> '{}', MDR_RIF '{}' -> '{}', status {} -> {}",
                 order.getId(), order.getExternalOrderId(), order.getOrderType(), storedSummary, summary,
                 storedRifSummary, rifSummary, order.getStatus(), status);
-        DiagnosticPollResult merged = new DiagnosticPollResult(status, null, summary, null, null, null,
-                tbPresence, null, drugResistance, rifSummary, rifStatus);
         processResult(order, merged, true, "SYSTEM");
         if (summaryChanged && status == DiagnosticOrderStatus.COMPLETED) {
             pushMtbOrderAfterPositiveXray(order, tbPresence);
@@ -1389,20 +1393,20 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         }
     }
 
-    // MTB/MTB_PLUS: an invalid run — the MTB result "Error-2", or a RIF error (RIF result "Error-2", or
-    // the vendor's mdr_rif component FAILED, which makes the whole order FAILED) — sets the poll result
-    // to INVALID. The machine retests the same order by itself, so it is polled on rather than closed.
+    // MTB/MTB_PLUS: an invalid run — the MTB or RIF result "Error-2" — sets the poll result to INVALID.
+    // The machine retests the same order by itself, so it is polled on rather than closed. A test the
+    // vendor reports FAILED is not invalid: the order stays FAILED, as the vendor reported it.
     // "Indeterminate" is a real RIF result, not an error. Returns true when it changed the status.
     private static boolean markInvalidTrueNatResult(DiagnosticOrder order, DiagnosticPollResult result) {
-        if (result == null || !TrueNatResultRules.isTrueNat(order.getOrderType())) {
+        if (result == null || !TrueNatResultRules.isTrueNat(order.getOrderType())
+                || DiagnosticOrderStatus.FAILED.equals(result.getStatus())) {
             return false;
         }
         String mtb = blankToNull(result.getResultSummary());
         String rif = blankToNull(result.getDrugResistanceSummary());
         boolean invalid = (DiagnosticOrderStatus.COMPLETED.equals(result.getStatus())
                         && SPUTUM_INVALID_POLLED_RESULT.equalsIgnoreCase(mtb == null ? "" : mtb))
-                || SPUTUM_INVALID_POLLED_RESULT.equalsIgnoreCase(rif == null ? "" : rif)
-                || DiagnosticOrderStatus.FAILED.name().equalsIgnoreCase(result.getDrugResistanceStatus());
+                || SPUTUM_INVALID_POLLED_RESULT.equalsIgnoreCase(rif == null ? "" : rif);
         if (invalid) {
             result.setStatus(DiagnosticOrderStatus.INVALID);
             // Only the test that failed is INVALID: an invalid MTB run marks its own row; with a RIF
