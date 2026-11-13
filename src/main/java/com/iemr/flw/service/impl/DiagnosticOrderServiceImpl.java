@@ -963,10 +963,18 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                         + order.getManuallyEnteredBy() + " and a vendor poll would overwrite it");
             }
             DiagnosticProvider provider = providerFactory.getProvider(order.getProviderCode());
+            boolean wasCompleted = DiagnosticOrderStatus.COMPLETED.name().equals(order.getStatus());
             DiagnosticPollResult pollResult = provider.pollResult(order, true);
             markInvalidTrueNatResult(order, pollResult);
             boolean invalid = closeIfInvalidPolledResult(order, pollResult);
-            return processResult(order, pollResult, invalid, "SYSTEM");
+            DiagnosticOrderResultDto dto = processResult(order, pollResult, invalid, "SYSTEM");
+            // Same follow-up as the scheduled poll: an X-ray this call completes as TB Presumptive gets
+            // its MTB order. Only on the transition to COMPLETED — the scheduler skips a completed order,
+            // so this is the only chance; re-polling an already completed X-ray creates nothing.
+            if (!wasCompleted && DiagnosticOrderStatus.COMPLETED.name().equals(order.getStatus())) {
+                pushMtbOrderAfterPositiveXray(order, pollResult.getTbPresence());
+            }
+            return dto;
         });
     }
 
@@ -1200,8 +1208,11 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         // While open, an order the vendor received stays PENDING so the poll keeps running and brings
         // the vendor's MTB/RIF result and reports (its values replace these where they differ); an
         // order with no vendor stays MANUAL_ENTRY, waiting for mdrRifResult or reasonToCloseRif.
+        // An invalid RIF result entered by hand is handled like an invalid MTB result entered by hand:
+        // the order is CLOSED (the MTB row keeps its result, the RIF row records the invalid value).
+        boolean invalidRif = isInvalidRifResult(mdrRifResult);
         DiagnosticOrderStatus status;
-        if (isInvalidResult(order.getOrderType(), mtbSummary, SPUTUM_INVALID_MANUAL_RESULT)) {
+        if (isInvalidResult(order.getOrderType(), mtbSummary, SPUTUM_INVALID_MANUAL_RESULT) || invalidRif) {
             status = DiagnosticOrderStatus.CLOSED;
         } else if (trueNat && mdrRifResult == null && TrueNatResultRules.needsMdrRif(mtbSummary)) {
             status = order.getProviderOrderId() != null ? DiagnosticOrderStatus.PENDING : DiagnosticOrderStatus.MANUAL_ENTRY;
@@ -1215,7 +1226,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 : (status == DiagnosticOrderStatus.COMPLETED ? XRAY_TB_PRESUMPTIVE.equalsIgnoreCase(mtbSummary) : null);
         DiagnosticPollResult pollResult = new DiagnosticPollResult(
                 status, null, mtbSummary, null, null, null, tbPresence, null,
-                TrueNatResultRules.classifyDrugResistance(mdrRifResult), mdrRifResult);
+                TrueNatResultRules.classifyDrugResistance(mdrRifResult), mdrRifResult,
+                invalidRif ? DiagnosticOrderStatus.CLOSED.name() : null);
         return processResult(order, pollResult, true, actingUserName);
     }
 
@@ -1292,6 +1304,14 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     // sputumInvalidResult differs by source: SPUTUM_INVALID_POLLED_RESULT for vendor polls,
     // SPUTUM_INVALID_MANUAL_RESULT for manual entry. The X-ray value is the same for both.
+    // isInvalidResult goes by order type, so it can't judge a RIF value: an invalid RIF result is the
+    // manual "Invalid/Error" or the vendor's "Error-2".
+    private static boolean isInvalidRifResult(String rifResult) {
+        String rif = blankToNull(rifResult);
+        return rif != null && (SPUTUM_INVALID_MANUAL_RESULT.equalsIgnoreCase(rif)
+                || SPUTUM_INVALID_POLLED_RESULT.equalsIgnoreCase(rif));
+    }
+
     private static boolean isInvalidResult(String orderTypeCode, String resultSummary, String sputumInvalidResult) {
         if (resultSummary == null) {
             return false;
