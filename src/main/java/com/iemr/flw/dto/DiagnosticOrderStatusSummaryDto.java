@@ -15,4 +15,6 @@ public class DiagnosticOrderStatusSummaryDto {
     private List<Long> failed;
     private List<Long> closed;
     private List<Long> awaitingManualEntry;
+    // MTB/RIF invalid, waiting for the machine's own retest (still polled).
+    private List<Long> invalid;
 }

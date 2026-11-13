@@ -43,9 +43,9 @@ public interface QuestionResponseRepo extends JpaRepository<QuestionResponse, Lo
 
     List<QuestionResponse> findBySectionResponseIdIn(Collection<Long> sectionResponseIds);
 
-    void deleteByQuestionIdAndSectionResponseId(Long questionId, Long sectionResponseId);
-
     void deleteBySectionResponseIdIn(Collection<Long> sectionResponseIds);
+
+    void deleteBySectionResponseIdAndQuestionIdIn(Long sectionResponseId, Collection<Long> questionIds);
 
     // See SectionResponseRepo.updateVanSerialNo for why this is a targeted UPDATE, not a
     // second full-entity save.

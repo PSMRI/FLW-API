@@ -3,8 +3,8 @@ package com.iemr.flw.masterEnum;
 public enum DiagnosticOrderType {
     XRAY_CHEST(1),
     MTB(2),
-    MTB_PLUS(3),
-    MDR_RIF(4);
+    MTB_PLUS(3);
+    // 4 was MDR_RIF — removed: EMR Lite now runs MDR RIF automatically on a positive MTB order
 
     private final int id;
 

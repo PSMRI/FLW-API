@@ -14,7 +14,9 @@ import org.springframework.web.client.ResourceAccessException;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 @Service
@@ -69,6 +71,65 @@ public class DiagnosticPollSchedulerService {
             }
         }
         logger.info("Polled {} of {} pending {} diagnostic orders", polled, candidates.size(), label);
+    }
+
+    // A completed order's documents come from a second vendor call after the result is saved; if that
+    // call fails the order stays COMPLETED with no documents and the regular poll never revisits it.
+    // A result entered manually COMPLETES the order, so the poll stops visiting it: its documents (MTB
+    // report, then the MDR RIF report) only arrive here, and the vendor's result overwrites the manual
+    // one where they differ. This job runs at application startup and then every hour.
+    @Scheduled(fixedDelayString = "${diagnostic.documents.backfill-interval-ms:3600000}")
+    public void fetchMissingDocuments() {
+        List<DiagnosticOrder> candidates = diagnosticOrderRepo.findOrdersNeedingDocuments();
+        logger.info("Document back-fill tick: {} order(s) needing documents", candidates.size());
+        if (candidates.isEmpty()) return;
+
+        // X-ray and TrueNat are handled in this one job but are separate vendor endpoints: each is pinged
+        // once, before its first order, and its orders are skipped this tick if it's down (or drops mid-tick),
+        // without holding up the other.
+        Map<String, Boolean> vendorUp = new HashMap<>();
+        int received = 0;
+        int skipped = 0;
+        for (DiagnosticOrder order : candidates) {
+            try {
+                DiagnosticOrderType orderType = DiagnosticOrderType.fromCode(order.getOrderType());
+                String vendorKey = order.getProviderCode() + ":" + vendorGroup(orderType);
+                if (!vendorUp.computeIfAbsent(vendorKey, k -> isVendorUp(order.getProviderCode(), orderType))) {
+                    skipped++;
+                    continue;
+                }
+                try {
+                    if (diagnosticOrderService.fetchMissingDocuments(order)) received++;
+                } catch (ResourceAccessException e) {
+                    logger.error("Vendor {} unreachable fetching documents for orderId={} — skipping its remaining orders this tick: {}",
+                            vendorKey, order.getId(), e.getMessage());
+                    vendorUp.put(vendorKey, false);
+                }
+            } catch (Exception e) {
+                logger.error("Document fetch failed for orderId={}: {}", order.getId(), e.getMessage());
+            }
+        }
+        logger.info("Document back-fill: documents received for {} of {} order(s), {} skipped (vendor down)",
+                received, candidates.size(), skipped);
+    }
+
+    // MTB and MTB_PLUS share the TrueNat endpoint, so they share one health check.
+    private static String vendorGroup(DiagnosticOrderType orderType) {
+        return orderType == DiagnosticOrderType.XRAY_CHEST ? "XRAY" : "TRUENAT";
+    }
+
+    private boolean isVendorUp(String providerCode, DiagnosticOrderType orderType) {
+        try {
+            boolean up = providerFactory.getProvider(providerCode).checkHealth(orderType);
+            if (!up) {
+                logger.warn("{} {} vendor ping failed — skipping its document back-fill this tick",
+                        providerCode, vendorGroup(orderType));
+            }
+            return up;
+        } catch (Exception e) {
+            logger.warn("No usable provider {} for {} document back-fill: {}", providerCode, orderType, e.getMessage());
+            return false;
+        }
     }
 
     // Auto-closure of outstanding orders at the daily cutoff is disabled for now — orders are no longer

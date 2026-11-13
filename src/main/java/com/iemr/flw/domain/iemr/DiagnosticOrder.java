@@ -52,8 +52,17 @@ public class DiagnosticOrder {
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
-    @Column(name = "reason_to_close", columnDefinition = "TEXT")
-    private String reasonToClose;
+    // Why the order was closed, one column per test (see DiagnosticCloseStage): xray, mtb, or mdrrif
+    // for an MTB/MTB_PLUS order whose MTB was positive but whose MDR RIF test wasn't done. Set through
+    // setReasonToClose(stage, reason). The old reason_to_close column is no longer mapped.
+    @Column(name = "reason_to_close_xray", columnDefinition = "TEXT")
+    private String reasonToCloseXray;
+
+    @Column(name = "reason_to_close_mtb", columnDefinition = "TEXT")
+    private String reasonToCloseMTB;
+
+    @Column(name = "reason_to_close_mdrrif", columnDefinition = "TEXT")
+    private String reasonToCloseMDRRIF;
 
     @Column(name = "push_response_json", columnDefinition = "LONGTEXT")
     private String pushResponseJson;
@@ -115,4 +124,12 @@ public class DiagnosticOrder {
     @org.hibernate.annotations.CreationTimestamp
     @Column(name = "synced_date")
     private Timestamp syncedDate;
+
+    public void setReasonToClose(com.iemr.flw.masterEnum.DiagnosticCloseStage stage, String reason) {
+        switch (stage) {
+            case XRAY -> reasonToCloseXray = reason;
+            case MTB -> reasonToCloseMTB = reason;
+            case RIF -> reasonToCloseMDRRIF = reason;
+        }
+    }
 }

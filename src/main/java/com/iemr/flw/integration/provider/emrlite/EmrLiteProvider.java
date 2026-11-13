@@ -7,6 +7,7 @@ import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.integration.provider.DiagnosticCancelResult;
 import com.iemr.flw.integration.provider.DiagnosticDocumentAsset;
 import com.iemr.flw.integration.provider.DiagnosticPollResult;
+import com.iemr.flw.integration.provider.TrueNatResultRules;
 import com.iemr.flw.integration.provider.DiagnosticProvider;
 import com.iemr.flw.integration.provider.DiagnosticPushResult;
 import com.iemr.flw.integration.provider.emrlite.dto.*;
@@ -37,11 +38,10 @@ public class EmrLiteProvider implements DiagnosticProvider {
     private static final Logger logger = LoggerFactory.getLogger(EmrLiteProvider.class);
     private static final String PROVIDER_CODE = DiagnosticProviderCode.EMRLITE.name();
 
-    private static final String SUMMARY_TB_POSITIVE = "TB Positive";
-    private static final String SUMMARY_TB_NEGATIVE = "TB Negative";
-    private static final String SUMMARY_DR_TB = "DR TB";
-    private static final String SUMMARY_NON_DR_TB = "Non DR TB";
     private static final String SUMMARY_TB_PRESUMPTIVE = "TB Presumptive";
+    private static final String MDR_RIF_COMPONENT = "mdr_rif";
+    private static final String VENDOR_DICOM_CONTENT_TYPE = "dicom/dcm";
+    private static final String DICOM_CONTENT_TYPE = "application/dicom";
 
     @Value("${diagnostic.emrlite.xray.order-url}")
     private String xrayOrderUrl;
@@ -147,22 +147,60 @@ public class EmrLiteProvider implements DiagnosticProvider {
         }
 
         EmrLiteResultResponse result = gson.fromJson(envelope.getData(), EmrLiteResultResponse.class);
-        DiagnosticOrderStatus status = deriveOrderStatus(result);
+        boolean xray = DiagnosticOrderType.XRAY_CHEST.name().equals(order.getOrderType());
 
-        String summary = result.getResult() != null ? result.getResult().getSummary() : null;
+        // TrueNat orders report per component: the test itself under its own orderType key
+        // ("mtb" / "mtb_plus"), plus "mdr_rif" which the vendor adds when MTB comes back positive.
+        EmrLiteResultResponse.Component testComponent = xray ? null : component(result, order.getOrderType());
+        EmrLiteResultResponse.Component mdrRif = xray ? null : component(result, MDR_RIF_COMPONENT);
+        String summary = xray || testComponent == null
+                ? (result.getResult() != null ? result.getResult().getSummary() : null)
+                : testComponent.getSummary();
+        String drugResistanceSummary = mdrRif != null ? mdrRif.getSummary() : null;
+
+        DiagnosticOrderStatus status = deriveOrderStatus(result);
+        if (!xray && awaitingMdrRif(summary, mdrRif)) {
+            // A positive MTB triggers an MDR RIF test on the same order — keep the order PENDING so the
+            // scheduler keeps polling until the RIF result is in, instead of completing on MTB alone.
+            status = DiagnosticOrderStatus.PENDING;
+        }
         List<DiagnosticDocumentAsset> assets = mapAssets(result);
 
         Boolean tbPresence;
-        Double tbConfidence = null; // dropped for X-ray; MTB/MTB_PLUS/MDR_RIF never populated this either
-        if (DiagnosticOrderType.XRAY_CHEST.name().equals(order.getOrderType())) {
+        Double tbConfidence = null; // dropped for X-ray; MTB/MTB_PLUS never populated this either
+        if (xray) {
             tbPresence = classifyXrayTbPresenceFromSummary(status, summary);
         } else {
             tbPresence = classifyTbPresenceFromSummary(order.getOrderType(), summary);
         }
-        Boolean drugResistancePresence = classifyDrugResistanceFromSummary(order.getOrderType(), summary);
+        Boolean drugResistancePresence = classifyDrugResistanceFromSummary(drugResistanceSummary);
 
-        return new DiagnosticPollResult(status, order.getExternalOrderId(), summary, responseBody, assets, null,
-                tbPresence, tbConfidence, drugResistancePresence);
+        DiagnosticPollResult pollResult = new DiagnosticPollResult(status, order.getExternalOrderId(), summary,
+                responseBody, assets, null, tbPresence, tbConfidence, drugResistancePresence, drugResistanceSummary);
+        pollResult.setDrugResistanceStatus(mdrRif != null && mdrRif.getStatus() != null
+                ? mdrRif.getStatus().toUpperCase(java.util.Locale.ROOT) : null);
+        return pollResult;
+    }
+
+    private EmrLiteResultResponse.Component component(EmrLiteResultResponse result, String key) {
+        if (result.getComponents() == null) {
+            return null;
+        }
+        return result.getComponents().entrySet().stream()
+                .filter(e -> e.getKey().equalsIgnoreCase(key))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(null);
+    }
+
+    // True while a positive MTB's MDR RIF test hasn't reached a terminal state yet (not created by the
+    // vendor yet, or still running). A FAILED RIF is terminal — deriveOrderStatus already reports it.
+    private boolean awaitingMdrRif(String summary, EmrLiteResultResponse.Component mdrRif) {
+        if (!TrueNatResultRules.needsMdrRif(summary)) {
+            return false;
+        }
+        return mdrRif == null
+                || !("COMPLETED".equalsIgnoreCase(mdrRif.getStatus()) || "FAILED".equalsIgnoreCase(mdrRif.getStatus()));
     }
 
     @Override
@@ -214,31 +252,14 @@ public class EmrLiteProvider implements DiagnosticProvider {
     }
 
     Boolean classifyTbPresenceFromSummary(String orderType, String summary) {
-        if (!DiagnosticOrderType.MTB.name().equals(orderType) && !DiagnosticOrderType.MTB_PLUS.name().equals(orderType)) {
-            return null; // TB presence isn't tested for this orderType — not applicable, not a confirmed negative
-        }
-        if (SUMMARY_TB_POSITIVE.equalsIgnoreCase(summary)) {
-            return true;
-        }
-        if (SUMMARY_TB_NEGATIVE.equalsIgnoreCase(summary)) {
-            return false;
-        }
-        return null; // Error/Indeterminate/anything else — genuinely unknown, not a confirmed negative
+        return TrueNatResultRules.classifyTbPresence(orderType, summary);
     }
 
-    // MDR_RIF's summary reports rifampicin drug-resistance, not raw TB presence — kept as its own
-    // field rather than folded into tbPresence.
-    Boolean classifyDrugResistanceFromSummary(String orderType, String summary) {
-        if (!DiagnosticOrderType.MDR_RIF.name().equals(orderType)) {
-            return null; // Drug resistance isn't tested for this orderType — not applicable, not a confirmed negative
-        }
-        if (SUMMARY_DR_TB.equalsIgnoreCase(summary)) {
-            return true;
-        }
-        if (SUMMARY_NON_DR_TB.equalsIgnoreCase(summary)) {
-            return false;
-        }
-        return null; // Error/Indeterminate/anything else — genuinely unknown, not a confirmed negative
+    // The mdr_rif component's summary reports rifampicin drug-resistance, not raw TB presence — kept
+    // as its own field rather than folded into tbPresence. Null summary = no RIF test (MTB negative,
+    // X-ray) or not finished yet.
+    Boolean classifyDrugResistanceFromSummary(String summary) {
+        return TrueNatResultRules.classifyDrugResistance(summary);
     }
 
     // X-ray summary carries no numeric score (tbConfidence is always null for this order type —
@@ -254,7 +275,7 @@ public class EmrLiteProvider implements DiagnosticProvider {
     // Provider's top-level "status" is unreliable on its own (can report COMPLETED while a
     // component is still PENDING), so true completion is derived from the components map instead.
     private DiagnosticOrderStatus deriveOrderStatus(EmrLiteResultResponse result) {
-        Map<String, EmrLiteResultResponse.ComponentStatus> components = result.getComponents();
+        Map<String, EmrLiteResultResponse.Component> components = result.getComponents();
         if (components == null || components.isEmpty()) {
             return DiagnosticOrderStatus.fromString(result.getStatus());
         }
@@ -300,16 +321,38 @@ public class EmrLiteProvider implements DiagnosticProvider {
         return detail.append(")").toString();
     }
 
+    // X-ray files sit in the top-level result; TrueNat files sit in each component's result, so each
+    // one is tagged with its component key ("mtb" / "mdr_rif") to keep the two reports apart.
     private List<DiagnosticDocumentAsset> mapAssets(EmrLiteResultResponse result) {
-        if (result.getResult() == null || result.getResult().getAssets() == null) {
-            return new ArrayList<>();
-        }
         List<DiagnosticDocumentAsset> assets = new ArrayList<>();
-        for (EmrLiteResultResponse.AssetDto assetDto : result.getResult().getAssets()) {
-            assets.add(new DiagnosticDocumentAsset(
-                    assetDto.getType(), assetDto.getContentType(), assetDto.getFileName(), assetDto.getBase64()));
+        if (result.getResult() != null) {
+            addAssets(assets, result.getResult().getAssets(), null);
+        }
+        if (result.getComponents() != null) {
+            result.getComponents().forEach((key, component) -> {
+                if (component != null && component.getResult() != null) {
+                    addAssets(assets, component.getResult().getAssets(), key);
+                }
+            });
         }
         return assets;
+    }
+
+    private void addAssets(List<DiagnosticDocumentAsset> assets, List<EmrLiteResultResponse.AssetDto> assetDtos,
+                           String component) {
+        if (assetDtos == null) {
+            return;
+        }
+        for (EmrLiteResultResponse.AssetDto assetDto : assetDtos) {
+            assets.add(new DiagnosticDocumentAsset(assetDto.getType(), toStandardContentType(assetDto.getContentType()),
+                    assetDto.getFileName(), assetDto.getBase64(), component));
+        }
+    }
+
+    // EMR Lite labels the X-ray capture "dicom/dcm", which isn't a registered media type — store and
+    // serve it as the standard application/dicom instead.
+    private String toStandardContentType(String contentType) {
+        return VENDOR_DICOM_CONTENT_TYPE.equalsIgnoreCase(contentType) ? DICOM_CONTENT_TYPE : contentType;
     }
 
     private String doPost(String url, String jsonBody) {
