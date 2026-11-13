@@ -479,7 +479,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         boolean hasRif = hasRifData(pollResult);
         // A poll that brings nothing new must not rewrite the rows: every rewrite resets processed
         // (so MMU re-uploads the order) and would re-send it to every tablet.
-        boolean mainUnchanged = existingMain.isPresent() && sameMainResult(existingMain.get(), pollResult);
+        boolean mainUnchanged = existingMain.isPresent() && sameMainResult(order, existingMain.get(), pollResult);
         boolean rifUnchanged = !hasRif || (existingRif.isPresent() && sameRifResult(existingRif.get(), pollResult));
         boolean orderUnchanged = sameOrderStatus(order, pollResult);
         if (mainUnchanged && rifUnchanged && orderUnchanged && !writeBackWhenClosed) {
@@ -492,7 +492,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         }
 
         DiagnosticResult main = saveResultRow(order, existingMain, order.getOrderType(), actingUser, row -> {
-            row.setProviderStatus(pollResult.getStatus().name());
+            row.setProviderStatus(mainRowStatus(order, pollResult));
             row.setResultSummary(pollResult.getResultSummary());
             // The vendor embeds each asset's base64 file content directly inline in its response body
             // when assets are requested — never persist that raw JSON verbatim (it's unencrypted, unlike
@@ -800,8 +800,26 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         return true;
     }
 
-    private static boolean sameMainResult(DiagnosticResult stored, DiagnosticPollResult polled) {
-        return java.util.Objects.equals(stored.getProviderStatus(), polled.getStatus() == null ? null : polled.getStatus().name())
+    // providerStatus of the order's own test row (X-ray / MTB / MTB_PLUS), kept apart from the order
+    // status: a finished MTB is COMPLETED while the order stays PENDING / INVALID / CLOSED over its RIF
+    // test (whose row carries the RIF status). The vendor's component status when it gave one;
+    // otherwise (manual entry, a manual result kept over an empty vendor one, the vendor replacing a
+    // manual result, closing RIF) COMPLETED for a valid MTB result, else the order status.
+    private static String mainRowStatus(DiagnosticOrder order, DiagnosticPollResult p) {
+        if (p.getMainStatus() != null) {
+            return p.getMainStatus();
+        }
+        String summary = blankToNull(p.getResultSummary());
+        if (TrueNatResultRules.isTrueNat(order.getOrderType()) && summary != null
+                && !isInvalidResult(order.getOrderType(), summary, SPUTUM_INVALID_POLLED_RESULT)
+                && !isInvalidResult(order.getOrderType(), summary, SPUTUM_INVALID_MANUAL_RESULT)) {
+            return DiagnosticOrderStatus.COMPLETED.name();
+        }
+        return p.getStatus() == null ? null : p.getStatus().name();
+    }
+
+    private static boolean sameMainResult(DiagnosticOrder order, DiagnosticResult stored, DiagnosticPollResult polled) {
+        return java.util.Objects.equals(stored.getProviderStatus(), mainRowStatus(order, polled))
                 && java.util.Objects.equals(stored.getResultSummary(), polled.getResultSummary())
                 && java.util.Objects.equals(stored.getTbPresence(), polled.getTbPresence())
                 && java.util.Objects.equals(stored.getTbConfidence(), polled.getTbConfidence())
@@ -886,6 +904,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             if (blankToNull(vendor.getResultSummary()) == null) {
                 vendor.setResultSummary(manual.getResultSummary());
                 vendor.setTbPresence(manual.getTbPresence());
+                vendor.setMainStatus(null);
             }
         });
         if (!hasRifData(vendor)) {
@@ -1386,6 +1405,11 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 || DiagnosticOrderStatus.FAILED.name().equalsIgnoreCase(result.getDrugResistanceStatus());
         if (invalid) {
             result.setStatus(DiagnosticOrderStatus.INVALID);
+            // Only the test that failed is INVALID: an invalid MTB run marks its own row; with a RIF
+            // error the MTB row keeps its (valid) status and the RIF row the vendor's RIF status.
+            if (SPUTUM_INVALID_POLLED_RESULT.equalsIgnoreCase(mtb == null ? "" : mtb)) {
+                result.setMainStatus(DiagnosticOrderStatus.INVALID.name());
+            }
         }
         return invalid;
     }

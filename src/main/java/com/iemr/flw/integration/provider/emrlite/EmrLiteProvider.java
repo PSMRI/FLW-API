@@ -179,6 +179,10 @@ public class EmrLiteProvider implements DiagnosticProvider {
                 responseBody, assets, null, tbPresence, tbConfidence, drugResistancePresence, drugResistanceSummary);
         pollResult.setDrugResistanceStatus(mdrRif != null && mdrRif.getStatus() != null
                 ? mdrRif.getStatus().toUpperCase(java.util.Locale.ROOT) : null);
+        // The MTB test's own status, so a finished MTB is stored COMPLETED even while the order waits
+        // for RIF (IN_PROGRESS is read as PENDING, as for the order).
+        pollResult.setMainStatus(testComponent != null && testComponent.getStatus() != null
+                ? DiagnosticOrderStatus.fromString(testComponent.getStatus()).name() : null);
         return pollResult;
     }
 
