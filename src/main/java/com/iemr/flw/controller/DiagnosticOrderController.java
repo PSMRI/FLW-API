@@ -142,7 +142,8 @@ public class DiagnosticOrderController {
             + "to a vendor (polling continues, and the vendor's result replaces a differing manual one), "
             + "MANUAL_ENTRY if there is no vendor (send mdrRifResult or reasonToCloseRif). Otherwise the order "
             + "is COMPLETED; a vendor's differing result still replaces it when its documents are fetched. "
-            + "Rejected if that order is already COMPLETED. Closing (same as on /order/push): reasonToCloseXray for "
+            + "An invalid result (resultSummary or mdrRifResult \"Invalid/Error\") closes the order. "
+            + "Rejected if that order is already COMPLETED or CLOSED (push a new order to test again). Closing (same as on /order/push): reasonToCloseXray for "
             + "XRAY_CHEST; reasonToCloseMTB when the MTB test wasn't done; reasonToCloseRif when MTB was positive but "
             + "MDR RIF wasn't done — closes that same order, keeping its MTB result. Patient/orderEvent are sourced "
             + "from the beneficiary's existing order for this type.")

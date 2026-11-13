@@ -762,7 +762,13 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         String vendorRifStatus = vendor.getDrugResistanceStatus();
         boolean rifStatusChanged = vendorRifStatus != null && !vendorRifStatus.equalsIgnoreCase(
                 storedRif != null && storedRif.getProviderStatus() != null ? storedRif.getProviderStatus() : "");
-        if (!summaryChanged && !rifChanged && !rifStatusChanged) {
+        // The vendor's MTB test status goes with the vendor's MTB result: used (and compared) only when
+        // the vendor has an MTB result. Without one the stored manual result is kept, and its row
+        // status is worked out from it (mainRowStatus).
+        String vendorMainStatus = vendorSummary != null ? vendor.getMainStatus() : null;
+        boolean mainStatusChanged = vendorMainStatus != null && !vendorMainStatus.equalsIgnoreCase(
+                storedMain != null && storedMain.getProviderStatus() != null ? storedMain.getProviderStatus() : "");
+        if (!summaryChanged && !rifChanged && !rifStatusChanged && !mainStatusChanged) {
             return false;
         }
 
@@ -786,6 +792,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 ? DiagnosticOrderStatus.FAILED : DiagnosticOrderStatus.COMPLETED;
         DiagnosticPollResult merged = new DiagnosticPollResult(status, null, summary, null, null, null,
                 tbPresence, null, drugResistance, rifSummary, rifStatus);
+        merged.setMainStatus(vendorMainStatus);
         if (!markInvalidTrueNatResult(order, merged) && status == DiagnosticOrderStatus.COMPLETED
                 && (isInvalidResult(order.getOrderType(), summary, SPUTUM_INVALID_POLLED_RESULT)
                     || isInvalidResult(order.getOrderType(), summary, SPUTUM_INVALID_MANUAL_RESULT))) {
@@ -1182,6 +1189,14 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         if (DiagnosticOrderStatus.COMPLETED.name().equals(order.getStatus())) {
             throw new IllegalStateException("Cannot submit manual result: order is already COMPLETED (beneficiaryId="
                     + request.getBeneficiaryId() + ", orderType=" + request.getOrderType() + ")");
+        }
+        // A CLOSED order is final too (a test not done, or an invalid result; one closed with a reason
+        // was also cancelled on the vendor). Reopening it would leave a result next to the reason the
+        // test wasn't done. To test again, push a new order — a push never reuses a CLOSED order.
+        if (DiagnosticOrderStatus.CLOSED.name().equals(order.getStatus())) {
+            throw new IllegalStateException("Cannot submit manual result: order is CLOSED (beneficiaryId="
+                    + request.getBeneficiaryId() + ", orderType=" + request.getOrderType()
+                    + ") — push a new order to test again");
         }
         String mtbSummary = blankToNull(request.getResultSummary());
         String mdrRifResult = blankToNull(request.getMdrRifResult());
