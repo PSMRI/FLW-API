@@ -477,10 +477,14 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         Optional<DiagnosticResult> existingMain = mainResult(order);
         Optional<DiagnosticResult> existingRif = rifResult(order);
         boolean hasRif = hasRifData(pollResult);
+        // The MTB result no longer calls for RIF (e.g. the vendor corrected a positive to negative) and
+        // no RIF result came with it: the stored RIF row is stale and is invalidated below.
+        boolean dropRif = existingRif.isPresent() && !hasRif && rifNoLongerNeeded(order, pollResult.getResultSummary());
         // A poll that brings nothing new must not rewrite the rows: every rewrite resets processed
         // (so MMU re-uploads the order) and would re-send it to every tablet.
         boolean mainUnchanged = existingMain.isPresent() && sameMainResult(order, existingMain.get(), pollResult);
-        boolean rifUnchanged = !hasRif || (existingRif.isPresent() && sameRifResult(existingRif.get(), pollResult));
+        boolean rifUnchanged = !dropRif
+                && (!hasRif || (existingRif.isPresent() && sameRifResult(existingRif.get(), pollResult)));
         boolean orderUnchanged = sameOrderStatus(order, pollResult);
         if (mainUnchanged && rifUnchanged && orderUnchanged && !writeBackWhenClosed) {
             ingestAssets(order, pollResult);
@@ -510,6 +514,14 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 row.setResultSummary(blankToNull(pollResult.getDrugResistanceSummary()));
                 row.setDrugResistancePresence(pollResult.getDrugResistancePresence());
             });
+        } else if (dropRif) {
+            DiagnosticResult stale = existingRif.get();
+            logger.warn("Invalidating MDR_RIF result '{}' for externalOrderId={}: MTB result is now '{}'",
+                    stale.getResultSummary(), order.getExternalOrderId(), pollResult.getResultSummary());
+            stale.setDeleted(true);
+            stale.setModifiedBy(actingUser);
+            diagnosticResultRepo.save(stale);
+            rif = null;
         }
 
         ingestAssets(order, pollResult);
@@ -537,7 +549,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 || (writeBackWhenClosed && main.getResultSummary() != null
                     && (DiagnosticOrderStatus.MANUAL_ENTRY.name().equals(order.getStatus())
                         || DiagnosticOrderStatus.PENDING.name().equals(order.getStatus())))) {
-            recordTbSuspectedResult(order, main, rif != null ? rif.getResultSummary() : null);
+            recordTbSuspectedResult(order, main, rif != null ? rif.getResultSummary() : null, dropRif);
         }
 
         DiagnosticOrderResultDto dto = toResultDto(order);
@@ -550,7 +562,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     // means the result was not saved, so the order must not move on without it.
     private DiagnosticResult saveResultRow(DiagnosticOrder order, Optional<DiagnosticResult> existing, String resultType,
                                            String actingUser, java.util.function.Consumer<DiagnosticResult> fill) {
-        DiagnosticResult row = existing.orElseGet(DiagnosticResult::new);
+        // No live row: reuse a soft-deleted one (e.g. an invalidated MDR_RIF row) if there is one, since
+        // the unique (external_order_id, result_type) key still covers it and a new insert would fail.
+        DiagnosticResult row = existing
+                .or(() -> diagnosticResultRepo.findByExternalOrderIdAndResultType(order.getExternalOrderId(), resultType))
+                .orElseGet(DiagnosticResult::new);
+        row.setDeleted(false);
         row.setExternalOrderId(order.getExternalOrderId());
         row.setResultType(resultType);
         row.setBeneficiaryId(order.getBeneficiaryId());
@@ -563,17 +580,18 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             row.setVanID(order.getVanID());
             row.setParkingPlaceID(order.getParkingPlaceID());
         }
+        boolean insert = row.getId() == null;
         try {
             diagnosticResultRepo.save(row);
             if (row.getVanSerialNo() == null) diagnosticResultRepo.updateVanSerialNo(row.getId());
             return row;
         } catch (DataIntegrityViolationException dive) {
-            if (existing.isPresent()) throw dive;
+            if (!insert) throw dive;
             logger.warn("Lost result upsert race for externalOrderId={}, resultType={}",
                     order.getExternalOrderId(), resultType);
             return diagnosticResultRepo
                     .findByExternalOrderIdAndResultTypeAndDeletedFalse(order.getExternalOrderId(), resultType)
-                    .orElse(row);
+                    .orElseThrow(() -> dive); // no winner: the insert failed for another reason
         }
     }
 
@@ -591,6 +609,12 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         }
         return diagnosticResultRepo.findByExternalOrderIdAndResultTypeAndDeletedFalse(
                 order.getExternalOrderId(), DiagnosticResultType.MDR_RIF.name());
+    }
+
+    // A TrueNat order whose MTB result is known and isn't positive: no RIF test applies to it.
+    private static boolean rifNoLongerNeeded(DiagnosticOrder order, String mtbSummary) {
+        return TrueNatResultRules.isTrueNat(order.getOrderType())
+                && blankToNull(mtbSummary) != null && !TrueNatResultRules.needsMdrRif(mtbSummary);
     }
 
     private static boolean hasRifData(DiagnosticPollResult p) {
@@ -616,8 +640,10 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     }
 
     // drugResistanceSummary is the MDR RIF result the vendor runs on the same MTB order when MTB is
-    // positive; null when no RIF test ran (MTB negative, manual entry), so an earlier value is kept.
-    private void recordTbSuspectedResult(DiagnosticOrder order, DiagnosticResult result, String drugResistanceSummary) {
+    // positive; null when no RIF test ran (MTB negative, manual entry), so an earlier value is kept —
+    // unless clearRif: this order's RIF result was invalidated, so the value it wrote is cleared.
+    private void recordTbSuspectedResult(DiagnosticOrder order, DiagnosticResult result, String drugResistanceSummary,
+                                         boolean clearRif) {
         TBSuspected tbSuspected = findTbSuspected(order.getBeneficiaryId());
         if (tbSuspected == null) return;
         DiagnosticOrderType type = DiagnosticOrderType.fromCode(order.getOrderType());
@@ -627,9 +653,10 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         } else if (type == DiagnosticOrderType.MTB){
             tbSuspected.setIsSputumCollected(true);
             tbSuspected.setSputumTestResult(result.getResultSummary());
-            if (drugResistanceSummary != null) {
-                tbSuspected.setMdrRifResult(drugResistanceSummary);
-            }
+        }
+        // MDR RIF runs on both TrueNat order types (MTB and MTB_PLUS) after a positive MTB result
+        if (TrueNatResultRules.isTrueNat(order.getOrderType()) && (drugResistanceSummary != null || clearRif)) {
+            tbSuspected.setMdrRifResult(drugResistanceSummary);
         }
         tbSuspected.setProcessed("N");
         tbSuspectedRepo.save(tbSuspected);
@@ -775,12 +802,16 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         String summary = vendorSummary != null ? vendorSummary : storedSummary;
         Boolean tbPresence = summaryChanged ? vendor.getTbPresence()
                 : (storedMain != null ? storedMain.getTbPresence() : null);
-        String rifSummary = vendorRif != null ? vendorRif : storedRifSummary;
+        // The stored RIF is kept only while the MTB result still calls for RIF; once the vendor's MTB
+        // isn't positive, a RIF result the vendor didn't send is dropped (processResult invalidates it).
+        DiagnosticResult keptRif = rifNoLongerNeeded(order, summary) ? null : storedRif;
+        String rifSummary = vendorRif != null ? vendorRif
+                : (keptRif != null ? keptRif.getResultSummary() : null);
         Boolean drugResistance = vendorRif != null ? TrueNatResultRules.classifyDrugResistance(vendorRif)
-                : (storedRif != null ? storedRif.getDrugResistancePresence() : null);
+                : (keptRif != null ? keptRif.getDrugResistancePresence() : null);
         String rifStatus = vendorRifStatus != null ? vendorRifStatus
                 : vendorRif != null ? DiagnosticOrderStatus.COMPLETED.name()
-                : (storedRif != null ? storedRif.getProviderStatus() : null);
+                : (keptRif != null ? keptRif.getProviderStatus() : null);
 
         // Same rules as the poll. A test the vendor reports FAILED makes the order FAILED; an invalid
         // vendor MTB/RIF result ("Error-2") makes it INVALID, so the poll resumes and picks up the
@@ -918,7 +949,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
                 vendor.setMainStatus(null);
             }
         });
-        if (!hasRifData(vendor)) {
+        // The manual RIF is kept only while the (merged) MTB result still calls for RIF.
+        if (!hasRifData(vendor) && !rifNoLongerNeeded(order, vendor.getResultSummary())) {
             rifResult(order).ifPresent(manualRif -> {
                 vendor.setDrugResistanceSummary(manualRif.getResultSummary());
                 vendor.setDrugResistancePresence(manualRif.getDrugResistancePresence());

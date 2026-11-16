@@ -17,6 +17,9 @@ public interface DiagnosticResultRepo extends JpaRepository<DiagnosticResult, Lo
     // One order has a row per test (resultType): its own test, plus MDR_RIF on MTB/MTB_PLUS orders.
     Optional<DiagnosticResult> findByExternalOrderIdAndResultTypeAndDeletedFalse(String externalOrderId, String resultType);
 
+    // Including soft-deleted rows: the unique (external_order_id, result_type) key covers them too.
+    Optional<DiagnosticResult> findByExternalOrderIdAndResultType(String externalOrderId, String resultType);
+
     List<DiagnosticResult> findAllByExternalOrderIdAndDeletedFalse(String externalOrderId);
 
     @Transactional

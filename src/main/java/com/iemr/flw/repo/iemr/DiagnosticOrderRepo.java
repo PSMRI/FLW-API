@@ -32,7 +32,7 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
             "ORDER BY o.lastPolledAt ASC NULLS FIRST")
     List<DiagnosticOrder> findXrayDueForPoll();
 
-    @Query("SELECT o FROM DiagnosticOrder o WHERE o.orderType IN ('MTB', 'MTB_PLUS') " +
+    @Query("SELECT o FROM DiagnosticOrder o WHERE o.orderType IN ('MTB', 'MTB_PLUS', 'MDR_RIF') " +
             "AND o.status IN ('PENDING', 'IN_PROGRESS', 'INVALID') " +
             "AND o.deleted = false " +
             "ORDER BY o.lastPolledAt ASC NULLS FIRST")

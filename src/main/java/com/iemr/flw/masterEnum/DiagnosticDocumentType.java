@@ -36,6 +36,7 @@ public enum DiagnosticDocumentType {
         switch (type) {
             case MTB: return MTB_REPORT;
             case MTB_PLUS: return MTB_PLUS_REPORT;
+            case MDR_RIF: return MDR_RIF_REPORT; // legacy MDR_RIF orders
             default: throw new IllegalArgumentException("Unknown orderType for document classification: " + orderType);
         }
     }
