@@ -18,4 +18,5 @@ public class DiagnosticDocumentAsset {
     private String contentType;
     private String fileName;
     private String base64Content;
+    private String component;
 }

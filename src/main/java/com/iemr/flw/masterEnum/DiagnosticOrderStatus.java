@@ -6,7 +6,10 @@ public enum DiagnosticOrderStatus {
     COMPLETED,
     FAILED,
     CLOSED,
-    MANUAL_ENTRY;
+    MANUAL_ENTRY,
+    // MTB/RIF test came back invalid (e.g. "Error-2"); the TrueNat machine retests the same order by
+    // itself, so the order is not closed — it keeps being polled until the retest result arrives.
+    INVALID;
 
     public static DiagnosticOrderStatus fromString(String value) {
         if (value == null) return PENDING;

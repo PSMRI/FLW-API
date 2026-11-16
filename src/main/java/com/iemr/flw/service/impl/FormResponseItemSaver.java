@@ -88,6 +88,7 @@ public class FormResponseItemSaver {
     private final JwtUtil jwtUtil;
     private final CampConfigService campConfigService;
     private final ConsentRefusalEvaluator consentRefusalEvaluator;
+    private final ConditionalAnswerPruner conditionalAnswerPruner;
 
     /**
      * Saves one form response in its own independent REQUIRES_NEW transaction.
@@ -232,6 +233,9 @@ public class FormResponseItemSaver {
                         o -> o.getSectionQuestion().getQuestionId(),
                         Collectors.toMap(QuestionOption::getOptionValue, Function.identity())));
 
+        Map<Long, Set<Long>> childrenByParent =
+                conditionalAnswerPruner.loadChildrenByParent(version.getVersionId());
+
         List<SectionResponseDTO> sectionDTOs = new ArrayList<>();
         for (SectionAnswerRequest sectionReq : req.getSections()) {
             if (sectionReq.getSectionUuid() == null) {
@@ -267,6 +271,7 @@ public class FormResponseItemSaver {
                     sectionReq.getAnswers(),
                     questionMap,
                     optionsByQuestion,
+                    childrenByParent,
                     actor,
                     vanID,
                     parkingPlaceID);
@@ -324,10 +329,18 @@ public class FormResponseItemSaver {
             List<QuestionAnswerRequest> answers,
             Map<String, SectionQuestion> questionMap,
             Map<Long, Map<String, QuestionOption>> optionsByQuestion,
+            Map<Long, Set<Long>> childrenByParent,
             String actor,
             Integer vanID,
             Integer parkingPlaceID) {
 
+        // Pass 1: clear old answers of every received question and its SHOW_QUESTION descendants,
+        // so children hidden by an edited parent don't keep stale answers. Done up-front so a
+        // parent listed after its child can't wipe the child's freshly inserted answer.
+        conditionalAnswerPruner.deleteWithDescendants(
+                sectionResponseId, answeredQuestionIds(answers, questionMap), childrenByParent);
+
+        // Pass 2: insert the received answers
         List<QuestionResponse> results = new ArrayList<>();
         for (QuestionAnswerRequest answer : answers) {
             if (answer.getQuestionUuid() == null) {
@@ -345,8 +358,6 @@ public class FormResponseItemSaver {
             if (type == QuestionType.DISPLAY) {
                 continue;
             }
-
-            questionResponseRepo.deleteByQuestionIdAndSectionResponseId(questionId, sectionResponseId);
 
             if (type == QuestionType.RADIO || type == QuestionType.CHECKBOX || type == QuestionType.DROPDOWN) {
                 if (answer.getOptionValue() != null) {
@@ -396,6 +407,15 @@ public class FormResponseItemSaver {
             }
         }
         return results;
+    }
+
+    /** Ids of the non-DISPLAY questions in the request; unknown/null uuids are left to processAnswers to reject. */
+    private Set<Long> answeredQuestionIds(List<QuestionAnswerRequest> answers, Map<String, SectionQuestion> questionMap) {
+        return answers.stream()
+                .map(a -> a.getQuestionUuid() == null ? null : questionMap.get(a.getQuestionUuid()))
+                .filter(q -> q != null && q.getQuestionType() != QuestionType.DISPLAY)
+                .map(SectionQuestion::getQuestionId)
+                .collect(Collectors.toSet());
     }
 
     private QuestionOption resolveOption(Map<Long, Map<String, QuestionOption>> optionsByQuestion,

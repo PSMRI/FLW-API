@@ -16,6 +16,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,12 +28,16 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 @Service
 public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService {
 
     private static final Logger logger = LoggerFactory.getLogger(DiagnosticDocumentServiceImpl.class);
     private static final String DEFAULT_CONTENT_TYPE = "application/pdf";
+    // Files are gzipped before encryption (raw DICOMs are ~3x smaller); older files are plain ".enc".
+    private static final String GZIP_ENCRYPTED_FILE_SUFFIX = ".gz.enc";
 
     @Value("${diagnostic.documents.storage-root}")
     private String storageRoot;
@@ -56,7 +63,7 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         byte[] originalBytes = Base64.getDecoder().decode(asset.getBase64Content());
         String sha256Hash = sha256Hex(originalBytes);
 
-        DiagnosticDocumentType documentType = DiagnosticDocumentType.from(orderType, asset.getType());
+        DiagnosticDocumentType documentType = DiagnosticDocumentType.from(orderType, asset.getType(), asset.getComponent());
         Optional<DiagnosticDocument> existing = diagnosticDocumentRepo
                 .findByExternalOrderIdAndDocumentTypeAndDeletedFalse(externalOrderId, documentType.name());
         if (existing.isPresent() && sha256Hash.equals(existing.get().getSha256Hash())) {
@@ -66,12 +73,13 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         }
 
         long epochTime = Instant.now().toEpochMilli();
-        String storedFileName = externalOrderId + ".enc";
+        String storedFileName = externalOrderId + GZIP_ENCRYPTED_FILE_SUFFIX;
         String relativeDir = beneficiaryId + "/" + orderType + "/" + documentType.name();
 
         // Documents must never touch disk unencrypted: encrypt in memory first, write only ciphertext.
-        String base64Original = Base64.getEncoder().encodeToString(originalBytes);
-        String encryptedPayload = cryptoUtil.encrypt(base64Original);
+        // Compress before encrypting - ciphertext doesn't compress. The hash stays that of the original.
+        String base64Compressed = Base64.getEncoder().encodeToString(gzip(originalBytes));
+        String encryptedPayload = cryptoUtil.encrypt(base64Compressed);
 
         Path dir = Paths.get(storageRoot, relativeDir);
         Files.createDirectories(dir);
@@ -79,6 +87,7 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         Files.write(filePath, encryptedPayload.getBytes(StandardCharsets.UTF_8));
 
         DiagnosticDocument document = existing.orElseGet(DiagnosticDocument::new);
+        String previousStoredPath = document.getStoredPath();
         if (document.getVanID() == null) {
             // Inherit from the parent order rather than re-reading Redis — the document belongs
             // to whichever van originated the order, not whichever van happens to be polling now.
@@ -105,6 +114,10 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         } catch (DataIntegrityViolationException dive) {
             logger.warn("Lost document upsert race for externalOrderId={}, documentType={}", externalOrderId, documentType);
             return;
+        }
+        // A replaced legacy ".enc" file isn't overwritten by the new ".gz.enc" one, so remove it.
+        if (previousStoredPath != null && !previousStoredPath.equals(document.getStoredPath())) {
+            Files.deleteIfExists(Paths.get(storageRoot, previousStoredPath));
         }
 
         logger.info("Diagnostic document ingested: beneficiaryId={}, orderType={}, epochTime={}",
@@ -134,11 +147,12 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         Path filePath = Paths.get(storageRoot, document.getStoredPath());
         String encryptedPayload = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
 
-        String base64Original = cryptoUtil.decrypt(encryptedPayload);
-        if (base64Original == null) {
+        String base64Content = cryptoUtil.decrypt(encryptedPayload);
+        if (base64Content == null) {
             throw new Exception("Failed to decrypt document for beneficiaryId=" + beneficiaryId + ", documentType=" + documentType);
         }
-        byte[] originalBytes = Base64.getDecoder().decode(base64Original);
+        byte[] content = Base64.getDecoder().decode(base64Content);
+        byte[] originalBytes = document.getStoredPath().endsWith(GZIP_ENCRYPTED_FILE_SUFFIX) ? gunzip(content) : content;
 
         String recomputedHash = sha256Hex(originalBytes);
         if (!recomputedHash.equals(document.getSha256Hash())) {
@@ -150,6 +164,20 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
                 beneficiaryId, documentType, document.getEpochTime());
 
         return new DiagnosticDocumentContent(originalBytes, document.getContentType());
+    }
+
+    private static byte[] gzip(byte[] data) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (GZIPOutputStream gz = new GZIPOutputStream(out)) {
+            gz.write(data);
+        }
+        return out.toByteArray();
+    }
+
+    private static byte[] gunzip(byte[] compressed) throws IOException {
+        try (GZIPInputStream in = new GZIPInputStream(new ByteArrayInputStream(compressed))) {
+            return in.readAllBytes();
+        }
     }
 
     private static String sha256Hex(byte[] data) throws Exception {

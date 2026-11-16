@@ -35,6 +35,17 @@ public interface DiagnosticOrderService {
      */
     void expireOrder(DiagnosticOrder order, String reason) throws Exception;
 
+    /**
+     * Document back-fill: fetches the vendor's documents for an order that needs them (see
+     * DiagnosticOrderRepo.findOrdersNeedingDocuments) and stores any it returns. When the order's
+     * result was entered manually, the vendor's result also overwrites it wherever they differ.
+     * Skipped (returns false) if the beneficiary is busy, the order is no longer COMPLETED, or the
+     * vendor returned neither documents nor a differing result.
+     *
+     * @return true when documents were stored or the manual result was overwritten
+     */
+    boolean fetchMissingDocuments(DiagnosticOrder order) throws Exception;
+
     DiagnosticOrderResultDto triggerManualPoll(Long beneficiaryId, String orderType, Long visitCode) throws Exception;
 
     DiagnosticOrder retryPoll(Long beneficiaryId, String orderType, Long visitCode) throws Exception;

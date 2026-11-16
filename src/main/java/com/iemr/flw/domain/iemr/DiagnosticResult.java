@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "tb_diagnostic_result", schema = "db_iemr",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"external_order_id"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"external_order_id", "result_type"}))
 @Data
 public class DiagnosticResult {
 
@@ -22,6 +22,10 @@ public class DiagnosticResult {
 
     @Column(name = "external_order_id", length = 100)
     private String externalOrderId;
+
+    // Which test this row holds (DiagnosticResultType): the order's own test, or MDR_RIF.
+    @Column(name = "result_type", length = 20)
+    private String resultType;
 
     @Column(name = "beneficiary_id")
     private Long beneficiaryId;

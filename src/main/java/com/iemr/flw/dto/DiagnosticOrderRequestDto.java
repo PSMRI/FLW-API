@@ -19,7 +19,12 @@ public class DiagnosticOrderRequestDto {
 
     private String orderEvent;
 
-    private String reasonToClose;
+    // Close instead of pushing/entering a result — send at most one, for the test that wasn't done:
+    // reasonToCloseXray (XRAY_CHEST); reasonToCloseMTB (MTB/MTB_PLUS, MTB test not done);
+    // reasonToCloseRif (MTB/MTB_PLUS, MTB was positive but the MDR RIF test wasn't done).
+    private String reasonToCloseXray;
+    private String reasonToCloseMTB;
+    private String reasonToCloseRif;
 
     @NotNull
     @Valid
