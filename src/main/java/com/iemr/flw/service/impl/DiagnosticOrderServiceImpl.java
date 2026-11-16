@@ -653,6 +653,13 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         } else if (type == DiagnosticOrderType.MTB){
             tbSuspected.setIsSputumCollected(true);
             tbSuspected.setSputumTestResult(result.getResultSummary());
+        } else if (type == DiagnosticOrderType.MDR_RIF) {
+            // Legacy MDR_RIF order: its own result is the RIF result (as written back before MDR RIF
+            // moved onto the MTB order)
+            tbSuspected.setIsSputumCollected(true);
+            if (result.getResultSummary() != null) {
+                tbSuspected.setMdrRifResult(result.getResultSummary());
+            }
         }
         // MDR RIF runs on both TrueNat order types (MTB and MTB_PLUS) after a positive MTB result
         if (TrueNatResultRules.isTrueNat(order.getOrderType()) && (drugResistanceSummary != null || clearRif)) {
