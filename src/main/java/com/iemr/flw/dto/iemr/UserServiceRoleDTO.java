@@ -26,6 +26,7 @@ public class UserServiceRoleDTO {
     private String villageId;
     private String villageName;
     private Map<String, Object> facilityData;
+    private Map<String,Object> gamification;
 
     // Stop TB / Nikshay location scope — populated only when serviceName = "Stop TB".
     // Set via setters after construction (additive, not part of the base constructor
