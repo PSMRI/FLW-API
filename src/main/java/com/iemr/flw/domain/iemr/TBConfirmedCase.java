@@ -23,6 +23,10 @@ public class TBConfirmedCase {
     private Integer userId;
 
 
+    // STOP-747: "DS TB" or "PMDT". regimen_type keeps the selected regimen (dsTbRegimen / pmdtRegimen).
+    @Column(name = "treatment_type")
+    private String treatmentType;
+
     @Column(name = "regimen_type")
     private String regimenType;
 

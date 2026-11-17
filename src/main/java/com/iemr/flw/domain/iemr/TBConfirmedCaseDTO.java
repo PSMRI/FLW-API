@@ -17,6 +17,9 @@ public class TBConfirmedCaseDTO {
     private Integer userId;
     private Integer suspectedTbId;
     private String regimenType;
+    private String treatmentType;
+    private String dsTbRegimen;
+    private String pmdtRegimen;
     private LocalDate treatmentStartDate;
     private LocalDate expectedTreatmentCompletionDate;
     private LocalDate followUpDate;

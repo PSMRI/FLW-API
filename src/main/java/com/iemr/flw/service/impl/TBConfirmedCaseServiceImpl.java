@@ -94,7 +94,11 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     entity.setVisitCode(visit.getVisitCode());
                     entity.setUserId(jwtUtil.extractUserId(authorisation));
                     entity.setModifiedBy(modifiedBy);
-                    entity.setRegimenType(dto.getRegimenType());
+                    // older app builds don't send treatmentType — keep the saved value instead of clearing it
+                    if (dto.getTreatmentType() != null) {
+                        entity.setTreatmentType(dto.getTreatmentType());
+                    }
+                    entity.setRegimenType(resolveRegimen(dto));
                     entity.setTreatmentStartDate(dto.getTreatmentStartDate());
                     entity.setExpectedTreatmentCompletionDate(dto.getExpectedTreatmentCompletionDate());
                     entity.setFollowUpDate(dto.getFollowUpDate());
@@ -102,9 +106,9 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
                     entity.setAdherenceToMedicines(dto.getAdherenceToMedicines());
                     entity.setAnyDiscomfort(dto.getAnyDiscomfort());
                     entity.setTreatmentCompleted(dto.getTreatmentCompleted());
-                    entity.setActualTreatmentCompletionDate(dto.getActualTreatmentCompletionDate());
+                    entity.setActualTreatmentCompletionDate(nullIfPlaceholder(dto.getActualTreatmentCompletionDate()));
                     entity.setTreatmentOutcome(dto.getTreatmentOutcome());
-                    entity.setDateOfDeath(dto.getDateOfDeath());
+                    entity.setDateOfDeath(nullIfPlaceholder(dto.getDateOfDeath()));
                     entity.setPlaceOfDeath(dto.getPlaceOfDeath());
                     entity.setReasonForDeath(dto.getReasonForDeath());
                     entity.setReasonForNotCompleting(dto.getReasonForNotCompleting());
@@ -145,37 +149,18 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
     }
 
     private void  checkIncentive(TBConfirmedCase entity){
-        String regimen = entity.getRegimenType();
-
-        boolean isDrTb =
-                "Shorter Regimen (9–12 Months)".equalsIgnoreCase(regimen)
-                        || "Longer Regimen (18–24 Months)".equalsIgnoreCase(regimen);
-
         if (Boolean.TRUE.equals(entity.getTreatmentCompleted())
                 && entity.getFollowUpDate() != null) {
 
 
-            if (isDrTb) {
-                if("Shorter Regimen (9–12 Months)".equalsIgnoreCase(regimen)){
-                    if ("cured".equalsIgnoreCase(entity.getTreatmentOutcome())) {
-                        incentiveLogicService.incentiveForTbFollowUpIsDrTb(
-                                entity.getBenId(),
-                                Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
-                                Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
-                                entity.getUserId()
-                        );
-                    }
-
-                }else  if("Longer Regimen (18–24 Months)".equalsIgnoreCase(regimen)){
-                    if ("cured".equalsIgnoreCase(entity.getTreatmentOutcome())) {
-
-                        incentiveLogicService.incentiveForTbFollowUpIsDrTb(
-                                entity.getBenId(),
-                                Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
-                                Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
-                                entity.getUserId()
-                        );
-                    }
+            if (isDrTb(entity)) {
+                if ("cured".equalsIgnoreCase(entity.getTreatmentOutcome())) {
+                    incentiveLogicService.incentiveForTbFollowUpIsDrTb(
+                            entity.getBenId(),
+                            Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
+                            Timestamp.valueOf(entity.getFollowUpDate().atStartOfDay()),
+                            entity.getUserId()
+                    );
                 }
 
             } else {
@@ -189,6 +174,39 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
             }
 
         }
+    }
+
+    private static final String TREATMENT_TYPE_DS_TB = "DS TB";
+    private static final String TREATMENT_TYPE_PMDT = "PMDT";
+    // regimen values sent by app builds before STOP-747 (no treatmentType)
+    private static final String LEGACY_SHORTER_REGIMEN = "Shorter Regimen (9–12 Months)";
+    private static final String LEGACY_LONGER_REGIMEN = "Longer Regimen (18–24 Months)";
+    // app sends epoch 0 (1970-01-01) for an empty date
+    private static final LocalDate PLACEHOLDER_DATE_CUTOFF = LocalDate.of(2000, 1, 1);
+
+    // STOP-747: PMDT = drug-resistant TB. Old rows (no treatmentType) keep the legacy regimen-name check.
+    private boolean isDrTb(TBConfirmedCase entity) {
+        if (entity.getTreatmentType() != null) {
+            return TREATMENT_TYPE_PMDT.equalsIgnoreCase(entity.getTreatmentType());
+        }
+        String regimen = entity.getRegimenType();
+        return LEGACY_SHORTER_REGIMEN.equalsIgnoreCase(regimen)
+                || LEGACY_LONGER_REGIMEN.equalsIgnoreCase(regimen);
+    }
+
+    // regimen_type holds the active regimen: pmdtRegimen / dsTbRegimen for new builds, regimenType for old ones
+    private String resolveRegimen(TBConfirmedCaseDTO dto) {
+        if (TREATMENT_TYPE_PMDT.equalsIgnoreCase(dto.getTreatmentType()) && dto.getPmdtRegimen() != null) {
+            return dto.getPmdtRegimen();
+        }
+        if (TREATMENT_TYPE_DS_TB.equalsIgnoreCase(dto.getTreatmentType()) && dto.getDsTbRegimen() != null) {
+            return dto.getDsTbRegimen();
+        }
+        return dto.getRegimenType();
+    }
+
+    private LocalDate nullIfPlaceholder(LocalDate date) {
+        return date != null && date.isBefore(PLACEHOLDER_DATE_CUTOFF) ? null : date;
     }
 
     public boolean isEligibleForIncentive(LocalDate treatmentStartDate, LocalDate endDate,Integer minMonth) {
@@ -721,6 +739,12 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         dto.setBenId(entity.getBenId());
         dto.setUserId(entity.getUserId());
         dto.setRegimenType(entity.getRegimenType());
+        dto.setTreatmentType(entity.getTreatmentType());
+        if (TREATMENT_TYPE_PMDT.equalsIgnoreCase(entity.getTreatmentType())) {
+            dto.setPmdtRegimen(entity.getRegimenType());
+        } else if (TREATMENT_TYPE_DS_TB.equalsIgnoreCase(entity.getTreatmentType())) {
+            dto.setDsTbRegimen(entity.getRegimenType());
+        }
         dto.setTreatmentStartDate(entity.getTreatmentStartDate());
         dto.setExpectedTreatmentCompletionDate(entity.getExpectedTreatmentCompletionDate());
         dto.setFollowUpDate(entity.getFollowUpDate());
