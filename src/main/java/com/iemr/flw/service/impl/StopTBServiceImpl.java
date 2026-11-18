@@ -411,6 +411,14 @@ public class StopTBServiceImpl implements StopTBService {
                     results.add(previous);
                     continue;
                 }
+                // STOP-855: a re-sent OPD that is unchanged (or empty) writes nothing, not even today's visit.
+                Map<String, Object> unchanged = stopTBPrescriptionService.findUnchangedOpd(beneficiaryRegID,
+                        toMapList(data.get("chiefComplaints")),
+                        data.get("prescription") instanceof Map ? (Map<String, Object>) data.get("prescription") : null);
+                if (unchanged != null) {
+                    results.add(unchanged);
+                    continue;
+                }
                 BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
                         createdBy, vanID, parkingPlaceID);
                 Map<String, Object> result = new LinkedHashMap<>();

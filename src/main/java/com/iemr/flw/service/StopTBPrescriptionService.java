@@ -105,13 +105,132 @@ public class StopTBPrescriptionService {
     }
 
     /**
+     * STOP-855. With dispensing off there is no patient issue, so findPreviousSubmission never matches and
+     * the app re-sends a beneficiary's whole OPD many times. If what arrives equals the beneficiary's latest
+     * saved OPD (same complaints, drugs and instruction), or carries nothing at all, the earlier OPD is
+     * returned and nothing is written: no visit for today, no prescription replaced, nothing new to sync.
+     * Returns null when the request is a real change and must be saved.
+     *
+     * The submissionId cannot decide this: the app keeps one submissionId per beneficiary OPD record for
+     * good, so a later real edit arrives with the same ID.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Map<String, Object> findUnchangedOpd(Long beneficiaryRegID, List<Map<String, Object>> complaints,
+            Map<String, Object> prescription) {
+        if (dispenseEnabled) return null;
+        List<Map<String, Object>> drugs = prescription != null ? toList(prescription.get("drugs"))
+                : Collections.emptyList();
+        String instruction = prescription != null ? norm(prescription.get("instruction")) : "";
+        boolean nothingSent = (complaints == null || complaints.isEmpty()) && drugs.isEmpty() && instruction.isEmpty();
+
+        // Latest visit of this beneficiary that holds an OPD (active complaint or prescription).
+        List<?> latest = em.createNativeQuery("SELECT v.VisitCode FROM db_iemr.t_benvisitdetail v "
+                        + "WHERE v.BeneficiaryRegID = :ben AND v.Deleted = false AND v.VisitCode IS NOT NULL "
+                        + "AND (EXISTS (SELECT 1 FROM db_iemr.t_benchiefcomplaint c WHERE c.BeneficiaryRegID = v.BeneficiaryRegID "
+                        + "  AND c.VisitCode = v.VisitCode AND c.Deleted = false) "
+                        + " OR EXISTS (SELECT 1 FROM db_iemr.t_prescription p WHERE p.BeneficiaryRegID = v.BeneficiaryRegID "
+                        + "  AND p.VisitCode = v.VisitCode AND p.Deleted = false)) "
+                        + "ORDER BY v.BenVisitID DESC LIMIT 1")
+                .setParameter("ben", beneficiaryRegID)
+                .getResultList();
+        if (latest.isEmpty()) {
+            // Nothing saved before and nothing sent now: do not create an empty visit.
+            return nothingSent ? unchangedResult(beneficiaryRegID, null, null) : null;
+        }
+        long visitCode = ((Number) latest.get(0)).longValue();
+
+        List<?> prescriptionRows = em.createNativeQuery("SELECT PrescriptionID, Instruction FROM db_iemr.t_prescription "
+                        + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false "
+                        + "ORDER BY PrescriptionID DESC")
+                .setParameter("ben", beneficiaryRegID)
+                .setParameter("visitCode", visitCode)
+                .getResultList();
+        Long prescriptionID = null;
+        String savedInstruction = "";
+        if (!prescriptionRows.isEmpty()) {
+            Object[] p = (Object[]) prescriptionRows.get(0);
+            prescriptionID = ((Number) p[0]).longValue();
+            savedInstruction = norm(p[1]);
+        }
+        if (nothingSent) return unchangedResult(beneficiaryRegID, visitCode, prescriptionID);
+
+        // An empty complaint list or an empty prescription is ignored on save (never wipes), so it is
+        // ignored here too: only what the save would actually write is compared.
+        if (complaints != null && !complaints.isEmpty()) {
+            List<String> savedComplaints = new ArrayList<>();
+            for (Object o : em.createNativeQuery("SELECT ChiefComplaintID FROM db_iemr.t_benchiefcomplaint "
+                            + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false")
+                    .setParameter("ben", beneficiaryRegID)
+                    .setParameter("visitCode", visitCode)
+                    .getResultList()) {
+                savedComplaints.add(normNumber(o));
+            }
+            List<String> sentComplaints = new ArrayList<>();
+            for (Map<String, Object> c : complaints) sentComplaints.add(normNumber(c.get("chiefComplaintID")));
+            Collections.sort(savedComplaints);
+            Collections.sort(sentComplaints);
+            if (!savedComplaints.equals(sentComplaints)) return null;
+        }
+
+        if (prescription != null && !(drugs.isEmpty() && instruction.isEmpty())) {
+            if (!savedInstruction.equals(instruction)) return null;
+            List<String> savedDrugs = new ArrayList<>();
+            for (Object o : em.createNativeQuery("SELECT DrugID, Frequency, Duration, DuartionUnit, SpecialInstruction "
+                            + "FROM db_iemr.t_prescribeddrug "
+                            + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false")
+                    .setParameter("ben", beneficiaryRegID)
+                    .setParameter("visitCode", visitCode)
+                    .getResultList()) {
+                Object[] r = (Object[]) o;
+                savedDrugs.add(drugKey(r[0], r[1], r[2], r[3], r[4]));
+            }
+            List<String> sentDrugs = new ArrayList<>();
+            for (Map<String, Object> d : drugs) {
+                sentDrugs.add(drugKey(d.get("drugID"), d.get("frequency"), d.get("duration"), d.get("durationUnit"),
+                        d.get("instructions")));
+            }
+            Collections.sort(savedDrugs);
+            Collections.sort(sentDrugs);
+            if (!savedDrugs.equals(sentDrugs)) return null;
+        }
+        return unchangedResult(beneficiaryRegID, visitCode, prescriptionID);
+    }
+
+    private Map<String, Object> unchangedResult(Long beneficiaryRegID, Long visitCode, Long prescriptionID) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("beneficiaryRegID", beneficiaryRegID);
+        result.put("visitCode", visitCode);
+        result.put("prescriptionID", prescriptionID);
+        result.put("dispensed", new ArrayList<Map<String, Object>>());
+        result.put("duplicate", true);
+        return result;
+    }
+
+    private String drugKey(Object drugID, Object frequency, Object duration, Object durationUnit, Object instructions) {
+        return normNumber(drugID) + "|" + norm(frequency) + "|" + normNumber(duration) + "|" + norm(durationUnit) + "|"
+                + norm(instructions);
+    }
+
+    // Trimmed, lower case, "" for null, so "OK " and "ok" or null and "" compare equal.
+    private String norm(Object v) {
+        return v == null ? "" : v.toString().trim().toLowerCase(Locale.ROOT);
+    }
+
+    // 5, "5" and 5.0 compare equal.
+    private String normNumber(Object v) {
+        Integer i = toInt(v);
+        return i != null ? i.toString() : norm(v);
+    }
+
+    /**
      * Replaces the visit's chief complaints with the given list (edit = remove old + insert new, as MMU
-     * does on update). Rows without an ID and without a name are skipped.
+     * does on update). Rows without an ID and without a name are skipped. An empty list never removes the
+     * saved complaints (STOP-855: re-sends without complaints wiped them).
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public void saveChiefComplaints(List<Map<String, Object>> complaints, Long beneficiaryRegID, BenVisitDetail visit,
             String createdBy, Integer vanID, Integer parkingPlaceID) {
-        if (complaints == null) return;
+        if (complaints == null || complaints.isEmpty()) return;
         // Processed='N' so the removal is uploaded to central again (central updates rows it already has).
         em.createNativeQuery("UPDATE db_iemr.t_benchiefcomplaint SET Deleted = true, Processed = 'N', ModifiedBy = :user "
                         + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false")
@@ -501,6 +620,13 @@ public class StopTBPrescriptionService {
             Integer vanID, Integer parkingPlaceID) {
         for (Map<String, Object> d : drugs) {
             if (toInt(d.get("drugID")) == null) throw new IllegalArgumentException("drugID is required for every drug");
+        }
+        String sentInstruction = toStr(prescription.get("instruction"));
+        if (drugs.isEmpty() && (sentInstruction == null || sentInstruction.isBlank())) {
+            // STOP-855: a re-send without drugs or instruction must not remove the saved prescription.
+            Map<String, Object> kept = new LinkedHashMap<>();
+            kept.put("dispensed", new ArrayList<Map<String, Object>>());
+            return kept;
         }
         // Processed='N' so the removal is uploaded to central again (central updates rows it already has).
         for (String table : new String[] { "t_prescribeddrug", "t_prescription" }) {
