@@ -158,15 +158,20 @@ public class StopTBPrescriptionService {
         // ignored here too: only what the save would actually write is compared.
         if (complaints != null && !complaints.isEmpty()) {
             List<String> savedComplaints = new ArrayList<>();
-            for (Object o : em.createNativeQuery("SELECT ChiefComplaintID FROM db_iemr.t_benchiefcomplaint "
+            for (Object o : em.createNativeQuery("SELECT ChiefComplaintID, Duration, UnitOfDuration, Description "
+                            + "FROM db_iemr.t_benchiefcomplaint "
                             + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false")
                     .setParameter("ben", beneficiaryRegID)
                     .setParameter("visitCode", visitCode)
                     .getResultList()) {
-                savedComplaints.add(normNumber(o));
+                Object[] r = (Object[]) o;
+                savedComplaints.add(complaintKey(r[0], r[1], r[2], r[3]));
             }
             List<String> sentComplaints = new ArrayList<>();
-            for (Map<String, Object> c : complaints) sentComplaints.add(normNumber(c.get("chiefComplaintID")));
+            for (Map<String, Object> c : complaints) {
+                sentComplaints.add(complaintKey(c.get("chiefComplaintID"), c.get("duration"), c.get("unitOfDuration"),
+                        c.get("description")));
+            }
             Collections.sort(savedComplaints);
             Collections.sort(sentComplaints);
             if (!savedComplaints.equals(sentComplaints)) return null;
@@ -175,19 +180,22 @@ public class StopTBPrescriptionService {
         if (prescription != null && !(drugs.isEmpty() && instruction.isEmpty())) {
             if (!savedInstruction.equals(instruction)) return null;
             List<String> savedDrugs = new ArrayList<>();
-            for (Object o : em.createNativeQuery("SELECT DrugID, Frequency, Duration, DuartionUnit, SpecialInstruction "
-                            + "FROM db_iemr.t_prescribeddrug "
+            for (Object o : em.createNativeQuery("SELECT DrugID, Frequency, Duration, DuartionUnit, SpecialInstruction, "
+                            + "Dose, QtyPrescribed FROM db_iemr.t_prescribeddrug "
                             + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false")
                     .setParameter("ben", beneficiaryRegID)
                     .setParameter("visitCode", visitCode)
                     .getResultList()) {
                 Object[] r = (Object[]) o;
-                savedDrugs.add(drugKey(r[0], r[1], r[2], r[3], r[4]));
+                savedDrugs.add(drugKey(r[0], r[1], r[2], r[3], r[4]) + "|" + norm(r[5]) + "|" + normNumber(r[6]));
             }
             List<String> sentDrugs = new ArrayList<>();
             for (Map<String, Object> d : drugs) {
+                // Quantity exactly as prescribeWithoutDispensing would save it.
+                Integer qty = toInt(d.get("qtyPrescribed"));
+                if (qty == null || qty <= 0) qty = calculateQuantity(d, toInt(d.get("itemFormID")));
                 sentDrugs.add(drugKey(d.get("drugID"), d.get("frequency"), d.get("duration"), d.get("durationUnit"),
-                        d.get("instructions")));
+                        d.get("instructions")) + "|" + norm(d.get("dose")) + "|" + normNumber(qty));
             }
             Collections.sort(savedDrugs);
             Collections.sort(sentDrugs);
@@ -204,6 +212,10 @@ public class StopTBPrescriptionService {
         result.put("dispensed", new ArrayList<Map<String, Object>>());
         result.put("duplicate", true);
         return result;
+    }
+
+    private String complaintKey(Object complaintID, Object duration, Object unitOfDuration, Object description) {
+        return normNumber(complaintID) + "|" + normNumber(duration) + "|" + norm(unitOfDuration) + "|" + norm(description);
     }
 
     private String drugKey(Object drugID, Object frequency, Object duration, Object durationUnit, Object instructions) {
