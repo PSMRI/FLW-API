@@ -48,7 +48,7 @@ public class HRNonPregnantServiceImpl implements HighRiskNonPregnantService {
         requestDTO.getEntries().forEach(dto ->
         {
             NonPregnantWomanHighRiskAssess assess = assessRepo
-                    .getByUserIdAndBenId(modelMapper.map(dto, HRPregnantAssessDTO.class).getBenId()
+                    .getByUserIdAndBenId(modelMapper.map(dto, HRNonPregnantAssessDTO.class).getBenId()
                             , requestDTO.getUserId());
 
             if (assess == null) {
