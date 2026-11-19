@@ -1,6 +1,7 @@
 package com.iemr.flw.service.impl;
 
 import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
+import com.iemr.flw.dto.iemr.VillageDetailDTO;
 import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.UserService;
 import org.slf4j.Logger;
@@ -8,8 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -50,6 +53,8 @@ public class UserServiceImpl implements UserService {
         // mobile app changes: it just displays whatever text is in the name string
         // (confirmed against ServiceLocationViewModel/BindingUtils.setSpinnerItems -
         // plain ArrayAdapter, selection is by array position, not by name content).
+        String mergedVillageIds = userRole.getVillageId();
+        String mergedVillageNames = userRole.getVillageName();
         userRole.setVillageName(appendVillageIds(userRole.getVillageId(), userRole.getVillageName()));
 
         // Stop TB / Nikshay — additive only. This naturally returns nothing for
@@ -106,9 +111,74 @@ public class UserServiceImpl implements UserService {
                 userRole.setWorkingDistrictId(districtId);
                 userRole.setWorkingDistrictName(userServiceRoleRepo.findNikshayDistrictName(districtId));
             }
+
+            // AMM-2568: village-level Pincode so the app can fill it in.
+            // Never fails login: on any error the field is left out and the app asks the user.
+            try {
+                userRole.setVillageDetails(buildVillageDetails(mergedVillageIds, mergedVillageNames));
+            } catch (Exception e) {
+                logger.error("Could not load village details for userId {}: {}", userId, e.getMessage(), e);
+            }
         }
 
         return userRole;
+    }
+
+    // Large districts map tens of thousands of villages to one user; keep each IN list bounded.
+    private static final int VILLAGE_LOOKUP_CHUNK = 1000;
+
+    // One entry per assigned village, in the order of villageId. A pincode the village master
+    // doesn't hold (or a village missing from the master) is returned as null.
+    private List<VillageDetailDTO> buildVillageDetails(String villageIdCsv, String villageNameCsv) {
+        if (villageIdCsv == null || villageIdCsv.isBlank()) return null;
+        String[] ids = villageIdCsv.split(",", -1);
+        String[] names = villageNameCsv == null ? new String[0] : villageNameCsv.split(",", -1);
+
+        LinkedHashMap<Integer, String> assigned = new LinkedHashMap<>();
+        for (int i = 0; i < ids.length; i++) {
+            try {
+                Integer id = Integer.valueOf(ids[i].trim());
+                String name = (names.length == ids.length) ? names[i].trim() : null;
+                assigned.putIfAbsent(id, name);
+            } catch (NumberFormatException ignored) {
+                // skip malformed entries rather than fail the whole login
+            }
+        }
+        if (assigned.isEmpty()) return null;
+
+        Map<Integer, Object[]> masterRows = new HashMap<>();
+        List<Integer> idList = new ArrayList<>(assigned.keySet());
+        for (int from = 0; from < idList.size(); from += VILLAGE_LOOKUP_CHUNK) {
+            List<Integer> chunk = idList.subList(from, Math.min(from + VILLAGE_LOOKUP_CHUNK, idList.size()));
+            for (Object[] row : userServiceRoleRepo.findNikshayVillageDetails(new ArrayList<>(chunk))) {
+                masterRows.put(((Number) row[0]).intValue(), row);
+            }
+        }
+
+        List<VillageDetailDTO> details = new ArrayList<>(assigned.size());
+        List<Integer> notInMaster = new ArrayList<>();
+        for (Map.Entry<Integer, String> village : assigned.entrySet()) {
+            Integer villageId = village.getKey();
+            Object[] row = masterRows.get(villageId);
+            if (row == null) {
+                notInMaster.add(villageId);
+                details.add(new VillageDetailDTO(villageId, village.getValue(), null, null, null));
+                continue;
+            }
+            String masterName = row[1] == null ? null : row[1].toString().trim();
+            String pinCode = row[2] == null ? null : row[2].toString().trim();
+            if (pinCode != null && pinCode.isEmpty()) pinCode = null;
+
+            // Residential Area is not held at village level yet, so it is always null for now.
+            details.add(new VillageDetailDTO(villageId,
+                    masterName == null || masterName.isEmpty() ? village.getValue() : masterName,
+                    pinCode, null, null));
+        }
+        if (!notInMaster.isEmpty()) {
+            logger.warn("{} assigned village(s) not found in m_nikshay_village: {}", notInMaster.size(),
+                    notInMaster.size() > 20 ? notInMaster.subList(0, 20) + "..." : notInMaster);
+        }
+        return details;
     }
 
     private UserServiceRoleDTO primaryRole(Integer userId, List<UserServiceRoleDTO> roles) {

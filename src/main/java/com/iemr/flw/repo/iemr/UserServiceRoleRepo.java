@@ -71,6 +71,11 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
     @Query(value = "SELECT NikshayFacilityID, FacilityName FROM m_nikshay_facility WHERE NikshayFacilityID IN (:ids)", nativeQuery = true)
     List<Object[]> findNikshayFacilityNames(@Param("ids") java.util.Collection<Integer> ids);
 
+    // Village master Pincode for getUserDetail; callers pass the IDs in chunks.
+    @Query(value = "SELECT NikshayVillageID, VillageName, PinCode FROM m_nikshay_village " +
+            "WHERE NikshayVillageID IN (:ids)", nativeQuery = true)
+    List<Object[]> findNikshayVillageDetails(@Param("ids") java.util.Collection<Integer> ids);
+
     // DistrictID on m_userservicerolemapping is a Nikshay district ID, not an
     // AMRIT one (see setWorkLocationObject in Admin-UI) - resolving its name
     // against m_nikshay_district (the same ID space) is safe, unlike joining it

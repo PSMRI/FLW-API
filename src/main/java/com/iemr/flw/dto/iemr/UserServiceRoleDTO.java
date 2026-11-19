@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -34,6 +35,10 @@ public class UserServiceRoleDTO {
     private String tuName;
     private String healthFacilityId;
     private String healthFacilityName;
+
+    // Stop TB only: Pincode of each assigned village, in villageId order.
+    // villageId / villageName above stay as they are for older app builds.
+    private List<VillageDetailDTO> villageDetails;
 
     public UserServiceRoleDTO(Integer userId, String name, String userName, Integer stateId, String stateName, Integer workingDistrictId, String workingDistrictName, Short serviceProviderId, Integer roleId, String roleName, Integer providerServiceMapId, Integer blockId, String blockName, String villageId, String villageName) {
         this.userId = userId;
