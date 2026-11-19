@@ -39,6 +39,18 @@ import java.util.*;
 public class StopTBPrescriptionService {
 
     private static final String REFERENCE_PREFIX = "StopTB:";
+    // Request / response keys of the Stop TB OPD payload.
+    private static final String KEY_DRUGS = "drugs";
+    private static final String KEY_INSTRUCTION = "instruction";
+    private static final String KEY_INSTRUCTIONS = "instructions";
+    private static final String KEY_DURATION = "duration";
+    private static final String KEY_DURATION_UNIT = "durationUnit";
+    private static final String KEY_DESCRIPTION = "description";
+    private static final String KEY_FREQUENCY = "frequency";
+    private static final String KEY_ITEM_FORM_ID = "itemFormID";
+    private static final String KEY_QTY_PRESCRIBED = "qtyPrescribed";
+    private static final String KEY_DRUG_ID = "drugID";
+    private static final String KEY_BEN_REG_ID = "beneficiaryRegID";
 
     @PersistenceContext(unitName = "db_iemr")
     private EntityManager em;
@@ -89,14 +101,14 @@ public class StopTBPrescriptionService {
             Object[] r = (Object[]) o;
             int drugID = ((Number) r[0]).intValue();
             Map<String, Object> d = new LinkedHashMap<>();
-            d.put("drugID", drugID);
+            d.put(KEY_DRUG_ID, drugID);
             d.put("drugName", r[1]);
             d.put("qtyIssued", ((Number) r[2]).intValue());
             d.put("availableQuantity", availableQuantity(facilityID, drugID, 0));
             dispensed.add(d);
         }
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("beneficiaryRegID", beneficiaryRegID);
+        result.put(KEY_BEN_REG_ID, beneficiaryRegID);
         result.put("visitCode", row[1] != null ? ((Number) row[1]).longValue() : null);
         result.put("prescriptionID", row[2] != null ? ((Number) row[2]).longValue() : null);
         result.put("dispensed", dispensed);
@@ -109,104 +121,122 @@ public class StopTBPrescriptionService {
      * the app re-sends a beneficiary's whole OPD many times. If what arrives equals the beneficiary's latest
      * saved OPD (same complaints, drugs and instruction), or carries nothing at all, the earlier OPD is
      * returned and nothing is written: no visit for today, no prescription replaced, nothing new to sync.
-     * Returns null when the request is a real change and must be saved.
+     * Returns empty when the request is a real change and must be saved.
      *
      * The submissionId cannot decide this: the app keeps one submissionId per beneficiary OPD record for
      * good, so a later real edit arrives with the same ID.
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    public Map<String, Object> findUnchangedOpd(Long beneficiaryRegID, List<Map<String, Object>> complaints,
-            Map<String, Object> prescription) {
-        if (dispenseEnabled) return null;
-        List<Map<String, Object>> drugs = prescription != null ? toList(prescription.get("drugs"))
+    public Optional<Map<String, Object>> findUnchangedOpd(Long beneficiaryRegID, Integer providerServiceMapID,
+            List<Map<String, Object>> complaints, Map<String, Object> prescription) {
+        if (dispenseEnabled) return Optional.empty();
+        List<Map<String, Object>> drugs = prescription != null ? toList(prescription.get(KEY_DRUGS))
                 : Collections.emptyList();
-        String instruction = prescription != null ? norm(prescription.get("instruction")) : "";
-        boolean nothingSent = (complaints == null || complaints.isEmpty()) && drugs.isEmpty() && instruction.isEmpty();
+        String instruction = prescription != null ? norm(prescription.get(KEY_INSTRUCTION)) : "";
+        boolean complaintsSent = complaints != null && !complaints.isEmpty();
+        boolean prescriptionSent = !drugs.isEmpty() || !instruction.isEmpty();
 
-        // Latest visit of this beneficiary that holds an OPD (active complaint or prescription).
+        Long visitCode = latestOpdVisitCode(beneficiaryRegID, providerServiceMapID);
+        if (visitCode == null) {
+            // Nothing saved before and nothing sent now: do not create an empty visit.
+            return complaintsSent || prescriptionSent ? Optional.empty()
+                    : Optional.of(unchangedResult(beneficiaryRegID, null, null));
+        }
+        Object[] savedPrescription = latestPrescription(beneficiaryRegID, visitCode);
+        Long prescriptionID = savedPrescription != null ? ((Number) savedPrescription[0]).longValue() : null;
+
+        // An empty complaint list or an empty prescription is ignored on save (never wipes), so it is
+        // ignored here too: only what the save would actually write is compared.
+        boolean same = (!complaintsSent || complaintsUnchanged(beneficiaryRegID, visitCode, complaints))
+                && (!prescriptionSent || (instruction.equals(savedPrescription != null ? norm(savedPrescription[1]) : "")
+                        && drugsUnchanged(beneficiaryRegID, visitCode, drugs)));
+        return same ? Optional.of(unchangedResult(beneficiaryRegID, visitCode, prescriptionID)) : Optional.empty();
+    }
+
+    // Latest visit of this beneficiary under this service line that holds an OPD (active complaint or
+    // prescription), or null.
+    private Long latestOpdVisitCode(Long beneficiaryRegID, Integer providerServiceMapID) {
         List<?> latest = em.createNativeQuery("SELECT v.VisitCode FROM db_iemr.t_benvisitdetail v "
-                        + "WHERE v.BeneficiaryRegID = :ben AND v.Deleted = false AND v.VisitCode IS NOT NULL "
+                        + "WHERE v.BeneficiaryRegID = :ben AND v.ProviderServiceMapID = :psm "
+                        + "AND v.Deleted = false AND v.VisitCode IS NOT NULL "
                         + "AND (EXISTS (SELECT 1 FROM db_iemr.t_benchiefcomplaint c WHERE c.BeneficiaryRegID = v.BeneficiaryRegID "
                         + "  AND c.VisitCode = v.VisitCode AND c.Deleted = false) "
                         + " OR EXISTS (SELECT 1 FROM db_iemr.t_prescription p WHERE p.BeneficiaryRegID = v.BeneficiaryRegID "
                         + "  AND p.VisitCode = v.VisitCode AND p.Deleted = false)) "
                         + "ORDER BY v.BenVisitID DESC LIMIT 1")
                 .setParameter("ben", beneficiaryRegID)
+                .setParameter("psm", providerServiceMapID)
                 .getResultList();
-        if (latest.isEmpty()) {
-            // Nothing saved before and nothing sent now: do not create an empty visit.
-            return nothingSent ? unchangedResult(beneficiaryRegID, null, null) : null;
-        }
-        long visitCode = ((Number) latest.get(0)).longValue();
+        return latest.isEmpty() ? null : ((Number) latest.get(0)).longValue();
+    }
 
-        List<?> prescriptionRows = em.createNativeQuery("SELECT PrescriptionID, Instruction FROM db_iemr.t_prescription "
+    // {PrescriptionID, Instruction} of the visit's active prescription, or null.
+    private Object[] latestPrescription(Long beneficiaryRegID, long visitCode) {
+        List<?> rows = em.createNativeQuery("SELECT PrescriptionID, Instruction FROM db_iemr.t_prescription "
                         + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false "
                         + "ORDER BY PrescriptionID DESC")
                 .setParameter("ben", beneficiaryRegID)
                 .setParameter("visitCode", visitCode)
                 .getResultList();
-        Long prescriptionID = null;
-        String savedInstruction = "";
-        if (!prescriptionRows.isEmpty()) {
-            Object[] p = (Object[]) prescriptionRows.get(0);
-            prescriptionID = ((Number) p[0]).longValue();
-            savedInstruction = norm(p[1]);
-        }
-        if (nothingSent) return unchangedResult(beneficiaryRegID, visitCode, prescriptionID);
+        return rows.isEmpty() ? null : (Object[]) rows.get(0);
+    }
 
-        // An empty complaint list or an empty prescription is ignored on save (never wipes), so it is
-        // ignored here too: only what the save would actually write is compared.
-        if (complaints != null && !complaints.isEmpty()) {
-            List<String> savedComplaints = new ArrayList<>();
-            for (Object o : em.createNativeQuery("SELECT ChiefComplaintID, Duration, UnitOfDuration, Description "
-                            + "FROM db_iemr.t_benchiefcomplaint "
-                            + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false")
-                    .setParameter("ben", beneficiaryRegID)
-                    .setParameter("visitCode", visitCode)
-                    .getResultList()) {
-                Object[] r = (Object[]) o;
-                savedComplaints.add(complaintKey(r[0], r[1], r[2], r[3]));
-            }
-            List<String> sentComplaints = new ArrayList<>();
-            for (Map<String, Object> c : complaints) {
-                sentComplaints.add(complaintKey(c.get("chiefComplaintID"), c.get("duration"), c.get("unitOfDuration"),
-                        c.get("description")));
-            }
-            Collections.sort(savedComplaints);
-            Collections.sort(sentComplaints);
-            if (!savedComplaints.equals(sentComplaints)) return null;
+    private boolean complaintsUnchanged(Long beneficiaryRegID, long visitCode, List<Map<String, Object>> complaints) {
+        List<String> saved = savedKeys("SELECT ChiefComplaintID, Duration, UnitOfDuration, Description "
+                + "FROM db_iemr.t_benchiefcomplaint "
+                + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false",
+                beneficiaryRegID, visitCode, r -> complaintKey(r[0], r[1], r[2], r[3]));
+        List<String> sent = new ArrayList<>();
+        for (Map<String, Object> c : complaints) {
+            sent.add(complaintKey(c.get("chiefComplaintID"), c.get(KEY_DURATION), c.get("unitOfDuration"),
+                    c.get(KEY_DESCRIPTION)));
         }
+        sent.sort(null);
+        return saved.equals(sent);
+    }
 
-        if (prescription != null && !(drugs.isEmpty() && instruction.isEmpty())) {
-            if (!savedInstruction.equals(instruction)) return null;
-            List<String> savedDrugs = new ArrayList<>();
-            for (Object o : em.createNativeQuery("SELECT DrugID, Frequency, Duration, DuartionUnit, SpecialInstruction, "
-                            + "Dose, QtyPrescribed FROM db_iemr.t_prescribeddrug "
-                            + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false")
-                    .setParameter("ben", beneficiaryRegID)
-                    .setParameter("visitCode", visitCode)
-                    .getResultList()) {
-                Object[] r = (Object[]) o;
-                savedDrugs.add(drugKey(r[0], r[1], r[2], r[3], r[4]) + "|" + norm(r[5]) + "|" + normNumber(r[6]));
-            }
-            List<String> sentDrugs = new ArrayList<>();
-            for (Map<String, Object> d : drugs) {
-                // Quantity exactly as prescribeWithoutDispensing would save it.
-                Integer qty = toInt(d.get("qtyPrescribed"));
-                if (qty == null || qty <= 0) qty = calculateQuantity(d, toInt(d.get("itemFormID")));
-                sentDrugs.add(drugKey(d.get("drugID"), d.get("frequency"), d.get("duration"), d.get("durationUnit"),
-                        d.get("instructions")) + "|" + norm(d.get("dose")) + "|" + normNumber(qty));
-            }
-            Collections.sort(savedDrugs);
-            Collections.sort(sentDrugs);
-            if (!savedDrugs.equals(sentDrugs)) return null;
+    private boolean drugsUnchanged(Long beneficiaryRegID, long visitCode, List<Map<String, Object>> drugs) {
+        List<String> saved = savedKeys("SELECT DrugID, Frequency, Duration, DuartionUnit, SpecialInstruction, "
+                + "Dose, QtyPrescribed, GenericDrugName, DrugForm FROM db_iemr.t_prescribeddrug "
+                + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false",
+                beneficiaryRegID, visitCode,
+                r -> drugKey(r[0], r[1], r[2], r[3], r[4]) + "|" + norm(r[5]) + "|" + normNumber(r[6]) + "|"
+                        + norm(r[7]) + "|" + norm(r[8]));
+        List<String> sent = new ArrayList<>();
+        for (Map<String, Object> d : drugs) {
+            // Quantity exactly as prescribeWithoutDispensing would save it.
+            Integer qty = toInt(d.get(KEY_QTY_PRESCRIBED));
+            if (qty == null || qty <= 0) qty = calculateQuantity(d, toInt(d.get(KEY_ITEM_FORM_ID)));
+            sent.add(drugKey(d.get(KEY_DRUG_ID), d.get(KEY_FREQUENCY), d.get(KEY_DURATION), d.get(KEY_DURATION_UNIT),
+                    d.get(KEY_INSTRUCTIONS)) + "|" + norm(d.get("dose")) + "|" + normNumber(qty) + "|"
+                    + norm(d.get("drugName")) + "|" + norm(d.get("drugForm")));
         }
-        return unchangedResult(beneficiaryRegID, visitCode, prescriptionID);
+        sent.sort(null);
+        return saved.equals(sent);
+    }
+
+    // Rows of a (ben, visitCode) query turned into comparison keys, sorted.
+    private List<String> savedKeys(String sql, Long beneficiaryRegID, long visitCode,
+            java.util.function.Function<Object[], String> key) {
+        List<String> keys = new ArrayList<>();
+        for (Object o : em.createNativeQuery(sql)
+                .setParameter("ben", beneficiaryRegID)
+                .setParameter("visitCode", visitCode)
+                .getResultList()) {
+            keys.add(key.apply((Object[]) o));
+        }
+        keys.sort(null);
+        return keys;
+    }
+
+    // No drugs and no instruction: nothing a save would write.
+    private static boolean isEmptyPrescription(List<Map<String, Object>> drugs, String instruction) {
+        return drugs.isEmpty() && (instruction == null || instruction.isBlank());
     }
 
     private Map<String, Object> unchangedResult(Long beneficiaryRegID, Long visitCode, Long prescriptionID) {
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("beneficiaryRegID", beneficiaryRegID);
+        result.put(KEY_BEN_REG_ID, beneficiaryRegID);
         result.put("visitCode", visitCode);
         result.put("prescriptionID", prescriptionID);
         result.put("dispensed", new ArrayList<Map<String, Object>>());
@@ -219,13 +249,23 @@ public class StopTBPrescriptionService {
     }
 
     private String drugKey(Object drugID, Object frequency, Object duration, Object durationUnit, Object instructions) {
-        return normNumber(drugID) + "|" + norm(frequency) + "|" + normNumber(duration) + "|" + norm(durationUnit) + "|"
+        return normNumber(drugID) + "|" + norm(frequency) + "|" + normDecimal(duration) + "|" + norm(durationUnit) + "|"
                 + norm(instructions);
     }
 
     // Trimmed, lower case, "" for null, so "OK " and "ok" or null and "" compare equal.
     private String norm(Object v) {
         return v == null ? "" : v.toString().trim().toLowerCase(Locale.ROOT);
+    }
+
+    // Drug duration is saved as text, so keep fractions: 5, "5" and "5.0" are equal, "5.5" is not.
+    private String normDecimal(Object v) {
+        if (v == null) return "";
+        try {
+            return new java.math.BigDecimal(v.toString().trim()).stripTrailingZeros().toPlainString();
+        } catch (NumberFormatException e) {
+            return norm(v);
+        }
     }
 
     // 5, "5" and 5.0 compare equal.
@@ -236,13 +276,14 @@ public class StopTBPrescriptionService {
 
     /**
      * Replaces the visit's chief complaints with the given list (edit = remove old + insert new, as MMU
-     * does on update). Rows without an ID and without a name are skipped. An empty list never removes the
-     * saved complaints (STOP-855: re-sends without complaints wiped them).
+     * does on update). Rows without an ID and without a name are skipped. With dispensing off an empty list
+     * never removes the saved complaints (STOP-855: re-sends without complaints wiped them).
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public void saveChiefComplaints(List<Map<String, Object>> complaints, Long beneficiaryRegID, BenVisitDetail visit,
             String createdBy, Integer vanID, Integer parkingPlaceID) {
-        if (complaints == null || complaints.isEmpty()) return;
+        // STOP-855: with dispensing off an empty list (a re-send without complaints) keeps the saved ones.
+        if (complaints == null || (complaints.isEmpty() && !dispenseEnabled)) return;
         // Processed='N' so the removal is uploaded to central again (central updates rows it already has).
         em.createNativeQuery("UPDATE db_iemr.t_benchiefcomplaint SET Deleted = true, Processed = 'N', ModifiedBy = :user "
                         + "WHERE BeneficiaryRegID = :ben AND VisitCode = :visitCode AND Deleted = false")
@@ -268,9 +309,9 @@ public class StopTBPrescriptionService {
                     .setParameter("visitCode", visit.getVisitCode())
                     .setParameter("cid", complaintID)
                     .setParameter("name", complaint)
-                    .setParameter("duration", toInt(c.get("duration")))
+                    .setParameter(KEY_DURATION, toInt(c.get(KEY_DURATION)))
                     .setParameter("unit", toStr(c.get("unitOfDuration")))
-                    .setParameter("description", toStr(c.get("description")))
+                    .setParameter(KEY_DESCRIPTION, toStr(c.get(KEY_DESCRIPTION)))
                     .setParameter("user", createdBy)
                     .setParameter("van", vanID)
                     .setParameter("pp", parkingPlaceID)
@@ -286,7 +327,7 @@ public class StopTBPrescriptionService {
     @Transactional(propagation = Propagation.MANDATORY)
     public Map<String, Object> prescribeAndDispense(Map<String, Object> prescription, Long beneficiaryRegID,
             BenVisitDetail visit, String submissionId, String createdBy, Integer vanID, Integer parkingPlaceID) {
-        List<Map<String, Object>> drugs = toList(prescription.get("drugs"));
+        List<Map<String, Object>> drugs = toList(prescription.get(KEY_DRUGS));
         if (!dispenseEnabled) {
             return prescribeWithoutDispensing(prescription, drugs, beneficiaryRegID, visit, createdBy, vanID,
                     parkingPlaceID);
@@ -294,7 +335,7 @@ public class StopTBPrescriptionService {
         Map<String, Object> result = new LinkedHashMap<>();
         if (drugs.isEmpty()) {
             // Remarks without medicine are still kept, as MMU saves the visit instruction without drugs.
-            String instruction = toStr(prescription.get("instruction"));
+            String instruction = toStr(prescription.get(KEY_INSTRUCTION));
             if (instruction != null && !instruction.isBlank()) {
                 result.put("prescriptionID", insertPrescription(beneficiaryRegID, visit, instruction, createdBy, vanID,
                         parkingPlaceID));
@@ -311,10 +352,10 @@ public class StopTBPrescriptionService {
         Map<Integer, Integer> requested = new LinkedHashMap<>();
         Map<Integer, Object[]> items = new HashMap<>();
         for (Map<String, Object> d : drugs) {
-            Integer drugID = toInt(d.get("drugID"));
+            Integer drugID = toInt(d.get(KEY_DRUG_ID));
             if (drugID == null) throw new IllegalArgumentException("drugID is required for every drug");
             if (!items.containsKey(drugID)) items.put(drugID, getStoreItem(facilityID, drugID));
-            Integer qty = toInt(d.get("qtyPrescribed"));
+            Integer qty = toInt(d.get(KEY_QTY_PRESCRIBED));
             if (qty == null || qty <= 0) {
                 // No quantity from the app: tablets/capsules = doses per day x days, other forms = 1.
                 qty = calculateQuantity(d, toInt(items.get(drugID)[7]));
@@ -322,7 +363,7 @@ public class StopTBPrescriptionService {
                     throw new IllegalArgumentException("qtyPrescribed is required for drugID " + drugID
                             + " (tablet/capsule quantity needs frequency and duration)");
                 }
-                d.put("qtyPrescribed", qty); // saved in t_prescribeddrug.QtyPrescribed
+                d.put(KEY_QTY_PRESCRIBED, qty); // saved in t_prescribeddrug.QtyPrescribed
             }
             requested.merge(drugID, qty, Integer::sum);
         }
@@ -344,11 +385,11 @@ public class StopTBPrescriptionService {
 
         // 2. Prescription + prescribed drugs (Stop TB service line, same as the visit).
         Integer storePsm = getStorePsm(facilityID);
-        long prescriptionID = insertPrescription(beneficiaryRegID, visit, toStr(prescription.get("instruction")),
+        long prescriptionID = insertPrescription(beneficiaryRegID, visit, toStr(prescription.get(KEY_INSTRUCTION)),
                 createdBy, vanID, parkingPlaceID);
 
         for (Map<String, Object> d : drugs) {
-            Integer drugID = toInt(d.get("drugID"));
+            Integer drugID = toInt(d.get(KEY_DRUG_ID));
             Object[] item = items.get(drugID);
             em.createNativeQuery("INSERT INTO db_iemr.t_prescribeddrug (BeneficiaryRegID, BenVisitID, ProviderServiceMapID, "
                             + "VisitCode, PrescriptionID, DrugForm, DrugID, GenericDrugName, DrugStrength, Dose, Route, Frequency, "
@@ -362,16 +403,16 @@ public class StopTBPrescriptionService {
                     .setParameter("visitCode", visit.getVisitCode())
                     .setParameter("prescriptionID", prescriptionID)
                     .setParameter("form", item[3])
-                    .setParameter("drugID", drugID)
+                    .setParameter(KEY_DRUG_ID, drugID)
                     .setParameter("name", item[1])
                     .setParameter("strength", item[2])
                     .setParameter("dose", toStr(d.get("dose")))
                     .setParameter("route", item[4])
-                    .setParameter("frequency", toStr(d.get("frequency")))
-                    .setParameter("duration", toStr(d.get("duration")))
-                    .setParameter("durationUnit", toStr(d.get("durationUnit")))
-                    .setParameter("instruction", toStr(d.get("instructions")))
-                    .setParameter("qty", toInt(d.get("qtyPrescribed")))
+                    .setParameter(KEY_FREQUENCY, toStr(d.get(KEY_FREQUENCY)))
+                    .setParameter(KEY_DURATION, toStr(d.get(KEY_DURATION)))
+                    .setParameter(KEY_DURATION_UNIT, toStr(d.get(KEY_DURATION_UNIT)))
+                    .setParameter(KEY_INSTRUCTION, toStr(d.get(KEY_INSTRUCTIONS)))
+                    .setParameter("qty", toInt(d.get(KEY_QTY_PRESCRIBED)))
                     .setParameter("isEDL", item[5])
                     .setParameter("user", createdBy)
                     .setParameter("van", vanID)
@@ -437,7 +478,7 @@ public class StopTBPrescriptionService {
                 remaining -= take;
             }
             Map<String, Object> d = new LinkedHashMap<>();
-            d.put("drugID", r.getKey());
+            d.put(KEY_DRUG_ID, r.getKey());
             d.put("drugName", items.get(r.getKey())[1]);
             d.put("qtyIssued", r.getValue());
             d.put("availableQuantity", availableQuantity(facilityID, r.getKey(), 0));
@@ -504,15 +545,15 @@ public class StopTBPrescriptionService {
         for (Object[] v : visits) {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", ((Number) v[0]).longValue());
-            m.put("beneficiaryRegID", ((Number) v[1]).longValue());
+            m.put(KEY_BEN_REG_ID, ((Number) v[1]).longValue());
             m.put("visitCode", ((Number) v[2]).longValue());
             m.put("providerServiceMapID", v[6] != null ? ((Number) v[6]).intValue() : null);
             m.put("chiefComplaint", new ArrayList<String>());
             m.put("medication", new StringJoiner(", "));
             m.put("dosage", new StringJoiner(", "));
-            m.put("frequency", new StringJoiner(", "));
-            m.put("duration", new StringJoiner(", "));
-            m.put("drugs", new ArrayList<Map<String, Object>>());
+            m.put(KEY_FREQUENCY, new StringJoiner(", "));
+            m.put(KEY_DURATION, new StringJoiner(", "));
+            m.put(KEY_DRUGS, new ArrayList<Map<String, Object>>());
             m.put("notes", null);
             m.put("createdBy", v[3]);
             m.put("createdDate", v[4]);
@@ -546,23 +587,23 @@ public class StopTBPrescriptionService {
                 Map<String, Object> m = byVisit.get(((Number) r[0]).longValue());
                 ((StringJoiner) m.get("medication")).add(r[1] != null ? r[1].toString() : "");
                 ((StringJoiner) m.get("dosage")).add(r[2] != null ? r[2].toString() : "");
-                ((StringJoiner) m.get("frequency")).add(r[3] != null ? r[3].toString() : "");
-                ((StringJoiner) m.get("duration")).add(r[4] == null ? "" : r[5] == null ? r[4].toString() : r[4] + " " + r[5]);
+                ((StringJoiner) m.get(KEY_FREQUENCY)).add(r[3] != null ? r[3].toString() : "");
+                ((StringJoiner) m.get(KEY_DURATION)).add(r[4] == null ? "" : r[5] == null ? r[4].toString() : r[4] + " " + r[5]);
                 latest(m, r[6]);
 
                 // Full prescription per drug, so a saved record can show form, quantity and instructions.
                 Map<String, Object> drug = new LinkedHashMap<>();
-                drug.put("drugID", ((Number) r[7]).intValue());
+                drug.put(KEY_DRUG_ID, ((Number) r[7]).intValue());
                 drug.put("drugName", r[1]);
-                drug.put("itemFormID", r[8] != null ? ((Number) r[8]).intValue() : null);
+                drug.put(KEY_ITEM_FORM_ID, r[8] != null ? ((Number) r[8]).intValue() : null);
                 drug.put("drugForm", r[9]);
                 drug.put("dose", r[2]);
-                drug.put("frequency", r[3]);
-                drug.put("duration", r[4] != null ? toInt(r[4]) : null);
-                drug.put("durationUnit", r[5]);
-                drug.put("qtyPrescribed", r[10] != null ? ((Number) r[10]).intValue() : null);
-                drug.put("instructions", r[11]);
-                ((List<Map<String, Object>>) m.get("drugs")).add(drug);
+                drug.put(KEY_FREQUENCY, r[3]);
+                drug.put(KEY_DURATION, r[4] != null ? toInt(r[4]) : null);
+                drug.put(KEY_DURATION_UNIT, r[5]);
+                drug.put(KEY_QTY_PRESCRIBED, r[10] != null ? ((Number) r[10]).intValue() : null);
+                drug.put(KEY_INSTRUCTIONS, r[11]);
+                ((List<Map<String, Object>>) m.get(KEY_DRUGS)).add(drug);
             }
 
             // Latest prescription instruction per visit is the visit's note.
@@ -581,7 +622,7 @@ public class StopTBPrescriptionService {
         for (Map<String, Object> m : byVisit.values()) {
             List<String> complaints = (List<String>) m.get("chiefComplaint");
             m.put("chiefComplaint", complaints.isEmpty() ? null : gson.toJson(complaints));
-            for (String key : new String[] { "medication", "dosage", "frequency", "duration" }) {
+            for (String key : new String[] { "medication", "dosage", KEY_FREQUENCY, KEY_DURATION }) {
                 String joined = m.get(key).toString();
                 m.put(key, joined.replace(",", "").isBlank() ? null : joined);
             }
@@ -631,10 +672,9 @@ public class StopTBPrescriptionService {
             List<Map<String, Object>> drugs, Long beneficiaryRegID, BenVisitDetail visit, String createdBy,
             Integer vanID, Integer parkingPlaceID) {
         for (Map<String, Object> d : drugs) {
-            if (toInt(d.get("drugID")) == null) throw new IllegalArgumentException("drugID is required for every drug");
+            if (toInt(d.get(KEY_DRUG_ID)) == null) throw new IllegalArgumentException("drugID is required for every drug");
         }
-        String sentInstruction = toStr(prescription.get("instruction"));
-        if (drugs.isEmpty() && (sentInstruction == null || sentInstruction.isBlank())) {
+        if (isEmptyPrescription(drugs, toStr(prescription.get(KEY_INSTRUCTION)))) {
             // STOP-855: a re-send without drugs or instruction must not remove the saved prescription.
             Map<String, Object> kept = new LinkedHashMap<>();
             kept.put("dispensed", new ArrayList<Map<String, Object>>());
@@ -651,13 +691,13 @@ public class StopTBPrescriptionService {
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
-        String instruction = toStr(prescription.get("instruction"));
+        String instruction = toStr(prescription.get(KEY_INSTRUCTION));
         if (!drugs.isEmpty() || (instruction != null && !instruction.isBlank())) {
             long prescriptionID = insertPrescription(beneficiaryRegID, visit, instruction, createdBy, vanID,
                     parkingPlaceID);
             for (Map<String, Object> d : drugs) {
-                Integer qty = toInt(d.get("qtyPrescribed"));
-                if (qty == null || qty <= 0) qty = calculateQuantity(d, toInt(d.get("itemFormID"))); // null if unknown
+                Integer qty = toInt(d.get(KEY_QTY_PRESCRIBED));
+                if (qty == null || qty <= 0) qty = calculateQuantity(d, toInt(d.get(KEY_ITEM_FORM_ID))); // null if unknown
                 em.createNativeQuery("INSERT INTO db_iemr.t_prescribeddrug (BeneficiaryRegID, BenVisitID, "
                                 + "ProviderServiceMapID, VisitCode, PrescriptionID, DrugForm, DrugID, GenericDrugName, Dose, "
                                 + "Frequency, Duration, DuartionUnit, SpecialInstruction, QtyPrescribed, Deleted, Processed, "
@@ -670,13 +710,13 @@ public class StopTBPrescriptionService {
                         .setParameter("visitCode", visit.getVisitCode())
                         .setParameter("prescriptionID", prescriptionID)
                         .setParameter("form", toStr(d.get("drugForm")))
-                        .setParameter("drugID", toInt(d.get("drugID")))
+                        .setParameter(KEY_DRUG_ID, toInt(d.get(KEY_DRUG_ID)))
                         .setParameter("name", toStr(d.get("drugName")))
                         .setParameter("dose", toStr(d.get("dose")))
-                        .setParameter("frequency", toStr(d.get("frequency")))
-                        .setParameter("duration", toStr(d.get("duration")))
-                        .setParameter("durationUnit", toStr(d.get("durationUnit")))
-                        .setParameter("instruction", toStr(d.get("instructions")))
+                        .setParameter(KEY_FREQUENCY, toStr(d.get(KEY_FREQUENCY)))
+                        .setParameter(KEY_DURATION, toStr(d.get(KEY_DURATION)))
+                        .setParameter(KEY_DURATION_UNIT, toStr(d.get(KEY_DURATION_UNIT)))
+                        .setParameter(KEY_INSTRUCTION, toStr(d.get(KEY_INSTRUCTIONS)))
                         .setParameter("qty", qty)
                         .setParameter("user", createdBy)
                         .setParameter("van", vanID)
@@ -700,7 +740,7 @@ public class StopTBPrescriptionService {
                 .setParameter("visitID", visit.getBenVisitId())
                 .setParameter("psm", visit.getProviderServiceMapID())
                 .setParameter("visitCode", visit.getVisitCode())
-                .setParameter("instruction", instruction)
+                .setParameter(KEY_INSTRUCTION, instruction)
                 .setParameter("user", createdBy)
                 .setParameter("van", vanID)
                 .setParameter("pp", parkingPlaceID)
@@ -721,13 +761,13 @@ public class StopTBPrescriptionService {
     private Integer calculateQuantity(Map<String, Object> drug, Integer formID) {
         if (formID == null || (formID != 1 && formID != 2)) return 1; // 1 = Tablet, 2 = Capsule
         double perIntake = formID == 2 ? 1 : tabletsPerIntake(toStr(drug.get("dose")));
-        String frequency = Optional.ofNullable(toStr(drug.get("frequency"))).orElse("").toUpperCase();
+        String frequency = Optional.ofNullable(toStr(drug.get(KEY_FREQUENCY))).orElse("").toUpperCase();
         if (frequency.contains("SINGLE DOSE") || frequency.contains("STAT")) return (int) Math.ceil(perIntake);
 
-        Integer duration = toInt(drug.get("duration"));
+        Integer duration = toInt(drug.get(KEY_DURATION));
         boolean sos = frequency.contains("SOS");
         if (duration == null || duration <= 0) return sos ? (int) Math.ceil(perIntake) : null;
-        String unit = Optional.ofNullable(toStr(drug.get("durationUnit"))).orElse("Day").toLowerCase();
+        String unit = Optional.ofNullable(toStr(drug.get(KEY_DURATION_UNIT))).orElse("Day").toLowerCase();
         int days = unit.startsWith("week") ? duration * 7 : unit.startsWith("month") ? duration * 30
                 : unit.startsWith("year") ? duration * 365 : duration;
 
@@ -765,7 +805,7 @@ public class StopTBPrescriptionService {
                         + "LEFT JOIN db_iemr.m_itemcategory c ON c.ItemCategoryID = i.ItemCategoryID "
                         + "WHERE i.ItemID = :drugID AND i.Deleted = false")
                 .setParameter("facilityID", facilityID)
-                .setParameter("drugID", drugID)
+                .setParameter(KEY_DRUG_ID, drugID)
                 .getResultList();
         if (rows.isEmpty()) {
             throw new IllegalArgumentException("drugID " + drugID + " is not available in this camp's store");
@@ -787,7 +827,7 @@ public class StopTBPrescriptionService {
                         + "WHERE FacilityID = :facilityID AND ItemID = :drugID AND Deleted = false AND QuantityInHand > 0 "
                         + USABLE_BATCH + "ORDER BY " + order + " FOR UPDATE")
                 .setParameter("facilityID", facilityID)
-                .setParameter("drugID", drugID)
+                .setParameter(KEY_DRUG_ID, drugID)
                 .setParameter("days", durationDays);
         return (List<Object[]>) q.getResultList();
     }
@@ -797,7 +837,7 @@ public class StopTBPrescriptionService {
                         + "WHERE FacilityID = :facilityID AND ItemID = :drugID AND Deleted = false AND QuantityInHand > 0 "
                         + USABLE_BATCH)
                 .setParameter("facilityID", facilityID)
-                .setParameter("drugID", drugID)
+                .setParameter(KEY_DRUG_ID, drugID)
                 .setParameter("days", durationDays)
                 .getSingleResult();
         return ((Number) v).intValue();
@@ -814,10 +854,10 @@ public class StopTBPrescriptionService {
     private int maxDurationDays(List<Map<String, Object>> drugs, Integer drugID) {
         int max = 0;
         for (Map<String, Object> d : drugs) {
-            if (!drugID.equals(toInt(d.get("drugID")))) continue;
-            Integer n = toInt(d.get("duration"));
+            if (!drugID.equals(toInt(d.get(KEY_DRUG_ID)))) continue;
+            Integer n = toInt(d.get(KEY_DURATION));
             if (n == null || n <= 0) continue;
-            String unit = Optional.ofNullable(toStr(d.get("durationUnit"))).orElse("Day").toLowerCase();
+            String unit = Optional.ofNullable(toStr(d.get(KEY_DURATION_UNIT))).orElse("Day").toLowerCase();
             int days = unit.startsWith("week") ? n * 7 : unit.startsWith("month") ? n * 30 : unit.startsWith("year") ? n * 365 : n;
             max = Math.max(max, days);
         }

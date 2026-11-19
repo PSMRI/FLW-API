@@ -23,6 +23,7 @@ class StopTBPrescriptionServiceRepeatOpdTest {
     private static final long BEN = 9001L;
     private static final long VISIT_CODE = 1004060000123L;
     private static final long PRESCRIPTION_ID = 77L;
+    private static final int PSM = 1732;
 
     private StopTBPrescriptionService service;
     private EntityManager em;
@@ -46,7 +47,7 @@ class StopTBPrescriptionServiceRepeatOpdTest {
         complaintRows = new ArrayList<>();
         complaintRows.add(new Object[] { 5, 3, "Days", null });
         drugRows = new ArrayList<>();
-        drugRows.add(new Object[] { 10, "Twice a day", "5", "Day", "After food", "One Tab", 10 });
+        drugRows.add(new Object[] { 10, "Twice a day", "5", "Day", "After food", "One Tab", 10, "Paracetamol", "Tablet" });
 
         when(em.createNativeQuery(anyString())).thenAnswer(inv -> {
             String sql = inv.getArgument(0);
@@ -79,6 +80,7 @@ class StopTBPrescriptionServiceRepeatOpdTest {
         Map<String, Object> d = new HashMap<>();
         d.put("drugID", id);
         d.put("drugName", "Paracetamol");
+        d.put("drugForm", "Tablet");
         d.put("frequency", freq);
         d.put("duration", duration);
         d.put("durationUnit", unit);
@@ -104,7 +106,7 @@ class StopTBPrescriptionServiceRepeatOpdTest {
     }
 
     private Map<String, Object> check(List<Map<String, Object>> complaints, Map<String, Object> prescription) {
-        return service.findUnchangedOpd(BEN, complaints, prescription);
+        return service.findUnchangedOpd(BEN, PSM, complaints, prescription).orElse(null);
     }
 
     private static void assertSkipped(Map<String, Object> r, Long visitCode) {
@@ -131,7 +133,7 @@ class StopTBPrescriptionServiceRepeatOpdTest {
 
     @Test
     void resendWithDrugsInDifferentOrder_isSkipped() {
-        drugRows.add(new Object[] { 11, "Once a day", "3", "Day", null, "One Tab", 3 });
+        drugRows.add(new Object[] { 11, "Once a day", "3", "Day", null, "One Tab", 3, "Paracetamol", "Tablet" });
         Map<String, Object> p = prescription("Take rest", List.of(
                 drug(11, "Once a day", 3, "Day", null, "One Tab", 3),
                 drug(10, "Twice a day", 5, "Day", "After food", "One Tab", 10)));
@@ -163,9 +165,10 @@ class StopTBPrescriptionServiceRepeatOpdTest {
     @Test
     void quantityNotSent_comparedAsTheSaveWouldCalculateIt() {
         // Syrup (form 3): the save stores 1 bottle when no quantity is sent.
-        drugRows.set(0, new Object[] { 10, "Twice a day", "5", "Day", "After food", null, 1 });
+        drugRows.set(0, new Object[] { 10, "Twice a day", "5", "Day", "After food", null, 1, "Paracetamol", "Syrup" });
         Map<String, Object> d = drug(10, "Twice a day", 5, "Day", "After food", null, null);
         d.put("itemFormID", 3);
+        d.put("drugForm", "Syrup");
         assertSkipped(check(sameComplaints(), prescription("Take rest", List.of(d))), VISIT_CODE);
     }
 
@@ -192,7 +195,7 @@ class StopTBPrescriptionServiceRepeatOpdTest {
 
     @Test
     void drugRemoved_isSaved() {
-        drugRows.add(new Object[] { 11, "Once a day", "3", "Day", null, "One Tab", 3 });
+        drugRows.add(new Object[] { 11, "Once a day", "3", "Day", null, "One Tab", 3, "Paracetamol", "Tablet" });
         assertNull(check(sameComplaints(), samePrescription()));
     }
 
@@ -287,5 +290,59 @@ class StopTBPrescriptionServiceRepeatOpdTest {
         assertNotNull(r);
         assertFalse(r.containsKey("prescriptionID"));
         verifyNoInteractions(em);
+    }
+
+    // ---- CodeRabbit review (PR #415)
+
+    @Test
+    void drugNameChanged_isSaved() {
+        Map<String, Object> d = drug(10, "Twice a day", 5, "Day", "After food", "One Tab", 10);
+        d.put("drugName", "Paracetamol 650");
+        assertNull(check(sameComplaints(), prescription("Take rest", List.of(d))));
+    }
+
+    @Test
+    void drugFormChanged_isSaved() {
+        Map<String, Object> d = drug(10, "Twice a day", 5, "Day", "After food", "One Tab", 10);
+        d.put("drugForm", "Capsule");
+        assertNull(check(sameComplaints(), prescription("Take rest", List.of(d))));
+    }
+
+    @Test
+    void fractionalDurationChanged_isSaved_butFiveEqualsFivePointZero() {
+        assertNull(check(sameComplaints(),
+                prescription("Take rest", List.of(drug(10, "Twice a day", "5.5", "Day", "After food", "One Tab", 10)))));
+        assertSkipped(check(sameComplaints(),
+                prescription("Take rest", List.of(drug(10, "Twice a day", "5.0", "Day", "After food", "One Tab", 10)))),
+                VISIT_CODE);
+    }
+
+    @Test
+    void latestVisitLookup_isScopedToTheServiceLine() {
+        List<String> sqls = new ArrayList<>();
+        List<Object> psmParams = new ArrayList<>();
+        doAnswer(inv -> {
+            String sql = inv.getArgument(0);
+            sqls.add(sql);
+            Query q = mock(Query.class, Answers.RETURNS_SELF);
+            doAnswer(a -> { psmParams.add(a.getArgument(1)); return q; })
+                    .when(q).setParameter(org.mockito.ArgumentMatchers.eq("psm"), org.mockito.ArgumentMatchers.any());
+            doReturn(new ArrayList<>()).when(q).getResultList();
+            return q;
+        }).when(em).createNativeQuery(anyString());
+        assertNull(check(sameComplaints(), samePrescription()));
+        assertTrue(sqls.get(0).contains("v.ProviderServiceMapID = :psm"));
+        assertEquals(List.of(PSM), psmParams);
+    }
+
+    @Test
+    void dispensingOn_emptyComplaintList_stillReplacesAsBefore() {
+        ReflectionTestUtils.setField(service, "dispenseEnabled", true);
+        Query q = mock(Query.class, Answers.RETURNS_SELF);
+        doReturn(q).when(em).createNativeQuery(anyString());
+        com.iemr.flw.domain.iemr.BenVisitDetail visit = new com.iemr.flw.domain.iemr.BenVisitDetail();
+        visit.setVisitCode(VISIT_CODE);
+        service.saveChiefComplaints(List.of(), BEN, visit, "nurse", 406, 1);
+        verify(q).executeUpdate();
     }
 }
