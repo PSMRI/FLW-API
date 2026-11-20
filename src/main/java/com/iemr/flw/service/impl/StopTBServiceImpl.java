@@ -402,13 +402,22 @@ public class StopTBServiceImpl implements StopTBService {
 
             // New payload (chiefComplaints[] / prescription.drugs[]): AMRIT standard tables only, with dispensing.
             // tb_stoptb_general_opd is not written; getAll and the Nikshay export read the standard tables.
-            if (data.get("chiefComplaints") instanceof List || data.get("prescription") instanceof Map) {
+            Map<String, Object> prescription = data.get("prescription") instanceof Map
+                    ? (Map<String, Object>) data.get("prescription") : null;
+            if (data.get("chiefComplaints") instanceof List || prescription != null) {
                 if (providerServiceMapID == null) throw new Exception("providerServiceMapID is required");
                 if (createdBy == null || createdBy.isBlank()) throw new Exception("createdBy is required");
                 String submissionId = getString(data, "submissionId");
                 Map<String, Object> previous = stopTBPrescriptionService.findPreviousSubmission(beneficiaryRegID, submissionId);
                 if (previous != null) {
                     results.add(previous);
+                    continue;
+                }
+                // STOP-855: a re-sent OPD that is unchanged (or empty) writes nothing, not even today's visit.
+                Optional<Map<String, Object>> unchanged = stopTBPrescriptionService.findUnchangedOpd(beneficiaryRegID,
+                        providerServiceMapID, toMapList(data.get("chiefComplaints")), prescription);
+                if (unchanged.isPresent()) {
+                    results.add(unchanged.get());
                     continue;
                 }
                 BenVisitDetail visit = tbStopVisitService.getOrCreateVisitForToday(beneficiaryRegID, providerServiceMapID,
@@ -418,9 +427,9 @@ public class StopTBServiceImpl implements StopTBService {
                 result.put("visitCode", visit.getVisitCode());
                 stopTBPrescriptionService.saveChiefComplaints(toMapList(data.get("chiefComplaints")), beneficiaryRegID,
                         visit, createdBy, vanID, parkingPlaceID);
-                if (data.get("prescription") instanceof Map) {
+                if (prescription != null) {
                     result.putAll(stopTBPrescriptionService.prescribeAndDispense(
-                            (Map<String, Object>) data.get("prescription"), beneficiaryRegID, visit, submissionId,
+                            prescription, beneficiaryRegID, visit, submissionId,
                             createdBy, vanID, parkingPlaceID));
                 }
                 results.add(result);
