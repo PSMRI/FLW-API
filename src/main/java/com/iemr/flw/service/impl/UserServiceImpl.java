@@ -1,6 +1,8 @@
 package com.iemr.flw.service.impl;
 
+import com.iemr.flw.domain.iemr.User;
 import com.iemr.flw.dto.iemr.UserServiceRoleDTO;
+import com.iemr.flw.repo.iemr.EmployeeMasterRepo;
 import com.iemr.flw.repo.iemr.UserServiceRoleRepo;
 import com.iemr.flw.service.UserService;
 import org.slf4j.Logger;
@@ -24,6 +26,9 @@ public class UserServiceImpl implements UserService {
     private UserServiceRoleRepo userServiceRoleRepo;
 
     @Autowired
+    private EmployeeMasterRepo employeeMasterRepo;
+
+    @Autowired
     private FacilityDataService facilityDataService;
 
     public UserServiceRoleDTO getUserDetail(Integer userId) {
@@ -38,6 +43,7 @@ public class UserServiceImpl implements UserService {
         UserServiceRoleDTO userRole = primaryRole(userId, roles);
         mergeVillages(userRole, roles);
         userRole.setFacilityData(facilityDataService.buildFacilityData(userId, userRole.getRoleName()));
+        userRole.setGamification(getGamification(userId));
 
         // Two different villages can legitimately share the same name (confirmed live:
         // Nikshay village IDs 275135 and 275136 are both named "Sanapindapadar", under
@@ -109,6 +115,37 @@ public class UserServiceImpl implements UserService {
         }
 
         return userRole;
+    }
+
+
+    private Map<String, Object> getGamification(Integer userID) {
+        User user = employeeMasterRepo.findUserByUserID(userID);
+
+        if (user == null) {
+            new RuntimeException("User not found") ;
+        }
+
+        Map<String, Object> gamification = new HashMap<>();
+        Map<String, Object> mechanics = new HashMap<>();
+
+        gamification.put("enabled",
+                user != null && Boolean.TRUE.equals(user.getGamificationEnabled()));
+
+        mechanics.put("badges",
+                user != null && Boolean.TRUE.equals(user.getBadgesMechanics()));
+
+        mechanics.put("monthlyRecap",
+                user != null && Boolean.TRUE.equals(user.getMonthlyRecapMechanics()));
+
+        mechanics.put("eveningNotifications",
+                user != null && Boolean.TRUE.equals(user.getEveningNotifications()));
+
+        mechanics.put("consistencyDashboard",
+                user != null && Boolean.TRUE.equals(user.getConsistencyDashboard()));
+
+        gamification.put("mechanics", mechanics);
+
+        return gamification;
     }
 
     private UserServiceRoleDTO primaryRole(Integer userId, List<UserServiceRoleDTO> roles) {

@@ -132,6 +132,27 @@ public class User {
     private Integer serviceProviderID;
 
     @Expose
+    @Column(name = "gamificationEnabled")
+    private Boolean gamificationEnabled;
+
+    @Expose
+    @Column(name = "badgesMechanics")
+    private Boolean badgesMechanics;
+
+    @Expose
+    @Column(name = "monthlyRecapMechanics")
+    private Boolean monthlyRecapMechanics;
+
+    @Expose
+    @Column(name = "eveningNotifications")
+    private Boolean eveningNotifications;
+
+    @Expose
+    @Column(name = "consistencyDashboard")
+    private Boolean  consistencyDashboard;
+
+
+    @Expose
     @Column(name = "failed_attempt", insertable = false)
     private Integer failedAttempt;
 
