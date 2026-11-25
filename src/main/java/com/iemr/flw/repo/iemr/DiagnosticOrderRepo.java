@@ -66,6 +66,22 @@ public interface DiagnosticOrderRepo extends JpaRepository<DiagnosticOrder, Long
     @Query("UPDATE DiagnosticOrder o SET o.vanSerialNo = o.id WHERE o.id = :id")
     void updateVanSerialNo(@Param("id") Long id);
 
+    // Saves the order and sets vanSerialNo = id in ONE transaction: save() and updateVanSerialNo() both
+    // join this transaction (REQUIRED propagation), so the row is committed with vanSerialNo already set.
+    // Why: the service has no outer transaction (vendor HTTP calls must not hold one open), so a plain
+    // save() committed the row on its own with vanSerialNo NULL, and van sync could pick it up before
+    // the separate stamp ran — or never got stamped if the app died in between.
+    // Use this for every insert. Later saves can't clear vanSerialNo: the column is updatable = false.
+    @Transactional
+    default DiagnosticOrder saveWithVanSerialNo(DiagnosticOrder order) {
+        DiagnosticOrder saved = save(order);
+        if (saved.getVanSerialNo() == null) {
+            updateVanSerialNo(saved.getId());
+            saved.setVanSerialNo(saved.getId()); // bulk UPDATE doesn't touch the in-memory entity
+        }
+        return saved;
+    }
+
     // A poll that changed nothing only records when it ran (and the retry count), leaving processed,
     // modified_by and the rest of the row alone: no re-upload to central, no change-log line.
     @Transactional

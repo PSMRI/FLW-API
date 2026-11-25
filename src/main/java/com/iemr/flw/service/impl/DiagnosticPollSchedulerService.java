@@ -8,6 +8,7 @@ import com.iemr.flw.service.DiagnosticOrderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
@@ -33,14 +34,21 @@ public class DiagnosticPollSchedulerService {
     @Autowired
     private DiagnosticProviderFactory providerFactory;
 
+    // IS_PRODUCTION env variable (is.production in common_*.properties). Polling never runs on
+    // production: every vendor-polling job below returns straight away when this is true.
+    @Value("${is.production:false}")
+    private boolean isProduction;
+
     @Scheduled(fixedDelayString = "${diagnostic.poll.xray.tick-ms:15000}")
     public void pollXrayOrders() {
+        if (isProduction) return; // polling is disabled on production
         pollDueOrders("XRAY", DiagnosticOrderType.XRAY_CHEST,
                 diagnosticOrderRepo::findXrayDueForPoll);
     }
 
     @Scheduled(fixedDelayString = "${diagnostic.poll.truenat.tick-ms:60000}")
     public void pollTrueNatOrders() {
+        if (isProduction) return; // polling is disabled on production
         pollDueOrders("TrueNat", DiagnosticOrderType.MTB,
                 diagnosticOrderRepo::findTrueNatDueForPoll);
     }
@@ -80,6 +88,7 @@ public class DiagnosticPollSchedulerService {
     // one where they differ. This job runs at application startup and then every hour.
     @Scheduled(fixedDelayString = "${diagnostic.documents.backfill-interval-ms:3600000}")
     public void fetchMissingDocuments() {
+        if (isProduction) return; // vendor document polling is disabled on production
         List<DiagnosticOrder> candidates = diagnosticOrderRepo.findOrdersNeedingDocuments();
         logger.info("Document back-fill tick: {} order(s) needing documents", candidates.size());
         if (candidates.isEmpty()) return;

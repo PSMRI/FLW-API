@@ -39,6 +39,7 @@ import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -108,6 +109,10 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
+
+    // IS_PRODUCTION env variable (is.production in common_*.properties): no vendor polling on production.
+    @Value("${is.production:false}")
+    private boolean isProduction;
 
     @Autowired
     private TBStopVisitService tbStopVisitService;
@@ -291,7 +296,10 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         order.setModifiedBy(createdBy);
 
         try {
-            order = diagnosticOrderRepo.save(order);
+            // vanSerialNo is set in the same commit as the insert, BEFORE the vendor push below. It used to
+            // be set only after the push (which can take seconds or time out), leaving the row NULL for
+            // van sync in the meantime.
+            order = diagnosticOrderRepo.saveWithVanSerialNo(order);
         } catch (DataIntegrityViolationException dive) {
             Optional<DiagnosticOrder> winner = diagnosticOrderRepo
                     .findFirstByBeneficiaryIdAndVisitCodeAndOrderTypeAndDeletedFalseOrderByCreatedDateDesc(beneficiaryId, visitCode, orderType.name());
@@ -307,8 +315,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             logger.info("No active vendor configured for orderType={}, beneficiaryId={} — order saved for manual entry",
                     orderType, beneficiaryId);
             // Status is MANUAL_ENTRY (set above) — awaiting manual entry via submitManualResult.
-            order = diagnosticOrderRepo.save(order);
-            if (order.getVanSerialNo() == null) diagnosticOrderRepo.updateVanSerialNo(order.getId());
+            // Already saved and stamped with vanSerialNo above, so no second save is needed.
             return order;
         }
 
@@ -427,8 +434,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         order.setProcessed("N");
 
         try {
-            order = diagnosticOrderRepo.save(order);
-            if (order.getVanSerialNo() == null) diagnosticOrderRepo.updateVanSerialNo(order.getId());
+            // A new CLOSED row gets its vanSerialNo in the same commit; a reused row keeps the one it has.
+            order = diagnosticOrderRepo.saveWithVanSerialNo(order);
             notifyProviderOrderClosed(order, close.reason());
             return order;
         } catch (DataIntegrityViolationException dive) {
@@ -582,9 +589,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
         }
         boolean insert = row.getId() == null;
         try {
-            diagnosticResultRepo.save(row);
-            if (row.getVanSerialNo() == null) diagnosticResultRepo.updateVanSerialNo(row.getId());
-            return row;
+            // Insert and vanSerialNo commit together; returns the saved row, not the possibly stale input.
+            return diagnosticResultRepo.saveWithVanSerialNo(row);
         } catch (DataIntegrityViolationException dive) {
             if (!insert) throw dive;
             logger.warn("Lost result upsert race for externalOrderId={}, resultType={}",
@@ -996,6 +1002,9 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     @Override
     public DiagnosticOrderResultDto triggerManualPoll(Long beneficiaryId, String orderType, Long visitCode) throws Exception {
+        if (isProduction) {
+            throw new IllegalStateException("Polling is disabled on production");
+        }
         // Locked, and the order read inside the lock, so this can't interleave with a manual entry or a
         // scheduler poll for the same beneficiary and save over what they just wrote.
         return withBeneficiaryLock(beneficiaryId, () -> {
@@ -1427,7 +1436,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
             retest.setPatientSex(closed.getPatientSex());
             retest.setCreatedBy("SYSTEM");
             retest.setModifiedBy("SYSTEM");
-            retest = diagnosticOrderRepo.save(retest);
+            // Same as a user-created order: vanSerialNo is set before the vendor push, not after it.
+            retest = diagnosticOrderRepo.saveWithVanSerialNo(retest);
             retest = pushToProvider(retest, closed.getProviderCode());
             logger.info("Retest order created after invalid result: closedOrderId={}, retestOrderId={}, "
                             + "externalOrderId={}, status={}", closed.getId(), retest.getId(), retest.getExternalOrderId(),

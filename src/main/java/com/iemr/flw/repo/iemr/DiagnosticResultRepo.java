@@ -26,4 +26,16 @@ public interface DiagnosticResultRepo extends JpaRepository<DiagnosticResult, Lo
     @Modifying
     @Query("UPDATE DiagnosticResult r SET r.vanSerialNo = r.id WHERE r.id = :id")
     void updateVanSerialNo(@Param("id") Long id);
+
+    // Saves the result and sets vanSerialNo = id in one transaction, so van sync never sees a committed
+    // result row with vanSerialNo NULL. See DiagnosticOrderRepo.saveWithVanSerialNo for the full reason.
+    @Transactional
+    default DiagnosticResult saveWithVanSerialNo(DiagnosticResult result) {
+        DiagnosticResult saved = save(result);
+        if (saved.getVanSerialNo() == null) {
+            updateVanSerialNo(saved.getId());
+            saved.setVanSerialNo(saved.getId()); // bulk UPDATE doesn't touch the in-memory entity
+        }
+        return saved;
+    }
 }

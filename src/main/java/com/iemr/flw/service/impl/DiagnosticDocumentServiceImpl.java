@@ -109,8 +109,8 @@ public class DiagnosticDocumentServiceImpl implements DiagnosticDocumentService 
         document.setOriginalFileName(asset.getFileName());
         document.setCreatedBy("SYSTEM");
         try {
-            diagnosticDocumentRepo.save(document);
-            if (document.getVanSerialNo() == null) diagnosticDocumentRepo.updateVanSerialNo(document.getId());
+            // Save and vanSerialNo commit together, so van sync never sees this row with vanSerialNo NULL.
+            diagnosticDocumentRepo.saveWithVanSerialNo(document);
         } catch (DataIntegrityViolationException dive) {
             logger.warn("Lost document upsert race for externalOrderId={}, documentType={}", externalOrderId, documentType);
             return;
