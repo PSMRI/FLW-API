@@ -52,7 +52,8 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
     // with FIND_IN_SET — FIND_IN_SET can't use an index on either side, so it
     // forces a full scan of the master table per call (measured: ~60s against
     // m_nikshay_facility's 300k+ rows for a user with ~100 mapped facilities).
-    @Query(value = "SELECT usrm.NikshayTUID, usrm.NikshayFacilityID, usrm.DistrictID " +
+    // VanID = the user's Stop TB team (AMM-2496: Admin sets the same VanID on all the user's Stop TB rows).
+    @Query(value = "SELECT usrm.NikshayTUID, usrm.NikshayFacilityID, usrm.DistrictID, usrm.VanID " +
             "FROM m_userservicerolemapping usrm " +
             "WHERE usrm.UserID = :userId AND usrm.ProviderServiceMapID = :providerServiceMapId " +
             "AND usrm.Deleted = false AND usrm.NikshayTUID IS NOT NULL",
@@ -65,10 +66,12 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
             "WHERE usrm.UserID = :userId AND usrm.Deleted = false", nativeQuery = true)
     List<Object[]> getServiceVillageRows(@Param("userId") Integer userId);
 
-    @Query(value = "SELECT NikshayTUID, TUName FROM m_nikshay_tu WHERE NikshayTUID IN (:ids)", nativeQuery = true)
+    // {NikshayTUID, TUName, NikshayCode}
+    @Query(value = "SELECT NikshayTUID, TUName, NikshayCode FROM m_nikshay_tu WHERE NikshayTUID IN (:ids)", nativeQuery = true)
     List<Object[]> findNikshayTuNames(@Param("ids") java.util.Collection<Integer> ids);
 
-    @Query(value = "SELECT NikshayFacilityID, FacilityName FROM m_nikshay_facility WHERE NikshayFacilityID IN (:ids)", nativeQuery = true)
+    // {NikshayFacilityID, FacilityName, NikshayCode, FacilityCode}
+    @Query(value = "SELECT NikshayFacilityID, FacilityName, NikshayCode, FacilityCode FROM m_nikshay_facility WHERE NikshayFacilityID IN (:ids)", nativeQuery = true)
     List<Object[]> findNikshayFacilityNames(@Param("ids") java.util.Collection<Integer> ids);
 
     // DistrictID on m_userservicerolemapping is a Nikshay district ID, not an
@@ -78,6 +81,10 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
     // district happens to share that same numeric ID by coincidence.
     @Query(value = "SELECT DistrictName FROM m_nikshay_district WHERE NikshayDistrictID = :id", nativeQuery = true)
     String findNikshayDistrictName(@Param("id") Integer id);
+
+    // Stop TB team name (team = MMU van, AMM-2496). Primary-key lookup.
+    @Query(value = "SELECT VanName FROM m_van WHERE VanID = :vanId", nativeQuery = true)
+    String findVanName(@Param("vanId") Integer vanId);
 
     @Query("SELECT new com.iemr.flw.dto.iemr.UserServiceRoleDTO(u.userId, u.name, u.userName, u.stateId, u.stateName, u.workingDistrictId," +
             "u.workingDistrictName, u.serviceProviderId, u.roleId, u.roleName, u.providerServiceMapId, u.blockid, u.blockname, u.villageid, " +

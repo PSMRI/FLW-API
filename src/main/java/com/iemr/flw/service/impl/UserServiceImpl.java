@@ -79,23 +79,37 @@ public class UserServiceImpl implements UserService {
             TreeSet<Integer> tuIds = new TreeSet<>();
             TreeSet<Integer> facilityIds = new TreeSet<>();
             Integer districtId = null;
+            Integer teamId = null;
             for (Object[] row : nikshayRows) {
                 addCsvIds((String) row[0], tuIds);
                 addCsvIds((String) row[1], facilityIds);
                 if (districtId == null && row[2] != null) {
                     districtId = ((Number) row[2]).intValue();
                 }
+                if (teamId == null && row.length > 3 && row[3] != null) {
+                    teamId = ((Number) row[3]).intValue();
+                }
             }
 
-            Map<Integer, String> tuNames = tuIds.isEmpty() ? Map.of()
-                    : toIdNameMap(userServiceRoleRepo.findNikshayTuNames(tuIds));
-            Map<Integer, String> facilityNames = facilityIds.isEmpty() ? Map.of()
-                    : toIdNameMap(userServiceRoleRepo.findNikshayFacilityNames(facilityIds));
+            // One indexed primary-key IN lookup per master table (a user can have
+            // hundreds of facilities; the masters hold lakhs of rows).
+            Map<Integer, Object[]> tuRows = tuIds.isEmpty() ? Map.of()
+                    : toIdRowMap(userServiceRoleRepo.findNikshayTuNames(tuIds));
+            Map<Integer, Object[]> facilityRows = facilityIds.isEmpty() ? Map.of()
+                    : toIdRowMap(userServiceRoleRepo.findNikshayFacilityNames(facilityIds));
 
             userRole.setTuId(joinIds(tuIds));
-            userRole.setTuName(joinNames(tuIds, tuNames));
+            userRole.setTuName(joinColumn(tuIds, tuRows, 1));
+            userRole.setTuCode(joinColumn(tuIds, tuRows, 2));
             userRole.setHealthFacilityId(joinIds(facilityIds));
-            userRole.setHealthFacilityName(joinNames(facilityIds, facilityNames));
+            userRole.setHealthFacilityName(joinColumn(facilityIds, facilityRows, 1));
+            userRole.setHealthFacilityNikshayCode(joinColumn(facilityIds, facilityRows, 2));
+            userRole.setHealthFacilityCode(joinColumn(facilityIds, facilityRows, 3));
+
+            if (teamId != null) {
+                userRole.setTeamId(teamId);
+                userRole.setTeamName(userServiceRoleRepo.findVanName(teamId));
+            }
 
             // Stop TB never sets WorkingLocationID, so workingDistrictId/Name
             // (derived from it) are always null. DistrictID sits directly on
@@ -180,10 +194,10 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private Map<Integer, String> toIdNameMap(List<Object[]> rows) {
-        Map<Integer, String> map = new HashMap<>();
+    private Map<Integer, Object[]> toIdRowMap(List<Object[]> rows) {
+        Map<Integer, Object[]> map = new HashMap<>();
         for (Object[] row : rows) {
-            map.put(((Number) row[0]).intValue(), (String) row[1]);
+            map.put(((Number) row[0]).intValue(), row);
         }
         return map;
     }
@@ -192,7 +206,13 @@ public class UserServiceImpl implements UserService {
         return ids.stream().map(String::valueOf).collect(Collectors.joining(","));
     }
 
-    private String joinNames(Collection<Integer> ids, Map<Integer, String> names) {
-        return ids.stream().map(id -> names.getOrDefault(id, "")).collect(Collectors.joining(","));
+    // Joins one column of the looked-up rows in the same order as the IDs, so the lists stay parallel;
+    // "" for a missing row or a null value.
+    private String joinColumn(Collection<Integer> ids, Map<Integer, Object[]> rows, int column) {
+        return ids.stream().map(id -> {
+            Object[] row = rows.get(id);
+            Object value = row == null || row.length <= column ? null : row[column];
+            return value == null ? "" : value.toString().trim();
+        }).collect(Collectors.joining(","));
     }
 }

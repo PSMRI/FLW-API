@@ -35,6 +35,15 @@ public class UserServiceRoleDTO {
     private String healthFacilityId;
     private String healthFacilityName;
 
+    // AMM-2548 — codes, in the same order as tuId / healthFacilityId (comma-separated, "" when blank).
+    private String tuCode;
+    private String healthFacilityNikshayCode;
+    private String healthFacilityCode;
+
+    // AMM-2548 — the user's Stop TB team (an MMU van, mapped in Admin work location mapping). Null when no team.
+    private Integer teamId;
+    private String teamName;
+
     public UserServiceRoleDTO(Integer userId, String name, String userName, Integer stateId, String stateName, Integer workingDistrictId, String workingDistrictName, Short serviceProviderId, Integer roleId, String roleName, Integer providerServiceMapId, Integer blockId, String blockName, String villageId, String villageName) {
         this.userId = userId;
         this.name = name;
