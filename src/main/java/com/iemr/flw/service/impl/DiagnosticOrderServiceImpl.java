@@ -1,5 +1,6 @@
 package com.iemr.flw.service.impl;
 
+import com.iemr.flw.config.ProductionEnvironment;
 import com.iemr.flw.domain.iemr.BenVisitDetail;
 import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.domain.iemr.DiagnosticResult;
@@ -39,7 +40,6 @@ import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -111,8 +111,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     private BeneficiaryRepo beneficiaryRepo;
 
     // IS_PRODUCTION env variable (is.production in common_*.properties): no vendor polling on production.
-    @Value("${is.production:false}")
-    private boolean isProduction;
+    @Autowired
+    private ProductionEnvironment productionEnvironment;
 
     @Autowired
     private TBStopVisitService tbStopVisitService;
@@ -1002,7 +1002,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     @Override
     public DiagnosticOrderResultDto triggerManualPoll(Long beneficiaryId, String orderType, Long visitCode) throws Exception {
-        if (isProduction) {
+        if (productionEnvironment.isProduction()) {
             throw new IllegalStateException("Polling is disabled on production");
         }
         // Locked, and the order read inside the lock, so this can't interleave with a manual entry or a
