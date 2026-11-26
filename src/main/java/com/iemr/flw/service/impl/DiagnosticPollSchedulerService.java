@@ -1,6 +1,6 @@
 package com.iemr.flw.service.impl;
 
-import com.iemr.flw.config.ProductionEnvironment;
+import com.iemr.flw.config.DiagnosticPollSettings;
 import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.integration.provider.DiagnosticProviderFactory;
 import com.iemr.flw.masterEnum.DiagnosticOrderType;
@@ -34,21 +34,19 @@ public class DiagnosticPollSchedulerService {
     @Autowired
     private DiagnosticProviderFactory providerFactory;
 
-    // IS_PRODUCTION env variable (is.production in common_*.properties). Polling never runs on
-    // production: every vendor-polling job below returns straight away when this is true.
     @Autowired
-    private ProductionEnvironment productionEnvironment;
+    private DiagnosticPollSettings diagnosticPollSettings;
 
     @Scheduled(fixedDelayString = "${diagnostic.poll.xray.tick-ms:15000}")
     public void pollXrayOrders() {
-        if (productionEnvironment.isProduction()) return; // polling is disabled on production
+        if (!diagnosticPollSettings.isPollEnabled()) return; // polling is disabled on this server
         pollDueOrders("XRAY", DiagnosticOrderType.XRAY_CHEST,
                 diagnosticOrderRepo::findXrayDueForPoll);
     }
 
     @Scheduled(fixedDelayString = "${diagnostic.poll.truenat.tick-ms:60000}")
     public void pollTrueNatOrders() {
-        if (productionEnvironment.isProduction()) return; // polling is disabled on production
+        if (!diagnosticPollSettings.isPollEnabled()) return; // polling is disabled on this server
         pollDueOrders("TrueNat", DiagnosticOrderType.MTB,
                 diagnosticOrderRepo::findTrueNatDueForPoll);
     }
@@ -88,7 +86,7 @@ public class DiagnosticPollSchedulerService {
     // one where they differ. This job runs at application startup and then every hour.
     @Scheduled(fixedDelayString = "${diagnostic.documents.backfill-interval-ms:3600000}")
     public void fetchMissingDocuments() {
-        if (productionEnvironment.isProduction()) return; // vendor document polling is disabled on production
+        if (!diagnosticPollSettings.isPollEnabled()) return; // vendor document polling is disabled on this server
         List<DiagnosticOrder> candidates = diagnosticOrderRepo.findOrdersNeedingDocuments();
         logger.info("Document back-fill tick: {} order(s) needing documents", candidates.size());
         if (candidates.isEmpty()) return;

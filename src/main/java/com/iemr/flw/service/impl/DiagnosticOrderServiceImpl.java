@@ -1,6 +1,6 @@
 package com.iemr.flw.service.impl;
 
-import com.iemr.flw.config.ProductionEnvironment;
+import com.iemr.flw.config.DiagnosticPollSettings;
 import com.iemr.flw.domain.iemr.BenVisitDetail;
 import com.iemr.flw.domain.iemr.DiagnosticOrder;
 import com.iemr.flw.domain.iemr.DiagnosticResult;
@@ -110,9 +110,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     @Autowired
     private BeneficiaryRepo beneficiaryRepo;
 
-    // IS_PRODUCTION env variable (is.production in common_*.properties): no vendor polling on production.
     @Autowired
-    private ProductionEnvironment productionEnvironment;
+    private DiagnosticPollSettings diagnosticPollSettings;
 
     @Autowired
     private TBStopVisitService tbStopVisitService;
@@ -1002,8 +1001,8 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
 
     @Override
     public DiagnosticOrderResultDto triggerManualPoll(Long beneficiaryId, String orderType, Long visitCode) throws Exception {
-        if (productionEnvironment.isProduction()) {
-            throw new IllegalStateException("Polling is disabled on production");
+        if (!diagnosticPollSettings.isPollEnabled()) {
+            throw new IllegalStateException("Diagnostic polling is disabled on this server (diagnostic.poll.enabled=false)");
         }
         // Locked, and the order read inside the lock, so this can't interleave with a manual entry or a
         // scheduler poll for the same beneficiary and save over what they just wrote.
