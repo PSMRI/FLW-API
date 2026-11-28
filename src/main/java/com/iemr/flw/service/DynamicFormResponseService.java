@@ -69,11 +69,11 @@ public interface DynamicFormResponseService {
     List<FormResponseDTO> submitBulk(List<FormResponseRequest> requests, String jwtToken);
 
     /**
-     * Returns SUBMITTED responses for the given form IDs whose {@code lastFollowUpAt}
+     * Returns SUBMITTED responses for the given forms (by formUuid) whose {@code lastFollowUpAt}
      * falls within the 24-hour window that started exactly {@code delayDays} days ago.
      * Used by the follow-up notification scheduler.
      */
-    List<FormResponseDTO> findPendingFollowUps(List<Long> formIds, int delayDays);
+    List<FormResponseDTO> findPendingFollowUps(List<String> formUuids, int delayDays);
 
     /**
      * Returns per-beneficiary detail (outcome plus section-fill progress) for COMPLETE and REFUSED

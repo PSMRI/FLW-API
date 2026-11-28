@@ -46,6 +46,10 @@ public interface FormVersionRepo extends JpaRepository<FormVersion, Long> {
 
     Optional<FormVersion> findByDynamicForm_FormUuidAndIsLatest(String formUuid, boolean b);
 
+    /** The version a response was captured against. Newest row first in case a machine holds duplicates. */
+    Optional<FormVersion> findFirstByDynamicForm_FormUuidAndVersionNumberOrderByVersionIdDesc(String formUuid,
+                                                                                             Integer versionNumber);
+
     @Query("SELECT new com.iemr.flw.dto.iemr.LatestFormVersionDTO(f.formId, f.formUuid, f.formName, v.versionId, v.versionNumber) " +
            "FROM FormVersion v JOIN v.dynamicForm f " +
            "WHERE v.isLatest = true AND f.isActive = true " +

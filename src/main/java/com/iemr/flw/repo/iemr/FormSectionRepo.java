@@ -56,10 +56,11 @@ public interface FormSectionRepo extends JpaRepository<FormSection, Long> {
     void shiftDisplayOrder(@Param("versionId") Long versionId, @Param("from") int from,
                            @Param("to") int to, @Param("delta") int delta);
 
-    @Query("SELECT fs.formVersion.versionId, COUNT(fs) FROM FormSection fs " +
-           "WHERE fs.formVersion.versionId IN :versionIds " +
+    /** versionNumber → number of sections of that phase, for every version of the form. */
+    @Query("SELECT fs.formVersion.versionNumber, COUNT(fs) FROM FormSection fs " +
+           "WHERE fs.formVersion.dynamicForm.formUuid = :formUuid " +
            "AND fs.sectionPhase = :sectionPhase " +
-           "GROUP BY fs.formVersion.versionId")
-    List<Object[]> countByFormVersion_VersionIdInAndSectionPhase(@Param("versionIds") Collection<Long> versionIds,
-                                                                  @Param("sectionPhase") SectionPhase sectionPhase);
+           "GROUP BY fs.formVersion.versionNumber")
+    List<Object[]> countByFormUuidAndSectionPhaseGroupByVersionNumber(@Param("formUuid") String formUuid,
+                                                                      @Param("sectionPhase") SectionPhase sectionPhase);
 }

@@ -37,7 +37,6 @@ import com.iemr.flw.dto.iemr.SectionAnswerRequest;
 import com.iemr.flw.dto.iemr.SectionResponseDTO;
 import com.iemr.flw.domain.iemr.DynamicForm;
 import com.iemr.flw.masterEnum.FormResponseStatus;
-import com.iemr.flw.masterEnum.FormResponseStatus;
 import com.iemr.flw.masterEnum.FormType;
 import com.iemr.flw.repo.iemr.DynamicFormRepo;
 import com.iemr.flw.repo.iemr.FormResponseRepo;
@@ -51,6 +50,7 @@ import com.iemr.flw.masterEnum.QuestionType;
 import com.iemr.flw.masterEnum.SectionPhase;
 import com.iemr.flw.service.CampConfigService;
 import com.iemr.flw.service.DynamicFormResponseService;
+import com.iemr.flw.service.impl.ResponseDefinitionResolver.VersionDefinition;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.exception.IEMRException;
 import lombok.RequiredArgsConstructor;
@@ -62,11 +62,11 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -99,6 +99,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     private final CampConfigService campConfigService;
     private final ConsentRefusalEvaluator consentRefusalEvaluator;
     private final ConditionalAnswerPruner conditionalAnswerPruner;
+    private final ResponseDefinitionResolver definitionResolver;
 
     @Override
     @Transactional
@@ -136,11 +137,10 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         Integer parkingPlaceID = campConfigService.getParkingPlaceID();
 
         FormVersion version = resolveLatestVersion(request.getFormUuid());
-        Long formId = version.getDynamicForm().getFormId();
         Timestamp now = new Timestamp(System.currentTimeMillis());
 
-        List<FormResponse> existing =
-                formResponseRepo.findByBeneficiaryIdAndVersionId(request.getBeneficiaryId(), version.getVersionId());
+        List<FormResponse> existing = formResponseRepo.findByBeneficiaryIdAndFormUuidAndVersionNumber(
+                request.getBeneficiaryId(), request.getFormUuid(), version.getVersionNumber());
         FormResponse formResponse = existing.isEmpty()
                 ? createFormResponse(request, version, FormResponseStatus.SUBMITTED.name(), now, vanID, parkingPlaceID)
                 : existing.get(0);
@@ -162,27 +162,16 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
             throw new IllegalArgumentException(
                     "At least one of beneficiaryId, villageId, or providerServiceMapId must be provided");
         }
-        FormVersion version = resolveLatestVersion(formUuid);
-        Long formId = version.getDynamicForm().getFormId();
+        resolveLatestVersion(formUuid); // fails fast for an unknown form
 
         List<FormResponse> responses = beneficiaryId != null
-                ? formResponseRepo.findByBeneficiaryIdAndFormId(beneficiaryId, formId)
-                : formResponseRepo.findByFormIdFiltered(formId, villageId, providerServiceMapId);
+                ? formResponseRepo.findByBeneficiaryIdAndFormUuid(beneficiaryId, formUuid)
+                : formResponseRepo.findByFormUuidFiltered(formUuid, villageId, providerServiceMapId);
 
-        // Responses may belong to older versions than the latest one resolved above.
-        Set<Long> versionIds = responses.stream()
-                .map(FormResponse::getVersionId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-        Map<Long, Integer> versionNumberById = formVersionRepo.findAllById(versionIds).stream()
-                .collect(Collectors.toMap(FormVersion::getVersionId, FormVersion::getVersionNumber));
-
+        // Responses may belong to older versions than the latest one; each is read against its own.
+        Map<String, VersionDefinition> definitions = new HashMap<>();
         return responses.stream()
-                .map(r -> {
-                    FormResponseDTO dto = buildFormResponseDTO(r, loadSectionResponseDTOs(r.getResponseId()));
-                    dto.setVersionNumber(versionNumberById.get(r.getVersionId()));
-                    return dto;
-                })
+                .map(r -> toDTO(r, definitions))
                 .collect(Collectors.toList());
     }
 
@@ -191,7 +180,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     public FormResponseDTO getResponseById(Long responseId) {
         FormResponse formResponse = formResponseRepo.findById(responseId)
                 .orElseThrow(() -> new NoSuchElementException("FormResponse not found: " + responseId));
-        return buildFormResponseDTO(formResponse, loadSectionResponseDTOs(responseId));
+        return toDTO(formResponse, new HashMap<>());
     }
 
     // ---- private helpers ----
@@ -213,8 +202,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
         FormResponse formResponse = FormResponse.builder()
                 .beneficiaryId(request.getBeneficiaryId())
-                .formId(version.getDynamicForm().getFormId())
-                .versionId(version.getVersionId())
+                .formUuid(version.getDynamicForm().getFormUuid())
+                .versionNumber(version.getVersionNumber())
                 .officerId(request.getOfficerId())
                 .status(status)
                 .submittedAt(submittedAt)
@@ -227,6 +216,9 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 .build();
         formResponse = formResponseRepo.save(formResponse);
         formResponseRepo.updateVanSerialNo(formResponse.getResponseId(), formResponse.getResponseId());
+        // Keep the managed entity in step: a later save/flush of it (e.g. completeForm) would
+        // otherwise write vanSerialNo back to NULL.
+        formResponse.setVanSerialNo(formResponse.getResponseId());
         return formResponse;
     }
 
@@ -265,8 +257,6 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 .collect(Collectors.toMap(SectionQuestion::getQuestionId, SectionQuestion::getQuestionUuid));
         List<QuestionOption> allOptions =
                 questionOptionRepo.findByQuestionIdsOrderByDisplayOrderAsc(questionIds);
-        Map<Long, QuestionOption> optionById = allOptions.stream()
-                .collect(Collectors.toMap(QuestionOption::getOptionId, Function.identity()));
 
         // Map: questionId → (optionValue → QuestionOption)
         Map<Long, Map<String, QuestionOption>> optionsByQuestion = allOptions.stream()
@@ -276,6 +266,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
         Map<Long, Set<Long>> childrenByParent =
                 conditionalAnswerPruner.loadChildrenByParent(version.getVersionId());
+        VersionDefinition responseDefinition = definitionResolver.load(
+                formResponse.getFormUuid(), formResponse.getVersionNumber(), new HashMap<>());
 
         List<SectionResponseDTO> sectionDTOs = new ArrayList<>();
         for (SectionAnswerRequest sectionReq : request.getSections()) {
@@ -295,7 +287,7 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                             section, sectionReq.getAnswers(), SECTION_STATUS_DONE, SECTION_STATUS_REFUSED)
                     : SECTION_STATUS_DONE;
             Optional<SectionResponse> sectionResponseOpt = upsertSectionResponse(
-                    formResponse.getResponseId(), section, actor, desiredStatus, vanID, parkingPlaceID);
+                    formResponse, section, actor, desiredStatus, vanID, parkingPlaceID);
             if (sectionResponseOpt.isEmpty()) {
                 continue;
             }
@@ -310,11 +302,12 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                     questionsBySection.getOrDefault(section.getSectionId(), Map.of());
 
             List<QuestionResponse> questionResponses = processAnswers(
-                    sectionResponse.getSectionResponseId(),
+                    sectionResponse,
                     sectionReq.getAnswers(),
                     questionMap,
                     optionsByQuestion,
                     childrenByParent,
+                    questionUuidById,
                     actor,
                     vanID,
                     parkingPlaceID);
@@ -324,17 +317,18 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 questionResponseRepo.updateVanSerialNo(qr.getQuestionResponseId(), qr.getQuestionResponseId());
             }
 
-            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, section, questionResponses, questionUuidById, optionById));
+            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, questionResponses, responseDefinition));
         }
 
-        return buildFormResponseDTO(formResponse, sectionDTOs);
+        return buildFormResponseDTO(formResponse, responseDefinition, sectionDTOs);
     }
 
     private Optional<SectionResponse> upsertSectionResponse(
-            Long responseId, FormSection section, String actor, String status, Integer vanID, Integer parkingPlaceID) {
+            FormResponse formResponse, FormSection section, String actor, String status, Integer vanID, Integer parkingPlaceID) {
+        Long responseId = formResponse.getResponseId();
         if (section.getSectionPhase() != SectionPhase.POST_SUBMIT) {
             Optional<SectionResponse> existing =
-                    sectionResponseRepo.findByResponseIdAndSectionId(responseId, section.getSectionId());
+                    sectionResponseRepo.findByResponseUuidAndSectionUuid(formResponse.getResponseUuid(), section.getSectionUuid());
             if (existing.isPresent()) {
                 if (Boolean.FALSE.equals(section.getIsEditable())) {
                     log.info("Section '{}' is not editable — skipping update for responseId={}",
@@ -355,7 +349,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         // follow-up visits possible; the read path already returns every row for a section.
         SectionResponse sr = SectionResponse.builder()
                 .responseId(responseId)
-                .sectionId(section.getSectionId())
+                .responseUuid(formResponse.getResponseUuid())
+                .sectionUuid(section.getSectionUuid())
                 .status(status)
                 .savedAt(new Timestamp(System.currentTimeMillis()))
                 .createdBy(actor)
@@ -369,11 +364,12 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     }
 
     private List<QuestionResponse> processAnswers(
-            Long sectionResponseId,
+            SectionResponse sectionResponse,
             List<QuestionAnswerRequest> answers,
             Map<String, SectionQuestion> questionMap,
             Map<Long, Map<String, QuestionOption>> optionsByQuestion,
             Map<Long, Set<Long>> childrenByParent,
+            Map<Long, String> questionUuidById,
             String actor,
             Integer vanID,
             Integer parkingPlaceID) {
@@ -381,8 +377,9 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         // Pass 1: clear old answers of every received question and its SHOW_QUESTION descendants,
         // so children hidden by an edited parent don't keep stale answers. Done up-front so a
         // parent listed after its child can't wipe the child's freshly inserted answer.
-        conditionalAnswerPruner.deleteWithDescendants(
-                sectionResponseId, answeredQuestionIds(answers, questionMap), childrenByParent);
+        Long sectionResponseId = sectionResponse.getSectionResponseId();
+        conditionalAnswerPruner.deleteWithDescendants(sectionResponse.getSectionResponseUuid(),
+                answeredQuestionIds(answers, questionMap), childrenByParent, questionUuidById);
 
         // Pass 2: insert the received answers
         List<QuestionResponse> results = new ArrayList<>();
@@ -411,8 +408,9 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                             optionsByQuestion, questionId, answer.getOptionValue(), answer.getQuestionUuid());
                     results.add(QuestionResponse.builder()
                             .sectionResponseId(sectionResponseId)
-                            .questionId(questionId)
-                            .optionId(opt != null ? opt.getOptionId() : null)
+                            .sectionResponseUuid(sectionResponse.getSectionResponseUuid())
+                            .questionUuid(question.getQuestionUuid())
+                            .optionUuid(opt != null ? opt.getOptionUuid() : null)
                             .createdBy(actor)
                             .updatedBy(actor)
                             .vanID(vanID)
@@ -427,8 +425,9 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                                 optionsByQuestion, questionId, val, answer.getQuestionUuid());
                         results.add(QuestionResponse.builder()
                                 .sectionResponseId(sectionResponseId)
-                                .questionId(questionId)
-                                .optionId(opt != null ? opt.getOptionId() : null)
+                                .sectionResponseUuid(sectionResponse.getSectionResponseUuid())
+                                .questionUuid(question.getQuestionUuid())
+                                .optionUuid(opt != null ? opt.getOptionUuid() : null)
                                 .createdBy(actor)
                                 .updatedBy(actor)
                                 .vanID(vanID)
@@ -443,7 +442,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                         : answer.getOptionValue();
                 results.add(QuestionResponse.builder()
                         .sectionResponseId(sectionResponseId)
-                        .questionId(questionId)
+                        .sectionResponseUuid(sectionResponse.getSectionResponseUuid())
+                        .questionUuid(question.getQuestionUuid())
                         .answerText(value)
                         .createdBy(actor)
                         .updatedBy(actor)
@@ -482,71 +482,66 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     // ---- read helpers ----
 
     @Override
+    @Transactional(readOnly = true)
     public Map<Long, FormResponseDTO> getResponsesByIds(Collection<Long> responseIds) {
-        List<FormResponse> responses = formResponseRepo.findAllById(responseIds);
-        Set<Long> versionIds = responses.stream()
-                .map(FormResponse::getVersionId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-        Map<Long, Integer> versionNumberById = formVersionRepo.findAllById(versionIds).stream()
-                .collect(Collectors.toMap(FormVersion::getVersionId, FormVersion::getVersionNumber));
+        Map<String, VersionDefinition> definitions = new HashMap<>();
         Map<Long, FormResponseDTO> out = new LinkedHashMap<>();
-        for (FormResponse r : responses) {
-            FormResponseDTO dto = buildFormResponseDTO(r, loadSectionResponseDTOs(r.getResponseId()));
-            dto.setVersionNumber(versionNumberById.get(r.getVersionId()));
-            out.put(r.getResponseId(), dto);
+        for (FormResponse r : formResponseRepo.findAllById(responseIds)) {
+            out.put(r.getResponseId(), toDTO(r, definitions));
         }
         return out;
     }
 
-    private List<SectionResponseDTO> loadSectionResponseDTOs(Long responseId) {
-        List<SectionResponse> sections = sectionResponseRepo.findByResponseId(responseId);
+    /** Full DTO of a stored response, read against the form version it was captured on. */
+    private FormResponseDTO toDTO(FormResponse r, Map<String, VersionDefinition> definitions) {
+        VersionDefinition definition = definitionResolver.load(r.getFormUuid(), r.getVersionNumber(), definitions);
+        if (definition == null) {
+            log.warn("Form {} version {} not found on this machine; responseId={} returned without definition IDs",
+                    r.getFormUuid(), r.getVersionNumber(), r.getResponseId());
+        }
+        return buildFormResponseDTO(r, definition, loadSectionResponseDTOs(r.getResponseUuid(), definition));
+    }
+
+    private List<SectionResponseDTO> loadSectionResponseDTOs(String responseUuid, VersionDefinition definition) {
+        if (responseUuid == null) {
+            return List.of();
+        }
+        List<SectionResponse> sections = sectionResponseRepo.findByResponseUuid(responseUuid);
         if (sections.isEmpty()) {
             return List.of();
         }
-        Set<Long> srIds = sections.stream()
-                .map(SectionResponse::getSectionResponseId)
+        Set<String> srUuids = sections.stream()
+                .map(SectionResponse::getSectionResponseUuid)
+                .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toSet());
-        List<QuestionResponse> allAnswers =
-                questionResponseRepo.findBySectionResponseIdIn(srIds);
-        Map<Long, List<QuestionResponse>> answersBySectionResponse = allAnswers.stream()
-                .collect(Collectors.groupingBy(QuestionResponse::getSectionResponseId));
-
-        Set<Long> sectionIds = sections.stream()
-                .map(SectionResponse::getSectionId)
-                .collect(Collectors.toSet());
-        Map<Long, FormSection> sectionById = formSectionRepo.findAllById(sectionIds).stream()
-                .collect(Collectors.toMap(FormSection::getSectionId, Function.identity()));
-
-        // findAllById includes unlinked (isActive=false) questions, so historical answers still resolve their uuid.
-        Set<Long> questionIds = allAnswers.stream()
-                .map(QuestionResponse::getQuestionId)
-                .collect(Collectors.toSet());
-        Map<Long, String> questionUuidById = sectionQuestionRepo.findAllById(questionIds).stream()
-                .collect(Collectors.toMap(SectionQuestion::getQuestionId, SectionQuestion::getQuestionUuid));
-        Set<Long> optionIds = allAnswers.stream()
-                .map(QuestionResponse::getOptionId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-        Map<Long, QuestionOption> optionById = questionOptionRepo.findAllById(optionIds).stream()
-                .collect(Collectors.toMap(QuestionOption::getOptionId, Function.identity()));
+        Map<String, List<QuestionResponse>> answersBySectionResponse = srUuids.isEmpty() ? Map.of()
+                : questionResponseRepo.findBySectionResponseUuidIn(srUuids).stream()
+                        .collect(Collectors.groupingBy(QuestionResponse::getSectionResponseUuid));
 
         return sections.stream()
                 .map(sr -> buildSectionResponseDTO(
                         sr,
-                        sectionById.get(sr.getSectionId()),
-                        answersBySectionResponse.getOrDefault(sr.getSectionResponseId(), List.of()),
-                        questionUuidById,
-                        optionById))
+                        sr.getSectionResponseUuid() == null ? List.of()
+                                : answersBySectionResponse.getOrDefault(sr.getSectionResponseUuid(), List.of()),
+                        definition))
                 .collect(Collectors.toList());
     }
 
-    private FormResponseDTO buildFormResponseDTO(FormResponse r, List<SectionResponseDTO> sections) {
+    /**
+     * The numeric formId / versionId in the DTO are this machine's IDs, looked up by UUID, so clients
+     * keep receiving them; null when the definition is not on this machine.
+     */
+    private FormResponseDTO buildFormResponseDTO(FormResponse r, VersionDefinition definition,
+                                                 List<SectionResponseDTO> sections) {
+        FormVersion version = definition != null ? definition.version() : null;
         return FormResponseDTO.builder()
                 .responseId(r.getResponseId())
+                .responseUuid(r.getResponseUuid())
                 .beneficiaryId(r.getBeneficiaryId())
-                .formId(r.getFormId())
-                .versionId(r.getVersionId())
+                .formUuid(r.getFormUuid())
+                .formId(version != null ? version.getDynamicForm().getFormId() : null)
+                .versionId(version != null ? version.getVersionId() : null)
+                .versionNumber(r.getVersionNumber())
                 .officerId(r.getOfficerId())
                 .status(r.getStatus())
                 .createdBy(r.getCreatedBy())
@@ -561,25 +556,28 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
     }
 
     private SectionResponseDTO buildSectionResponseDTO(
-            SectionResponse sr, FormSection section, List<QuestionResponse> answers,
-            Map<Long, String> questionUuidById, Map<Long, QuestionOption> optionById) {
+            SectionResponse sr, List<QuestionResponse> answers, VersionDefinition definition) {
         List<QuestionResponseDTO> answerDTOs = answers.stream()
-                .map(a -> QuestionResponseDTO.builder()
-                        .questionResponseId(a.getQuestionResponseId())
-                        .questionId(a.getQuestionId())
-                        .questionUuid(questionUuidById.get(a.getQuestionId()))
-                        .optionId(a.getOptionId())
-                        .optionValue(optionById.containsKey(a.getOptionId())
-                                ? optionById.get(a.getOptionId()).getOptionValue() : null)
-                        .optionUuid(optionById.containsKey(a.getOptionId())
-                                ? optionById.get(a.getOptionId()).getOptionUuid() : null)
-                        .answerText(a.getAnswerText())
-                        .build())
+                .map(a -> {
+                    SectionQuestion question = definition != null ? definition.question(a.getQuestionUuid()) : null;
+                    QuestionOption option = definition != null
+                            ? definition.option(a.getQuestionUuid(), a.getOptionUuid()) : null;
+                    return QuestionResponseDTO.builder()
+                            .questionResponseId(a.getQuestionResponseId())
+                            .questionId(question != null ? question.getQuestionId() : null)
+                            .questionUuid(a.getQuestionUuid())
+                            .optionId(option != null ? option.getOptionId() : null)
+                            .optionValue(option != null ? option.getOptionValue() : null)
+                            .optionUuid(a.getOptionUuid())
+                            .answerText(a.getAnswerText())
+                            .build();
+                })
                 .collect(Collectors.toList());
+        FormSection section = definition != null ? definition.section(sr.getSectionUuid()) : null;
         return SectionResponseDTO.builder()
                 .sectionResponseId(sr.getSectionResponseId())
-                .sectionId(sr.getSectionId())
-                .sectionUuid(section != null ? section.getSectionUuid() : null)
+                .sectionId(section != null ? section.getSectionId() : null)
+                .sectionUuid(sr.getSectionUuid())
                 .isEditable(section != null ? section.getIsEditable() : null)
                 .status(sr.getStatus())
                 .savedAt(sr.getSavedAt())
@@ -604,16 +602,16 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
     @Override
     @Transactional(readOnly = true)
-    public List<FormResponseDTO> findPendingFollowUps(List<Long> formIds, int delayDays) {
-        if (formIds == null || formIds.isEmpty()) {
+    public List<FormResponseDTO> findPendingFollowUps(List<String> formUuids, int delayDays) {
+        if (formUuids == null || formUuids.isEmpty()) {
             return List.of();
         }
         LocalDate target = LocalDate.now().minusDays(delayDays);
         Timestamp windowStart = Timestamp.valueOf(target.atStartOfDay());
         Timestamp windowEnd   = Timestamp.valueOf(target.plusDays(1).atStartOfDay());
-        return formResponseRepo.findPendingFollowUps(formIds, windowStart, windowEnd)
+        return formResponseRepo.findPendingFollowUps(formUuids, windowStart, windowEnd)
                 .stream()
-                .map(r -> buildFormResponseDTO(r, List.of()))
+                .map(r -> buildFormResponseDTO(r, null, List.of()))
                 .collect(Collectors.toList());
     }
 
@@ -627,8 +625,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
 
         List<String> statuses = List.of(FormResponseStatus.COMPLETE.name(), FormResponseStatus.REFUSED.name(), FormResponseStatus.SUBMITTED.name());
         List<FormResponse> responses = (villageId != null || providerServiceMapId != null)
-                ? formResponseRepo.findByFormIdAndStatusInFiltered(form.getFormId(), statuses, villageId, providerServiceMapId)
-                : formResponseRepo.findByFormIdAndStatusIn(form.getFormId(), statuses);
+                ? formResponseRepo.findByFormUuidAndStatusInFiltered(form.getFormUuid(), statuses, villageId, providerServiceMapId)
+                : formResponseRepo.findByFormUuidAndStatusIn(form.getFormUuid(), statuses);
 
         if (responses.isEmpty()) {
             return List.of();
@@ -639,17 +637,16 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 .countByResponseIdInAndSectionPhase(responseIds, sectionPhase).stream()
                 .collect(Collectors.toMap(row -> (Long) row[0], row -> ((Number) row[1]).intValue()));
 
-        List<Long> versionIds = responses.stream().map(FormResponse::getVersionId).distinct().collect(Collectors.toList());
-        Map<Long, Integer> totalSectionsByVersionId = formSectionRepo
-                .countByFormVersion_VersionIdInAndSectionPhase(versionIds, sectionPhase).stream()
-                .collect(Collectors.toMap(row -> (Long) row[0], row -> ((Number) row[1]).intValue()));
+        Map<Integer, Integer> totalSectionsByVersionNumber = formSectionRepo
+                .countByFormUuidAndSectionPhaseGroupByVersionNumber(form.getFormUuid(), sectionPhase).stream()
+                .collect(Collectors.toMap(row -> (Integer) row[0], row -> ((Number) row[1]).intValue(), Integer::sum));
 
         return responses.stream()
                 .map(r -> CompletedBeneficiaryDetailDTO.builder()
                         .beneficiaryId(r.getBeneficiaryId())
                         .isRefused(FormResponseStatus.REFUSED.name().equals(r.getStatus()))
                         .sectionsFilled(sectionsFilledByResponseId.getOrDefault(r.getResponseId(), 0))
-                        .totalSections(totalSectionsByVersionId.getOrDefault(r.getVersionId(), 0))
+                        .totalSections(totalSectionsByVersionNumber.getOrDefault(r.getVersionNumber(), 0))
                         .build())
                 .collect(Collectors.toList());
     }

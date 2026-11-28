@@ -33,7 +33,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Clears answers before a re-save so that SHOW_QUESTION children hidden by an edited parent
@@ -62,15 +64,21 @@ public class ConditionalAnswerPruner {
     /**
      * Deletes, within one section response, the answers of the given questions plus all their
      * descendants. Must run before any new answers are inserted, otherwise a parent processed after
-     * its child would wipe the child's freshly inserted answer.
+     * its child would wipe the child's freshly inserted answer. The graph is walked by this machine's
+     * question IDs; answers are deleted by questionUuid, which is what answer rows store.
      */
-    public void deleteWithDescendants(Long sectionResponseId, Collection<Long> questionIds,
-            Map<Long, Set<Long>> childrenByParent) {
+    public void deleteWithDescendants(String sectionResponseUuid, Collection<Long> questionIds,
+            Map<Long, Set<Long>> childrenByParent, Map<Long, String> questionUuidById) {
         if (questionIds.isEmpty()) {
             return;
         }
-        Set<Long> toDelete = collectWithDescendants(questionIds, childrenByParent);
-        questionResponseRepo.deleteBySectionResponseIdAndQuestionIdIn(sectionResponseId, toDelete);
+        Set<String> toDelete = collectWithDescendants(questionIds, childrenByParent).stream()
+                .map(questionUuidById::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (!toDelete.isEmpty()) {
+            questionResponseRepo.deleteBySectionResponseUuidAndQuestionUuidIn(sectionResponseUuid, toDelete);
+        }
     }
 
     /** BFS over the SHOW_QUESTION graph; the visited set also guards against misconfigured cycles. */

@@ -63,4 +63,8 @@ public interface SectionQuestionRepo extends JpaRepository<SectionQuestion, Long
     @Query("SELECT q FROM SectionQuestion q JOIN FETCH q.formSection "
             + "WHERE q.formSection.sectionId IN :sectionIds AND q.isActive = true ORDER BY q.displayOrder ASC")
     List<SectionQuestion> findBySectionIdsOrderByDisplayOrderAsc(@Param("sectionIds") Collection<Long> sectionIds);
+
+    /** Every question of a version, inactive included, so stored answers still resolve by questionUuid. */
+    @Query("SELECT q FROM SectionQuestion q JOIN FETCH q.formSection s WHERE s.formVersion.versionId = :versionId")
+    List<SectionQuestion> findAllByVersionIdIncludingInactive(@Param("versionId") Long versionId);
 }
