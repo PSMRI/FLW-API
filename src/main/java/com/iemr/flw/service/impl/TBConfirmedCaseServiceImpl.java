@@ -37,7 +37,6 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
 
     private final TBConfirmedTreatmentRepository repository;
     private final FormResponseRepo formResponseRepo;
-    private final DynamicFormRepo dynamicFormRepo;
 
     @Autowired
     private IncentiveLogicService incentiveLogicService;
@@ -64,11 +63,9 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
     private TbTptFollowUpRepo tbTptFollowUpRepo;
 
     public TBConfirmedCaseServiceImpl(TBConfirmedTreatmentRepository repository,
-                                      FormResponseRepo formResponseRepo,
-                                      DynamicFormRepo dynamicFormRepo) {
+                                      FormResponseRepo formResponseRepo) {
         this.repository = repository;
         this.formResponseRepo = formResponseRepo;
-        this.dynamicFormRepo = dynamicFormRepo;
     }
 
     @Override
@@ -694,10 +691,8 @@ public class TBConfirmedCaseServiceImpl implements TBConfirmedCaseService {
         List<Long> benIds = dtoList.stream().map(TBConfirmedCaseDTO::getBenId).collect(Collectors.toList());
         Set<Long> counselledBenIds = Collections.emptySet();
         if (!benIds.isEmpty()) {
-            Optional<DynamicForm> counsellingForm = dynamicFormRepo.findByFormUuid(TbCounsellingV2FormSeeder.FORM_UUID);
-            if (counsellingForm.isPresent()) {
-                counselledBenIds = new HashSet<>(formResponseRepo.findCounselledBenIds(benIds, counsellingForm.get().getFormId(), "COMPLETE"));
-            }
+            counselledBenIds = new HashSet<>(formResponseRepo.findCounselledBenIds(
+                    benIds, TbCounsellingV2FormSeeder.FORM_UUID, "COMPLETE"));
         }
         final Set<Long> counselled = counselledBenIds;
         dtoList.forEach(dto -> dto.setCounselled(counselled.contains(dto.getBenId())));

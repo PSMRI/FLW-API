@@ -27,6 +27,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,9 +39,11 @@ import java.sql.Timestamp;
 /**
  * Stores one answer to a single question within a section response.
  * MCQ/CHECKBOX_MULTI/DROPDOWN_MULTI questions produce multiple rows (one per selected option) — no unique constraint on (sectionResponseId, questionId).
- * RADIO/DROPDOWN: optionId set, answerText null.
- * MCQ/CHECKBOX_MULTI/DROPDOWN_MULTI: optionId set per selection, answerText null.
- * TEXT/DATE/AUTO_FILL/NUMBER_PICKER: answerText set, optionId null.
+ * The question and option are referenced by UUID (questionUuid within the response's form version,
+ * optionUuid within the question); the legacy numeric questionId/optionId columns are no longer written.
+ * RADIO/DROPDOWN: optionUuid set, answerText null.
+ * MCQ/CHECKBOX_MULTI/DROPDOWN_MULTI: optionUuid set per selection, answerText null.
+ * TEXT/DATE/AUTO_FILL/NUMBER_PICKER: answerText set, optionUuid null.
  * DISPLAY: no row stored (read-only question type).
  *
  * @author Piramal Swasthya
@@ -58,15 +61,24 @@ public class QuestionResponse {
     @Column(name = "questionResponseId")
     private Long questionResponseId;
 
-    @Column(name = "sectionResponseId", nullable = false)
+    /** Identifies this row on every machine; generated when the row is created. */
+    @Column(name = "questionResponseUuid", length = 36, updatable = false)
+    private String questionResponseUuid;
+
+    /** This machine's parent ID, kept for local use (change-log triggers). Not uploaded: NULL on central rows. */
+    @Column(name = "sectionResponseId")
     private Long sectionResponseId;
 
-    @Column(name = "questionId", nullable = false)
-    private Long questionId;
+    /** The parent link that works on every machine; reads and deletes go through it. */
+    @Column(name = "sectionResponseUuid", length = 36)
+    private String sectionResponseUuid;
+
+    @Column(name = "questionUuid", length = 100)
+    private String questionUuid;
 
     /** Set for RADIO/DROPDOWN (one row) and MCQ/CHECKBOX_MULTI/DROPDOWN_MULTI (one row per selected option). */
-    @Column(name = "optionId")
-    private Long optionId;
+    @Column(name = "optionUuid", length = 255)
+    private String optionUuid;
 
     /** Set for TEXT, DATE, AUTO_FILL answers. */
     @Lob
@@ -101,4 +113,11 @@ public class QuestionResponse {
 
     @Column(name = "SyncFailureReason")
     private String syncFailureReason;
+
+    @PrePersist
+    protected void onCreate() {
+        if (questionResponseUuid == null) {
+            questionResponseUuid = java.util.UUID.randomUUID().toString();
+        }
+    }
 }

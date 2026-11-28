@@ -55,16 +55,23 @@ public class FormResponse {
     @Column(name = "responseId")
     private Long responseId;
 
+    /** Identifies this response on every machine; generated when the row is created. Children link to it. */
+    @Column(name = "responseUuid", length = 36, updatable = false)
+    private String responseUuid;
+
     @Column(name = "beneficiaryId", nullable = false)
     private Long beneficiaryId;
 
-    /** Denormalized from versionId for fast form-level queries. */
-    @Column(name = "formId", nullable = false)
-    private Long formId;
+    /**
+     * The form, by UUID. The legacy numeric formId/versionId columns are no longer written: definition
+     * IDs differ on every machine, so a response synced to central would point to the wrong form.
+     */
+    @Column(name = "formUuid", length = 100)
+    private String formUuid;
 
-    /** Exact FormVersion active at submission time — resolved server-side from isLatest=true. */
-    @Column(name = "versionId", nullable = false)
-    private Long versionId;
+    /** Version of the form this response was captured against (the latest at creation time). */
+    @Column(name = "versionNumber")
+    private Integer versionNumber;
 
     /** Logged-in ASHA/officer ID from the request body. */
     @Column(name = "officerId", nullable = false)
@@ -127,6 +134,9 @@ public class FormResponse {
     protected void onCreate() {
         createdAt = new Timestamp(System.currentTimeMillis());
         updatedAt = new Timestamp(System.currentTimeMillis());
+        if (responseUuid == null) {
+            responseUuid = java.util.UUID.randomUUID().toString();
+        }
         if (status == null) {
             status = "DRAFT";
         }

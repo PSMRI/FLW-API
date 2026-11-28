@@ -44,10 +44,15 @@ public class FormResponseDTO {
 
 
     private Long responseId;
+    /** Same on every machine, unlike responseId. */
+    private String responseUuid;
     private Long beneficiaryId;
+    private String formUuid;
+    /** This machine's ID of the form; null when the form is not on this machine. */
     private Long formId;
+    /** This machine's ID of the version the response was captured against; null when not on this machine. */
     private Long versionId;
-    /** Version number of the form version this response was captured against (versionId), not necessarily the latest. */
+    /** Version number of the form version this response was captured against, not necessarily the latest. */
     private Integer versionNumber;
     private Long officerId;
     private String status;

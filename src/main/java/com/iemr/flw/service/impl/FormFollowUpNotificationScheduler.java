@@ -75,18 +75,18 @@ public class FormFollowUpNotificationScheduler {
         }
 
         // Group by delay value so we issue one batch DB query per distinct delay
-        Map<Integer, List<Long>> byDelay = formsWithDelay.stream()
+        Map<Integer, List<String>> byDelay = formsWithDelay.stream()
                 .collect(Collectors.groupingBy(
                         DynamicForm::getFollowUpDelayDays,
-                        Collectors.mapping(DynamicForm::getFormId, Collectors.toList())));
+                        Collectors.mapping(DynamicForm::getFormUuid, Collectors.toList())));
 
-        for (Map.Entry<Integer, List<Long>> entry : byDelay.entrySet()) {
+        for (Map.Entry<Integer, List<String>> entry : byDelay.entrySet()) {
             int delayDays = entry.getKey();
-            List<Long> formIds = entry.getValue();
+            List<String> formUuids = entry.getValue();
 
             try {
                 List<FormResponseDTO> pending =
-                        responseService.findPendingFollowUps(formIds, delayDays);
+                        responseService.findPendingFollowUps(formUuids, delayDays);
 
                 log.info("delayDays={}: found {} pending follow-up(s)", delayDays, pending.size());
 

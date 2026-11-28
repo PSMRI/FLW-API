@@ -41,18 +41,24 @@ import java.util.Optional;
 @Repository
 public interface SectionResponseRepo extends JpaRepository<SectionResponse, Long> {
 
-    List<SectionResponse> findByResponseId(Long responseId);
+    /** Children are found by the parent's UUID: on central, uploaded rows carry no numeric responseId. */
+    List<SectionResponse> findByResponseUuid(String responseUuid);
 
-    Optional<SectionResponse> findByResponseIdAndSectionId(Long responseId, Long sectionId);
+    Optional<SectionResponse> findByResponseUuidAndSectionUuid(String responseUuid, String sectionUuid);
 
     List<SectionResponse> findByResponseIdIn(Collection<Long> responseIds);
 
     void deleteByResponseId(Long responseId);
 
-    @Query("SELECT sr.responseId, COUNT(sr) FROM SectionResponse sr, FormSection fs " +
-           "WHERE sr.sectionId = fs.sectionId " +
+    /** The section is found by sectionUuid within the response's own form version (sectionUuid repeats per version). */
+    @Query("SELECT r.responseId, COUNT(DISTINCT sr.sectionResponseId) " +
+           "FROM SectionResponse sr, FormResponse r, FormSection fs " +
+           "WHERE r.responseUuid = sr.responseUuid " +
+           "AND fs.sectionUuid = sr.sectionUuid " +
+           "AND fs.formVersion.versionNumber = r.versionNumber " +
+           "AND fs.formVersion.dynamicForm.formUuid = r.formUuid " +
            "AND fs.sectionPhase = :sectionPhase " +
-           "AND sr.responseId IN :responseIds GROUP BY sr.responseId")
+           "AND r.responseId IN :responseIds GROUP BY r.responseId")
     List<Object[]> countByResponseIdInAndSectionPhase(@Param("responseIds") Collection<Long> responseIds,
                                                        @Param("sectionPhase") SectionPhase sectionPhase);
 

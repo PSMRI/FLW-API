@@ -66,4 +66,9 @@ public interface QuestionOptionRepo extends JpaRepository<QuestionOption, Long> 
             + "JOIN FETCH s.formVersion v JOIN FETCH v.dynamicForm "
             + "WHERE o.optionUuid IS NULL OR o.optionUuid = ''")
     List<QuestionOption> findAllMissingOptionUuid();
+
+    /** Every option of a version, inactive included, so stored answers still resolve by optionUuid. */
+    @Query("SELECT o FROM QuestionOption o JOIN FETCH o.sectionQuestion q "
+            + "WHERE q.formSection.formVersion.versionId = :versionId")
+    List<QuestionOption> findAllByVersionIdIncludingInactive(@Param("versionId") Long versionId);
 }

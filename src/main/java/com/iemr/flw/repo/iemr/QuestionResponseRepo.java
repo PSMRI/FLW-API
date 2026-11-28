@@ -41,11 +41,12 @@ public interface QuestionResponseRepo extends JpaRepository<QuestionResponse, Lo
 
     List<QuestionResponse> findBySectionResponseId(Long sectionResponseId);
 
-    List<QuestionResponse> findBySectionResponseIdIn(Collection<Long> sectionResponseIds);
+    /** Answers are found by the parent's UUID: on central, uploaded rows carry no numeric sectionResponseId. */
+    List<QuestionResponse> findBySectionResponseUuidIn(Collection<String> sectionResponseUuids);
 
     void deleteBySectionResponseIdIn(Collection<Long> sectionResponseIds);
 
-    void deleteBySectionResponseIdAndQuestionIdIn(Long sectionResponseId, Collection<Long> questionIds);
+    void deleteBySectionResponseUuidAndQuestionUuidIn(String sectionResponseUuid, Collection<String> questionUuids);
 
     // See SectionResponseRepo.updateVanSerialNo for why this is a targeted UPDATE, not a
     // second full-entity save.

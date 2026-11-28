@@ -26,6 +26,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,7 +37,8 @@ import java.sql.Timestamp;
 
 /**
  * Tracks completion state of one section within a form response.
- * sectionId FK to t_form_section already implies the form version via its version_id FK.
+ * The section is referenced by sectionUuid, resolved within the parent response's form version
+ * (sectionUuid repeats in every version). The legacy numeric sectionId column is no longer written.
  *
  * @author Piramal Swasthya
  */
@@ -53,11 +55,20 @@ public class SectionResponse {
     @Column(name = "sectionResponseId")
     private Long sectionResponseId;
 
-    @Column(name = "responseId", nullable = false)
+    /** Identifies this row on every machine; generated when the row is created. Answers link to it. */
+    @Column(name = "sectionResponseUuid", length = 36, updatable = false)
+    private String sectionResponseUuid;
+
+    /** This machine's parent ID, kept for local use (change-log triggers). Not uploaded: NULL on central rows. */
+    @Column(name = "responseId")
     private Long responseId;
 
-    @Column(name = "sectionId", nullable = false)
-    private Long sectionId;
+    /** The parent link that works on every machine; reads go through it. */
+    @Column(name = "responseUuid", length = 36)
+    private String responseUuid;
+
+    @Column(name = "sectionUuid", length = 100)
+    private String sectionUuid;
 
     /** PENDING | IN_PROGRESS | DONE | SKIPPED */
     @Column(name = "status", nullable = false, length = 20)
@@ -94,4 +105,11 @@ public class SectionResponse {
 
     @Column(name = "SyncFailureReason")
     private String syncFailureReason;
+
+    @PrePersist
+    protected void onCreate() {
+        if (sectionResponseUuid == null) {
+            sectionResponseUuid = java.util.UUID.randomUUID().toString();
+        }
+    }
 }

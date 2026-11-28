@@ -45,6 +45,7 @@ import com.iemr.flw.masterEnum.FormResponseStatus;
 import com.iemr.flw.masterEnum.QuestionType;
 import com.iemr.flw.masterEnum.SectionPhase;
 import com.iemr.flw.service.CampConfigService;
+import com.iemr.flw.service.impl.ResponseDefinitionResolver.VersionDefinition;
 import com.iemr.flw.utils.JwtUtil;
 import com.iemr.flw.utils.exception.IEMRException;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -89,6 +91,7 @@ public class FormResponseItemSaver {
     private final CampConfigService campConfigService;
     private final ConsentRefusalEvaluator consentRefusalEvaluator;
     private final ConditionalAnswerPruner conditionalAnswerPruner;
+    private final ResponseDefinitionResolver definitionResolver;
 
     /**
      * Saves one form response in its own independent REQUIRES_NEW transaction.
@@ -102,7 +105,6 @@ public class FormResponseItemSaver {
         Integer parkingPlaceID = campConfigService.getParkingPlaceID();
         FormVersion version = resolveLatestVersion(req.getFormUuid());
         Timestamp now = new Timestamp(System.currentTimeMillis());
-        Long formId = version.getDynamicForm().getFormId();
 
         // Step 1: Validate all section + question UUIDs BEFORE any writes or deletes
         validateRequest(req, version);
@@ -112,8 +114,8 @@ public class FormResponseItemSaver {
                 : FormResponseStatus.SUBMITTED.name();
 
         // Step 2: Check for an existing response for this beneficiary+form
-        List<FormResponse> existing =
-                formResponseRepo.findByBeneficiaryIdAndVersionId(req.getBeneficiaryId(), version.getVersionId());
+        List<FormResponse> existing = formResponseRepo.findByBeneficiaryIdAndFormUuidAndVersionNumber(
+                req.getBeneficiaryId(), req.getFormUuid(), version.getVersionNumber());
 
         FormResponse formResponse;
         if (!existing.isEmpty()) {
@@ -185,8 +187,8 @@ public class FormResponseItemSaver {
             Integer vanID, Integer parkingPlaceID, String status) {
         FormResponse formResponse = FormResponse.builder()
                 .beneficiaryId(req.getBeneficiaryId())
-                .formId(version.getDynamicForm().getFormId())
-                .versionId(version.getVersionId())
+                .formUuid(version.getDynamicForm().getFormUuid())
+                .versionNumber(version.getVersionNumber())
                 .officerId(req.getOfficerId())
                 .status(status)
                 .createdBy(actor)
@@ -198,6 +200,9 @@ public class FormResponseItemSaver {
                 .build();
         formResponse = formResponseRepo.save(formResponse);
         formResponseRepo.updateVanSerialNo(formResponse.getResponseId(), formResponse.getResponseId());
+        // Keep the managed entity in step: a later save/flush of it would otherwise write
+        // vanSerialNo back to NULL.
+        formResponse.setVanSerialNo(formResponse.getResponseId());
         return formResponse;
     }
 
@@ -226,8 +231,6 @@ public class FormResponseItemSaver {
                 .collect(Collectors.toMap(SectionQuestion::getQuestionId, SectionQuestion::getQuestionUuid));
         List<QuestionOption> allOptions =
                 questionOptionRepo.findByQuestionIdsOrderByDisplayOrderAsc(questionIds);
-        Map<Long, QuestionOption> optionById = allOptions.stream()
-                .collect(Collectors.toMap(QuestionOption::getOptionId, Function.identity()));
         Map<Long, Map<String, QuestionOption>> optionsByQuestion = allOptions.stream()
                 .collect(Collectors.groupingBy(
                         o -> o.getSectionQuestion().getQuestionId(),
@@ -235,6 +238,8 @@ public class FormResponseItemSaver {
 
         Map<Long, Set<Long>> childrenByParent =
                 conditionalAnswerPruner.loadChildrenByParent(version.getVersionId());
+        VersionDefinition responseDefinition = definitionResolver.load(
+                formResponse.getFormUuid(), formResponse.getVersionNumber(), new HashMap<>());
 
         List<SectionResponseDTO> sectionDTOs = new ArrayList<>();
         for (SectionAnswerRequest sectionReq : req.getSections()) {
@@ -252,7 +257,7 @@ public class FormResponseItemSaver {
             String desiredStatus = consentRefusalEvaluator.determineSectionStatus(
                     section, sectionReq.getAnswers(), SECTION_STATUS_DONE, SECTION_STATUS_REFUSED);
             Optional<SectionResponse> sectionResponseOpt = upsertSectionResponse(
-                    formResponse.getResponseId(), section, actor, desiredStatus, vanID, parkingPlaceID);
+                    formResponse, section, actor, desiredStatus, vanID, parkingPlaceID);
             if (sectionResponseOpt.isEmpty()) {
                 continue;
             }
@@ -267,11 +272,12 @@ public class FormResponseItemSaver {
                     questionsBySection.getOrDefault(section.getSectionId(), Map.of());
 
             List<QuestionResponse> questionResponses = processAnswers(
-                    sectionResponse.getSectionResponseId(),
+                    sectionResponse,
                     sectionReq.getAnswers(),
                     questionMap,
                     optionsByQuestion,
                     childrenByParent,
+                    questionUuidById,
                     actor,
                     vanID,
                     parkingPlaceID);
@@ -280,17 +286,18 @@ public class FormResponseItemSaver {
             for (QuestionResponse qr : questionResponses) {
                 questionResponseRepo.updateVanSerialNo(qr.getQuestionResponseId(), qr.getQuestionResponseId());
             }
-            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, section, questionResponses, questionUuidById, optionById));
+            sectionDTOs.add(buildSectionResponseDTO(sectionResponse, questionResponses, responseDefinition));
         }
 
-        return buildFormResponseDTO(formResponse, sectionDTOs);
+        return buildFormResponseDTO(formResponse, responseDefinition, sectionDTOs);
     }
 
-    private Optional<SectionResponse> upsertSectionResponse(Long responseId, FormSection section, String actor,
+    private Optional<SectionResponse> upsertSectionResponse(FormResponse formResponse, FormSection section, String actor,
             String status, Integer vanID, Integer parkingPlaceID) {
+        Long responseId = formResponse.getResponseId();
         if (section.getSectionPhase() != SectionPhase.POST_SUBMIT) {
             Optional<SectionResponse> existing =
-                    sectionResponseRepo.findByResponseIdAndSectionId(responseId, section.getSectionId());
+                    sectionResponseRepo.findByResponseUuidAndSectionUuid(formResponse.getResponseUuid(), section.getSectionUuid());
             if (existing.isPresent()) {
                 if (Boolean.FALSE.equals(section.getIsEditable())) {
                     log.info("saveForBulk: section '{}' is not editable — skipping update for responseId={}",
@@ -311,7 +318,8 @@ public class FormResponseItemSaver {
         // follow-up visits possible; the read path already returns every row for a section.
         SectionResponse sr = SectionResponse.builder()
                 .responseId(responseId)
-                .sectionId(section.getSectionId())
+                .responseUuid(formResponse.getResponseUuid())
+                .sectionUuid(section.getSectionUuid())
                 .status(status)
                 .savedAt(new Timestamp(System.currentTimeMillis()))
                 .createdBy(actor)
@@ -325,11 +333,12 @@ public class FormResponseItemSaver {
     }
 
     private List<QuestionResponse> processAnswers(
-            Long sectionResponseId,
+            SectionResponse sectionResponse,
             List<QuestionAnswerRequest> answers,
             Map<String, SectionQuestion> questionMap,
             Map<Long, Map<String, QuestionOption>> optionsByQuestion,
             Map<Long, Set<Long>> childrenByParent,
+            Map<Long, String> questionUuidById,
             String actor,
             Integer vanID,
             Integer parkingPlaceID) {
@@ -337,8 +346,9 @@ public class FormResponseItemSaver {
         // Pass 1: clear old answers of every received question and its SHOW_QUESTION descendants,
         // so children hidden by an edited parent don't keep stale answers. Done up-front so a
         // parent listed after its child can't wipe the child's freshly inserted answer.
-        conditionalAnswerPruner.deleteWithDescendants(
-                sectionResponseId, answeredQuestionIds(answers, questionMap), childrenByParent);
+        Long sectionResponseId = sectionResponse.getSectionResponseId();
+        conditionalAnswerPruner.deleteWithDescendants(sectionResponse.getSectionResponseUuid(),
+                answeredQuestionIds(answers, questionMap), childrenByParent, questionUuidById);
 
         // Pass 2: insert the received answers
         List<QuestionResponse> results = new ArrayList<>();
@@ -365,8 +375,9 @@ public class FormResponseItemSaver {
                             answer.getOptionValue(), answer.getQuestionUuid());
                     results.add(QuestionResponse.builder()
                             .sectionResponseId(sectionResponseId)
-                            .questionId(questionId)
-                            .optionId(opt != null ? opt.getOptionId() : null)
+                            .sectionResponseUuid(sectionResponse.getSectionResponseUuid())
+                            .questionUuid(question.getQuestionUuid())
+                            .optionUuid(opt != null ? opt.getOptionUuid() : null)
                             .createdBy(actor)
                             .updatedBy(actor)
                             .vanID(vanID)
@@ -381,8 +392,9 @@ public class FormResponseItemSaver {
                                 answer.getQuestionUuid());
                         results.add(QuestionResponse.builder()
                                 .sectionResponseId(sectionResponseId)
-                                .questionId(questionId)
-                                .optionId(opt != null ? opt.getOptionId() : null)
+                                .sectionResponseUuid(sectionResponse.getSectionResponseUuid())
+                                .questionUuid(question.getQuestionUuid())
+                                .optionUuid(opt != null ? opt.getOptionUuid() : null)
                                 .createdBy(actor)
                                 .updatedBy(actor)
                                 .vanID(vanID)
@@ -397,7 +409,8 @@ public class FormResponseItemSaver {
                         : answer.getOptionValue();
                 results.add(QuestionResponse.builder()
                         .sectionResponseId(sectionResponseId)
-                        .questionId(questionId)
+                        .sectionResponseUuid(sectionResponse.getSectionResponseUuid())
+                        .questionUuid(question.getQuestionUuid())
                         .answerText(value)
                         .createdBy(actor)
                         .updatedBy(actor)
@@ -429,12 +442,18 @@ public class FormResponseItemSaver {
         return opts.get(optionValue);
     }
 
-    private FormResponseDTO buildFormResponseDTO(FormResponse r, List<SectionResponseDTO> sections) {
+    /** Same shape as DynamicFormResponseServiceImpl: numeric IDs are this machine's, looked up by UUID. */
+    private FormResponseDTO buildFormResponseDTO(FormResponse r, VersionDefinition definition,
+                                                 List<SectionResponseDTO> sections) {
+        FormVersion version = definition != null ? definition.version() : null;
         return FormResponseDTO.builder()
                 .responseId(r.getResponseId())
+                .responseUuid(r.getResponseUuid())
                 .beneficiaryId(r.getBeneficiaryId())
-                .formId(r.getFormId())
-                .versionId(r.getVersionId())
+                .formUuid(r.getFormUuid())
+                .formId(version != null ? version.getDynamicForm().getFormId() : null)
+                .versionId(version != null ? version.getVersionId() : null)
+                .versionNumber(r.getVersionNumber())
                 .officerId(r.getOfficerId())
                 .status(r.getStatus())
                 .createdBy(r.getCreatedBy())
@@ -449,25 +468,28 @@ public class FormResponseItemSaver {
     }
 
     private SectionResponseDTO buildSectionResponseDTO(
-            SectionResponse sr, FormSection section, List<QuestionResponse> answers,
-            Map<Long, String> questionUuidById, Map<Long, QuestionOption> optionById) {
+            SectionResponse sr, List<QuestionResponse> answers, VersionDefinition definition) {
         List<QuestionResponseDTO> answerDTOs = answers.stream()
-                .map(a -> QuestionResponseDTO.builder()
-                        .questionResponseId(a.getQuestionResponseId())
-                        .questionId(a.getQuestionId())
-                        .questionUuid(questionUuidById.get(a.getQuestionId()))
-                        .optionId(a.getOptionId())
-                        .optionValue(optionById.containsKey(a.getOptionId())
-                                ? optionById.get(a.getOptionId()).getOptionValue() : null)
-                        .optionUuid(optionById.containsKey(a.getOptionId())
-                                ? optionById.get(a.getOptionId()).getOptionUuid() : null)
-                        .answerText(a.getAnswerText())
-                        .build())
+                .map(a -> {
+                    SectionQuestion question = definition != null ? definition.question(a.getQuestionUuid()) : null;
+                    QuestionOption option = definition != null
+                            ? definition.option(a.getQuestionUuid(), a.getOptionUuid()) : null;
+                    return QuestionResponseDTO.builder()
+                            .questionResponseId(a.getQuestionResponseId())
+                            .questionId(question != null ? question.getQuestionId() : null)
+                            .questionUuid(a.getQuestionUuid())
+                            .optionId(option != null ? option.getOptionId() : null)
+                            .optionValue(option != null ? option.getOptionValue() : null)
+                            .optionUuid(a.getOptionUuid())
+                            .answerText(a.getAnswerText())
+                            .build();
+                })
                 .collect(Collectors.toList());
+        FormSection section = definition != null ? definition.section(sr.getSectionUuid()) : null;
         return SectionResponseDTO.builder()
                 .sectionResponseId(sr.getSectionResponseId())
-                .sectionId(sr.getSectionId())
-                .sectionUuid(section != null ? section.getSectionUuid() : null)
+                .sectionId(section != null ? section.getSectionId() : null)
+                .sectionUuid(sr.getSectionUuid())
                 .isEditable(section != null ? section.getIsEditable() : null)
                 .status(sr.getStatus())
                 .savedAt(sr.getSavedAt())

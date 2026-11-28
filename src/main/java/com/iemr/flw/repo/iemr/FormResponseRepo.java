@@ -39,45 +39,47 @@ import java.util.List;
 @Repository
 public interface FormResponseRepo extends JpaRepository<FormResponse, Long> {
 
-    List<FormResponse> findByBeneficiaryIdAndFormId(Long beneficiaryId, Long formId);
+    List<FormResponse> findByBeneficiaryIdAndFormUuid(Long beneficiaryId, String formUuid);
 
-    List<FormResponse> findByBeneficiaryIdAndVersionId(Long beneficiaryId, Long versionId);
+    List<FormResponse> findByBeneficiaryIdAndFormUuidAndVersionNumber(Long beneficiaryId, String formUuid,
+                                                                      Integer versionNumber);
 
-   @Query("SELECT r FROM FormResponse r WHERE r.formId = :formId AND r.status IN :statuses")
-    List<FormResponse> findByFormIdAndStatusIn(@Param("formId") Long formId, @Param("statuses") List<String> statuses);
+    @Query("SELECT r FROM FormResponse r WHERE r.formUuid = :formUuid AND r.status IN :statuses")
+    List<FormResponse> findByFormUuidAndStatusIn(@Param("formUuid") String formUuid,
+                                                 @Param("statuses") List<String> statuses);
 
-    @Query("SELECT r FROM FormResponse r WHERE r.formId = :formId AND r.status IN :statuses " +
+    @Query("SELECT r FROM FormResponse r WHERE r.formUuid = :formUuid AND r.status IN :statuses " +
            "AND r.beneficiaryId IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
            "AND (:villageId IS NULL OR b.villageID = :villageId) " +
            "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
-    List<FormResponse> findByFormIdAndStatusInFiltered(@Param("formId") Long formId,
+    List<FormResponse> findByFormUuidAndStatusInFiltered(@Param("formUuid") String formUuid,
                                                         @Param("statuses") List<String> statuses,
                                                         @Param("villageId") Integer villageId,
                                                         @Param("providerServiceMapId") Integer providerServiceMapId);
 
-    @Query("SELECT r FROM FormResponse r WHERE r.formId = :formId " +
+    @Query("SELECT r FROM FormResponse r WHERE r.formUuid = :formUuid " +
            "AND r.beneficiaryId IN (SELECT b.beneficiaryID FROM BenFlowStatus b WHERE b.deleted = false " +
            "AND (:villageId IS NULL OR b.villageID = :villageId) " +
            "AND (:providerServiceMapId IS NULL OR b.providerServiceMapId = :providerServiceMapId))")
-    List<FormResponse> findByFormIdFiltered(@Param("formId") Long formId,
+    List<FormResponse> findByFormUuidFiltered(@Param("formUuid") String formUuid,
                                             @Param("villageId") Integer villageId,
                                             @Param("providerServiceMapId") Integer providerServiceMapId);
 
     @Query("SELECT r.beneficiaryId FROM FormResponse r " +
            "WHERE r.beneficiaryId IN :benIds " +
-           "AND r.formId = :formId " +
+           "AND r.formUuid = :formUuid " +
            "AND r.status = :status")
     List<Long> findCounselledBenIds(@Param("benIds") List<Long> benIds,
-                                    @Param("formId") Long formId,
+                                    @Param("formUuid") String formUuid,
                                     @Param("status") String status);
 
     @Query("SELECT r FROM FormResponse r "
-         + "WHERE r.formId IN :formIds "
+         + "WHERE r.formUuid IN :formUuids "
          + "AND r.status = 'SUBMITTED' "
          + "AND r.lastFollowUpAt >= :windowStart "
          + "AND r.lastFollowUpAt < :windowEnd")
     List<FormResponse> findPendingFollowUps(
-            @Param("formIds") List<Long> formIds,
+            @Param("formUuids") List<String> formUuids,
             @Param("windowStart") Timestamp windowStart,
             @Param("windowEnd") Timestamp windowEnd);
 
