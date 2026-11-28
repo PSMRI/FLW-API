@@ -118,6 +118,18 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
                 throw new IllegalStateException(
                         "Cannot update a COMPLETE response (responseId=" + request.getResponseId() + ")");
             }
+            // Re-submit stays on the version the response was created on, even if a newer one is latest now:
+            // its other sections' stored answers (option UUIDs) belong to that version, and reads resolve the
+            // response against it. A response with no recorded version is moved to the latest one.
+            FormVersion recorded = formResponse.getVersionNumber() == null ? null
+                    : formVersionRepo.findFirstByDynamicForm_FormUuidAndVersionNumberOrderByVersionIdDesc(
+                            formResponse.getFormUuid(), formResponse.getVersionNumber()).orElse(null);
+            if (recorded != null) {
+                version = recorded;
+            } else {
+                formResponse.setFormUuid(request.getFormUuid());
+                formResponse.setVersionNumber(version.getVersionNumber());
+            }
             // Bump submittedAt to reflect the re-submission time
             formResponse.setStatus(FormResponseStatus.SUBMITTED.name());
             formResponse.setSubmittedAt(now);
@@ -253,7 +265,8 @@ public class DynamicFormResponseServiceImpl implements DynamicFormResponseServic
         Set<Long> questionIds = allQuestions.stream()
                 .map(SectionQuestion::getQuestionId)
                 .collect(Collectors.toSet());
-        Map<Long, String> questionUuidById = allQuestions.stream()
+        Map<Long, String> questionUuidById = sectionQuestionRepo
+                .findAllByVersionIdIncludingInactive(version.getVersionId()).stream()
                 .collect(Collectors.toMap(SectionQuestion::getQuestionId, SectionQuestion::getQuestionUuid));
         List<QuestionOption> allOptions =
                 questionOptionRepo.findByQuestionIdsOrderByDisplayOrderAsc(questionIds);

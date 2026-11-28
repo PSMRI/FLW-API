@@ -227,7 +227,8 @@ public class FormResponseItemSaver {
         Set<Long> questionIds = allQuestions.stream()
                 .map(SectionQuestion::getQuestionId)
                 .collect(Collectors.toSet());
-        Map<Long, String> questionUuidById = allQuestions.stream()
+        Map<Long, String> questionUuidById = sectionQuestionRepo
+                .findAllByVersionIdIncludingInactive(version.getVersionId()).stream()
                 .collect(Collectors.toMap(SectionQuestion::getQuestionId, SectionQuestion::getQuestionUuid));
         List<QuestionOption> allOptions =
                 questionOptionRepo.findByQuestionIdsOrderByDisplayOrderAsc(questionIds);
