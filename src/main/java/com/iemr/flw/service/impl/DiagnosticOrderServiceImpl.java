@@ -1002,7 +1002,7 @@ public class DiagnosticOrderServiceImpl implements DiagnosticOrderService {
     @Override
     public DiagnosticOrderResultDto triggerManualPoll(Long beneficiaryId, String orderType, Long visitCode) throws Exception {
         if (!diagnosticPollSettings.isPollEnabled()) {
-            throw new IllegalStateException("Diagnostic polling is disabled on this server (diagnostic.poll.enabled=false)");
+            throw new IllegalStateException("Diagnostic polling is disabled on this server (is.central.server=true)");
         }
         // Locked, and the order read inside the lock, so this can't interleave with a manual entry or a
         // scheduler poll for the same beneficiary and save over what they just wrote.
